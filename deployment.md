@@ -335,7 +335,7 @@ Traefik UI：`https://traefik.fastapi-project.example.com`
 
 前端：`https://dashboard.fastapi-project.example.com`
 
-后端 API 文档：`https://api.fastapi-project.example.com/docs`
+后端 API 文档：`https://api.fastapi-project.example.com/scalar`
 
 后端 API 基础 URL：`https://api.fastapi-project.example.com`
 
@@ -343,6 +343,6 @@ Traefik UI：`https://traefik.fastapi-project.example.com`
 
 前端：`https://dashboard.staging.fastapi-project.example.com`
 
-后端 API 文档：`https://api.staging.fastapi-project.example.com/docs`
+后端 API 文档：`https://api.staging.fastapi-project.example.com/scalar`
 
 后端 API 基础 URL：`https://api.staging.fastapi-project.example.com`

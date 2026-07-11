@@ -14,7 +14,7 @@ docker compose watch
 
 后端，基于 OpenAPI 的 JSON Web API：<http://localhost:8000>
 
-基于 Swagger UI 的自动交互式文档（来自 OpenAPI 后端）：<http://localhost:8000/docs>
+基于 Scalar 的自动交互式文档（来自 OpenAPI 后端）：<http://localhost:8000/scalar>
 
 Traefik UI，可以查看代理是如何处理路由的：<http://localhost:8090>
 
@@ -190,7 +190,7 @@ biome check..............................................................Passed
 
 后端：<http://localhost:8000>
 
-自动交互式文档（Swagger UI）：<http://localhost:8000/docs>
+自动交互式文档（Scalar）：<http://localhost:8000/scalar>
 
 自动备用文档（ReDoc）：<http://localhost:8000/redoc>
 
@@ -206,7 +206,7 @@ MailCatcher：<http://localhost:1080>
 
 后端：<http://api.localhost.tiangolo.com>
 
-自动交互式文档（Swagger UI）：<http://api.localhost.tiangolo.com/docs>
+自动交互式文档（Scalar）：<http://api.localhost.tiangolo.com/scalar>
 
 自动备用文档（ReDoc）：<http://api.localhost.tiangolo.com/redoc>
 

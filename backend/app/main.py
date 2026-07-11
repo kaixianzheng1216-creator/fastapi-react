@@ -1,6 +1,7 @@
 import sentry_sdk
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
+from scalar_fastapi import get_scalar_api_reference
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
@@ -8,7 +9,8 @@ from app.core.config import settings
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
-    return f"{route.tags[0]}-{route.name}"
+    tag = route.tags[0] if route.tags else route.name
+    return f"{tag}-{route.name}"
 
 
 if settings.SENTRY_DSN and settings.ENVIRONMENT != "local":
@@ -18,7 +20,18 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id,
+    docs_url=None,
+    redoc_url=None,
 )
+
+
+@app.get("/scalar", include_in_schema=False)
+async def scalar_html():
+    return get_scalar_api_reference(
+        openapi_url=f"{settings.API_V1_STR}/openapi.json",
+        title=settings.PROJECT_NAME,
+    )
+
 
 # Set all CORS enabled origins
 if settings.all_cors_origins:
