@@ -1,34 +1,34 @@
-# FastAPI Project - Development
+# FastAPI 项目 - 开发指南
 
 ## Docker Compose
 
-* Start the local stack with Docker Compose:
+* 使用 Docker Compose 启动本地开发环境：
 
 ```bash
 docker compose watch
 ```
 
-* Now you can open your browser and interact with these URLs:
+* 现在你可以在浏览器中访问以下 URL：
 
-Frontend, built with Docker, with routes handled based on the path: <http://localhost:5173>
+前端，基于 Docker 构建，根据路径处理路由：<http://localhost:5173>
 
-Backend, JSON based web API based on OpenAPI: <http://localhost:8000>
+后端，基于 OpenAPI 的 JSON Web API：<http://localhost:8000>
 
-Automatic interactive documentation with Swagger UI (from the OpenAPI backend): <http://localhost:8000/docs>
+基于 Swagger UI 的自动交互式文档（来自 OpenAPI 后端）：<http://localhost:8000/docs>
 
-Adminer, database web administration: <http://localhost:8080>
+Adminer，数据库 Web 管理工具：<http://localhost:8080>
 
-Traefik UI, to see how the routes are being handled by the proxy: <http://localhost:8090>
+Traefik UI，可以查看代理是如何处理路由的：<http://localhost:8090>
 
-**Note**: The first time you start your stack, it might take a minute for it to be ready. While the backend waits for the database to be ready and configures everything. You can check the logs to monitor it.
+**注意**：第一次启动开发环境时，可能需要等待一分钟左右才能就绪。这是因为后端需要等待数据库就绪并进行一些初始化配置。你可以通过查看日志来监控这个过程。
 
-To check the logs, run (in another terminal):
+要查看日志，可以运行（在另一个终端中）：
 
 ```bash
 docker compose logs
 ```
 
-To check the logs of a specific service, add the name of the service, e.g.:
+要查看特定服务的日志，可以加上服务名称，例如：
 
 ```bash
 docker compose logs backend
@@ -36,137 +36,137 @@ docker compose logs backend
 
 ## Mailcatcher
 
-Mailcatcher is a simple SMTP server that catches all emails sent by the backend during local development. Instead of sending real emails, they are captured and displayed in a web interface.
+Mailcatcher 是一个简单的 SMTP 服务器，用于在本地开发期间捕获后端发送的所有邮件。它不会真正发送邮件，而是将邮件捕获并显示在 Web 界面中。
 
-This is useful for:
+它的用途包括：
 
-* Testing email functionality during development
-* Verifying email content and formatting
-* Debugging email-related functionality without sending real emails
+* 在开发期间测试邮件功能
+* 验证邮件内容和格式
+* 调试邮件相关功能，而无需发送真实邮件
 
-The backend is automatically configured to use Mailcatcher when running with Docker Compose locally (SMTP on port 1025). All captured emails can be viewed at <http://localhost:1080>.
+后端在本地使用 Docker Compose 运行时会被自动配置为使用 Mailcatcher（SMTP 端口为 1025）。所有捕获的邮件都可以在 <http://localhost:1080> 查看。
 
-## Local Development
+## 本地开发
 
-The Docker Compose files are configured so that each of the services is available in a different port in `localhost`.
+Docker Compose 文件的配置方式使得每个服务都通过 `localhost` 上的不同端口提供访问。
 
-For the backend and frontend, they use the same port that would be used by their local development server, so, the backend is at `http://localhost:8000` and the frontend at `http://localhost:5173`.
+对于后端和前端，它们使用的端口与本地开发服务器使用的端口相同，因此后端位于 `http://localhost:8000`，前端位于 `http://localhost:5173`。
 
-This way, you could turn off a Docker Compose service and start its local development service, and everything would keep working, because it all uses the same ports.
+这样一来，你可以停掉某个 Docker Compose 服务，然后启动它的本地开发服务，所有功能依然可以正常工作，因为它们使用的都是相同的端口。
 
-For example, you can stop that `frontend` service in the Docker Compose, in another terminal, run:
+例如，你可以先停止 Docker Compose 中的 `frontend` 服务，在另一个终端运行：
 
 ```bash
 docker compose stop frontend
 ```
 
-And then start the local frontend development server:
+然后启动本地的 frontend 开发服务器：
 
 ```bash
 bun run dev
 ```
 
-Or you could stop the `backend` Docker Compose service:
+或者你可以停止 `backend` 这个 Docker Compose 服务：
 
 ```bash
 docker compose stop backend
 ```
 
-And then you can run the local development server for the backend:
+然后可以运行后端的本地开发服务器：
 
 ```bash
 cd backend
 fastapi dev app/main.py
 ```
 
-## Docker Compose in `localhost.tiangolo.com`
+## `localhost.tiangolo.com` 下的 Docker Compose
 
-When you start the Docker Compose stack, it uses `localhost` by default, with different ports for each service (backend, frontend, adminer, etc).
+当你启动 Docker Compose 栈时，默认使用 `localhost`，并为每个服务（backend、frontend、adminer 等）使用不同的端口。
 
-When you deploy it to production (or staging), it will deploy each service in a different subdomain, like `api.example.com` for the backend and `dashboard.example.com` for the frontend.
+当你将其部署到生产环境（或预发布环境）时，每个服务会部署在不同的子域名下，例如后端使用 `api.example.com`，前端使用 `dashboard.example.com`。
 
-In the guide about [deployment](deployment.md) you can read about Traefik, the configured proxy. That's the component in charge of transmitting traffic to each service based on the subdomain.
+在关于[部署](deployment.md)的指南中，你可以了解到 Traefik 这个配置好的反向代理。它负责根据子域名将流量转发到对应的服务。
 
-If you want to test that it's all working locally, you can edit the local `.env` file, and change:
+如果你想在本地测试这一切是否正常工作，可以编辑本地的 `.env` 文件，修改：
 
 ```dotenv
 DOMAIN=localhost.tiangolo.com
 ```
 
-That will be used by the Docker Compose files to configure the base domain for the services.
+Docker Compose 文件会使用这个值来配置服务的基础域名。
 
-Traefik will use this to transmit traffic at `api.localhost.tiangolo.com` to the backend, and traffic at `dashboard.localhost.tiangolo.com` to the frontend.
+Traefik 会据此将 `api.localhost.tiangolo.com` 的流量转发到后端，将 `dashboard.localhost.tiangolo.com` 的流量转发到前端。
 
-The domain `localhost.tiangolo.com` is a special domain that is configured (with all its subdomains) to point to `127.0.0.1`. This way you can use that for your local development.
+`localhost.tiangolo.com` 是一个特殊域名，它（包括其所有子域名）被配置为指向 `127.0.0.1`。这样你就可以在本地开发中使用它。
 
-After you update it, run again:
-
-```bash
-docker compose watch
-```
-
-When deploying, for example in production, the main Traefik is configured outside of the Docker Compose files. For local development, there's an included Traefik in `compose.override.yml`, just to let you test that the domains work as expected, for example with `api.localhost.tiangolo.com` and `dashboard.localhost.tiangolo.com`.
-
-## Docker Compose files and env vars
-
-There is a main `compose.yml` file with all the configurations that apply to the whole stack, it is used automatically by `docker compose`.
-
-And there's also a `compose.override.yml` with overrides for development, for example to mount the source code as a volume. It is used automatically by `docker compose` to apply overrides on top of `compose.yml`.
-
-These Docker Compose files use the `.env` file containing configurations to be injected as environment variables in the containers.
-
-They also use some additional configurations taken from environment variables set in the scripts before calling the `docker compose` command.
-
-After changing variables, make sure you restart the stack:
+修改完成后，重新运行：
 
 ```bash
 docker compose watch
 ```
 
-## The .env file
+在生产部署时，主 Traefik 配置在 Docker Compose 文件之外。本地开发时，`compose.override.yml` 中包含了一个内置的 Traefik，方便你测试域名是否能按预期工作，例如 `api.localhost.tiangolo.com` 和 `dashboard.localhost.tiangolo.com`。
 
-The `.env` file is the one that contains all your configurations, generated keys and passwords, etc.
+## Docker Compose 文件与环境变量
 
-Depending on your workflow, you could want to exclude it from Git, for example if your project is public. In that case, you would have to make sure to set up a way for your CI tools to obtain it while building or deploying your project.
+存在一个主 `compose.yml` 文件，包含应用于整个栈的所有配置，它会被 `docker compose` 自动使用。
 
-One way to do it could be to add each environment variable to your CI/CD system, and updating the `compose.yml` file to read that specific env var instead of reading the `.env` file.
+还有一个 `compose.override.yml` 文件，包含针对开发环境的覆盖配置，例如将源码挂载为卷。它会被 `docker compose` 自动使用，以便在 `compose.yml` 之上应用覆盖。
 
-## Pre-commits and code linting
+这些 Docker Compose 文件使用包含配置的 `.env` 文件，这些配置会作为环境变量注入到容器中。
 
-we are using a tool called [prek](https://prek.j178.dev/) (modern alternative to [Pre-commit](https://pre-commit.com/)) for code linting and formatting.
+它们还会使用在调用 `docker compose` 命令之前由脚本设置的一些额外环境变量配置。
 
-When you install it, it runs right before making a commit in git. This way it ensures that the code is consistent and formatted even before it is committed.
+修改环境变量后，请确保重启整个栈：
 
-You can find a file `.pre-commit-config.yaml` with configurations at the root of the project.
+```bash
+docker compose watch
+```
 
-#### Install prek to run automatically
+## .env 文件
 
-`prek` is already part of the dependencies of the project.
+`.env` 文件包含所有的配置、生成的密钥和密码等。
 
-After having the `prek` tool installed and available, you need to "install" it in the local repository, so that it runs automatically before each commit.
+根据你的工作流程，你可能希望将它排除在 Git 之外，例如当你的项目是公开的情况下。在这种情况下，你需要确保设置一种方式，让你的 CI 工具在构建或部署项目时能够获取到它。
 
-Using `uv`, you could do it with (make sure you are inside `backend` folder):
+一种可行的方法是将每个环境变量添加到你的 CI/CD 系统中，然后更新 `compose.yml` 文件，使其从该特定环境变量读取，而不是从 `.env` 文件读取。
+
+## Pre-commit 与代码检查
+
+我们使用一个叫做 [prek](https://prek.j178.dev/) 的工具（[Pre-commit](https://pre-commit.com/) 的现代替代品）来进行代码检查和格式化。
+
+当你安装它之后，它会在你进行 git 提交之前自动运行。这样可以确保代码在提交之前就是一致且经过格式化的。
+
+你可以在项目根目录找到一个配置文件 `.pre-commit-config.yaml`。
+
+#### 安装 prek 以自动运行
+
+`prek` 已经是项目依赖的一部分。
+
+在安装好 `prek` 工具并确保它可用之后，你需要在本地仓库中"安装"它，这样它才会在每次提交前自动运行。
+
+使用 `uv`，可以这样做（确保你在 `backend` 目录下）：
 
 ```bash
 ❯ uv run prek install -f
 prek installed at `../.git/hooks/pre-commit`
 ```
 
-The `-f` flag forces the installation, in case there was already a `pre-commit` hook previously installed.
+`-f` 参数会强制安装，覆盖之前可能已经安装的 `pre-commit` 钩子。
 
-Now whenever you try to commit, e.g. with:
+现在，每当你尝试提交时，例如：
 
 ```bash
 git commit
 ```
 
-...prek will run and check and format the code you are about to commit, and will ask you to add that code (stage it) with git again before committing.
+...prek 会运行，检查并格式化你即将提交的代码，并要求你用 git 重新添加（暂存）这些代码，然后再提交。
 
-Then you can `git add` the modified/fixed files again and now you can commit.
+然后你可以再次 `git add` 修改/修复后的文件，现在就可以提交了。
 
-#### Running prek hooks manually
+#### 手动运行 prek 钩子
 
-you can also run `prek` manually on all the files, you can do it using `uv` with:
+你也可以使用 `uv` 在所有文件上手动运行 `prek`：
 
 ```bash
 ❯ uv run prek run --all-files
@@ -180,42 +180,42 @@ ruff-format..............................................................Passed
 biome check..............................................................Passed
 ```
 
-## URLs
+## URL
 
-The production or staging URLs would use these same paths, but with your own domain.
+生产或预发布环境的 URL 使用相同的路径，但使用你自己的域名。
 
-### Development URLs
+### 开发 URL
 
-Development URLs, for local development.
+开发 URL，用于本地开发。
 
-Frontend: <http://localhost:5173>
+前端：<http://localhost:5173>
 
-Backend: <http://localhost:8000>
+后端：<http://localhost:8000>
 
-Automatic Interactive Docs (Swagger UI): <http://localhost:8000/docs>
+自动交互式文档（Swagger UI）：<http://localhost:8000/docs>
 
-Automatic Alternative Docs (ReDoc): <http://localhost:8000/redoc>
+自动备用文档（ReDoc）：<http://localhost:8000/redoc>
 
-Adminer: <http://localhost:8080>
+Adminer：<http://localhost:8080>
 
-Traefik UI: <http://localhost:8090>
+Traefik UI：<http://localhost:8090>
 
-MailCatcher: <http://localhost:1080>
+MailCatcher：<http://localhost:1080>
 
-### Development URLs with `localhost.tiangolo.com` Configured
+### 配置 `localhost.tiangolo.com` 后的开发 URL
 
-Development URLs, for local development.
+开发 URL，用于本地开发。
 
-Frontend: <http://dashboard.localhost.tiangolo.com>
+前端：<http://dashboard.localhost.tiangolo.com>
 
-Backend: <http://api.localhost.tiangolo.com>
+后端：<http://api.localhost.tiangolo.com>
 
-Automatic Interactive Docs (Swagger UI): <http://api.localhost.tiangolo.com/docs>
+自动交互式文档（Swagger UI）：<http://api.localhost.tiangolo.com/docs>
 
-Automatic Alternative Docs (ReDoc): <http://api.localhost.tiangolo.com/redoc>
+自动备用文档（ReDoc）：<http://api.localhost.tiangolo.com/redoc>
 
-Adminer: <http://localhost.tiangolo.com:8080>
+Adminer：<http://localhost.tiangolo.com:8080>
 
-Traefik UI: <http://localhost.tiangolo.com:8090>
+Traefik UI：<http://localhost.tiangolo.com:8090>
 
-MailCatcher: <http://localhost.tiangolo.com:1080>
+MailCatcher：<http://localhost.tiangolo.com:1080>
