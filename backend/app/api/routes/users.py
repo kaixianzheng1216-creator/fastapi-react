@@ -48,6 +48,7 @@ def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
     users = session.exec(statement).all()
 
     users_public = [UserPublic.model_validate(user) for user in users]
+
     return UsersPublic(data=users_public, count=count)
 
 
@@ -75,6 +76,7 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
             subject=email_data.subject,
             html_content=email_data.html_content,
         )
+
     return user
 
 
@@ -92,11 +94,13 @@ def update_user_me(
             raise HTTPException(
                 status_code=409, detail="User with this email already exists"
             )
+
     user_data = user_in.model_dump(exclude_unset=True)
     current_user.sqlmodel_update(user_data)
     session.add(current_user)
     session.commit()
     session.refresh(current_user)
+
     return current_user
 
 
@@ -114,10 +118,12 @@ def update_password_me(
         raise HTTPException(
             status_code=400, detail="New password cannot be the same as the current one"
         )
+
     hashed_password = get_password_hash(body.new_password)
     current_user.hashed_password = hashed_password
     session.add(current_user)
     session.commit()
+
     return Message(message="Password updated successfully")
 
 
@@ -138,8 +144,10 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
+
     session.delete(current_user)
     session.commit()
+
     return Message(message="User deleted successfully")
 
 
@@ -154,8 +162,10 @@ def register_user(session: SessionDep, user_in: UserRegister) -> Any:
             status_code=400,
             detail="The user with this email already exists in the system",
         )
+
     user_create = UserCreate.model_validate(user_in)
     user = crud.create_user(session=session, user_create=user_create)
+
     return user
 
 
@@ -169,13 +179,16 @@ def read_user_by_id(
     user = session.get(User, user_id)
     if user == current_user:
         return user
+
     if not current_user.is_superuser:
         raise HTTPException(
             status_code=403,
             detail="The user doesn't have enough privileges",
         )
+
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
+
     return user
 
 
@@ -200,6 +213,7 @@ def update_user(
             status_code=404,
             detail="The user with this id does not exist in the system",
         )
+
     if user_in.email:
         existing_user = crud.get_user_by_email(session=session, email=user_in.email)
         if existing_user and existing_user.id != user_id:
@@ -208,6 +222,7 @@ def update_user(
             )
 
     db_user = crud.update_user(session=session, db_user=db_user, user_in=user_in)
+
     return db_user
 
 
@@ -225,8 +240,11 @@ def delete_user(
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
+
     statement = delete(Item).where(col(Item.owner_id) == user_id)
     session.exec(statement)
+
     session.delete(user)
     session.commit()
+
     return Message(message="User deleted successfully")

@@ -23,6 +23,7 @@ def init_db(session: Session) -> None:
     user = session.exec(
         select(User).where(User.email == settings.FIRST_SUPERUSER)
     ).first()
+
     if not user:
         user_in = UserCreate(
             email=settings.FIRST_SUPERUSER,

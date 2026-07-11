@@ -24,25 +24,29 @@ class EmailData:
 
 def render_email_template(*, template_name: str, context: dict[str, Any]) -> str:
     template_str = (
-        Path(__file__).parent / "email-templates" / "build" / template_name
+            Path(__file__).parent / "email-templates" / "build" / template_name
     ).read_text()
+
     html_content = Template(template_str).render(context)
+
     return html_content
 
 
 def send_email(
-    *,
-    email_to: str,
-    subject: str = "",
-    html_content: str = "",
+        *,
+        email_to: str,
+        subject: str = "",
+        html_content: str = "",
 ) -> None:
     assert settings.emails_enabled, "no provided configuration for email variables"
     assert settings.EMAILS_FROM_EMAIL  # For type checker
+
     message = emails.message.Message(
         subject=subject,
         html=html_content,
         mail_from=(settings.EMAILS_FROM_NAME, settings.EMAILS_FROM_EMAIL),
     )
+
     smtp_options = {"host": settings.SMTP_HOST, "port": settings.SMTP_PORT}
     if settings.SMTP_TLS:
         smtp_options["tls"] = True
@@ -52,17 +56,21 @@ def send_email(
         smtp_options["user"] = settings.SMTP_USER
     if settings.SMTP_PASSWORD:
         smtp_options["password"] = settings.SMTP_PASSWORD
+
     response = message.send(to=email_to, smtp=smtp_options)
+
     logger.info(f"send email result: {response}")
 
 
 def generate_test_email(email_to: str) -> EmailData:
     project_name = settings.PROJECT_NAME
     subject = f"{project_name} - Test email"
+
     html_content = render_email_template(
         template_name="test_email.html",
         context={"project_name": settings.PROJECT_NAME, "email": email_to},
     )
+
     return EmailData(html_content=html_content, subject=subject)
 
 
@@ -70,6 +78,7 @@ def generate_reset_password_email(email_to: str, email: str, token: str) -> Emai
     project_name = settings.PROJECT_NAME
     subject = f"{project_name} - Password recovery for user {email}"
     link = f"{settings.FRONTEND_HOST}/reset-password?token={token}"
+
     html_content = render_email_template(
         template_name="reset_password.html",
         context={
@@ -80,14 +89,16 @@ def generate_reset_password_email(email_to: str, email: str, token: str) -> Emai
             "link": link,
         },
     )
+
     return EmailData(html_content=html_content, subject=subject)
 
 
 def generate_new_account_email(
-    email_to: str, username: str, password: str
+        email_to: str, username: str, password: str
 ) -> EmailData:
     project_name = settings.PROJECT_NAME
     subject = f"{project_name} - New account for user {username}"
+
     html_content = render_email_template(
         template_name="new_account.html",
         context={
@@ -98,6 +109,7 @@ def generate_new_account_email(
             "link": settings.FRONTEND_HOST,
         },
     )
+
     return EmailData(html_content=html_content, subject=subject)
 
 
@@ -106,11 +118,13 @@ def generate_password_reset_token(email: str) -> str:
     now = datetime.now(UTC)
     expires = now + delta
     exp = expires.timestamp()
+
     encoded_jwt = jwt.encode(
         {"exp": exp, "nbf": now, "sub": email},
         settings.SECRET_KEY,
         algorithm=security.ALGORITHM,
     )
+
     return encoded_jwt
 
 
@@ -119,6 +133,7 @@ def verify_password_reset_token(token: str) -> str | None:
         decoded_token = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
+
         return str(decoded_token["sub"])
     except InvalidTokenError:
         return None

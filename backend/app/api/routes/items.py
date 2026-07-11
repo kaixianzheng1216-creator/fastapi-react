@@ -21,6 +21,7 @@ def read_items(
     if current_user.is_superuser:
         count_statement = select(func.count()).select_from(Item)
         count = session.exec(count_statement).one()
+
         statement = (
             select(Item).order_by(col(Item.created_at).desc()).offset(skip).limit(limit)
         )
@@ -32,6 +33,7 @@ def read_items(
             .where(Item.owner_id == current_user.id)
         )
         count = session.exec(count_statement).one()
+
         statement = (
             select(Item)
             .where(Item.owner_id == current_user.id)
@@ -42,6 +44,7 @@ def read_items(
         items = session.exec(statement).all()
 
     items_public = [ItemPublic.model_validate(item) for item in items]
+
     return ItemsPublic(data=items_public, count=count)
 
 
@@ -55,6 +58,7 @@ def read_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> 
         raise HTTPException(status_code=404, detail="Item not found")
     if not current_user.is_superuser and (item.owner_id != current_user.id):
         raise HTTPException(status_code=403, detail="Not enough permissions")
+
     return item
 
 
@@ -69,6 +73,7 @@ def create_item(
     session.add(item)
     session.commit()
     session.refresh(item)
+
     return item
 
 
@@ -88,11 +93,14 @@ def update_item(
         raise HTTPException(status_code=404, detail="Item not found")
     if not current_user.is_superuser and (item.owner_id != current_user.id):
         raise HTTPException(status_code=403, detail="Not enough permissions")
+
     update_dict = item_in.model_dump(exclude_unset=True)
     item.sqlmodel_update(update_dict)
+
     session.add(item)
     session.commit()
     session.refresh(item)
+
     return item
 
 
@@ -108,6 +116,8 @@ def delete_item(
         raise HTTPException(status_code=404, detail="Item not found")
     if not current_user.is_superuser and (item.owner_id != current_user.id):
         raise HTTPException(status_code=403, detail="Not enough permissions")
+
     session.delete(item)
     session.commit()
+
     return Message(message="Item deleted successfully")

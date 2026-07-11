@@ -33,7 +33,7 @@ async def scalar_html():
     )
 
 
-# Set all CORS enabled origins
+# 设置所有启用的 CORS 源
 if settings.all_cors_origins:
     app.add_middleware(
         CORSMiddleware,
