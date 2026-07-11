@@ -12,7 +12,7 @@
 
 * 准备好一台可用的远程服务器。
 * 将你域名的 DNS 记录指向刚刚创建的服务器 IP。
-* 为你的域名配置通配符子域名，以便为不同的服务使用多个子域名，例如 `*.fastapi-project.example.com`。这将用于访问不同的组件，比如 `dashboard.fastapi-project.example.com`、`api.fastapi-project.example.com`、`traefik.fastapi-project.example.com`、`adminer.fastapi-project.example.com` 等。也用于 `staging` 环境，例如 `dashboard.staging.fastapi-project.example.com`、`adminer.staging.fastapi-project.example.com` 等。
+* 为你的域名配置通配符子域名，以便为不同的服务使用多个子域名，例如 `*.fastapi-project.example.com`。这将用于访问不同的组件，比如 `dashboard.fastapi-project.example.com`、`api.fastapi-project.example.com`、`traefik.fastapi-project.example.com` 等。也用于 `staging` 环境，例如 `dashboard.staging.fastapi-project.example.com` 等。
 * 在远程服务器上安装并配置 [Docker](https://docs.docker.com/engine/install/)（Docker Engine，而非 Docker Desktop）。
 
 ## 公共 Traefik
@@ -339,8 +339,6 @@ Traefik UI：`https://traefik.fastapi-project.example.com`
 
 后端 API 基础 URL：`https://api.fastapi-project.example.com`
 
-Adminer：`https://adminer.fastapi-project.example.com`
-
 ### Staging 环境
 
 前端：`https://dashboard.staging.fastapi-project.example.com`
@@ -348,5 +346,3 @@ Adminer：`https://adminer.fastapi-project.example.com`
 后端 API 文档：`https://api.staging.fastapi-project.example.com/docs`
 
 后端 API 基础 URL：`https://api.staging.fastapi-project.example.com`
-
-Adminer：`https://adminer.staging.fastapi-project.example.com`

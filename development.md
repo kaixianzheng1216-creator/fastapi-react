@@ -16,8 +16,6 @@ docker compose watch
 
 基于 Swagger UI 的自动交互式文档（来自 OpenAPI 后端）：<http://localhost:8000/docs>
 
-Adminer，数据库 Web 管理工具：<http://localhost:8080>
-
 Traefik UI，可以查看代理是如何处理路由的：<http://localhost:8090>
 
 **注意**：第一次启动开发环境时，可能需要等待一分钟左右才能就绪。这是因为后端需要等待数据库就绪并进行一些初始化配置。你可以通过查看日志来监控这个过程。
@@ -81,7 +79,7 @@ fastapi dev app/main.py
 
 ## `localhost.tiangolo.com` 下的 Docker Compose
 
-当你启动 Docker Compose 栈时，默认使用 `localhost`，并为每个服务（backend、frontend、adminer 等）使用不同的端口。
+当你启动 Docker Compose 栈时，默认使用 `localhost`，并为每个服务（backend、frontend 等）使用不同的端口。
 
 当你将其部署到生产环境（或预发布环境）时，每个服务会部署在不同的子域名下，例如后端使用 `api.example.com`，前端使用 `dashboard.example.com`。
 
@@ -196,8 +194,6 @@ biome check..............................................................Passed
 
 自动备用文档（ReDoc）：<http://localhost:8000/redoc>
 
-Adminer：<http://localhost:8080>
-
 Traefik UI：<http://localhost:8090>
 
 MailCatcher：<http://localhost:1080>
@@ -213,8 +209,6 @@ MailCatcher：<http://localhost:1080>
 自动交互式文档（Swagger UI）：<http://api.localhost.tiangolo.com/docs>
 
 自动备用文档（ReDoc）：<http://api.localhost.tiangolo.com/redoc>
-
-Adminer：<http://localhost.tiangolo.com:8080>
 
 Traefik UI：<http://localhost.tiangolo.com:8090>
 
