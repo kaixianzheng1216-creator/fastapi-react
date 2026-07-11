@@ -15,7 +15,7 @@ def read_items(
     session: SessionDep, current_user: CurrentUser, skip: int = 0, limit: int = 100
 ) -> Any:
     """
-    Retrieve items.
+    获取物品列表。
     """
 
     if current_user.is_superuser:
@@ -48,7 +48,7 @@ def read_items(
 @router.get("/{id}", response_model=ItemPublic)
 def read_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> Any:
     """
-    Get item by ID.
+    根据 ID 获取物品。
     """
     item = session.get(Item, id)
     if not item:
@@ -63,7 +63,7 @@ def create_item(
     *, session: SessionDep, current_user: CurrentUser, item_in: ItemCreate
 ) -> Any:
     """
-    Create new item.
+    创建新物品。
     """
     item = Item.model_validate(item_in, update={"owner_id": current_user.id})
     session.add(item)
@@ -81,7 +81,7 @@ def update_item(
     item_in: ItemUpdate,
 ) -> Any:
     """
-    Update an item.
+    更新物品。
     """
     item = session.get(Item, id)
     if not item:
@@ -101,7 +101,7 @@ def delete_item(
     session: SessionDep, current_user: CurrentUser, id: uuid.UUID
 ) -> Message:
     """
-    Delete an item.
+    删除物品。
     """
     item = session.get(Item, id)
     if not item:

@@ -147,7 +147,7 @@ def test_create_user_existing_username(
     client: TestClient, superuser_token_headers: dict[str, str], db: Session
 ) -> None:
     username = random_email()
-    # username = email
+    # 用户名 = 邮箱
     password = random_lower_string()
     user_in = UserCreate(email=username, password=password)
     crud.create_user(session=db, user_create=user_in)
@@ -245,7 +245,7 @@ def test_update_password_me(
     verified, _ = verify_password(new_password, user_db.hashed_password)
     assert verified
 
-    # Revert to the old password to keep consistency in test
+    # 恢复为旧密码以保持测试一致性
     old_data = {
         "current_password": new_password,
         "new_password": settings.FIRST_SUPERUSER_PASSWORD,

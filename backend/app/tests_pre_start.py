@@ -21,7 +21,7 @@ wait_seconds = 1
 )
 def init(db_engine: Engine) -> None:
     try:
-        # Try to create session to check if DB is awake
+        # 尝试创建会话以检查数据库是否已就绪
         with Session(db_engine) as session:
             session.exec(select(1))
     except Exception as e:

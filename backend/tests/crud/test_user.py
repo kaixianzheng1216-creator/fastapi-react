@@ -94,37 +94,37 @@ def test_update_user(db: Session) -> None:
 
 
 def test_authenticate_user_with_bcrypt_upgrades_to_argon2(db: Session) -> None:
-    """Test that a user with bcrypt password hash gets upgraded to argon2 on login."""
+    """测试使用 bcrypt 密码哈希的用户在登录时升级为 argon2。"""
     email = random_email()
     password = random_lower_string()
 
-    # Create a bcrypt hash directly (simulating legacy password)
+    # 直接创建 bcrypt 哈希（模拟旧版密码）
     bcrypt_hasher = BcryptHasher()
     bcrypt_hash = bcrypt_hasher.hash(password)
-    assert bcrypt_hash.startswith("$2")  # bcrypt hashes start with $2
+    assert bcrypt_hash.startswith("$2")  # bcrypt 哈希以 $2 开头
 
-    # Create user with bcrypt hash directly in the database
+    # 直接在数据库中创建使用 bcrypt 哈希的用户
     user = User(email=email, hashed_password=bcrypt_hash)
     db.add(user)
     db.commit()
     db.refresh(user)
 
-    # Verify the hash is bcrypt before authentication
+    # 认证前验证哈希是 bcrypt
     assert user.hashed_password.startswith("$2")
 
-    # Authenticate - this should upgrade the hash to argon2
+    # 认证 - 此操作应将哈希升级为 argon2
     authenticated_user = crud.authenticate(session=db, email=email, password=password)
     assert authenticated_user
     assert authenticated_user.email == email
 
     db.refresh(authenticated_user)
 
-    # Verify the hash was upgraded to argon2
+    # 验证哈希已升级为 argon2
     assert authenticated_user.hashed_password.startswith("$argon2")
 
     verified, updated_hash = verify_password(
         password, authenticated_user.hashed_password
     )
     assert verified
-    # Should not need another update since it's already argon2
+    # 已经是 argon2，不需要再次更新
     assert updated_hash is None

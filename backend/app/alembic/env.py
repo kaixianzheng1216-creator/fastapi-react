@@ -35,15 +35,13 @@ def get_url():
 
 
 def run_migrations_offline():
-    """Run migrations in 'offline' mode.
+    """以"离线"模式运行迁移。
 
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
+    此模式下仅用 URL 配置上下文，
+    不创建 Engine（不过 Engine 也可以用）。
+    跳过 Engine 创建意味着不需要 DBAPI 可用。
 
-    Calls to context.execute() here emit the given string to the
-    script output.
+    调用 context.execute() 会将给定字符串输出到脚本输出。
 
     """
     url = get_url()
@@ -56,10 +54,10 @@ def run_migrations_offline():
 
 
 def run_migrations_online():
-    """Run migrations in 'online' mode.
+    """以"在线"模式运行迁移。
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
+    此模式下需要创建 Engine，
+    并将一个连接关联到上下文。
 
     """
     configuration = config.get_section(config.config_ini_section)

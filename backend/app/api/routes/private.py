@@ -23,7 +23,7 @@ class PrivateUserCreate(BaseModel):
 @router.post("/users/", response_model=UserPublic)
 def create_user(user_in: PrivateUserCreate, session: SessionDep) -> Any:
     """
-    Create a new user.
+    创建新用户。
     """
 
     user = User(
