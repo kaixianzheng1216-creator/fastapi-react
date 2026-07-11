@@ -4,30 +4,29 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
+# 这是 Alembic 的 Config 对象，
+# 用于访问当前使用的 .ini 配置文件中的配置项。
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
+# 解析配置文件中的 Python 日志配置。
+# 这一行主要用于初始化日志记录器。
 assert config.config_file_name is not None
 fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
+# 在这里添加模型的 MetaData 对象，
+# 以支持自动生成迁移文件（autogenerate）。
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 # target_metadata = None
 
 from app.models import SQLModel  # noqa
-from app.core.config import settings # noqa
+from app.core.config import settings  # noqa
 
 target_metadata = SQLModel.metadata
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
+# env.py 所需的其他配置值也可以在这里获取：
 # my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+# ……等等。
 
 
 def get_url():

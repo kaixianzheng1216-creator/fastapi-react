@@ -1,12 +1,12 @@
 #! /usr/bin/env bash
 
-# Exit in case of error
+# 发生错误时立即退出
 set -e
 
-docker-compose down -v --remove-orphans # Remove possibly previous broken stacks left hanging after an error
+docker-compose down -v --remove-orphans # 清理此前因错误遗留的异常服务栈
 
 if [ $(uname -s) = "Linux" ]; then
-    echo "Remove __pycache__ files"
+    echo "删除 __pycache__ 文件"
     sudo find . -type d -name __pycache__ -exec rm -r {} \+
 fi
 

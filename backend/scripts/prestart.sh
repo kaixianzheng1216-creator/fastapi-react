@@ -3,11 +3,11 @@
 set -e
 set -x
 
-# Let the DB start
+# 等待数据库启动
 python app/backend_pre_start.py
 
-# Run migrations
+# 执行数据库迁移
 alembic upgrade head
 
-# Create initial data in DB
+# 创建数据库初始数据
 python app/initial_data.py
