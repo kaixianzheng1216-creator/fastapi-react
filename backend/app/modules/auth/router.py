@@ -17,11 +17,11 @@ def login_access_token(
     session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> Token:
     """OAuth2 兼容的令牌登录，获取访问令牌用于后续请求"""
-    user = service.authenticate(
+    access_token = service.login(
         session=session, username=form_data.username, password=form_data.password
     )
 
-    return Token(access_token=service.create_access_token_for_user(user))
+    return Token(access_token=access_token)
 
 
 @router.post("/login/test-token", response_model=UserPublic)

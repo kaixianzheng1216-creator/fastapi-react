@@ -25,7 +25,10 @@ def create_unique_user(*, session: Session, user_create: UserCreate) -> User:
 
 
 def get_user_by_username(*, session: Session, username: str) -> User | None:
-    return session.exec(select(User).where(User.username == username)).first()
+    statement = select(User).where(User.username == username)
+    user = session.exec(statement).first()
+
+    return user
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -88,8 +91,9 @@ def list_users(
     statement = (
         select(User).order_by(col(User.created_at).desc()).offset(skip).limit(limit)
     )
+    users = session.exec(statement).all()
 
-    return session.exec(statement).all(), count
+    return users, count
 
 
 def get_user_for_request(

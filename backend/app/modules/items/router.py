@@ -31,10 +31,9 @@ def read_items(
     items, count = service.list_items(
         session=session, current_user=current_user, skip=skip, limit=limit
     )
+    public_items = [ItemPublic.model_validate(item) for item in items]
 
-    return ItemsPublic(
-        data=[ItemPublic.model_validate(item) for item in items], count=count
-    )
+    return ItemsPublic(data=public_items, count=count)
 
 
 @router.get("/{id}", response_model=ItemPublic)

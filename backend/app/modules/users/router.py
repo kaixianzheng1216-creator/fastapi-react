@@ -89,10 +89,9 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> UserPublic:
 def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> UsersPublic:
     """获取用户列表。"""
     users, count = service.list_users(session=session, skip=skip, limit=limit)
+    public_users = [UserPublic.model_validate(user) for user in users]
 
-    return UsersPublic(
-        data=[UserPublic.model_validate(user) for user in users], count=count
-    )
+    return UsersPublic(data=public_users, count=count)
 
 
 @router.get("/{user_id}", response_model=UserPublic)

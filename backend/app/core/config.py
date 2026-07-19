@@ -15,7 +15,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 def parse_cors(v: Any) -> list[str] | str:
     if isinstance(v, str) and not v.startswith("["):
-        return [i.strip() for i in v.split(",") if i.strip()]
+        origins = [i.strip() for i in v.split(",") if i.strip()]
+
+        return origins
     elif isinstance(v, list | str):
         return v
     raise ValueError(v)
@@ -41,7 +43,9 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def all_cors_origins(self) -> list[str]:
-        return [str(origin).rstrip("/") for origin in self.BACKEND_CORS_ORIGINS]
+        origins = [str(origin).rstrip("/") for origin in self.BACKEND_CORS_ORIGINS]
+
+        return origins
 
     PROJECT_NAME: str
     SENTRY_DSN: HttpUrl | None = None
