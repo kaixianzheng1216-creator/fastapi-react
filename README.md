@@ -101,7 +101,7 @@ git merge --continue
 
 你可以（也应该）通过密钥以环境变量的方式传入这些值。
 
-更多详情请参阅 [docs/deployment.md](./docs/deployment.md) 文档。
+更多详情请参阅 [docs/deployment.md](docs/FastAPI 项目 - 部署.md) 文档。
 
 ### 生成密钥
 
@@ -121,11 +121,11 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 ## 部署
 
-部署文档：[docs/deployment.md](./docs/deployment.md)。
+部署文档：[docs/deployment.md](docs/FastAPI 项目 - 部署.md)。
 
 ## 开发
 
-通用开发文档：[docs/development.md](./docs/development.md)。
+通用开发文档：[docs/development.md](docs/FastAPI 项目 - 开发指南.md)。
 
 内容包括使用 Docker Compose、自定义本地域名、`.env` 配置等。
 

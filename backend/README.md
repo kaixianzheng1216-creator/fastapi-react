@@ -7,7 +7,7 @@
 
 ## Docker Compose
 
-按照 [../docs/development.md](../docs/development.md) 中的指南，使用 Docker Compose 启动本地开发环境。
+按照 [../docs/development.md](../docs/FastAPI%20项目%20-%20开发指南.md) 中的指南，使用 Docker Compose 启动本地开发环境。
 
 ## 一般工作流
 
