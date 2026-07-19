@@ -12,7 +12,8 @@ from app.modules.users.schemas import UserPublic
 public_router = APIRouter(tags=["login"])
 
 authenticated_router = APIRouter(
-    tags=["login"], dependencies=[Depends(get_current_user)]
+    tags=["login"],
+    dependencies=[Depends(get_current_user)],
 )
 
 

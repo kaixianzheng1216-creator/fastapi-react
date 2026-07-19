@@ -51,3 +51,6 @@ def get_current_active_superuser(current_user: CurrentUser) -> User:
         raise InsufficientPrivilegesError
 
     return current_user
+
+
+CurrentSuperuser = Annotated[User, Depends(get_current_active_superuser)]
