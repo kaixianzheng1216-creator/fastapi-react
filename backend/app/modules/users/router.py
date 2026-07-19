@@ -33,7 +33,6 @@ def register_user(session: SessionDep, user_in: UserRegister) -> UserPublic:
 @router.get("/me", response_model=UserPublic)
 def read_user_me(current_user: CurrentUser) -> UserPublic:
     """获取当前用户。"""
-
     return UserPublic.model_validate(current_user)
 
 

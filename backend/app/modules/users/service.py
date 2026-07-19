@@ -25,7 +25,6 @@ def create_unique_user(*, session: Session, user_create: UserCreate) -> User:
 
 
 def get_user_by_username(*, session: Session, username: str) -> User | None:
-
     return session.exec(select(User).where(User.username == username)).first()
 
 
