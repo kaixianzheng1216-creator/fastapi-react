@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.modules.agent.router import router as agent_router
 from app.modules.auth.router import (
     authenticated_router as authenticated_auth_router,
 )
@@ -21,3 +22,4 @@ api_router.include_router(authenticated_auth_router)
 api_router.include_router(authenticated_users_router)
 api_router.include_router(admin_users_router)
 api_router.include_router(items_router)
+api_router.include_router(agent_router)
