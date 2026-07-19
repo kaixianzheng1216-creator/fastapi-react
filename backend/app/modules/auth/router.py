@@ -5,14 +5,18 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from app.api.dependencies import SessionDep
 from app.modules.auth import service
-from app.modules.auth.dependencies import CurrentUser
+from app.modules.auth.dependencies import CurrentUser, get_current_user
 from app.modules.auth.schemas import Token
 from app.modules.users.schemas import UserPublic
 
-router = APIRouter(tags=["login"])
+public_router = APIRouter(tags=["login"])
+
+authenticated_router = APIRouter(
+    tags=["login"], dependencies=[Depends(get_current_user)]
+)
 
 
-@router.post("/login/access-token")
+@public_router.post("/login/access-token")
 def login_access_token(
     session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> Token:
@@ -24,7 +28,7 @@ def login_access_token(
     return Token(access_token=access_token)
 
 
-@router.post("/login/test-token", response_model=UserPublic)
+@authenticated_router.post("/login/test-token", response_model=UserPublic)
 def test_token(current_user: CurrentUser) -> UserPublic:
     """测试访问令牌"""
     return UserPublic.model_validate(current_user)

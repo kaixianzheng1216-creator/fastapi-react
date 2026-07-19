@@ -1,14 +1,18 @@
 import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from app.api.dependencies import SessionDep
 from app.common.schemas import Message
-from app.modules.auth.dependencies import CurrentUser
+from app.modules.auth.dependencies import CurrentUser, get_current_user
 from app.modules.items import service
 from app.modules.items.schemas import ItemCreate, ItemPublic, ItemsPublic, ItemUpdate
 
-router = APIRouter(prefix="/items", tags=["items"])
+router = APIRouter(
+    prefix="/items",
+    tags=["items"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.post("/", response_model=ItemPublic)

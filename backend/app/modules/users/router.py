@@ -4,7 +4,11 @@ from fastapi import APIRouter, Depends
 
 from app.api.dependencies import SessionDep
 from app.common.schemas import Message
-from app.modules.auth.dependencies import CurrentUser, get_current_active_superuser
+from app.modules.auth.dependencies import (
+    CurrentUser,
+    get_current_active_superuser,
+    get_current_user,
+)
 from app.modules.users import service
 from app.modules.users.schemas import (
     UpdatePassword,
@@ -16,10 +20,22 @@ from app.modules.users.schemas import (
     UserUpdateMe,
 )
 
-router = APIRouter(prefix="/users", tags=["users"])
+public_router = APIRouter(prefix="/users", tags=["users"])
+
+authenticated_router = APIRouter(
+    prefix="/users",
+    tags=["users"],
+    dependencies=[Depends(get_current_user)],
+)
+
+admin_router = APIRouter(
+    prefix="/users",
+    tags=["users"],
+    dependencies=[Depends(get_current_active_superuser)],
+)
 
 
-@router.post("/signup", response_model=UserPublic)
+@public_router.post("/signup", response_model=UserPublic)
 def register_user(session: SessionDep, user_in: UserRegister) -> UserPublic:
     """无需登录即可创建新用户。"""
     user = service.create_unique_user(
@@ -30,13 +46,13 @@ def register_user(session: SessionDep, user_in: UserRegister) -> UserPublic:
     return UserPublic.model_validate(user)
 
 
-@router.get("/me", response_model=UserPublic)
+@authenticated_router.get("/me", response_model=UserPublic)
 def read_user_me(current_user: CurrentUser) -> UserPublic:
     """获取当前用户。"""
     return UserPublic.model_validate(current_user)
 
 
-@router.patch("/me", response_model=UserPublic)
+@authenticated_router.patch("/me", response_model=UserPublic)
 def update_user_me(
     *, session: SessionDep, user_in: UserUpdateMe, current_user: CurrentUser
 ) -> UserPublic:
@@ -48,7 +64,7 @@ def update_user_me(
     return UserPublic.model_validate(user)
 
 
-@router.patch("/me/password", response_model=Message)
+@authenticated_router.patch("/me/password", response_model=Message)
 def update_password_me(
     *, session: SessionDep, body: UpdatePassword, current_user: CurrentUser
 ) -> Message:
@@ -63,7 +79,7 @@ def update_password_me(
     return Message(message="Password updated successfully")
 
 
-@router.delete("/me", response_model=Message)
+@authenticated_router.delete("/me", response_model=Message)
 def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Message:
     """删除当前用户。"""
     service.delete_current_user(session=session, current_user=current_user)
@@ -71,9 +87,7 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Message:
     return Message(message="User deleted successfully")
 
 
-@router.post(
-    "/", dependencies=[Depends(get_current_active_superuser)], response_model=UserPublic
-)
+@admin_router.post("/", response_model=UserPublic)
 def create_user(*, session: SessionDep, user_in: UserCreate) -> UserPublic:
     """创建新用户。"""
     user = service.create_unique_user(session=session, user_create=user_in)
@@ -81,11 +95,7 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> UserPublic:
     return UserPublic.model_validate(user)
 
 
-@router.get(
-    "/",
-    dependencies=[Depends(get_current_active_superuser)],
-    response_model=UsersPublic,
-)
+@admin_router.get("/", response_model=UsersPublic)
 def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> UsersPublic:
     """获取用户列表。"""
     users, count = service.list_users(session=session, skip=skip, limit=limit)
@@ -94,7 +104,7 @@ def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> UsersPub
     return UsersPublic(data=public_users, count=count)
 
 
-@router.get("/{user_id}", response_model=UserPublic)
+@authenticated_router.get("/{user_id}", response_model=UserPublic)
 def read_user_by_id(
     user_id: uuid.UUID, session: SessionDep, current_user: CurrentUser
 ) -> UserPublic:
@@ -106,11 +116,7 @@ def read_user_by_id(
     return UserPublic.model_validate(user)
 
 
-@router.patch(
-    "/{user_id}",
-    dependencies=[Depends(get_current_active_superuser)],
-    response_model=UserPublic,
-)
+@admin_router.patch("/{user_id}", response_model=UserPublic)
 def update_user(
     *, session: SessionDep, user_id: uuid.UUID, user_in: UserUpdate
 ) -> UserPublic:
@@ -122,7 +128,7 @@ def update_user(
     return UserPublic.model_validate(user)
 
 
-@router.delete("/{user_id}", dependencies=[Depends(get_current_active_superuser)])
+@admin_router.delete("/{user_id}")
 def delete_user(
     session: SessionDep, current_user: CurrentUser, user_id: uuid.UUID
 ) -> Message:
