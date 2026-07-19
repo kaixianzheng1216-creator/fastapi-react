@@ -10,8 +10,6 @@ docker compose watch
 
 * 现在你可以在浏览器中访问以下 URL：
 
-前端，基于 Docker 构建，根据路径处理路由：<http://localhost:5173>
-
 后端，基于 OpenAPI 的 JSON Web API：<http://localhost:8000>
 
 基于 Scalar 的自动交互式文档（来自 OpenAPI 后端）：<http://localhost:8000/scalar>
@@ -34,25 +32,7 @@ docker compose logs backend
 
 ## 本地开发
 
-Docker Compose 文件的配置方式使得每个服务都通过 `localhost` 上的不同端口提供访问。
-
-对于后端和前端，它们使用的端口与本地开发服务器使用的端口相同，因此后端位于 `http://localhost:8000`，前端位于 `http://localhost:5173`。
-
-这样一来，你可以停掉某个 Docker Compose 服务，然后启动它的本地开发服务，所有功能依然可以正常工作，因为它们使用的都是相同的端口。
-
-例如，你可以先停止 Docker Compose 中的 `frontend` 服务，在另一个终端运行：
-
-```bash
-docker compose stop frontend
-```
-
-然后启动本地的 frontend 开发服务器：
-
-```bash
-bun run dev
-```
-
-或者你可以停止 `backend` 这个 Docker Compose 服务：
+你可以停止 `backend` 这个 Docker Compose 服务：
 
 ```bash
 docker compose stop backend
@@ -67,9 +47,7 @@ fastapi dev app/main.py
 
 ## `localhost.tiangolo.com` 下的 Docker Compose
 
-当你启动 Docker Compose 栈时，默认使用 `localhost`，并为每个服务（backend、frontend 等）使用不同的端口。
-
-当你将其部署到生产环境（或预发布环境）时，每个服务会部署在不同的子域名下，例如后端使用 `api.example.com`，前端使用 `dashboard.example.com`。
+当你启动 Docker Compose 栈时，默认通过 `localhost` 上的不同端口访问各个服务。生产环境和预发布环境中的后端使用 `api.example.com` 这样的子域名。
 
 在关于[部署](deployment.md)的指南中，你可以了解到 Traefik 这个配置好的反向代理。它负责根据子域名将流量转发到对应的服务。
 
@@ -81,7 +59,7 @@ DOMAIN=localhost.tiangolo.com
 
 Docker Compose 文件会使用这个值来配置服务的基础域名。
 
-Traefik 会据此将 `api.localhost.tiangolo.com` 的流量转发到后端，将 `dashboard.localhost.tiangolo.com` 的流量转发到前端。
+Traefik 会据此将 `api.localhost.tiangolo.com` 的流量转发到后端。
 
 `localhost.tiangolo.com` 是一个特殊域名，它（包括其所有子域名）被配置为指向 `127.0.0.1`。这样你就可以在本地开发中使用它。
 
@@ -91,7 +69,7 @@ Traefik 会据此将 `api.localhost.tiangolo.com` 的流量转发到后端，将
 docker compose watch
 ```
 
-在生产部署时，主 Traefik 配置在 Docker Compose 文件之外。本地开发时，`compose.override.yml` 中包含了一个内置的 Traefik，方便你测试域名是否能按预期工作，例如 `api.localhost.tiangolo.com` 和 `dashboard.localhost.tiangolo.com`。
+在生产部署时，主 Traefik 配置在 Docker Compose 文件之外。本地开发时，`compose.override.yml` 中包含了一个内置的 Traefik，方便你测试 `api.localhost.tiangolo.com`。
 
 ## Docker Compose 文件与环境变量
 
@@ -163,7 +141,6 @@ fix end of files.........................................................Passed
 trim trailing whitespace.................................................Passed
 ruff.....................................................................Passed
 ruff-format..............................................................Passed
-biome check..............................................................Passed
 ```
 
 ## URL
@@ -173,8 +150,6 @@ biome check..............................................................Passed
 ### 开发 URL
 
 开发 URL，用于本地开发。
-
-前端：<http://localhost:5173>
 
 后端：<http://localhost:8000>
 
@@ -187,8 +162,6 @@ Traefik UI：<http://localhost:8090>
 ### 配置 `localhost.tiangolo.com` 后的开发 URL
 
 开发 URL，用于本地开发。
-
-前端：<http://dashboard.localhost.tiangolo.com>
 
 后端：<http://api.localhost.tiangolo.com>
 

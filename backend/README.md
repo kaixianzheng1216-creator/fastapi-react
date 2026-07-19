@@ -7,7 +7,7 @@
 
 ## Docker Compose
 
-按照 [../development.md](../development.md) 中的指南，使用 Docker Compose 启动本地开发环境。
+按照 [../docs/development.md](../docs/development.md) 中的指南，使用 Docker Compose 启动本地开发环境。
 
 ## 一般工作流
 
@@ -88,38 +88,6 @@ root@7f2607af31c3:/app/backend# uvicorn app.main:app --reload
 不过，如果没有检测到更改，而是出现了语法错误，它会直接停止并报错。但因为容器仍然处于运行状态，而且你处于一个 Bash 会话中，所以你可以在修复错误后，通过运行相同的命令（按“上箭头”和“回车”）快速重启它。
 
 ……正是上述这个特性让“让容器保持运行但什么都不做，然后在 Bash 会话中启动实时重载服务器”这种做法变得非常有用。
-
-## 后端测试
-
-要测试后端，请运行：
-
-```console
-$ bash ./scripts/test.sh
-```
-
-测试使用 Pytest 运行，你可以修改 `./backend/tests/` 下的测试并添加新的测试。
-
-如果你使用 GitHub Actions，测试会自动运行。
-
-### 在运行中的服务栈中运行测试
-
-如果你的服务栈已经启动，而你只想运行测试，可以使用：
-
-```bash
-docker compose exec backend bash scripts/tests-start.sh
-```
-
-`/app/scripts/tests-start.sh` 这个脚本会在确保整个服务栈其余部分都在运行之后调用 `pytest`。如果你需要向 `pytest` 传递额外的参数，可以将它们传递给上面的命令，它们会被转发过去。
-
-例如，要在遇到第一个错误时停止：
-
-```bash
-docker compose exec backend bash scripts/tests-start.sh -x
-```
-
-### 测试覆盖率
-
-测试运行后，会生成一个 `htmlcov/index.html` 文件，你可以在浏览器中打开它查看测试覆盖率。
 
 ## 数据库迁移
 

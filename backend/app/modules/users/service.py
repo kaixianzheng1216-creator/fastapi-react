@@ -14,12 +14,7 @@ from app.modules.users.exceptions import (
     UserNotFoundError,
 )
 from app.modules.users.models import User
-from app.modules.users.schemas import (
-    PrivateUserCreate,
-    UserCreate,
-    UserUpdate,
-    UserUpdateMe,
-)
+from app.modules.users.schemas import UserCreate, UserUpdate, UserUpdateMe
 
 
 def list_users(
@@ -51,17 +46,6 @@ def create_unique_user(*, session: Session, user_create: UserCreate) -> User:
     if get_user_by_username(session=session, username=user_create.username):
         raise UserAlreadyExistsError
     return create_user(session=session, user_create=user_create)
-
-
-def create_private_user(*, session: Session, user_create: PrivateUserCreate) -> User:
-    return create_unique_user(
-        session=session,
-        user_create=UserCreate(
-            username=user_create.username,
-            password=user_create.password,
-            full_name=user_create.full_name,
-        ),
-    )
 
 
 def update_user(*, session: Session, user: User, user_update: UserUpdate) -> User:

@@ -12,7 +12,7 @@
 
 * 准备好一台可用的远程服务器。
 * 将你域名的 DNS 记录指向刚刚创建的服务器 IP。
-* 为你的域名配置通配符子域名，以便为不同的服务使用多个子域名，例如 `*.fastapi-project.example.com`。这将用于访问不同的组件，比如 `dashboard.fastapi-project.example.com`、`api.fastapi-project.example.com`、`traefik.fastapi-project.example.com` 等。也用于 `staging` 环境，例如 `dashboard.staging.fastapi-project.example.com` 等。
+* 为你的域名配置通配符子域名，以便为不同的服务使用多个子域名，例如 `*.fastapi-project.example.com`。这将用于访问 `api.fastapi-project.example.com`、`traefik.fastapi-project.example.com` 等组件，也用于 `staging` 环境。
 * 在远程服务器上安装并配置 [Docker](https://docs.docker.com/engine/install/)（Docker Engine，而非 Docker Desktop）。
 
 ## 公共 Traefik
@@ -176,7 +176,7 @@ export FIRST_SUPERUSER_PASSWORD="changethis"
 将 `BACKEND_CORS_ORIGINS` 设置为包含你的域名：
 
 ```bash
-export BACKEND_CORS_ORIGINS="https://dashboard.${DOMAIN?Variable not set},https://api.${DOMAIN?Variable not set}"
+export BACKEND_CORS_ORIGINS="https://api.${DOMAIN?Variable not set}"
 ```
 
 你还可以设置其他一些环境变量：
@@ -195,8 +195,6 @@ export BACKEND_CORS_ORIGINS="https://dashboard.${DOMAIN?Variable not set},https:
 
 还有一些仅由 GitHub Actions 使用的环境变量，你可以自行配置：
 
-* `LATEST_CHANGES`：由 GitHub Action [latest-changes](https://github.com/tiangolo/latest-changes) 使用，用于根据已合并的 PR 自动添加发布说明。它是一个个人访问令牌，详情请查阅相关文档。
-* `SMOKESHOW_AUTH_KEY`：用于通过 [Smokeshow](https://github.com/samuelcolvin/smokeshow) 处理和发布代码覆盖率，按照其说明创建一个（免费）的 Smokeshow 密钥。
 
 ### 使用 Docker Compose 部署
 
@@ -310,8 +308,6 @@ cd /home/github/actions-runner
 * `FIRST_SUPERUSER_PASSWORD`
 * `POSTGRES_PASSWORD`
 * `SECRET_KEY`
-* `LATEST_CHANGES`
-* `SMOKESHOW_AUTH_KEY`
 
 ## GitHub Action 部署工作流
 
@@ -334,15 +330,11 @@ Traefik UI：`https://traefik.fastapi-project.example.com`
 
 ### 生产环境
 
-前端：`https://dashboard.fastapi-project.example.com`
-
 后端 API 文档：`https://api.fastapi-project.example.com/scalar`
 
 后端 API 基础 URL：`https://api.fastapi-project.example.com`
 
 ### Staging 环境
-
-前端：`https://dashboard.staging.fastapi-project.example.com`
 
 后端 API 文档：`https://api.staging.fastapi-project.example.com/scalar`
 
