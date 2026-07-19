@@ -1,17 +1,13 @@
 from fastapi import status
 
-from app.common.exceptions import ApplicationError, ErrorResponse
+from app.common.exceptions import ApplicationError
 
 
 class ItemNotFoundError(ApplicationError):
-    pass
+    status_code = status.HTTP_404_NOT_FOUND
+    detail = "条目不存在"
 
 
 class ItemPermissionError(ApplicationError):
-    pass
-
-
-ERROR_RESPONSES: dict[type[ApplicationError], ErrorResponse] = {
-    ItemNotFoundError: ErrorResponse(status.HTTP_404_NOT_FOUND, "条目不存在"),
-    ItemPermissionError: ErrorResponse(status.HTTP_403_FORBIDDEN, "权限不足"),
-}
+    status_code = status.HTTP_403_FORBIDDEN
+    detail = "权限不足"

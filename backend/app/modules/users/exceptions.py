@@ -1,46 +1,33 @@
 from fastapi import status
 
-from app.common.exceptions import ApplicationError, ErrorResponse
+from app.common.exceptions import ApplicationError
 
 
 class UserAlreadyExistsError(ApplicationError):
-    pass
+    status_code = status.HTTP_409_CONFLICT
+    detail = "该用户名已存在"
 
 
 class UserNotFoundError(ApplicationError):
-    pass
+    status_code = status.HTTP_404_NOT_FOUND
+    detail = "用户不存在"
 
 
 class IncorrectPasswordError(ApplicationError):
-    pass
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = "密码错误"
 
 
 class PasswordUnchangedError(ApplicationError):
-    pass
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = "新密码不能与当前密码相同"
 
 
 class SelfDeletionForbiddenError(ApplicationError):
-    pass
+    status_code = status.HTTP_403_FORBIDDEN
+    detail = "超级用户不能删除自己"
 
 
 class InsufficientPrivilegesError(ApplicationError):
-    pass
-
-
-ERROR_RESPONSES: dict[type[ApplicationError], ErrorResponse] = {
-    UserAlreadyExistsError: ErrorResponse(status.HTTP_409_CONFLICT, "该用户名已存在"),
-    UserNotFoundError: ErrorResponse(status.HTTP_404_NOT_FOUND, "用户不存在"),
-    IncorrectPasswordError: ErrorResponse(status.HTTP_400_BAD_REQUEST, "密码错误"),
-    PasswordUnchangedError: ErrorResponse(
-        status.HTTP_400_BAD_REQUEST,
-        "新密码不能与当前密码相同",
-    ),
-    SelfDeletionForbiddenError: ErrorResponse(
-        status.HTTP_403_FORBIDDEN,
-        "超级用户不能删除自己",
-    ),
-    InsufficientPrivilegesError: ErrorResponse(
-        status.HTTP_403_FORBIDDEN,
-        "当前用户权限不足",
-    ),
-}
+    status_code = status.HTTP_403_FORBIDDEN
+    detail = "当前用户权限不足"

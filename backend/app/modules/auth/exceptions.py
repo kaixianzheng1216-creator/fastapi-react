@@ -1,28 +1,19 @@
 from fastapi import status
 
-from app.common.exceptions import ApplicationError, ErrorResponse
+from app.common.exceptions import ApplicationError
 
 
 class InvalidCredentialsError(ApplicationError):
-    pass
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = "用户名或密码错误"
 
 
 class CredentialsValidationError(ApplicationError):
-    pass
+    status_code = status.HTTP_401_UNAUTHORIZED
+    detail = "无法验证身份凭证"
+    headers = {"WWW-Authenticate": "Bearer"}
 
 
 class InactiveUserError(ApplicationError):
-    pass
-
-
-ERROR_RESPONSES: dict[type[ApplicationError], ErrorResponse] = {
-    InvalidCredentialsError: ErrorResponse(
-        status.HTTP_400_BAD_REQUEST, "用户名或密码错误"
-    ),
-    CredentialsValidationError: ErrorResponse(
-        status.HTTP_401_UNAUTHORIZED,
-        "无法验证身份凭证",
-        {"WWW-Authenticate": "Bearer"},
-    ),
-    InactiveUserError: ErrorResponse(status.HTTP_400_BAD_REQUEST, "用户已停用"),
-}
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = "用户已停用"
