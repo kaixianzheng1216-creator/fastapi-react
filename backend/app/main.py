@@ -1,10 +1,11 @@
 import sentry_sdk
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRoute
 from scalar_fastapi import get_scalar_api_reference
 from starlette.middleware.cors import CORSMiddleware
 
-from app.api.main import api_router
+from app.api.router import api_router
 from app.core.config import settings
 
 
@@ -26,7 +27,7 @@ app = FastAPI(
 
 
 @app.get("/scalar", include_in_schema=False)
-async def scalar_html():
+async def scalar_html() -> HTMLResponse:
     return get_scalar_api_reference(
         openapi_url=f"{settings.API_V1_STR}/openapi.json",
         title=settings.PROJECT_NAME,

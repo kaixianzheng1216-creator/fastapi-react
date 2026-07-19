@@ -5,11 +5,13 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, delete
 
 from app.core.config import settings
-from app.core.db import engine, init_db
+from app.db.initial_data import init_db
+from app.db.session import engine
 from app.main import app
-from app.models import Item, User
-from tests.utils.user import authentication_token_from_email
-from tests.utils.utils import get_superuser_token_headers
+from app.modules.items.models import Item
+from app.modules.users.models import User
+from tests.support.data import get_superuser_token_headers
+from tests.support.users import authentication_token_from_email
 
 
 @pytest.fixture(scope="session", autouse=True)

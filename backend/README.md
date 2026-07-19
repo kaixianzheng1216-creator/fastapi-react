@@ -161,11 +161,11 @@ SQLModel.metadata.create_all(engine)
 $ alembic upgrade head
 ```
 
-如果你不想从默认模型开始，而是想从一开始就删除或修改它们，又不想保留任何已有的 revision，可以删除 `./backend/app/alembic/versions/` 下的所有 revision 文件（`.py` Python 文件）。然后按照上面描述的方法创建第一个迁移。
+如果你不想从默认模型开始，而是想从一开始就删除或修改它们，又不想保留任何已有的 revision，可以删除 `./backend/alembic/versions/` 下的所有 revision 文件（`.py` Python 文件）。然后按照上面描述的方法创建第一个迁移。
 
 ## 邮件模板
 
-邮件模板位于 `./backend/app/email-templates/`。这里有两个目录：`build` 和 `src`。`src` 目录包含用于构建最终邮件模板的源文件，`build` 目录包含应用程序实际使用的最终邮件模板。
+邮件模板位于 `./backend/app/integrations/email/templates/`。这里有两个目录：`build` 和 `src`。`src` 目录包含用于构建最终邮件模板的源文件，`build` 目录包含应用程序实际使用的最终邮件模板。
 
 在继续之前，请确保你已在 VS Code 中安装 [MJML 扩展](https://github.com/mjmlio/vscode-mjml)。
 

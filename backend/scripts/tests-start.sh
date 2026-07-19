@@ -2,6 +2,6 @@
 set -e
 set -x
 
-python app/tests_pre_start.py
+python -m scripts.prestart
 
 bash scripts/test.sh "$@"
