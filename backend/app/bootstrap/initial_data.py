@@ -10,12 +10,14 @@ from app.modules.users.schemas import UserCreate
 
 def initialize_data(session: Session) -> None:
     existing_superuser = session.exec(select(User).where(User.is_superuser)).first()
+
     if existing_superuser:
         return
 
     user = service.get_user_by_username(
         session=session, username=settings.FIRST_SUPERUSER_USERNAME
     )
+
     if not user:
         service.create_user(
             session=session,

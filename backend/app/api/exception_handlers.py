@@ -13,7 +13,9 @@ async def application_error_handler(
     _request: Request, exception: Exception
 ) -> JSONResponse:
     assert isinstance(exception, ApplicationError)
+
     response = ERROR_RESPONSES[type(exception)]
+
     return JSONResponse(
         status_code=response.status_code,
         content={"detail": response.detail},

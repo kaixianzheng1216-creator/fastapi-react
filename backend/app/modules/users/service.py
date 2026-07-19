@@ -24,6 +24,7 @@ def list_users(
     statement = (
         select(User).order_by(col(User.created_at).desc()).offset(skip).limit(limit)
     )
+
     return session.exec(statement).all(), count
 
 
@@ -36,15 +37,18 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
         user_create,
         update={"hashed_password": get_password_hash(user_create.password)},
     )
+
     session.add(user)
     session.commit()
     session.refresh(user)
+
     return user
 
 
 def create_unique_user(*, session: Session, user_create: UserCreate) -> User:
     if get_user_by_username(session=session, username=user_create.username):
         raise UserAlreadyExistsError
+
     return create_user(session=session, user_create=user_create)
 
 
@@ -58,6 +62,7 @@ def update_user(*, session: Session, user: User, user_update: UserUpdate) -> Use
     session.add(user)
     session.commit()
     session.refresh(user)
+
     return user
 
 
@@ -75,6 +80,7 @@ def update_current_user(
     session.add(current_user)
     session.commit()
     session.refresh(current_user)
+
     return current_user
 
 
@@ -96,12 +102,16 @@ def get_user_for_request(
     *, session: Session, user_id: uuid.UUID, current_user: User
 ) -> User:
     user = session.get(User, user_id)
+
     if user == current_user:
         return current_user
+
     if not current_user.is_superuser:
         raise InsufficientPrivilegesError
+
     if user is None:
         raise UserNotFoundError
+
     return user
 
 
@@ -109,6 +119,7 @@ def update_user_by_id(
     *, session: Session, user_id: uuid.UUID, user_update: UserUpdate
 ) -> User:
     user = session.get(User, user_id)
+
     if not user:
         raise UserNotFoundError
 
@@ -125,6 +136,7 @@ def update_user_by_id(
 def delete_current_user(*, session: Session, current_user: User) -> None:
     if current_user.is_superuser:
         raise SelfDeletionForbiddenError
+
     session.delete(current_user)
     session.commit()
 
@@ -133,8 +145,10 @@ def delete_user_by_id(
     *, session: Session, current_user: User, user_id: uuid.UUID
 ) -> None:
     user = session.get(User, user_id)
+
     if not user:
         raise UserNotFoundError
+
     if user == current_user:
         raise SelfDeletionForbiddenError
 

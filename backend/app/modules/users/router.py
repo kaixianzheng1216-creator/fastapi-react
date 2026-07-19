@@ -27,6 +27,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> UsersPublic:
     """获取用户列表。"""
     users, count = service.list_users(session=session, skip=skip, limit=limit)
+
     return UsersPublic(
         data=[UserPublic.model_validate(user) for user in users], count=count
     )
@@ -38,6 +39,7 @@ def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> UsersPub
 def create_user(*, session: SessionDep, user_in: UserCreate) -> UserPublic:
     """创建新用户。"""
     user = service.create_unique_user(session=session, user_create=user_in)
+
     return UserPublic.model_validate(user)
 
 
@@ -49,6 +51,7 @@ def update_user_me(
     user = service.update_current_user(
         session=session, current_user=current_user, user_update=user_in
     )
+
     return UserPublic.model_validate(user)
 
 
@@ -63,6 +66,7 @@ def update_password_me(
         current_password=body.current_password,
         new_password=body.new_password,
     )
+
     return Message(message="Password updated successfully")
 
 
@@ -76,6 +80,7 @@ def read_user_me(current_user: CurrentUser) -> UserPublic:
 def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Message:
     """删除当前用户。"""
     service.delete_current_user(session=session, current_user=current_user)
+
     return Message(message="User deleted successfully")
 
 
@@ -86,6 +91,7 @@ def register_user(session: SessionDep, user_in: UserRegister) -> UserPublic:
         session=session,
         user_create=UserCreate.model_validate(user_in),
     )
+
     return UserPublic.model_validate(user)
 
 
@@ -97,6 +103,7 @@ def read_user_by_id(
     user = service.get_user_for_request(
         session=session, user_id=user_id, current_user=current_user
     )
+
     return UserPublic.model_validate(user)
 
 
@@ -112,6 +119,7 @@ def update_user(
     user = service.update_user_by_id(
         session=session, user_id=user_id, user_update=user_in
     )
+
     return UserPublic.model_validate(user)
 
 
@@ -123,4 +131,5 @@ def delete_user(
     service.delete_user_by_id(
         session=session, current_user=current_user, user_id=user_id
     )
+
     return Message(message="User deleted successfully")

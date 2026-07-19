@@ -28,9 +28,7 @@ class InsufficientPrivilegesError(ApplicationError):
 
 
 ERROR_RESPONSES: dict[type[ApplicationError], ErrorResponse] = {
-    UserAlreadyExistsError: ErrorResponse(
-        status.HTTP_409_CONFLICT, "该用户名已存在"
-    ),
+    UserAlreadyExistsError: ErrorResponse(status.HTTP_409_CONFLICT, "该用户名已存在"),
     UserNotFoundError: ErrorResponse(status.HTTP_404_NOT_FOUND, "用户不存在"),
     IncorrectPasswordError: ErrorResponse(status.HTTP_400_BAD_REQUEST, "密码错误"),
     PasswordUnchangedError: ErrorResponse(

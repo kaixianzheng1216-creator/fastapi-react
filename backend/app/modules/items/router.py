@@ -19,6 +19,7 @@ def read_items(
     items, count = service.list_items(
         session=session, current_user=current_user, skip=skip, limit=limit
     )
+
     return ItemsPublic(
         data=[ItemPublic.model_validate(item) for item in items], count=count
     )
@@ -32,6 +33,7 @@ def read_item(
     item = service.get_accessible_item(
         session=session, current_user=current_user, item_id=id
     )
+
     return ItemPublic.model_validate(item)
 
 
@@ -43,6 +45,7 @@ def create_item(
     item = service.create_item(
         session=session, current_user=current_user, item_create=item_in
     )
+
     return ItemPublic.model_validate(item)
 
 
@@ -61,6 +64,7 @@ def update_item(
         item_id=id,
         item_update=item_in,
     )
+
     return ItemPublic.model_validate(item)
 
 
@@ -70,4 +74,5 @@ def delete_item(
 ) -> Message:
     """删除物品。"""
     service.delete_item(session=session, current_user=current_user, item_id=id)
+
     return Message(message="Item deleted successfully")

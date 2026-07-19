@@ -20,6 +20,7 @@ def login_access_token(
     user = service.authenticate(
         session=session, username=form_data.username, password=form_data.password
     )
+
     return Token(access_token=service.create_access_token_for_user(user))
 
 

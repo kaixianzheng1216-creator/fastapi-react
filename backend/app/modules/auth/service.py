@@ -28,11 +28,14 @@ def authenticate(*, session: Session, username: str, password: str) -> User:
         session.add(user)
         session.commit()
         session.refresh(user)
+
     if not user.is_active:
         raise InactiveUserError
+
     return user
 
 
 def create_access_token_for_user(user: User) -> str:
     expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
     return security.create_access_token(user.id, expires_delta=expires)

@@ -28,10 +28,13 @@ def get_accessible_item(
     *, session: Session, current_user: User, item_id: uuid.UUID
 ) -> Item:
     item = session.get(Item, item_id)
+
     if not item:
         raise ItemNotFoundError
+
     if not current_user.is_superuser and item.owner_id != current_user.id:
         raise ItemPermissionError
+
     return item
 
 
@@ -39,9 +42,11 @@ def create_item(
     *, session: Session, current_user: User, item_create: ItemCreate
 ) -> Item:
     item = Item.model_validate(item_create, update={"owner_id": current_user.id})
+
     session.add(item)
     session.commit()
     session.refresh(item)
+
     return item
 
 
@@ -55,10 +60,12 @@ def update_item(
     item = get_accessible_item(
         session=session, current_user=current_user, item_id=item_id
     )
+
     item.sqlmodel_update(item_update.model_dump(exclude_unset=True))
     session.add(item)
     session.commit()
     session.refresh(item)
+
     return item
 
 
@@ -66,5 +73,6 @@ def delete_item(*, session: Session, current_user: User, item_id: uuid.UUID) -> 
     item = get_accessible_item(
         session=session, current_user=current_user, item_id=item_id
     )
+
     session.delete(item)
     session.commit()

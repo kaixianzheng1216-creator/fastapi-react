@@ -23,6 +23,7 @@ TokenDep = Annotated[str | None, Depends(reusable_oauth2)]
 def get_current_user(session: SessionDep, token: TokenDep) -> User:
     if token is None:
         raise CredentialsValidationError
+
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
@@ -32,10 +33,13 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
         raise CredentialsValidationError from None
 
     user = session.get(User, token_data.sub)
+
     if not user:
         raise CredentialsValidationError
+
     if not user.is_active:
         raise InactiveUserError
+
     return user
 
 
@@ -45,4 +49,5 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 def get_current_active_superuser(current_user: CurrentUser) -> User:
     if not current_user.is_superuser:
         raise InsufficientPrivilegesError
+
     return current_user

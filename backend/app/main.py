@@ -25,6 +25,7 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+
 add_exception_handlers(app)
 
 
