@@ -5,6 +5,7 @@ from fastapi.routing import APIRoute
 from scalar_fastapi import get_scalar_api_reference
 from starlette.middleware.cors import CORSMiddleware
 
+from app.api.exception_handlers import add_exception_handlers
 from app.api.router import api_router
 from app.core.config import settings
 
@@ -24,6 +25,7 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+add_exception_handlers(app)
 
 
 @app.get("/scalar", include_in_schema=False)

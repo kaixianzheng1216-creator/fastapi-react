@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.api.dependencies import SessionDep
@@ -20,11 +20,6 @@ def login_access_token(
     user = service.authenticate(
         session=session, username=form_data.username, password=form_data.password
     )
-    if not user:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-    if not user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
-
     return Token(access_token=service.create_access_token_for_user(user))
 
 

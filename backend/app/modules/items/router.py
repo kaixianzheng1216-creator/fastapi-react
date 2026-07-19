@@ -1,12 +1,11 @@
 import uuid
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from app.api.dependencies import SessionDep
 from app.common.schemas import Message
 from app.modules.auth.dependencies import CurrentUser
 from app.modules.items import service
-from app.modules.items.exceptions import ItemNotFoundError, ItemPermissionError
 from app.modules.items.schemas import ItemCreate, ItemPublic, ItemsPublic, ItemUpdate
 
 router = APIRouter(prefix="/items", tags=["items"])
@@ -30,14 +29,9 @@ def read_item(
     session: SessionDep, current_user: CurrentUser, id: uuid.UUID
 ) -> ItemPublic:
     """根据 ID 获取物品。"""
-    try:
-        item = service.get_accessible_item(
-            session=session, current_user=current_user, item_id=id
-        )
-    except ItemNotFoundError:
-        raise HTTPException(status_code=404, detail="Item not found")
-    except ItemPermissionError:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    item = service.get_accessible_item(
+        session=session, current_user=current_user, item_id=id
+    )
     return ItemPublic.model_validate(item)
 
 
@@ -61,17 +55,12 @@ def update_item(
     item_in: ItemUpdate,
 ) -> ItemPublic:
     """更新物品。"""
-    try:
-        item = service.update_item(
-            session=session,
-            current_user=current_user,
-            item_id=id,
-            item_update=item_in,
-        )
-    except ItemNotFoundError:
-        raise HTTPException(status_code=404, detail="Item not found")
-    except ItemPermissionError:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    item = service.update_item(
+        session=session,
+        current_user=current_user,
+        item_id=id,
+        item_update=item_in,
+    )
     return ItemPublic.model_validate(item)
 
 
@@ -80,10 +69,5 @@ def delete_item(
     session: SessionDep, current_user: CurrentUser, id: uuid.UUID
 ) -> Message:
     """删除物品。"""
-    try:
-        service.delete_item(session=session, current_user=current_user, item_id=id)
-    except ItemNotFoundError:
-        raise HTTPException(status_code=404, detail="Item not found")
-    except ItemPermissionError:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
+    service.delete_item(session=session, current_user=current_user, item_id=id)
     return Message(message="Item deleted successfully")

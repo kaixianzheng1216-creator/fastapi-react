@@ -1,19 +1,11 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from app.api.dependencies import SessionDep
 from app.common.schemas import Message
 from app.modules.auth.dependencies import CurrentUser, get_current_active_superuser
 from app.modules.users import service
-from app.modules.users.exceptions import (
-    IncorrectPasswordError,
-    InsufficientPrivilegesError,
-    PasswordUnchangedError,
-    SelfDeletionForbiddenError,
-    UserAlreadyExistsError,
-    UserNotFoundError,
-)
 from app.modules.users.schemas import (
     UpdatePassword,
     UserCreate,
@@ -45,14 +37,7 @@ def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> UsersPub
 )
 def create_user(*, session: SessionDep, user_in: UserCreate) -> UserPublic:
     """创建新用户。"""
-    try:
-        user = service.create_unique_user(session=session, user_create=user_in)
-    except UserAlreadyExistsError:
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this username already exists in the system.",
-        )
-
+    user = service.create_unique_user(session=session, user_create=user_in)
     return UserPublic.model_validate(user)
 
 
@@ -61,14 +46,9 @@ def update_user_me(
     *, session: SessionDep, user_in: UserUpdateMe, current_user: CurrentUser
 ) -> UserPublic:
     """更新当前用户信息。"""
-    try:
-        user = service.update_current_user(
-            session=session, current_user=current_user, user_update=user_in
-        )
-    except UserAlreadyExistsError:
-        raise HTTPException(
-            status_code=409, detail="User with this username already exists"
-        )
+    user = service.update_current_user(
+        session=session, current_user=current_user, user_update=user_in
+    )
     return UserPublic.model_validate(user)
 
 
@@ -77,20 +57,12 @@ def update_password_me(
     *, session: SessionDep, body: UpdatePassword, current_user: CurrentUser
 ) -> Message:
     """更新当前用户密码。"""
-    try:
-        service.update_current_password(
-            session=session,
-            current_user=current_user,
-            current_password=body.current_password,
-            new_password=body.new_password,
-        )
-    except IncorrectPasswordError:
-        raise HTTPException(status_code=400, detail="Incorrect password")
-    except PasswordUnchangedError:
-        raise HTTPException(
-            status_code=400,
-            detail="New password cannot be the same as the current one",
-        )
+    service.update_current_password(
+        session=session,
+        current_user=current_user,
+        current_password=body.current_password,
+        new_password=body.new_password,
+    )
     return Message(message="Password updated successfully")
 
 
@@ -103,29 +75,17 @@ def read_user_me(current_user: CurrentUser) -> UserPublic:
 @router.delete("/me", response_model=Message)
 def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Message:
     """删除当前用户。"""
-    try:
-        service.delete_current_user(session=session, current_user=current_user)
-    except SelfDeletionForbiddenError:
-        raise HTTPException(
-            status_code=403,
-            detail="Super users are not allowed to delete themselves",
-        )
+    service.delete_current_user(session=session, current_user=current_user)
     return Message(message="User deleted successfully")
 
 
 @router.post("/signup", response_model=UserPublic)
 def register_user(session: SessionDep, user_in: UserRegister) -> UserPublic:
     """无需登录即可创建新用户。"""
-    try:
-        user = service.create_unique_user(
-            session=session,
-            user_create=UserCreate.model_validate(user_in),
-        )
-    except UserAlreadyExistsError:
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this username already exists in the system",
-        )
+    user = service.create_unique_user(
+        session=session,
+        user_create=UserCreate.model_validate(user_in),
+    )
     return UserPublic.model_validate(user)
 
 
@@ -134,17 +94,9 @@ def read_user_by_id(
     user_id: uuid.UUID, session: SessionDep, current_user: CurrentUser
 ) -> UserPublic:
     """根据 ID 获取指定用户。"""
-    try:
-        user = service.get_user_for_request(
-            session=session, user_id=user_id, current_user=current_user
-        )
-    except InsufficientPrivilegesError:
-        raise HTTPException(
-            status_code=403,
-            detail="The user doesn't have enough privileges",
-        )
-    except UserNotFoundError:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = service.get_user_for_request(
+        session=session, user_id=user_id, current_user=current_user
+    )
     return UserPublic.model_validate(user)
 
 
@@ -157,19 +109,9 @@ def update_user(
     *, session: SessionDep, user_id: uuid.UUID, user_in: UserUpdate
 ) -> UserPublic:
     """更新用户。"""
-    try:
-        user = service.update_user_by_id(
-            session=session, user_id=user_id, user_update=user_in
-        )
-    except UserNotFoundError:
-        raise HTTPException(
-            status_code=404,
-            detail="The user with this id does not exist in the system",
-        )
-    except UserAlreadyExistsError:
-        raise HTTPException(
-            status_code=409, detail="User with this username already exists"
-        )
+    user = service.update_user_by_id(
+        session=session, user_id=user_id, user_update=user_in
+    )
     return UserPublic.model_validate(user)
 
 
@@ -178,15 +120,7 @@ def delete_user(
     session: SessionDep, current_user: CurrentUser, user_id: uuid.UUID
 ) -> Message:
     """删除用户。"""
-    try:
-        service.delete_user_by_id(
-            session=session, current_user=current_user, user_id=user_id
-        )
-    except UserNotFoundError:
-        raise HTTPException(status_code=404, detail="User not found")
-    except SelfDeletionForbiddenError:
-        raise HTTPException(
-            status_code=403,
-            detail="Super users are not allowed to delete themselves",
-        )
+    service.delete_user_by_id(
+        session=session, current_user=current_user, user_id=user_id
+    )
     return Message(message="User deleted successfully")
