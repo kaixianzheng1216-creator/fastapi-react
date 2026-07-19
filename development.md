@@ -32,18 +32,6 @@ docker compose logs
 docker compose logs backend
 ```
 
-## Mailcatcher
-
-Mailcatcher 是一个简单的 SMTP 服务器，用于在本地开发期间捕获后端发送的所有邮件。它不会真正发送邮件，而是将邮件捕获并显示在 Web 界面中。
-
-它的用途包括：
-
-* 在开发期间测试邮件功能
-* 验证邮件内容和格式
-* 调试邮件相关功能，而无需发送真实邮件
-
-后端在本地使用 Docker Compose 运行时会被自动配置为使用 Mailcatcher（SMTP 端口为 1025）。所有捕获的邮件都可以在 <http://localhost:1080> 查看。
-
 ## 本地开发
 
 Docker Compose 文件的配置方式使得每个服务都通过 `localhost` 上的不同端口提供访问。
@@ -196,8 +184,6 @@ biome check..............................................................Passed
 
 Traefik UI：<http://localhost:8090>
 
-MailCatcher：<http://localhost:1080>
-
 ### 配置 `localhost.tiangolo.com` 后的开发 URL
 
 开发 URL，用于本地开发。
@@ -211,5 +197,3 @@ MailCatcher：<http://localhost:1080>
 自动备用文档（ReDoc）：<http://api.localhost.tiangolo.com/redoc>
 
 Traefik UI：<http://localhost.tiangolo.com:8090>
-
-MailCatcher：<http://localhost.tiangolo.com:1080>

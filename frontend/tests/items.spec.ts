@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test"
 import { createUser } from "./utils/privateApi"
 import {
-  randomEmail,
   randomItemDescription,
   randomItemTitle,
   randomPassword,
+  randomUsername,
 } from "./utils/random"
 import { logInUser } from "./utils/user"
 
@@ -21,16 +21,16 @@ test("Add Item button is visible", async ({ page }) => {
 
 test.describe("Items management", () => {
   test.use({ storageState: { cookies: [], origins: [] } })
-  let email: string
+  let username: string
   const password = randomPassword()
 
   test.beforeAll(async () => {
-    email = randomEmail()
-    await createUser({ email, password })
+    username = randomUsername()
+    await createUser({ username, password })
   })
 
   test.beforeEach(async ({ page }) => {
-    await logInUser(page, email, password)
+    await logInUser(page, username, password)
     await page.goto("/items")
   })
 
@@ -119,10 +119,10 @@ test.describe("Items empty state", () => {
   test.use({ storageState: { cookies: [], origins: [] } })
 
   test("Shows empty state message when no items exist", async ({ page }) => {
-    const email = randomEmail()
+    const username = randomUsername()
     const password = randomPassword()
-    await createUser({ email, password })
-    await logInUser(page, email, password)
+    await createUser({ username, password })
+    await logInUser(page, username, password)
 
     await page.goto("/items")
 

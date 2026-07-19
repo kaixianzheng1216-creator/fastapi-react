@@ -19,10 +19,11 @@ import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { PasswordInput } from "@/components/ui/password-input"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
+import { usernameSchema } from "@/utils"
 
 const formSchema = z
   .object({
-    email: z.email(),
+    username: usernameSchema,
     full_name: z.string().min(1, { message: "Full Name is required" }),
     password: z
       .string()
@@ -64,7 +65,7 @@ function SignUp() {
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {
-      email: "",
+      username: "",
       full_name: "",
       password: "",
       confirm_password: "",
@@ -112,15 +113,15 @@ function SignUp() {
 
             <FormField
               control={form.control}
-              name="email"
+              name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Username</FormLabel>
                   <FormControl>
                     <Input
-                      data-testid="email-input"
-                      placeholder="user@example.com"
-                      type="email"
+                      data-testid="username-input"
+                      placeholder="Username"
+                      type="text"
                       {...field}
                     />
                   </FormControl>

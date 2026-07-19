@@ -23,12 +23,13 @@
 
 ## 后端约定
 
-- API 入口在 `backend/app/main.py`，路由在 `backend/app/api/routes/`，依赖注入在 `backend/app/api/deps.py`。
-- SQLModel 数据库模型和 API schema 位于 `backend/app/models.py`；共享数据访问逻辑位于 `backend/app/crud.py`。
+- API 入口在 `backend/app/main.py`，总路由在 `backend/app/api/router.py`，共享 HTTP 依赖在 `backend/app/api/dependencies.py`。
+- 业务代码按领域位于 `backend/app/modules/<domain>/`，每个领域自行管理 router、models、schemas、service、dependencies 和 exceptions。
+- 数据库 Engine 与模型注册入口位于 `backend/app/db/`；启动初始化逻辑位于 `backend/app/bootstrap/`。
 - 公开函数、路由签名和返回值必须标注类型；命名使用完整、描述性的英文单词。
 - 在 API 等信任边界校验输入。领域错误与 HTTP 响应解耦，由边界层完成状态码映射。
 - 异常默认向上冒泡，只在外部入口、持久化或第三方服务等边界捕获；不得吞异常或使用空 `except`。
-- 鉴权、授权、密码、令牌和邮件找回属于安全路径，修改时必须覆盖失败分支且不得泄露内部信息。
+- 鉴权、授权、密码和令牌属于安全路径，修改时必须覆盖失败分支且不得泄露内部信息。
 - 修改持久化模型时必须新增 Alembic revision；不要通过 `SQLModel.metadata.create_all()` 代替迁移。
 - API schema 发生变化后，在后端可启动的环境中运行 `bash ./scripts/generate-client.sh`，并提交更新后的前端客户端。
 

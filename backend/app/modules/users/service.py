@@ -32,8 +32,8 @@ def list_users(
     return session.exec(statement).all(), count
 
 
-def get_user_by_email(*, session: Session, email: str) -> User | None:
-    return session.exec(select(User).where(User.email == email)).first()
+def get_user_by_username(*, session: Session, username: str) -> User | None:
+    return session.exec(select(User).where(User.username == username)).first()
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -48,23 +48,20 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
 
 
 def create_unique_user(*, session: Session, user_create: UserCreate) -> User:
-    if get_user_by_email(session=session, email=user_create.email):
+    if get_user_by_username(session=session, username=user_create.username):
         raise UserAlreadyExistsError
     return create_user(session=session, user_create=user_create)
 
 
-def create_private_user(
-    *, session: Session, user_create: PrivateUserCreate
-) -> User:
-    user = User(
-        email=user_create.email,
-        full_name=user_create.full_name,
-        hashed_password=get_password_hash(user_create.password),
+def create_private_user(*, session: Session, user_create: PrivateUserCreate) -> User:
+    return create_unique_user(
+        session=session,
+        user_create=UserCreate(
+            username=user_create.username,
+            password=user_create.password,
+            full_name=user_create.full_name,
+        ),
     )
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-    return user
 
 
 def update_user(*, session: Session, user: User, user_update: UserUpdate) -> User:
@@ -83,8 +80,10 @@ def update_user(*, session: Session, user: User, user_update: UserUpdate) -> Use
 def update_current_user(
     *, session: Session, current_user: User, user_update: UserUpdateMe
 ) -> User:
-    if user_update.email:
-        existing_user = get_user_by_email(session=session, email=user_update.email)
+    if user_update.username:
+        existing_user = get_user_by_username(
+            session=session, username=user_update.username
+        )
         if existing_user and existing_user.id != current_user.id:
             raise UserAlreadyExistsError
 
@@ -129,8 +128,10 @@ def update_user_by_id(
     if not user:
         raise UserNotFoundError
 
-    if user_update.email:
-        existing_user = get_user_by_email(session=session, email=user_update.email)
+    if user_update.username:
+        existing_user = get_user_by_username(
+            session=session, username=user_update.username
+        )
         if existing_user and existing_user.id != user_id:
             raise UserAlreadyExistsError
 

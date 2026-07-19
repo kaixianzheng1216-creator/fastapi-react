@@ -3,12 +3,12 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class ItemsService {
     /**
      * Read Items
-     * Retrieve items.
+     * 获取物品列表。
      * @param data The data for the request.
      * @param data.skip
      * @param data.limit
@@ -31,7 +31,7 @@ export class ItemsService {
     
     /**
      * Create Item
-     * Create new item.
+     * 创建新物品。
      * @param data The data for the request.
      * @param data.requestBody
      * @returns ItemPublic Successful Response
@@ -51,7 +51,7 @@ export class ItemsService {
     
     /**
      * Read Item
-     * Get item by ID.
+     * 根据 ID 获取物品。
      * @param data The data for the request.
      * @param data.id
      * @returns ItemPublic Successful Response
@@ -72,7 +72,7 @@ export class ItemsService {
     
     /**
      * Update Item
-     * Update an item.
+     * 更新物品。
      * @param data The data for the request.
      * @param data.id
      * @param data.requestBody
@@ -96,7 +96,7 @@ export class ItemsService {
     
     /**
      * Delete Item
-     * Delete an item.
+     * 删除物品。
      * @param data The data for the request.
      * @param data.id
      * @returns Message Successful Response
@@ -119,7 +119,7 @@ export class ItemsService {
 export class LoginService {
     /**
      * Login Access Token
-     * OAuth2 compatible token login, get an access token for future requests
+     * OAuth2 兼容的令牌登录，获取访问令牌用于后续请求
      * @param data The data for the request.
      * @param data.formData
      * @returns Token Successful Response
@@ -139,7 +139,7 @@ export class LoginService {
     
     /**
      * Test Token
-     * Test access token
+     * 测试访问令牌
      * @returns UserPublic Successful Response
      * @throws ApiError
      */
@@ -149,74 +149,12 @@ export class LoginService {
             url: '/api/v1/login/test-token'
         });
     }
-    
-    /**
-     * Recover Password
-     * Password Recovery
-     * @param data The data for the request.
-     * @param data.email
-     * @returns Message Successful Response
-     * @throws ApiError
-     */
-    public static recoverPassword(data: LoginRecoverPasswordData): CancelablePromise<LoginRecoverPasswordResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/password-recovery/{email}',
-            path: {
-                email: data.email
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Reset Password
-     * Reset password
-     * @param data The data for the request.
-     * @param data.requestBody
-     * @returns Message Successful Response
-     * @throws ApiError
-     */
-    public static resetPassword(data: LoginResetPasswordData): CancelablePromise<LoginResetPasswordResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/reset-password/',
-            body: data.requestBody,
-            mediaType: 'application/json',
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
-    /**
-     * Recover Password Html Content
-     * HTML Content for Password Recovery
-     * @param data The data for the request.
-     * @param data.email
-     * @returns string Successful Response
-     * @throws ApiError
-     */
-    public static recoverPasswordHtmlContent(data: LoginRecoverPasswordHtmlContentData): CancelablePromise<LoginRecoverPasswordHtmlContentResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/password-recovery-html-content/{email}',
-            path: {
-                email: data.email
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
 }
 
 export class PrivateService {
     /**
      * Create User
-     * Create a new user.
+     * 创建新用户。
      * @param data The data for the request.
      * @param data.requestBody
      * @returns UserPublic Successful Response
@@ -238,7 +176,7 @@ export class PrivateService {
 export class UsersService {
     /**
      * Read Users
-     * Retrieve users.
+     * 获取用户列表。
      * @param data The data for the request.
      * @param data.skip
      * @param data.limit
@@ -261,7 +199,7 @@ export class UsersService {
     
     /**
      * Create User
-     * Create new user.
+     * 创建新用户。
      * @param data The data for the request.
      * @param data.requestBody
      * @returns UserPublic Successful Response
@@ -281,7 +219,7 @@ export class UsersService {
     
     /**
      * Read User Me
-     * Get current user.
+     * 获取当前用户。
      * @returns UserPublic Successful Response
      * @throws ApiError
      */
@@ -294,7 +232,7 @@ export class UsersService {
     
     /**
      * Delete User Me
-     * Delete own user.
+     * 删除当前用户。
      * @returns Message Successful Response
      * @throws ApiError
      */
@@ -307,7 +245,7 @@ export class UsersService {
     
     /**
      * Update User Me
-     * Update own user.
+     * 更新当前用户信息。
      * @param data The data for the request.
      * @param data.requestBody
      * @returns UserPublic Successful Response
@@ -327,7 +265,7 @@ export class UsersService {
     
     /**
      * Update Password Me
-     * Update own password.
+     * 更新当前用户密码。
      * @param data The data for the request.
      * @param data.requestBody
      * @returns Message Successful Response
@@ -347,7 +285,7 @@ export class UsersService {
     
     /**
      * Register User
-     * Create new user without the need to be logged in.
+     * 无需登录即可创建新用户。
      * @param data The data for the request.
      * @param data.requestBody
      * @returns UserPublic Successful Response
@@ -367,7 +305,7 @@ export class UsersService {
     
     /**
      * Read User By Id
-     * Get a specific user by id.
+     * 根据 ID 获取指定用户。
      * @param data The data for the request.
      * @param data.userId
      * @returns UserPublic Successful Response
@@ -388,7 +326,7 @@ export class UsersService {
     
     /**
      * Update User
-     * Update a user.
+     * 更新用户。
      * @param data The data for the request.
      * @param data.userId
      * @param data.requestBody
@@ -412,7 +350,7 @@ export class UsersService {
     
     /**
      * Delete User
-     * Delete a user.
+     * 删除用户。
      * @param data The data for the request.
      * @param data.userId
      * @returns Message Successful Response
@@ -433,27 +371,6 @@ export class UsersService {
 }
 
 export class UtilsService {
-    /**
-     * Test Email
-     * Test emails.
-     * @param data The data for the request.
-     * @param data.emailTo
-     * @returns Message Successful Response
-     * @throws ApiError
-     */
-    public static testEmail(data: UtilsTestEmailData): CancelablePromise<UtilsTestEmailResponse> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/utils/test-email/',
-            query: {
-                email_to: data.emailTo
-            },
-            errors: {
-                422: 'Validation Error'
-            }
-        });
-    }
-    
     /**
      * Health Check
      * @returns boolean Successful Response

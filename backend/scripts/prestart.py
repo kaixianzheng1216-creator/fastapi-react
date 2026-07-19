@@ -9,24 +9,19 @@ from app.db.session import engine
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-max_tries = 60 * 5  # 5 minutes
-wait_seconds = 1
+MAX_TRIES = 60 * 5  # 5 minutes
+WAIT_SECONDS = 1
 
 
 @retry(
-    stop=stop_after_attempt(max_tries),
-    wait=wait_fixed(wait_seconds),
+    stop=stop_after_attempt(MAX_TRIES),
+    wait=wait_fixed(WAIT_SECONDS),
     before=before_log(logger, logging.INFO),
-    after=after_log(logger, logging.WARN),
+    after=after_log(logger, logging.WARNING),
 )
 def wait_for_database(db_engine: Engine) -> None:
-    try:
-        with Session(db_engine) as session:
-            # 尝试创建会话以检查数据库是否已就绪
-            session.exec(select(1))
-    except Exception as e:
-        logger.error(e)
-        raise e
+    with Session(db_engine) as session:
+        session.exec(select(1))
 
 
 def main() -> None:

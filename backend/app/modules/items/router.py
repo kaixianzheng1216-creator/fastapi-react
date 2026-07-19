@@ -81,9 +81,7 @@ def delete_item(
 ) -> Message:
     """删除物品。"""
     try:
-        service.delete_item(
-            session=session, current_user=current_user, item_id=id
-        )
+        service.delete_item(session=session, current_user=current_user, item_id=id)
     except ItemNotFoundError:
         raise HTTPException(status_code=404, detail="Item not found")
     except ItemPermissionError:

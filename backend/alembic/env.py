@@ -1,8 +1,10 @@
-import os
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import engine_from_config, pool
+
+from alembic import context
+from app.core.config import settings
+from app.db.models import metadata
 
 # 这是 Alembic 的 Config 对象，
 # 用于访问当前使用的 .ini 配置文件中的配置项。
@@ -18,9 +20,6 @@ fileConfig(config.config_file_name)
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 # target_metadata = None
-
-from app.core.config import settings  # noqa
-from app.db.models import metadata  # noqa
 
 target_metadata = metadata
 

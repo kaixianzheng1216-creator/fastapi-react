@@ -161,7 +161,13 @@ export SECRET_KEY="changethis"
 
 注意：你可以使用上面提到的 Python 命令来生成一个安全的密钥。
 
-将 `FIRST_SUPER_USER_PASSWORD` 设置为与 `changethis` 不同的值：
+设置初始超级用户的用户名：
+
+```bash
+export FIRST_SUPERUSER_USERNAME="admin"
+```
+
+将 `FIRST_SUPERUSER_PASSWORD` 设置为与 `changethis` 不同的值：
 
 ```bash
 export FIRST_SUPERUSER_PASSWORD="changethis"
@@ -175,14 +181,10 @@ export BACKEND_CORS_ORIGINS="https://dashboard.${DOMAIN?Variable not set},https:
 
 你还可以设置其他一些环境变量：
 
-* `PROJECT_NAME`：项目名称，在 API 的文档和邮件中使用。
+* `PROJECT_NAME`：项目名称，在 API 文档中使用。
 * `STACK_NAME`：栈名称，用于 Docker Compose 标签和项目名，`staging`、`production` 等不同环境应使用不同的值。你可以将域名中的点替换为中划线来使用，例如 `fastapi-project-example-com` 和 `staging-fastapi-project-example-com`。
 * `BACKEND_CORS_ORIGINS`：允许的 CORS 来源列表，多个值以逗号分隔。
-* `FIRST_SUPERUSER`：第一个超级用户的邮箱，该超级用户可以创建新用户。
-* `SMTP_HOST`：发送邮件的 SMTP 服务器主机名，通常来自你的邮件服务商（例如 Mailgun、Sparkpost、Sendgrid 等）。
-* `SMTP_USER`：发送邮件的 SMTP 服务器用户。
-* `SMTP_PASSWORD`：发送邮件的 SMTP 服务器密码。
-* `EMAILS_FROM_EMAIL`：用于发送邮件的邮箱账号。
+* `FIRST_SUPERUSER_USERNAME`：第一个超级用户的用户名，该超级用户可以创建新用户。
 * `POSTGRES_SERVER`：PostgreSQL 服务器的主机名。可以保留默认值 `db`，由同一个 Docker Compose 提供。除非你使用第三方服务，否则通常不需要修改。
 * `POSTGRES_PORT`：PostgreSQL 服务器的端口。可以保留默认值。除非你使用第三方服务，否则通常不需要修改。
 * `POSTGRES_USER`：Postgres 用户，可以保留默认值。
@@ -304,8 +306,7 @@ cd /home/github/actions-runner
 * `DOMAIN_STAGING`
 * `STACK_NAME_PRODUCTION`
 * `STACK_NAME_STAGING`
-* `EMAILS_FROM_EMAIL`
-* `FIRST_SUPERUSER`
+* `FIRST_SUPERUSER_USERNAME`
 * `FIRST_SUPERUSER_PASSWORD`
 * `POSTGRES_PASSWORD`
 * `SECRET_KEY`

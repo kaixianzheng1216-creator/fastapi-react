@@ -1,8 +1,9 @@
 import logging
 
-from app.db.initial_data import create_initial_data
+from app.bootstrap.initial_data import create_initial_data
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 def main() -> None:

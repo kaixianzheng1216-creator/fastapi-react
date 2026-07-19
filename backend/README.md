@@ -25,9 +25,9 @@ $ uv sync
 $ source .venv/bin/activate
 ```
 
-请确保你的编辑器使用的是正确的 Python 虚拟环境，解释器路径为 `backend/.venv/bin/python`。
+请确保编辑器使用项目根目录下的虚拟环境。Linux/macOS 的解释器路径为 `.venv/bin/python`，Windows 为 `.venv/Scripts/python.exe`。
 
-在 `./backend/app/models.py` 中修改或添加数据与 SQL 表的 SQLModel 模型，在 `./backend/app/api/` 中添加 API 端点，在 `./backend/app/crud.py` 中添加 CRUD（增删改查）工具函数。
+后端按业务领域组织在 `./backend/app/modules/`。每个领域自行维护 `router.py`、`models.py`、`schemas.py` 和 `service.py`；数据库 Engine 与模型注册入口位于 `./backend/app/db/`。
 
 ## VS Code
 
@@ -43,7 +43,7 @@ $ source .venv/bin/activate
 
 例如，包含后端代码的目录会在 Docker 容器内同步，将你修改的代码实时复制到容器内的目录中。这样你就可以立即测试你的更改，而无需重新构建 Docker 镜像。这种方式只应在开发阶段使用；生产环境应该使用包含最新后端代码的 Docker 镜像来构建。但在开发阶段，它能让你非常快速地迭代。
 
-还有一个命令覆盖配置，它运行 `fastapi run --reload` 而不是默认的 `fastapi run`。它启动单个服务器进程（而不是像生产环境那样启动多个进程），并在代码更改时重新加载进程。请注意，如果你有语法错误并保存了 Python 文件，进程会中断并退出，容器也会停止。之后，你可以通过修复错误并重新运行来重启容器：
+还有一个命令覆盖配置，它运行 `uvicorn app.main:app --reload`。它启动单个服务器进程（而不是像生产环境那样启动多个进程），并在代码更改时重新加载进程。请注意，如果你有语法错误并保存了 Python 文件，进程会中断并退出，容器也会停止。之后，你可以通过修复错误并重新运行来重启容器：
 
 ```console
 $ docker compose watch
@@ -66,21 +66,21 @@ $ docker compose exec backend bash
 你应该会看到类似下面的输出：
 
 ```console
-root@7f2607af31c3:/app#
+root@7f2607af31c3:/app/backend#
 ```
 
-这表示你已经进入了容器内的 `bash` 会话，以 `root` 用户身份，位于 `/app` 目录下。该目录下还有一个名为 "app" 的子目录，那就是你的代码在容器内所在的位置：`/app/app`。
+这表示你已经进入容器内的 `bash` 会话，以 `root` 用户身份位于 `/app/backend`，应用代码位于 `/app/backend/app`。
 
-在该目录下，你可以使用 `fastapi run --reload` 命令运行带调试功能的实时重载服务器。
+在该目录下，你可以使用 `uvicorn app.main:app --reload` 命令运行带调试功能的实时重载服务器。
 
 ```console
-$ fastapi run --reload app/main.py
+$ uvicorn app.main:app --reload
 ```
 
 它的效果看起来像这样：
 
 ```console
-root@7f2607af31c3:/app# fastapi run --reload app/main.py
+root@7f2607af31c3:/app/backend# uvicorn app.main:app --reload
 ```
 
 然后按回车键。这会启动一个实时重载的服务器，在检测到代码更改时自动重新加载。
@@ -123,7 +123,7 @@ docker compose exec backend bash scripts/tests-start.sh -x
 
 ## 数据库迁移
 
-由于在本地开发期间，你的 app 目录是以卷的形式挂载到容器中的，所以你也可以在容器内使用 `alembic` 命令运行迁移，迁移代码会保存在你的 app 目录中（而不是仅仅保存在容器内）。这样你就可以将其加入 git 仓库。
+本地开发时，整个 `backend` 目录会同步到容器，因此可以在容器内运行 Alembic，生成的迁移文件会保存在 `backend/alembic/versions/` 并同步回宿主机。
 
 请确保每次修改模型时，都为模型创建一个 "revision"（版本），并使用该 "revision" 来 "upgrade"（升级）你的数据库。因为这才会真正更新数据库中的表。否则，你的应用程序会出错。
 
@@ -133,7 +133,7 @@ docker compose exec backend bash scripts/tests-start.sh -x
 $ docker compose exec backend bash
 ```
 
-* Alembic 已经预先配置好，可以从 `./backend/app/models.py` 导入你的 SQLModel 模型。
+* Alembic 通过 `./backend/app/db/models.py` 注册各领域的 SQLModel 表模型。
 
 * 修改模型之后（例如添加一列），在容器内创建一个 revision，例如：
 
@@ -149,24 +149,4 @@ $ alembic revision --autogenerate -m "Add column last_name to User model"
 $ alembic upgrade head
 ```
 
-如果你根本不想使用迁移，可以打开 `./backend/app/core/db.py` 文件中以以下内容结尾的代码行的注释：
-
-```python
-SQLModel.metadata.create_all(engine)
-```
-
-并注释掉 `scripts/prestart.sh` 文件中包含以下内容的代码行：
-
-```console
-$ alembic upgrade head
-```
-
-如果你不想从默认模型开始，而是想从一开始就删除或修改它们，又不想保留任何已有的 revision，可以删除 `./backend/alembic/versions/` 下的所有 revision 文件（`.py` Python 文件）。然后按照上面描述的方法创建第一个迁移。
-
-## 邮件模板
-
-邮件模板位于 `./backend/app/integrations/email/templates/`。这里有两个目录：`build` 和 `src`。`src` 目录包含用于构建最终邮件模板的源文件，`build` 目录包含应用程序实际使用的最终邮件模板。
-
-在继续之前，请确保你已在 VS Code 中安装 [MJML 扩展](https://github.com/mjmlio/vscode-mjml)。
-
-安装好 MJML 扩展后，你就可以在 `src` 目录中创建新的邮件模板。创建好新的邮件模板并在编辑器中打开 `.mjml` 文件后，使用 `Ctrl+Shift+P` 打开命令面板，搜索 `MJML: Export to HTML`。这会将 `.mjml` 文件转换为 `.html` 文件，然后你就可以将其保存到 build 目录中。
+不要使用 `SQLModel.metadata.create_all()` 替代迁移，也不要改写已经部署过的 revision。模型发生变化时应新增 revision，并在提交前执行 `alembic check` 和 `alembic upgrade head`。

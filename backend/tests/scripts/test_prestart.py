@@ -1,33 +1,31 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
 from sqlmodel import select
 
-from scripts.prestart import logger, wait_for_database
+from scripts.prestart import wait_for_database
 
 
-def test_init_successful_connection() -> None:
-    engine_mock = MagicMock()
-
-    session_mock = MagicMock()
-    session_mock.__enter__.return_value = session_mock
-
-    select1 = select(1)
+def test_wait_for_database_checks_connection() -> None:
+    engine = MagicMock()
+    session = MagicMock()
+    session.__enter__.return_value = session
+    statement = select(1)
 
     with (
-        patch("scripts.prestart.Session", return_value=session_mock),
-        patch("scripts.prestart.select", return_value=select1),
-        patch.object(logger, "info"),
-        patch.object(logger, "error"),
-        patch.object(logger, "warn"),
+        patch("scripts.prestart.Session", return_value=session),
+        patch("scripts.prestart.select", return_value=statement),
     ):
-        try:
-            wait_for_database(engine_mock)
-            connection_successful = True
-        except Exception:
-            connection_successful = False
+        wait_for_database.__wrapped__(engine)
 
-        assert connection_successful, (
-            "The database connection should be successful and not raise an exception."
-        )
+    session.exec.assert_called_once_with(statement)
 
-        session_mock.exec.assert_called_once_with(select1)
+
+def test_wait_for_database_propagates_connection_error() -> None:
+    engine = MagicMock()
+
+    with (
+        patch("scripts.prestart.Session", side_effect=RuntimeError("unavailable")),
+        pytest.raises(RuntimeError, match="unavailable"),
+    ):
+        wait_for_database.__wrapped__(engine)

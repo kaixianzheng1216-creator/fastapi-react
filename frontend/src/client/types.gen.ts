@@ -40,16 +40,10 @@ export type Message = {
     message: string;
 };
 
-export type NewPassword = {
-    token: string;
-    new_password: string;
-};
-
 export type PrivateUserCreate = {
-    email: string;
+    username: string;
     password: string;
     full_name: string;
-    is_verified?: boolean;
 };
 
 export type Token = {
@@ -63,7 +57,7 @@ export type UpdatePassword = {
 };
 
 export type UserCreate = {
-    email: string;
+    username: string;
     is_active?: boolean;
     is_superuser?: boolean;
     full_name?: (string | null);
@@ -71,7 +65,7 @@ export type UserCreate = {
 };
 
 export type UserPublic = {
-    email: string;
+    username: string;
     is_active?: boolean;
     is_superuser?: boolean;
     full_name?: (string | null);
@@ -80,7 +74,7 @@ export type UserPublic = {
 };
 
 export type UserRegister = {
-    email: string;
+    username: string;
     password: string;
     full_name?: (string | null);
 };
@@ -91,7 +85,7 @@ export type UsersPublic = {
 };
 
 export type UserUpdate = {
-    email?: (string | null);
+    username?: (string | null);
     is_active?: (boolean | null);
     is_superuser?: (boolean | null);
     full_name?: (string | null);
@@ -100,7 +94,7 @@ export type UserUpdate = {
 
 export type UserUpdateMe = {
     full_name?: (string | null);
-    email?: (string | null);
+    username?: (string | null);
 };
 
 export type ValidationError = {
@@ -152,24 +146,6 @@ export type LoginLoginAccessTokenData = {
 export type LoginLoginAccessTokenResponse = (Token);
 
 export type LoginTestTokenResponse = (UserPublic);
-
-export type LoginRecoverPasswordData = {
-    email: string;
-};
-
-export type LoginRecoverPasswordResponse = (Message);
-
-export type LoginResetPasswordData = {
-    requestBody: NewPassword;
-};
-
-export type LoginResetPasswordResponse = (Message);
-
-export type LoginRecoverPasswordHtmlContentData = {
-    email: string;
-};
-
-export type LoginRecoverPasswordHtmlContentResponse = (string);
 
 export type PrivateCreateUserData = {
     requestBody: PrivateUserCreate;
@@ -230,11 +206,5 @@ export type UsersDeleteUserData = {
 };
 
 export type UsersDeleteUserResponse = (Message);
-
-export type UtilsTestEmailData = {
-    emailTo: string;
-};
-
-export type UtilsTestEmailResponse = (Message);
 
 export type UtilsHealthCheckResponse = (boolean);

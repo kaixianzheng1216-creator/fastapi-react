@@ -2,28 +2,31 @@ from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import Session, delete
+from sqlmodel import Session
 
+from app.api.dependencies import get_db
+from app.bootstrap.initial_data import initialize_data
 from app.core.config import settings
-from app.db.initial_data import init_db
 from app.db.session import engine
 from app.main import app
-from app.modules.items.models import Item
-from app.modules.users.models import User
 from tests.support.data import get_superuser_token_headers
-from tests.support.users import authentication_token_from_email
+from tests.support.users import authentication_token_from_username
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(autouse=True)
 def db() -> Generator[Session]:
-    with Session(engine) as session:
-        init_db(session)
-        yield session
-        statement = delete(Item)
-        session.execute(statement)
-        statement = delete(User)
-        session.execute(statement)
-        session.commit()
+    with engine.connect() as connection:
+        transaction = connection.begin()
+        with Session(
+            bind=connection, join_transaction_mode="create_savepoint"
+        ) as session:
+            initialize_data(session)
+            app.dependency_overrides[get_db] = lambda: session
+            try:
+                yield session
+            finally:
+                app.dependency_overrides.pop(get_db, None)
+        transaction.rollback()
 
 
 @pytest.fixture(scope="module")
@@ -32,13 +35,13 @@ def client() -> Generator[TestClient]:
         yield c
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def superuser_token_headers(client: TestClient) -> dict[str, str]:
     return get_superuser_token_headers(client)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def normal_user_token_headers(client: TestClient, db: Session) -> dict[str, str]:
-    return authentication_token_from_email(
-        client=client, email=settings.EMAIL_TEST_USER, db=db
+    return authentication_token_from_username(
+        client=client, username=settings.TEST_USER_USERNAME, db=db
     )

@@ -45,16 +45,6 @@ def create_item(
     return item
 
 
-def create_item_for_owner(
-    *, session: Session, item_create: ItemCreate, owner_id: uuid.UUID
-) -> Item:
-    item = Item.model_validate(item_create, update={"owner_id": owner_id})
-    session.add(item)
-    session.commit()
-    session.refresh(item)
-    return item
-
-
 def update_item(
     *,
     session: Session,
@@ -72,9 +62,7 @@ def update_item(
     return item
 
 
-def delete_item(
-    *, session: Session, current_user: User, item_id: uuid.UUID
-) -> None:
+def delete_item(*, session: Session, current_user: User, item_id: uuid.UUID) -> None:
     item = get_accessible_item(
         session=session, current_user=current_user, item_id=item_id
     )

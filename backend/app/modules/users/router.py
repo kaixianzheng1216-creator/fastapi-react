@@ -4,8 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.dependencies import SessionDep
 from app.common.schemas import Message
-from app.core.config import settings
-from app.integrations.email.service import generate_new_account_email, send_email
 from app.modules.auth.dependencies import CurrentUser, get_current_active_superuser
 from app.modules.users import service
 from app.modules.users.exceptions import (
@@ -52,20 +50,9 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> UserPublic:
     except UserAlreadyExistsError:
         raise HTTPException(
             status_code=400,
-            detail="The user with this email already exists in the system.",
+            detail="The user with this username already exists in the system.",
         )
 
-    if settings.emails_enabled and user_in.email:
-        email_data = generate_new_account_email(
-            email_to=user_in.email,
-            username=user_in.email,
-            password=user_in.password,
-        )
-        send_email(
-            email_to=user_in.email,
-            subject=email_data.subject,
-            html_content=email_data.html_content,
-        )
     return UserPublic.model_validate(user)
 
 
@@ -80,7 +67,7 @@ def update_user_me(
         )
     except UserAlreadyExistsError:
         raise HTTPException(
-            status_code=409, detail="User with this email already exists"
+            status_code=409, detail="User with this username already exists"
         )
     return UserPublic.model_validate(user)
 
@@ -137,7 +124,7 @@ def register_user(session: SessionDep, user_in: UserRegister) -> UserPublic:
     except UserAlreadyExistsError:
         raise HTTPException(
             status_code=400,
-            detail="The user with this email already exists in the system",
+            detail="The user with this username already exists in the system",
         )
     return UserPublic.model_validate(user)
 
@@ -181,7 +168,7 @@ def update_user(
         )
     except UserAlreadyExistsError:
         raise HTTPException(
-            status_code=409, detail="User with this email already exists"
+            status_code=409, detail="User with this username already exists"
         )
     return UserPublic.model_validate(user)
 

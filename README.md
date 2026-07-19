@@ -19,8 +19,6 @@
 - 🐋 [Docker Compose](https://www.docker.com) 用于开发和生产环境。
 - 🔒 默认启用安全的密码哈希。
 - 🔑 JWT (JSON Web Token) 身份认证。
-- 📫 基于邮件的密码找回。
-- 📬 [Mailcatcher](https://mailcatcher.me) 用于开发期间的本地邮件测试。
 - ✅ 使用 [Pytest](https://pytest.org) 进行测试。
 - 📞 [Traefik](https://traefik.io) 作为反向代理 / 负载均衡器。
 - 🚢 提供使用 Docker Compose 的部署说明，包括如何配置前端 Traefik 代理以自动处理 HTTPS 证书。
@@ -197,12 +195,8 @@ Copier 会询问你一些数据，你可能需要在生成项目前准备好。
 - `project_name`：（默认：`"FastAPI Project"`）项目名称，会展示给 API 用户（在 .env 中）。
 - `stack_name`：（默认：`"fastapi-project"`）用于 Docker Compose 标签和项目名的栈名称（不能包含空格和句点）（在 .env 中）。
 - `secret_key`：（默认：`"changethis"`）项目密钥，用于安全相关，存储在 .env 中，可使用上面的方法生成。
-- `first_superuser`：（默认：`"admin@example.com"`）初始超级用户的邮箱（在 .env 中）。
+- `first_superuser_username`：（默认：`"admin"`）初始超级用户的用户名（在 .env 中）。
 - `first_superuser_password`：（默认：`"changethis"`）初始超级用户的密码（在 .env 中）。
-- `smtp_host`：（默认：`""`）发送邮件的 SMTP 服务器主机，可在 .env 中稍后设置。
-- `smtp_user`：（默认：`""`）发送邮件的 SMTP 服务器用户名，可在 .env 中稍后设置。
-- `smtp_password`：（默认：`""`）发送邮件的 SMTP 服务器密码，可在 .env 中稍后设置。
-- `emails_from_email`：（默认：`"info@example.com"`）发件邮箱账户，可在 .env 中稍后设置。
 - `postgres_password`：（默认：`"changethis"`）PostgreSQL 数据库密码，存储在 .env 中，可使用上面的方法生成。
 - `sentry_dsn`：（默认：`""`）Sentry 的 DSN（如果你在使用 Sentry），可在 .env 中稍后设置。
 

@@ -16,35 +16,15 @@ secret_key:
     python -c "import secrets; print(secrets.token_urlsafe(32))"'
   default: changethis
 
-first_superuser:
+first_superuser_username:
   type: str
-  help: The email of the first superuser (in .env)
-  default: admin@example.com
+  help: The username of the first superuser (in .env)
+  default: admin
 
 first_superuser_password:
   type: str
   help: The password of the first superuser (in .env)
   default: changethis
-
-smtp_host:
-  type: str
-  help: The SMTP server host to send emails, you can set it later in .env
-  default: ""
-
-smtp_user:
-  type: str
-  help: The SMTP server user to send emails, you can set it later in .env
-  default: ""
-
-smtp_password:
-  type: str
-  help: The SMTP server password to send emails, you can set it later in .env
-  default: ""
-
-emails_from_email:
-  type: str
-  help: The email account to send emails from, you can set it later in .env
-  default: info@example.com
 
 postgres_password:
   type: str
