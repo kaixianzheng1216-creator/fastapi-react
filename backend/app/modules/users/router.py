@@ -19,28 +19,22 @@ from app.modules.users.schemas import (
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get(
-    "/",
-    dependencies=[Depends(get_current_active_superuser)],
-    response_model=UsersPublic,
-)
-def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> UsersPublic:
-    """获取用户列表。"""
-    users, count = service.list_users(session=session, skip=skip, limit=limit)
-
-    return UsersPublic(
-        data=[UserPublic.model_validate(user) for user in users], count=count
+@router.post("/signup", response_model=UserPublic)
+def register_user(session: SessionDep, user_in: UserRegister) -> UserPublic:
+    """无需登录即可创建新用户。"""
+    user = service.create_unique_user(
+        session=session,
+        user_create=UserCreate.model_validate(user_in),
     )
 
-
-@router.post(
-    "/", dependencies=[Depends(get_current_active_superuser)], response_model=UserPublic
-)
-def create_user(*, session: SessionDep, user_in: UserCreate) -> UserPublic:
-    """创建新用户。"""
-    user = service.create_unique_user(session=session, user_create=user_in)
-
     return UserPublic.model_validate(user)
+
+
+@router.get("/me", response_model=UserPublic)
+def read_user_me(current_user: CurrentUser) -> UserPublic:
+    """获取当前用户。"""
+
+    return UserPublic.model_validate(current_user)
 
 
 @router.patch("/me", response_model=UserPublic)
@@ -70,12 +64,6 @@ def update_password_me(
     return Message(message="Password updated successfully")
 
 
-@router.get("/me", response_model=UserPublic)
-def read_user_me(current_user: CurrentUser) -> UserPublic:
-    """获取当前用户。"""
-    return UserPublic.model_validate(current_user)
-
-
 @router.delete("/me", response_model=Message)
 def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Message:
     """删除当前用户。"""
@@ -84,15 +72,28 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Message:
     return Message(message="User deleted successfully")
 
 
-@router.post("/signup", response_model=UserPublic)
-def register_user(session: SessionDep, user_in: UserRegister) -> UserPublic:
-    """无需登录即可创建新用户。"""
-    user = service.create_unique_user(
-        session=session,
-        user_create=UserCreate.model_validate(user_in),
-    )
+@router.post(
+    "/", dependencies=[Depends(get_current_active_superuser)], response_model=UserPublic
+)
+def create_user(*, session: SessionDep, user_in: UserCreate) -> UserPublic:
+    """创建新用户。"""
+    user = service.create_unique_user(session=session, user_create=user_in)
 
     return UserPublic.model_validate(user)
+
+
+@router.get(
+    "/",
+    dependencies=[Depends(get_current_active_superuser)],
+    response_model=UsersPublic,
+)
+def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> UsersPublic:
+    """获取用户列表。"""
+    users, count = service.list_users(session=session, skip=skip, limit=limit)
+
+    return UsersPublic(
+        data=[UserPublic.model_validate(user) for user in users], count=count
+    )
 
 
 @router.get("/{user_id}", response_model=UserPublic)

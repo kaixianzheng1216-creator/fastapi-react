@@ -4,6 +4,10 @@ from fastapi.responses import JSONResponse
 from app.common.exceptions import ApplicationError
 
 
+def add_exception_handlers(app: FastAPI) -> None:
+    app.add_exception_handler(ApplicationError, application_error_handler)
+
+
 async def application_error_handler(
     _request: Request, exception: Exception
 ) -> JSONResponse:
@@ -14,7 +18,3 @@ async def application_error_handler(
         content={"detail": exception.detail},
         headers=exception.headers,
     )
-
-
-def add_exception_handlers(app: FastAPI) -> None:
-    app.add_exception_handler(ApplicationError, application_error_handler)

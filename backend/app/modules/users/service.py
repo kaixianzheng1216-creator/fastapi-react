@@ -17,18 +17,15 @@ from app.modules.users.models import User
 from app.modules.users.schemas import UserCreate, UserUpdate, UserUpdateMe
 
 
-def list_users(
-    *, session: Session, skip: int, limit: int
-) -> tuple[Sequence[User], int]:
-    count = session.exec(select(func.count()).select_from(User)).one()
-    statement = (
-        select(User).order_by(col(User.created_at).desc()).offset(skip).limit(limit)
-    )
+def create_unique_user(*, session: Session, user_create: UserCreate) -> User:
+    if get_user_by_username(session=session, username=user_create.username):
+        raise UserAlreadyExistsError
 
-    return session.exec(statement).all(), count
+    return create_user(session=session, user_create=user_create)
 
 
 def get_user_by_username(*, session: Session, username: str) -> User | None:
+
     return session.exec(select(User).where(User.username == username)).first()
 
 
@@ -38,27 +35,6 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
         update={"hashed_password": get_password_hash(user_create.password)},
     )
 
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-
-    return user
-
-
-def create_unique_user(*, session: Session, user_create: UserCreate) -> User:
-    if get_user_by_username(session=session, username=user_create.username):
-        raise UserAlreadyExistsError
-
-    return create_user(session=session, user_create=user_create)
-
-
-def update_user(*, session: Session, user: User, user_update: UserUpdate) -> User:
-    user_data = user_update.model_dump(exclude_unset=True)
-    extra_data: dict[str, Any] = {}
-    if "password" in user_data:
-        extra_data["hashed_password"] = get_password_hash(user_data["password"])
-
-    user.sqlmodel_update(user_data, update=extra_data)
     session.add(user)
     session.commit()
     session.refresh(user)
@@ -98,6 +74,25 @@ def update_current_password(
     session.commit()
 
 
+def delete_current_user(*, session: Session, current_user: User) -> None:
+    if current_user.is_superuser:
+        raise SelfDeletionForbiddenError
+
+    session.delete(current_user)
+    session.commit()
+
+
+def list_users(
+    *, session: Session, skip: int, limit: int
+) -> tuple[Sequence[User], int]:
+    count = session.exec(select(func.count()).select_from(User)).one()
+    statement = (
+        select(User).order_by(col(User.created_at).desc()).offset(skip).limit(limit)
+    )
+
+    return session.exec(statement).all(), count
+
+
 def get_user_for_request(
     *, session: Session, user_id: uuid.UUID, current_user: User
 ) -> User:
@@ -133,12 +128,18 @@ def update_user_by_id(
     return update_user(session=session, user=user, user_update=user_update)
 
 
-def delete_current_user(*, session: Session, current_user: User) -> None:
-    if current_user.is_superuser:
-        raise SelfDeletionForbiddenError
+def update_user(*, session: Session, user: User, user_update: UserUpdate) -> User:
+    user_data = user_update.model_dump(exclude_unset=True)
+    extra_data: dict[str, Any] = {}
+    if "password" in user_data:
+        extra_data["hashed_password"] = get_password_hash(user_data["password"])
 
-    session.delete(current_user)
+    user.sqlmodel_update(user_data, update=extra_data)
+    session.add(user)
     session.commit()
+    session.refresh(user)
+
+    return user
 
 
 def delete_user_by_id(

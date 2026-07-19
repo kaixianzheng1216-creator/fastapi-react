@@ -8,15 +8,13 @@ from pwdlib.hashers.bcrypt import BcryptHasher
 
 from app.core.config import settings
 
+ALGORITHM = "HS256"
 password_hash = PasswordHash(
     (
         Argon2Hasher(),
         BcryptHasher(),
     )
 )
-
-
-ALGORITHM = "HS256"
 
 
 def create_access_token(subject: str | Any, expires_delta: timedelta) -> str:

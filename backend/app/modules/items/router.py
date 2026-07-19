@@ -11,6 +11,18 @@ from app.modules.items.schemas import ItemCreate, ItemPublic, ItemsPublic, ItemU
 router = APIRouter(prefix="/items", tags=["items"])
 
 
+@router.post("/", response_model=ItemPublic)
+def create_item(
+    *, session: SessionDep, current_user: CurrentUser, item_in: ItemCreate
+) -> ItemPublic:
+    """创建新物品。"""
+    item = service.create_item(
+        session=session, current_user=current_user, item_create=item_in
+    )
+
+    return ItemPublic.model_validate(item)
+
+
 @router.get("/", response_model=ItemsPublic)
 def read_items(
     session: SessionDep, current_user: CurrentUser, skip: int = 0, limit: int = 100
@@ -32,18 +44,6 @@ def read_item(
     """根据 ID 获取物品。"""
     item = service.get_accessible_item(
         session=session, current_user=current_user, item_id=id
-    )
-
-    return ItemPublic.model_validate(item)
-
-
-@router.post("/", response_model=ItemPublic)
-def create_item(
-    *, session: SessionDep, current_user: CurrentUser, item_in: ItemCreate
-) -> ItemPublic:
-    """创建新物品。"""
-    item = service.create_item(
-        session=session, current_user=current_user, item_create=item_in
     )
 
     return ItemPublic.model_validate(item)

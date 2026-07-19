@@ -9,6 +9,18 @@ from app.modules.items.schemas import ItemCreate, ItemUpdate
 from app.modules.users.models import User
 
 
+def create_item(
+    *, session: Session, current_user: User, item_create: ItemCreate
+) -> Item:
+    item = Item.model_validate(item_create, update={"owner_id": current_user.id})
+
+    session.add(item)
+    session.commit()
+    session.refresh(item)
+
+    return item
+
+
 def list_items(
     *, session: Session, current_user: User, skip: int, limit: int
 ) -> tuple[Sequence[Item], int]:
@@ -21,6 +33,7 @@ def list_items(
 
     count = session.exec(count_statement).one()
     items = session.exec(statement.offset(skip).limit(limit)).all()
+
     return items, count
 
 
@@ -34,18 +47,6 @@ def get_accessible_item(
 
     if not current_user.is_superuser and item.owner_id != current_user.id:
         raise ItemPermissionError
-
-    return item
-
-
-def create_item(
-    *, session: Session, current_user: User, item_create: ItemCreate
-) -> Item:
-    item = Item.model_validate(item_create, update={"owner_id": current_user.id})
-
-    session.add(item)
-    session.commit()
-    session.refresh(item)
 
     return item
 

@@ -8,6 +8,11 @@ from app.modules.users.models import User
 from app.modules.users.schemas import UserCreate
 
 
+def create_initial_data() -> None:
+    with Session(engine) as session:
+        initialize_data(session)
+
+
 def initialize_data(session: Session) -> None:
     existing_superuser = session.exec(select(User).where(User.is_superuser)).first()
 
@@ -27,8 +32,3 @@ def initialize_data(session: Session) -> None:
                 is_superuser=True,
             ),
         )
-
-
-def create_initial_data() -> None:
-    with Session(engine) as session:
-        initialize_data(session)
