@@ -2,76 +2,76 @@ services:
   traefik:
     image: traefik:3.6
     ports:
-      # Listen on port 80, default for HTTP, necessary to redirect to HTTPS
+      # 监听 HTTP 默认使用的 80 端口，用于重定向到 HTTPS
       - "80:80"
-      # Listen on port 443, default for HTTPS
+      # 监听 HTTPS 默认使用的 443 端口
       - "443:443"
     restart: always
     labels:
-      # Enable Traefik for this service, to make it available in the public network
+      # 为此服务启用 Traefik，使其能够通过公共网络访问
       - traefik.enable=true
-      # Use the traefik-public network (declared below)
+      # 使用下方声明的 traefik-public 网络
       - traefik.docker.network=traefik-public
-      # Define the port inside of the Docker service to use
+      # 指定要使用的 Docker 服务内部端口
       - traefik.http.services.traefik-dashboard.loadbalancer.server.port=8080
-      # Make Traefik use this domain (from an environment variable) in HTTP
+      # 让 Traefik 通过环境变量指定的域名处理 HTTP 请求
       - traefik.http.routers.traefik-dashboard-http.entrypoints=http
       - traefik.http.routers.traefik-dashboard-http.rule=Host(`traefik.${DOMAIN?Variable not set}`)
-      # traefik-https the actual router using HTTPS
+      # traefik-https 是实际处理 HTTPS 请求的路由器
       - traefik.http.routers.traefik-dashboard-https.entrypoints=https
       - traefik.http.routers.traefik-dashboard-https.rule=Host(`traefik.${DOMAIN?Variable not set}`)
       - traefik.http.routers.traefik-dashboard-https.tls=true
-      # Use the "le" (Let's Encrypt) resolver created below
+      # 使用下方创建的 "le"（Let's Encrypt）证书解析器
       - traefik.http.routers.traefik-dashboard-https.tls.certresolver=le
-      # Use the special Traefik service api@internal with the web UI/Dashboard
+      # 使用 Traefik 的特殊服务 api@internal 提供网页管理面板
       - traefik.http.routers.traefik-dashboard-https.service=api@internal
-      # https-redirect middleware to redirect HTTP to HTTPS
+      # 使用 https-redirect 中间件将 HTTP 重定向到 HTTPS
       - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
       - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
-      # traefik-http set up only to use the middleware to redirect to https
+      # traefik-http 仅用于调用中间件并重定向到 HTTPS
       - traefik.http.routers.traefik-dashboard-http.middlewares=https-redirect
-      # admin-auth middleware with HTTP Basic auth
-      # Using the environment variables USERNAME and HASHED_PASSWORD
+      # 使用 HTTP 基本认证的 admin-auth 中间件
+      # 认证信息来自环境变量 USERNAME 和 HASHED_PASSWORD
       - traefik.http.middlewares.admin-auth.basicauth.users=${USERNAME?Variable not set}:${HASHED_PASSWORD?Variable not set}
-      # Enable HTTP Basic auth, using the middleware created above
+      # 使用上方创建的中间件启用 HTTP 基本认证
       - traefik.http.routers.traefik-dashboard-https.middlewares=admin-auth
     volumes:
-      # Add Docker as a mounted volume, so that Traefik can read the labels of other services
+      # 挂载 Docker 套接字，使 Traefik 能够读取其他服务的标签
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # Mount the volume to store the certificates
+      # 挂载用于保存证书的数据卷
       - traefik-public-certificates:/certificates
     command:
-      # Enable Docker in Traefik, so that it reads labels from Docker services
+      # 在 Traefik 中启用 Docker，使其能够读取 Docker 服务的标签
       - --providers.docker
-      # Do not expose all Docker services, only the ones explicitly exposed
+      # 不公开所有 Docker 服务，只公开明确启用的服务
       - --providers.docker.exposedbydefault=false
-      # Create an entrypoint "http" listening on port 80
+      # 创建监听 80 端口的 "http" 入口点
       - --entrypoints.http.address=:80
-      # Create an entrypoint "https" listening on port 443
+      # 创建监听 443 端口的 "https" 入口点
       - --entrypoints.https.address=:443
-      # Create the certificate resolver "le" for Let's Encrypt, uses the environment variable EMAIL
+      # 创建 Let's Encrypt 的 "le" 证书解析器，并使用环境变量 EMAIL
       - --certificatesresolvers.le.acme.email=${EMAIL?Variable not set}
-      # Store the Let's Encrypt certificates in the mounted volume
+      # 将 Let's Encrypt 证书保存在已挂载的数据卷中
       - --certificatesresolvers.le.acme.storage=/certificates/acme.json
-      # Use the TLS Challenge for Let's Encrypt
+      # 使用 Let's Encrypt 的 TLS Challenge 验证方式
       - --certificatesresolvers.le.acme.tlschallenge=true
-      # Enable the access log, with HTTP requests
+      # 启用记录 HTTP 请求的访问日志
       - --accesslog
-      # Enable the Traefik log, for configurations and errors
+      # 启用 Traefik 日志，记录配置和错误
       - --log
-      # Enable the Dashboard and API
+      # 启用管理面板和 API
       - --api
     networks:
-      # Use the public network created to be shared between Traefik and
-      # any other service that needs to be publicly available with HTTPS
+      # 使用创建的公共网络，让 Traefik 与其他需要通过 HTTPS
+      # 对外提供服务的容器共享该网络
       - traefik-public
 
 volumes:
-  # Create a volume to store the certificates, even if the container is recreated
+  # 创建用于保存证书的数据卷，即使容器重建也不会丢失证书
   traefik-public-certificates:
 
 networks:
-  # Use the previously created public network "traefik-public", shared with other
-  # services that need to be publicly available via this Traefik
+  # 使用之前创建的公共网络 "traefik-public"，并与其他需要通过此
+  # Traefik 对外提供服务的容器共享
   traefik-public:
     external: true

@@ -5,7 +5,7 @@ on:
       - opened
       - synchronize
       - reopened
-      # For label-checker
+      # 供 label-checker 使用
       - labeled
       - unlabeled
 
@@ -22,7 +22,7 @@ jobs:
     - uses: actions/labeler@f27b608878404679385c85cfa523b85ccb86e213 # v6.1.0
       if: ${{ github.event.action != 'labeled' && github.event.action != 'unlabeled' }}
     - run: echo "Done adding labels"
-  # Run this after labeler applied labels
+  # 在 labeler 添加标签后运行
   check-labels:
     needs:
       - labeler

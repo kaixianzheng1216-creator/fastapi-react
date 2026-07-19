@@ -1,7 +1,7 @@
 services:
-  # Local services are available on their ports, but also available on:
-  # http://api.localhost.tiangolo.com: backend
-  # etc. To enable it, update .env, set:
+  # 本地服务既可以通过各自端口访问，也可以通过以下地址访问：
+  # http://api.localhost.tiangolo.com：后端
+  # 要启用此功能，请在 .env 中设置：
   # DOMAIN=localhost.tiangolo.com
   proxy:
     image: traefik:3.6
@@ -10,34 +10,34 @@ services:
     ports:
       - "80:80"
       - "8090:8080"
-    # Duplicate the command from compose.yml to add --api.insecure=true
+    # 复制 compose.yml 中的命令，并额外添加 --api.insecure=true
     command:
-      # Enable Docker in Traefik, so that it reads labels from Docker services
+      # 在 Traefik 中启用 Docker，使其能够读取 Docker 服务的标签
       - --providers.docker
-      # Add a constraint to only use services with the label for this stack
+      # 添加约束，只使用带有当前技术栈标签的服务
       - --providers.docker.constraints=Label(`traefik.constraint-label`, `traefik-public`)
-      # Do not expose all Docker services, only the ones explicitly exposed
+      # 不公开所有 Docker 服务，只公开明确启用的服务
       - --providers.docker.exposedbydefault=false
-      # Create an entrypoint "http" listening on port 80
+      # 创建监听 80 端口的 "http" 入口点
       - --entrypoints.http.address=:80
-      # Create an entrypoint "https" listening on port 443
+      # 创建监听 443 端口的 "https" 入口点
       - --entrypoints.https.address=:443
-      # Enable the access log, with HTTP requests
+      # 启用记录 HTTP 请求的访问日志
       - --accesslog
-      # Enable the Traefik log, for configurations and errors
+      # 启用 Traefik 日志，记录配置和错误
       - --log
-      # Enable debug logging for local development
+      # 为本地开发启用调试日志
       - --log.level=DEBUG
-      # Enable the Dashboard and API
+      # 启用管理面板和 API
       - --api
-      # Enable the Dashboard and API in insecure mode for local development
+      # 在本地开发中以不安全模式启用管理面板和 API
       - --api.insecure=true
     labels:
-      # Enable Traefik for this service, to make it available in the public network
+      # 为此服务启用 Traefik，使其能够通过公共网络访问
       - traefik.enable=true
       - traefik.constraint-label=traefik-public
-      # Dummy https-redirect middleware that doesn't really redirect, only to
-      # allow running it locally
+      # 本地使用的虚拟 https-redirect 中间件，不会真正执行重定向，
+      # 仅用于确保配置可以在本地运行
       - traefik.http.middlewares.https-redirect.contenttype.autodetect=false
     networks:
       - traefik-public
@@ -55,7 +55,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    # command: sleep infinity  # Infinite loop to keep container alive doing nothing
+    # command: sleep infinity  # 通过无限循环让容器保持运行，但不执行任何工作
     command:
       - uvicorn
       - app.main:app
@@ -72,7 +72,8 @@ services:
             - .venv
         - path: ./backend/pyproject.toml
           action: rebuild
+
 networks:
   traefik-public:
-    # For local dev, don't expect an external Traefik network
+    # 本地开发不依赖外部 Traefik 网络
     external: false

@@ -10,7 +10,7 @@ import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
 ${imports if imports else ""}
 
-# revision identifiers, used by Alembic.
+# Alembic 使用的迁移版本标识符。
 revision = ${repr(up_revision)}
 down_revision = ${repr(down_revision)}
 branch_labels = ${repr(branch_labels)}

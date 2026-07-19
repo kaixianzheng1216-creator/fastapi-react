@@ -16,7 +16,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Preserve existing login identifiers so current accounts keep working.
+    # 保留现有登录标识，确保已有账号可以继续使用。
     op.drop_index("ix_user_email", table_name="user")
     op.alter_column(
         "user",

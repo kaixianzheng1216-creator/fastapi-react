@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
-      security-events: write # Required for upload-sarif (used by zizmor-action) to upload SARIF files.
+      security-events: write # zizmor-action 使用 upload-sarif 上传 SARIF 文件所必需。
     steps:
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0

@@ -5,7 +5,7 @@ on:
 permissions: {}
 
 env:
-  # Forks and Dependabot don't have access to secrets
+  # Fork 仓库和 Dependabot 无法访问密钥
   HAS_SECRETS: ${{ secrets.PRE_COMMIT != '' }}
 
 jobs:
@@ -21,20 +21,20 @@ jobs:
         name: Checkout PR for own repo
         if: env.HAS_SECRETS == 'true'
         with:
-          # To be able to commit it needs to fetch the head of the branch, not the
-          # merge commit
+          # 为了能够提交修改，需要拉取分支最新提交，
+          # 而不是合并提交
           ref: ${{ github.head_ref }}
-          # And it needs the full history to be able to compute diffs
+          # 需要完整历史记录才能计算差异
           fetch-depth: 0
-          # A token other than the default GITHUB_TOKEN is needed to be able to trigger CI
+          # 需要使用默认 GITHUB_TOKEN 以外的令牌才能触发 CI
           token: ${{ secrets.PRE_COMMIT }} # zizmor: ignore[secrets-outside-env]
-          persist-credentials: true # Required for `git push` command
-      # pre-commit lite ci needs the default checkout configs to work
+          persist-credentials: true # 执行 `git push` 命令所必需
+      # pre-commit lite CI 需要使用默认 checkout 配置
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         name: Checkout PR for fork
         if: env.HAS_SECRETS == 'false'
         with:
-        # To be able to commit it needs the head branch of the PR, the remote one
+        # 为了能够提交修改，需要拉取 PR 的远程源分支
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
@@ -45,8 +45,8 @@ jobs:
       - name: Setup uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
-          # Before upgrading uv version, make sure astral-sh/setup-uv knows its checksum.
-          # See: https://github.com/astral-sh/setup-uv/issues/851#issuecomment-4282017837
+          # 升级 uv 版本前，请确认 astral-sh/setup-uv 已收录对应校验和。
+          # 参考：https://github.com/astral-sh/setup-uv/issues/851#issuecomment-4282017837
           version: "0.11.18"
           cache-dependency-glob: |
             requirements**.txt
@@ -79,7 +79,7 @@ jobs:
         run: exit 1
 
   # https://github.com/marketplace/actions/alls-green#why
-  pre-commit-alls-green:  # This job does nothing and is only used for the branch protection
+  pre-commit-alls-green:  # 此任务不执行实际操作，仅用于分支保护
     if: always()
     needs:
       - pre-commit

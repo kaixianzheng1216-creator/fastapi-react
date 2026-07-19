@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # GitHub Actions
+  # GitHub Actions 工作流
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -17,7 +17,7 @@ updates:
       github-actions:
         patterns:
           - "*"
-  # Python uv
+  # Python uv 依赖
   - package-ecosystem: uv
     directory: /
     schedule:
@@ -31,7 +31,7 @@ updates:
       python-packages:
         patterns:
           - "*"
-  # Docker
+  # Docker 镜像
   - package-ecosystem: docker
     directories:
       - /backend
@@ -45,7 +45,7 @@ updates:
       docker:
         patterns:
           - "*"
-  # Docker Compose
+  # Docker Compose 配置
   - package-ecosystem: docker-compose
     directory: /
     schedule:
@@ -58,7 +58,7 @@ updates:
       docker-compose:
         patterns:
           - "*"
-  # pre-commit
+  # pre-commit 钩子
   - package-ecosystem: "pre-commit"
     directory: "/"
     schedule:

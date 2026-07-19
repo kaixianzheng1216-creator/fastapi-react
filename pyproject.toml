@@ -14,9 +14,9 @@ extend-exclude = [
 
 [tool.typos.default]
 extend-ignore-re = [
-    # GitHub usernames in @mentions
+    # @提及中的 GitHub 用户名
     "@[a-zA-Z0-9](?:-?[a-zA-Z0-9])*",
-    # Name of the package in the PR title
+    # PR 标题中的软件包名称
     "Bump certifi ",
 ]
 

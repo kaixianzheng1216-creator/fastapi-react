@@ -10,7 +10,7 @@ permissions: {}
 jobs:
   deploy:
     environment: production
-    # Do not deploy in the main repository, only in user projects
+    # 不在上游主仓库中部署，只在用户项目中部署
     if: github.repository_owner != 'fastapi'
     runs-on:
       - self-hosted
