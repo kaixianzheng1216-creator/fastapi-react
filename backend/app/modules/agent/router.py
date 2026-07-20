@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 
 from app.modules.agent import service
@@ -13,8 +13,13 @@ router = APIRouter(
 
 
 @router.post("/chat")
-async def chat(body: AgentChatRequest, current_user: CurrentUser) -> StreamingResponse:
-    events = await service.stream_chat(
+async def chat(
+    request: Request,
+    body: AgentChatRequest,
+    current_user: CurrentUser,
+) -> StreamingResponse:
+    events = service.stream_chat(
+        agent=request.app.state.agent,
         user_id=current_user.id,
         conversation_id=body.conversation_id,
         message=body.message,

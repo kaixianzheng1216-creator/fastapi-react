@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 from collections.abc import AsyncIterator
@@ -11,7 +10,7 @@ from langchain_core.messages import BaseMessage
 from langchain_deepseek import ChatDeepSeek
 from langfuse import propagate_attributes
 from langfuse.langchain import CallbackHandler
-from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from app.core.config import settings
 from app.modules.agent.connections.exa import load_exa_tools
@@ -23,33 +22,21 @@ SYSTEM_PROMPT = (
 STREAM_ERROR_DETAIL = "Agent 流式响应失败"
 TRACE_NAME = "agent-chat"
 logger = logging.getLogger(__name__)
-_agent: Any | None = None
-_agent_lock = asyncio.Lock()
 
 
-async def stream_chat(
+def stream_chat(
     *,
+    agent: Any,
     user_id: UUID,
     conversation_id: UUID,
     message: str,
 ) -> AsyncIterator[str]:
-    current_agent = await _get_agent()
-    events = _generate_events(current_agent, user_id, conversation_id, message)
+    events = _generate_events(agent, user_id, conversation_id, message)
 
     return events
 
 
-async def _get_agent() -> Any:
-    global _agent
-
-    async with _agent_lock:
-        if _agent is None:
-            _agent = await _create_agent()
-
-        return _agent
-
-
-async def _create_agent() -> Any:
+async def create_agent(checkpointer: AsyncPostgresSaver) -> Any:
     if not settings.DEEPSEEK_API_KEY:
         raise AgentNotConfiguredError
 
@@ -66,7 +53,7 @@ async def _create_agent() -> Any:
         model=model,
         tools=tools,
         system_prompt=SYSTEM_PROMPT,
-        checkpointer=InMemorySaver(),
+        checkpointer=checkpointer,
     )
 
     return new_agent
