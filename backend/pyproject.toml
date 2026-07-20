@@ -21,6 +21,7 @@ dependencies = [
     "langchain-deepseek>=1.0.0,<2.0.0",
     "langchain-mcp-adapters>=0.3.0,<1.0.0",
     "langfuse>=4,<5",
+    "langgraph-checkpoint-postgres>=3,<4",
 ]
 
 [dependency-groups]
