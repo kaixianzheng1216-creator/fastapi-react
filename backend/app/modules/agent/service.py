@@ -1,13 +1,14 @@
+import asyncio
 import json
 import logging
 from collections.abc import AsyncIterator
-from functools import cache
 from typing import Any, cast
 from uuid import UUID
 
 from deepagents import create_deep_agent
 from langchain_core.messages import BaseMessage
 from langchain_deepseek import ChatDeepSeek
+from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.checkpoint.memory import InMemorySaver
 
 from app.core.config import settings
@@ -15,26 +16,48 @@ from app.modules.agent.exceptions import AgentNotConfiguredError
 
 SYSTEM_PROMPT = "你是一个乐于助人的 AI 助手。除非用户另有要求，否则使用中文回答。"
 STREAM_ERROR_DETAIL = "Agent 流式响应失败"
+EXA_MCP_URL = "https://mcp.exa.ai/mcp"
 logger = logging.getLogger(__name__)
+_agent: Any | None = None
+_agent_lock = asyncio.Lock()
 
 
-def stream_chat(
+async def stream_chat(
     *,
     user_id: UUID,
     conversation_id: UUID,
     message: str,
 ) -> AsyncIterator[str]:
-    agent = _get_agent()
+    current_agent = await _get_agent()
     thread_id = f"{user_id}:{conversation_id}"
-    events = _generate_events(agent, thread_id, message)
+    events = _generate_events(current_agent, thread_id, message)
 
     return events
 
 
-@cache
-def _get_agent() -> Any:
+async def _get_agent() -> Any:
+    global _agent
+
+    async with _agent_lock:
+        if _agent is None:
+            _agent = await _create_agent()
+
+        return _agent
+
+
+async def _create_agent() -> Any:
     if not settings.DEEPSEEK_API_KEY:
         raise AgentNotConfiguredError
+
+    mcp_client = MultiServerMCPClient(
+        {
+            "exa": {
+                "transport": "streamable_http",
+                "url": EXA_MCP_URL,
+            }
+        }
+    )
+    tools = await mcp_client.get_tools()
 
     model = ChatDeepSeek(
         model=settings.DEEPSEEK_MODEL,
@@ -43,11 +66,14 @@ def _get_agent() -> Any:
         extra_body={"thinking": {"type": "enabled"}},
     )
 
-    return create_deep_agent(
+    new_agent = create_deep_agent(
         model=model,
+        tools=tools,
         system_prompt=SYSTEM_PROMPT,
         checkpointer=InMemorySaver(),
     )
+
+    return new_agent
 
 
 async def _generate_events(

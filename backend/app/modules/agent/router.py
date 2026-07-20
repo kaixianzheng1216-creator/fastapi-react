@@ -14,7 +14,7 @@ router = APIRouter(
 
 @router.post("/chat")
 async def chat(body: AgentChatRequest, current_user: CurrentUser) -> StreamingResponse:
-    events = service.stream_chat(
+    events = await service.stream_chat(
         user_id=current_user.id,
         conversation_id=body.conversation_id,
         message=body.message,
