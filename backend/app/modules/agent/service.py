@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 from collections.abc import AsyncIterator
+from pathlib import Path
 from typing import Any, cast
 from uuid import UUID
 
@@ -16,7 +17,9 @@ from app.core.config import settings
 from app.modules.agent.connections.exa import load_exa_tools
 from app.modules.agent.exceptions import AgentNotConfiguredError
 
-SYSTEM_PROMPT = "你是一个乐于助人的 AI 助手。除非用户另有要求，否则使用中文回答。"
+SYSTEM_PROMPT = (
+    Path(__file__).with_name("instructions.md").read_text(encoding="utf-8").strip()
+)
 STREAM_ERROR_DETAIL = "Agent 流式响应失败"
 TRACE_NAME = "agent-chat"
 logger = logging.getLogger(__name__)
