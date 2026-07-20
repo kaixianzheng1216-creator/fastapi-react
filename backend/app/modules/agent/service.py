@@ -6,7 +6,7 @@ from typing import Any, cast
 from uuid import UUID
 
 from deepagents import create_deep_agent
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import AIMessageChunk, ToolMessage
 from langchain_deepseek import ChatDeepSeek
 from langfuse import propagate_attributes
 from langfuse.langchain import CallbackHandler
@@ -90,9 +90,24 @@ async def _generate_events(
                     continue
 
                 message_chunk, _ = cast(
-                    "tuple[BaseMessage, dict[str, Any]]",
+                    "tuple[AIMessageChunk | ToolMessage, dict[str, Any]]",
                     stream_part["data"],
                 )
+
+                if isinstance(message_chunk, ToolMessage):
+                    yield _encode_sse(
+                        "tool-result",
+                        {
+                            "id": message_chunk.tool_call_id,
+                            "name": message_chunk.name,
+                            "result": message_chunk.text,
+                        },
+                    )
+
+                    continue
+
+                for tool_call_chunk in message_chunk.tool_call_chunks:
+                    yield _encode_sse("tool-call-delta", dict(tool_call_chunk))
 
                 reasoning_delta = message_chunk.additional_kwargs.get(
                     "reasoning_content"
@@ -112,7 +127,7 @@ async def _generate_events(
     yield _encode_sse("done")
 
 
-def _encode_sse(event: str, data: dict[str, str] | None = None) -> str:
+def _encode_sse(event: str, data: dict[str, Any] | None = None) -> str:
     payload = json.dumps(data or {}, ensure_ascii=False)
 
     return f"event: {event}\ndata: {payload}\n\n"
