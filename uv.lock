@@ -86,6 +86,7 @@ version = "0.1.0"
 source = { editable = "backend" }
 dependencies = [
     { name = "alembic" },
+    { name = "assistant-stream" },
     { name = "deepagents" },
     { name = "fastapi" },
     { name = "langchain-deepseek" },
@@ -115,6 +116,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "alembic", specifier = ">=1.12.1,<2.0.0" },
+    { name = "assistant-stream", specifier = ">=0.0.34,<0.1.0" },
     { name = "deepagents", specifier = ">=0.6.10,<0.7.0" },
     { name = "fastapi", specifier = ">=0.138.1,<1.0.0" },
     { name = "langchain-deepseek", specifier = ">=1.0.0,<2.0.0" },
@@ -182,6 +184,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/74/cd/15777dfde1c29d96de7f18edf4cc94c385646852e7c7b0320aa91ccca583/argon2_cffi_bindings-25.1.0-cp39-abi3-win32.whl", hash = "sha256:473bcb5f82924b1becbb637b63303ec8d10e84c8d241119419897a26116515d2", size = 27180, upload-time = "2025-07-30T10:01:57.759Z" },
     { url = "https://files.pythonhosted.org/packages/e2/c6/a759ece8f1829d1f162261226fbfd2c6832b3ff7657384045286d2afa384/argon2_cffi_bindings-25.1.0-cp39-abi3-win_amd64.whl", hash = "sha256:a98cd7d17e9f7ce244c0803cad3c23a7d379c301ba618a5fa76a67d116618b98", size = 31715, upload-time = "2025-07-30T10:01:58.56Z" },
     { url = "https://files.pythonhosted.org/packages/42/b9/f8d6fa329ab25128b7e98fd83a3cb34d9db5b059a9847eddb840a0af45dd/argon2_cffi_bindings-25.1.0-cp39-abi3-win_arm64.whl", hash = "sha256:b0fdbcf513833809c882823f98dc2f931cf659d9a1429616ac3adebb49f5db94", size = 27149, upload-time = "2025-07-30T10:01:59.329Z" },
+]
+
+[[package]]
+name = "assistant-stream"
+version = "0.0.34"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "starlette" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/07/23/462e7711676c60cbf044525a8f262c08c7c017aeabae9a41e8a74d87d294/assistant_stream-0.0.34.tar.gz", hash = "sha256:82501cc41af7b9aa5454894fadce47f144fcdfa78dca7ba4bfa3a162a5737682", size = 108247, upload-time = "2026-06-17T18:11:34.7Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9e/fe/d8eaddc7365d606b888eb38cbfd311ae8eb0d6d0a1e6c64105698f47ad52/assistant_stream-0.0.34-py3-none-any.whl", hash = "sha256:4b847a37eedee3f8defaa4d69ac33b03381fe2edc812db9068a06161123c3c51", size = 22652, upload-time = "2026-06-17T18:11:33.441Z" },
 ]
 
 [[package]]

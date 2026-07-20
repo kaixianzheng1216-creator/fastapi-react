@@ -1,3 +1,6 @@
+from assistant_stream.serialization import (  # type: ignore[import-untyped]
+    DataStreamResponse,
+)
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 
@@ -15,19 +18,15 @@ router = APIRouter(
 @router.post("/chat")
 async def chat(
     request: Request,
-    body: AgentChatRequest,
+    chat_request: AgentChatRequest,
     current_user: CurrentUser,
 ) -> StreamingResponse:
-    events = service.stream_chat(
+    chat_stream = service.stream_chat(
         agent=request.app.state.agent,
         user_id=current_user.id,
-        conversation_id=body.conversation_id,
-        message=body.message,
+        chat_request=chat_request,
     )
 
-    response = StreamingResponse(
-        events,
-        media_type="text/event-stream",
-    )
+    response: StreamingResponse = DataStreamResponse(chat_stream)
 
     return response

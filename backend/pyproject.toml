@@ -22,6 +22,7 @@ dependencies = [
     "langchain-mcp-adapters>=0.3.0,<1.0.0",
     "langfuse>=4,<5",
     "langgraph-checkpoint-postgres>=3,<4",
+    "assistant-stream>=0.0.34,<0.1.0",
 ]
 
 [dependency-groups]

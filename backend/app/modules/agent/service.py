@@ -1,12 +1,16 @@
 import json
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 from uuid import UUID
 
+from assistant_stream import RunController, create_run  # type: ignore[import-untyped]
+from assistant_stream.modules.langgraph import (  # type: ignore[import-untyped]
+    append_langgraph_event,
+)
 from deepagents import create_deep_agent
-from langchain_core.messages import AIMessageChunk, ToolMessage
+from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
 from langchain_deepseek import ChatDeepSeek
 from langfuse import propagate_attributes
 from langfuse.langchain import CallbackHandler
@@ -15,6 +19,11 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from app.core.config import settings
 from app.modules.agent.connections.exa import load_exa_tools
 from app.modules.agent.exceptions import AgentNotConfiguredError
+from app.modules.agent.schemas import (
+    AddMessageCommand,
+    AgentChatRequest,
+    AgentCommand,
+)
 
 SYSTEM_PROMPT = (
     Path(__file__).with_name("instructions.md").read_text(encoding="utf-8").strip()
@@ -22,18 +31,6 @@ SYSTEM_PROMPT = (
 STREAM_ERROR_DETAIL = "Agent 流式响应失败"
 TRACE_NAME = "agent-chat"
 logger = logging.getLogger(__name__)
-
-
-def stream_chat(
-    *,
-    agent: Any,
-    user_id: UUID,
-    conversation_id: UUID,
-    message: str,
-) -> AsyncIterator[str]:
-    events = _generate_events(agent, user_id, conversation_id, message)
-
-    return events
 
 
 async def create_agent(checkpointer: AsyncPostgresSaver) -> Any:
@@ -59,75 +56,87 @@ async def create_agent(checkpointer: AsyncPostgresSaver) -> Any:
     return new_agent
 
 
-async def _generate_events(
+def stream_chat(
+    *,
     agent: Any,
     user_id: UUID,
-    conversation_id: UUID,
-    message: str,
-) -> AsyncIterator[str]:
-    input_state = {"messages": [{"role": "user", "content": message}]}
-    thread_id = f"{user_id}:{conversation_id}"
-    config = {
-        "configurable": {"thread_id": thread_id},
-        "callbacks": [CallbackHandler()],
-    }
+    chat_request: AgentChatRequest,
+) -> AsyncGenerator[Any]:
+    async def run_agent(controller: RunController) -> None:
+        await _run_chat(controller, agent, user_id, chat_request)
+
+    chat_stream: AsyncGenerator[Any] = create_run(
+        run_agent,
+        state=chat_request.state,
+    )
+
+    return chat_stream
+
+
+async def _run_chat(
+    controller: RunController,
+    agent: Any,
+    user_id: UUID,
+    chat_request: AgentChatRequest,
+) -> None:
+    input_messages = _convert_commands_to_messages(chat_request.commands)
+    thread_id = f"{user_id}:{chat_request.thread_id}"
 
     try:
+        if controller.state is None:
+            controller.state = {"messages": []}
+        elif "messages" not in controller.state:
+            controller.state["messages"] = []
+
+        for message in input_messages:
+            controller.state["messages"].append(message.model_dump())
+
         with propagate_attributes(
             trace_name=TRACE_NAME,
             user_id=str(user_id),
             session_id=thread_id,
         ):
-            stream = agent.astream(
-                input_state,
-                config=config,
-                stream_mode="messages",
-                version="v2",
-            )
-
-            async for stream_part in stream:
-                if stream_part["ns"]:
-                    continue
-
-                message_chunk, _ = cast(
-                    "tuple[AIMessageChunk | ToolMessage, dict[str, Any]]",
-                    stream_part["data"],
+            async for namespace, stream_mode, event_data in agent.astream(
+                {"messages": input_messages},
+                config={
+                    "configurable": {"thread_id": thread_id},
+                    "callbacks": [CallbackHandler()],
+                },
+                stream_mode=["messages", "updates"],
+                subgraphs=True,
+            ):
+                append_langgraph_event(
+                    controller.state,
+                    namespace,
+                    stream_mode,
+                    event_data,
                 )
-
-                if isinstance(message_chunk, ToolMessage):
-                    yield _encode_sse(
-                        "tool-result",
-                        {
-                            "id": message_chunk.tool_call_id,
-                            "name": message_chunk.name,
-                            "result": message_chunk.text,
-                        },
-                    )
-
-                    continue
-
-                for tool_call_chunk in message_chunk.tool_call_chunks:
-                    yield _encode_sse("tool-call-delta", dict(tool_call_chunk))
-
-                reasoning_delta = message_chunk.additional_kwargs.get(
-                    "reasoning_content"
-                )
-                if isinstance(reasoning_delta, str) and reasoning_delta:
-                    yield _encode_sse("reasoning", {"delta": reasoning_delta})
-
-                text_delta = message_chunk.text
-                if text_delta:
-                    yield _encode_sse("text", {"delta": text_delta})
     except Exception:
         logger.exception(STREAM_ERROR_DETAIL)
-        yield _encode_sse("error", {"detail": STREAM_ERROR_DETAIL})
-
-        return
-
-    yield _encode_sse("done")
+        controller.add_error(STREAM_ERROR_DETAIL)
 
 
-def _encode_sse(event: str, data: dict[str, Any] | None = None) -> str:
-    payload = json.dumps(data or {}, ensure_ascii=False)
+def _convert_commands_to_messages(
+    commands: list[AgentCommand],
+) -> list[BaseMessage]:
+    messages: list[BaseMessage] = []
 
-    return f"event: {event}\ndata: {payload}\n\n"
+    for command in commands:
+        if isinstance(command, AddMessageCommand):
+            content = "".join(part.text for part in command.message.parts)
+            messages.append(HumanMessage(content=content))
+
+        else:
+            if isinstance(command.result, str):
+                content = command.result
+            else:
+                content = json.dumps(command.result, ensure_ascii=False)
+
+            messages.append(
+                ToolMessage(
+                    content=content,
+                    tool_call_id=command.tool_call_id,
+                )
+            )
+
+    return messages
