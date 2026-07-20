@@ -8,15 +8,17 @@ from uuid import UUID
 from deepagents import create_deep_agent
 from langchain_core.messages import BaseMessage
 from langchain_deepseek import ChatDeepSeek
-from langchain_mcp_adapters.client import MultiServerMCPClient
+from langfuse import propagate_attributes
+from langfuse.langchain import CallbackHandler
 from langgraph.checkpoint.memory import InMemorySaver
 
 from app.core.config import settings
+from app.modules.agent.connections.exa import load_exa_tools
 from app.modules.agent.exceptions import AgentNotConfiguredError
 
 SYSTEM_PROMPT = "你是一个乐于助人的 AI 助手。除非用户另有要求，否则使用中文回答。"
 STREAM_ERROR_DETAIL = "Agent 流式响应失败"
-EXA_MCP_URL = "https://mcp.exa.ai/mcp"
+TRACE_NAME = "agent-chat"
 logger = logging.getLogger(__name__)
 _agent: Any | None = None
 _agent_lock = asyncio.Lock()
@@ -29,8 +31,7 @@ async def stream_chat(
     message: str,
 ) -> AsyncIterator[str]:
     current_agent = await _get_agent()
-    thread_id = f"{user_id}:{conversation_id}"
-    events = _generate_events(current_agent, thread_id, message)
+    events = _generate_events(current_agent, user_id, conversation_id, message)
 
     return events
 
@@ -49,15 +50,7 @@ async def _create_agent() -> Any:
     if not settings.DEEPSEEK_API_KEY:
         raise AgentNotConfiguredError
 
-    mcp_client = MultiServerMCPClient(
-        {
-            "exa": {
-                "transport": "streamable_http",
-                "url": EXA_MCP_URL,
-            }
-        }
-    )
-    tools = await mcp_client.get_tools()
+    tools = await load_exa_tools()
 
     model = ChatDeepSeek(
         model=settings.DEEPSEEK_MODEL,
@@ -78,36 +71,48 @@ async def _create_agent() -> Any:
 
 async def _generate_events(
     agent: Any,
-    thread_id: str,
+    user_id: UUID,
+    conversation_id: UUID,
     message: str,
 ) -> AsyncIterator[str]:
     input_state = {"messages": [{"role": "user", "content": message}]}
-    config = {"configurable": {"thread_id": thread_id}}
+    thread_id = f"{user_id}:{conversation_id}"
+    config = {
+        "configurable": {"thread_id": thread_id},
+        "callbacks": [CallbackHandler()],
+    }
 
     try:
-        stream = agent.astream(
-            input_state,
-            config=config,
-            stream_mode="messages",
-            version="v2",
-        )
-
-        async for stream_part in stream:
-            if stream_part["ns"]:
-                continue
-
-            message_chunk, _ = cast(
-                "tuple[BaseMessage, dict[str, Any]]",
-                stream_part["data"],
+        with propagate_attributes(
+            trace_name=TRACE_NAME,
+            user_id=str(user_id),
+            session_id=thread_id,
+        ):
+            stream = agent.astream(
+                input_state,
+                config=config,
+                stream_mode="messages",
+                version="v2",
             )
 
-            reasoning_delta = message_chunk.additional_kwargs.get("reasoning_content")
-            if isinstance(reasoning_delta, str) and reasoning_delta:
-                yield _encode_sse("reasoning", {"delta": reasoning_delta})
+            async for stream_part in stream:
+                if stream_part["ns"]:
+                    continue
 
-            text_delta = message_chunk.text
-            if text_delta:
-                yield _encode_sse("text", {"delta": text_delta})
+                message_chunk, _ = cast(
+                    "tuple[BaseMessage, dict[str, Any]]",
+                    stream_part["data"],
+                )
+
+                reasoning_delta = message_chunk.additional_kwargs.get(
+                    "reasoning_content"
+                )
+                if isinstance(reasoning_delta, str) and reasoning_delta:
+                    yield _encode_sse("reasoning", {"delta": reasoning_delta})
+
+                text_delta = message_chunk.text
+                if text_delta:
+                    yield _encode_sse("text", {"delta": text_delta})
     except Exception:
         logger.exception(STREAM_ERROR_DETAIL)
         yield _encode_sse("error", {"detail": STREAM_ERROR_DETAIL})

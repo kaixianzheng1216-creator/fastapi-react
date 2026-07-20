@@ -1,3 +1,6 @@
+include:
+  - compose.langfuse.yml
+
 services:
   db:
     image: postgres:18
@@ -74,6 +77,8 @@ services:
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - SENTRY_DSN=${SENTRY_DSN}
+      - LANGFUSE_BASE_URL=http://langfuse-web:3000
+      - LANGFUSE_TRACING_ENVIRONMENT=${ENVIRONMENT}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
       interval: 10s
