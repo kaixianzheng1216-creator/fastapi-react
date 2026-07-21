@@ -159,12 +159,15 @@ def _apply_commands(
 
     for command in commands:
         message: BaseMessage
+
         if isinstance(command, AddMessageCommand):
             messages = list(controller.state["messages"])
+
             retained = _truncate_messages(
                 messages,
                 command,
             )
+
             if retained != messages:
                 controller.state["messages"] = retained
 
@@ -185,6 +188,7 @@ def _apply_commands(
             )
 
         controller.state["messages"].append(message.model_dump())
+
         inputs.append(message)
 
     return inputs
@@ -198,8 +202,10 @@ def _truncate_messages(
         return messages
 
     source_index = _find_index(messages, command.source_id)
+
     if command.source_id is not None and source_index is None:
         raise ValueError("未找到源消息")
+
 
     if command.parent_id is None:
         if source_index != 0:
@@ -207,6 +213,7 @@ def _truncate_messages(
         return []
 
     parent_index = _find_index(messages, command.parent_id)
+
     if parent_index is None:
         raise ValueError("未找到父消息")
 
@@ -246,6 +253,7 @@ def _to_content(
 
             if part.filename is not None:
                 file_content["extras"] = {"filename": part.filename}
+
             content.append(file_content)
 
     return content
@@ -259,8 +267,10 @@ def _to_resource(
 ) -> dict[str, Any]:
     if not resource.startswith("data:"):
         content: dict[str, Any] = {"type": part_type, "url": resource}
+
         if mime_type is not None:
             content["mime_type"] = mime_type
+
         return content
 
     header, data = resource.split(",", maxsplit=1)
