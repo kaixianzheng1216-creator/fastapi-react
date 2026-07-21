@@ -84,9 +84,11 @@ const converter = (
   );
 
   const messages = [...state.messages, ...optimisticStateMessages.flat()];
+  const isRunning = connectionMetadata.isSending || false;
+
   return {
-    messages: LangChainMessageConverter.toThreadMessages(messages),
-    isRunning: connectionMetadata.isSending || false,
+    messages: LangChainMessageConverter.toThreadMessages(messages, isRunning),
+    isRunning,
   };
 };
 
