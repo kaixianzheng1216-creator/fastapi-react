@@ -5,47 +5,53 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, field_validator
 
-MAX_MESSAGE_LENGTH = 20_000
-MAX_RESOURCE_LENGTH = 14_000_000
-MAX_THREAD_ID_LENGTH = 200
+MAX_TEXT_PART_LENGTH = 20_000
+MAX_RESOURCE_REFERENCE_LENGTH = 14_000_000
+MAX_IDENTIFIER_LENGTH = 200
 MAX_FILENAME_LENGTH = 255
 MAX_MIME_TYPE_LENGTH = 255
+ALLOWED_RESOURCE_SCHEMES = {"http", "https"}
 
 
-def _validate_resource(value: str) -> str:
-    if value.startswith("data:"):
-        header, separator, payload = value.partition(",")
-        if not separator or ";base64" not in header or not payload:
-            raise ValueError("data URI must contain base64 encoded content")
+def _validate_resource_reference(resource_reference: str) -> str:
+    if resource_reference.startswith("data:"):
+        metadata, comma, encoded_content = resource_reference.partition(",")
+
+        if not comma or ";base64" not in metadata or not encoded_content:
+            raise ValueError("Data URI 必须包含 Base64 编码内容")
+
         try:
-            base64.b64decode(payload, validate=True)
+            base64.b64decode(encoded_content, validate=True)
         except (binascii.Error, ValueError) as error:
-            raise ValueError("data URI contains invalid base64 content") from error
-        return value
+            raise ValueError("Data URI 包含无效的 Base64 内容") from error
 
-    parsed = urlparse(value)
-    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        raise ValueError("resource must be an HTTP(S) URL or base64 data URI")
+        return resource_reference
 
-    return value
+    parsed_url = urlparse(resource_reference)
+
+    if parsed_url.scheme not in ALLOWED_RESOURCE_SCHEMES or not parsed_url.netloc:
+        raise ValueError("资源必须是 HTTP(S) URL 或 Base64 Data URI")
+
+    return resource_reference
 
 
+# 消息内容
 class TextMessagePart(BaseModel):
     type: Literal["text"]
-    text: str = Field(min_length=1, max_length=MAX_MESSAGE_LENGTH)
+    text: str = Field(min_length=1, max_length=MAX_TEXT_PART_LENGTH)
 
 
 class ImageMessagePart(BaseModel):
     type: Literal["image"]
-    image: str = Field(min_length=1, max_length=MAX_RESOURCE_LENGTH)
+    image: str = Field(min_length=1, max_length=MAX_RESOURCE_REFERENCE_LENGTH)
     filename: str | None = Field(default=None, max_length=MAX_FILENAME_LENGTH)
 
-    _validate_image = field_validator("image")(_validate_resource)
+    _validate_image = field_validator("image")(_validate_resource_reference)
 
 
 class FileMessagePart(BaseModel):
     type: Literal["file"]
-    data: str = Field(min_length=1, max_length=MAX_RESOURCE_LENGTH)
+    data: str = Field(min_length=1, max_length=MAX_RESOURCE_REFERENCE_LENGTH)
     mime_type: str = Field(
         alias="mimeType",
         min_length=1,
@@ -53,7 +59,7 @@ class FileMessagePart(BaseModel):
     )
     filename: str | None = Field(default=None, max_length=MAX_FILENAME_LENGTH)
 
-    _validate_data = field_validator("data")(_validate_resource)
+    _validate_data = field_validator("data")(_validate_resource_reference)
 
 
 AssistantMessagePart = Annotated[
@@ -67,6 +73,7 @@ class AssistantMessage(BaseModel):
     parts: list[AssistantMessagePart] = Field(min_length=1)
 
 
+# 命令
 class AddMessageCommand(BaseModel):
     type: Literal["add-message"]
     message: AssistantMessage
@@ -74,13 +81,13 @@ class AddMessageCommand(BaseModel):
         default=None,
         alias="parentId",
         min_length=1,
-        max_length=MAX_THREAD_ID_LENGTH,
+        max_length=MAX_IDENTIFIER_LENGTH,
     )
     source_id: str | None = Field(
         default=None,
         alias="sourceId",
         min_length=1,
-        max_length=MAX_THREAD_ID_LENGTH,
+        max_length=MAX_IDENTIFIER_LENGTH,
     )
 
 
@@ -96,11 +103,12 @@ AgentCommand = Annotated[
 ]
 
 
+# 请求外层结构
 class AgentChatRequest(BaseModel):
     thread_id: str = Field(
         alias="threadId",
         min_length=1,
-        max_length=MAX_THREAD_ID_LENGTH,
+        max_length=MAX_IDENTIFIER_LENGTH,
     )
     state: dict[str, Any] | None = None
     commands: list[AgentCommand] = Field(min_length=1)
