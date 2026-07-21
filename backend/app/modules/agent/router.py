@@ -1,5 +1,5 @@
 from assistant_stream.serialization import (  # type: ignore[import-untyped]
-    DataStreamResponse,
+    AssistantTransportResponse,
 )
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
@@ -27,6 +27,6 @@ async def chat(
         chat_request=chat_request,
     )
 
-    response: StreamingResponse = DataStreamResponse(chat_stream)
+    response: StreamingResponse = AssistantTransportResponse(chat_stream)
 
     return response
