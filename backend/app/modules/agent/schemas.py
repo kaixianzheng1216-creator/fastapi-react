@@ -62,21 +62,21 @@ class FileMessagePart(BaseModel):
     _validate_data = field_validator("data")(_validate_resource_reference)
 
 
-AssistantMessagePart = Annotated[
+MessagePart = Annotated[
     TextMessagePart | ImageMessagePart | FileMessagePart,
     Field(discriminator="type"),
 ]
 
 
-class AssistantMessage(BaseModel):
+class Message(BaseModel):
     role: Literal["user"]
-    parts: list[AssistantMessagePart] = Field(min_length=1)
+    parts: list[MessagePart] = Field(min_length=1)
 
 
 # 命令
 class AddMessageCommand(BaseModel):
     type: Literal["add-message"]
-    message: AssistantMessage
+    message: Message
     parent_id: str | None = Field(
         default=None,
         alias="parentId",
