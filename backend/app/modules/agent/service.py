@@ -32,14 +32,14 @@ def stream_chat(
     *,
     agent: Any,
     user_id: UUID,
-    chat_request: AgentChatRequest,
+    request: AgentChatRequest,
 ) -> AsyncGenerator[Any]:
     async def run(controller: RunController) -> None:
-        await _run(controller, agent, user_id, chat_request)
+        await _run(controller, agent, user_id, request)
 
     stream: AsyncGenerator[Any] = create_run(
         run,
-        state=chat_request.state,
+        state=request.state,
     )
 
     return stream
