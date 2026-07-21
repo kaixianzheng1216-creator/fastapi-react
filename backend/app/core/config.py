@@ -7,7 +7,6 @@ from pydantic import (
     BeforeValidator,
     HttpUrl,
     PostgresDsn,
-    SecretStr,
     computed_field,
     model_validator,
 )
@@ -50,8 +49,6 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str
     SENTRY_DSN: HttpUrl | None = None
-    DEEPSEEK_API_KEY: SecretStr | None = None
-    DEEPSEEK_MODEL: str = "deepseek-v4-flash"
 
     POSTGRES_SERVER: str
     POSTGRES_PORT: int = 5432
