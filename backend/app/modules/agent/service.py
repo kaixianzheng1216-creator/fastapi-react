@@ -203,7 +203,6 @@ def _truncate_messages(
     if command.source_id is not None and source_index is None:
         raise ValueError("未找到源消息")
 
-
     if command.parent_id is None:
         if source_index != 0:
             raise ValueError("没有父消息的消息必须是第一条消息")
@@ -271,6 +270,7 @@ def _to_resource(
         return content
 
     header, data = resource.split(",", maxsplit=1)
+
     declared_type = header.removeprefix("data:").split(";", maxsplit=1)[0]
 
     return {
