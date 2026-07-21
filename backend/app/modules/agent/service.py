@@ -68,7 +68,9 @@ async def _run(
             thread_id,
             request.commands,
         )
+
         inputs = _apply_commands(controller, request.commands)
+
         config["callbacks"] = [CallbackHandler()]
 
         with propagate_attributes(
@@ -120,8 +122,10 @@ async def _get_config(
         raise ValueError("每次请求只能编辑一条消息")
 
     parent_id = edits[0].parent_id
+
     async for snapshot in agent.aget_state_history(config):
         messages = snapshot.values.get("messages", [])
+
         if parent_id is None:
             if not messages:
                 return cast(RunnableConfig, dict(snapshot.config))
@@ -229,6 +233,7 @@ def _to_content(
                 part.data,
                 mime_type=part.mime_type,
             )
+
             if part.filename is not None:
                 file_content["extras"] = {"filename": part.filename}
             content.append(file_content)
@@ -250,6 +255,7 @@ def _to_resource(
 
     header, data = resource.split(",", maxsplit=1)
     declared_type = header.removeprefix("data:").split(";", maxsplit=1)[0]
+
     return {
         "type": part_type,
         "base64": unquote_to_bytes(data).decode("ascii"),
