@@ -118,11 +118,11 @@ async def _get_config(
     commands: list[AgentCommand],
 ) -> RunnableConfig:
     config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
-    edits = [
-        command
-        for command in commands
-        if isinstance(command, AddMessageCommand) and command.source_id is not None
-    ]
+    edits: list[AddMessageCommand] = []
+
+    for command in commands:
+        if isinstance(command, AddMessageCommand) and command.source_id is not None:
+            edits.append(command)
 
     if not edits:
         return config
@@ -138,11 +138,13 @@ async def _get_config(
             if not messages:
                 return cast(RunnableConfig, dict(snapshot.config))
             continue
+
         if not messages:
             continue
 
         last = messages[-1]
         last_id = last.get("id") if isinstance(last, dict) else getattr(last, "id", None)
+
         if last_id == parent_id:
             return cast(RunnableConfig, dict(snapshot.config))
 
