@@ -122,23 +122,19 @@ async def _get_config(
     parent_id = edits[0].parent_id
     async for snapshot in agent.aget_state_history(config):
         messages = snapshot.values.get("messages", [])
-        if _matches_checkpoint(messages, parent_id):
+        if parent_id is None:
+            if not messages:
+                return cast(RunnableConfig, dict(snapshot.config))
+            continue
+        if not messages:
+            continue
+
+        last = messages[-1]
+        last_id = last.get("id") if isinstance(last, dict) else getattr(last, "id", None)
+        if last_id == parent_id:
             return cast(RunnableConfig, dict(snapshot.config))
 
     raise ValueError("未找到被编辑消息对应的检查点")
-
-
-def _matches_checkpoint(messages: list[Any], parent_id: str | None) -> bool:
-    if parent_id is None:
-        return not messages
-    if not messages:
-        return False
-
-    last = messages[-1]
-    if isinstance(last, dict):
-        return last.get("id") == parent_id
-
-    return getattr(last, "id", None) == parent_id
 
 
 def _apply_commands(
