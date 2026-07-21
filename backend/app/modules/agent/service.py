@@ -53,14 +53,12 @@ async def create_agent(checkpointer: AsyncPostgresSaver) -> Any:
         extra_body={"thinking": {"type": "enabled"}},
     )
 
-    new_agent = create_deep_agent(
+    return create_deep_agent(
         model=model,
         tools=tools,
         system_prompt=SYSTEM_PROMPT,
         checkpointer=checkpointer,
     )
-
-    return new_agent
 
 
 def stream_chat(
@@ -87,7 +85,7 @@ async def _run_chat(
     chat_request: AgentChatRequest,
 ) -> None:
     thread_id = f"{user_id}:{chat_request.thread_id}"
-    graph_stream: Any | None = None
+    graph_event_stream: Any | None = None
 
     try:
         if controller.state is None:
@@ -111,28 +109,28 @@ async def _run_chat(
             user_id=str(user_id),
             session_id=thread_id,
         ):
-            graph_stream = agent.astream(
+            graph_event_stream = agent.astream(
                 {"messages": input_messages},
                 config=graph_config,
                 stream_mode=["messages", "updates"],
                 subgraphs=True,
             )
-            async for namespace, stream_mode, event_data in graph_stream:
+            async for namespace, event_type, event in graph_event_stream:
                 if controller.is_cancelled:
                     break
 
                 append_langgraph_event(
                     controller.state,
                     namespace,
-                    stream_mode,
-                    event_data,
+                    event_type,
+                    event,
                 )
     except Exception:
         logger.exception(STREAM_ERROR_DETAIL)
         controller.add_error(STREAM_ERROR_DETAIL)
     finally:
-        if graph_stream is not None:
-            close_stream = getattr(graph_stream, "aclose", None)
+        if graph_event_stream is not None:
+            close_stream = getattr(graph_event_stream, "aclose", None)
             if close_stream is not None:
                 await close_stream()
 
@@ -141,7 +139,7 @@ def _apply_commands(
     controller: RunController,
     commands: list[AgentCommand],
 ) -> list[BaseMessage]:
-    messages: list[BaseMessage] = []
+    input_messages: list[BaseMessage] = []
 
     for command in commands:
         message: BaseMessage
@@ -171,9 +169,9 @@ def _apply_commands(
             )
 
         controller.state["messages"].append(message.model_dump())
-        messages.append(message)
+        input_messages.append(message)
 
-    return messages
+    return input_messages
 
 
 def _truncate_messages_for_add_command(
@@ -218,20 +216,20 @@ async def _create_graph_config(
     thread_id: str,
     commands: list[AgentCommand],
 ) -> RunnableConfig:
-    base_config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
-    edit_commands = [
+    thread_config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
+    message_edit_commands = [
         command
         for command in commands
         if isinstance(command, AddMessageCommand) and command.source_id is not None
     ]
 
-    if not edit_commands:
-        return base_config
-    if len(edit_commands) > 1:
+    if not message_edit_commands:
+        return thread_config
+    if len(message_edit_commands) > 1:
         raise ValueError("only one message can be edited per request")
 
-    parent_id = edit_commands[0].parent_id
-    async for snapshot in agent.aget_state_history(base_config):
+    parent_id = message_edit_commands[0].parent_id
+    async for snapshot in agent.aget_state_history(thread_config):
         checkpoint_messages = snapshot.values.get("messages", [])
         if _checkpoint_ends_with(checkpoint_messages, parent_id):
             return cast(RunnableConfig, dict(snapshot.config))
@@ -254,8 +252,8 @@ def _checkpoint_ends_with(messages: list[Any], parent_id: str | None) -> bool:
 
 def _convert_message_parts(
     command: AddMessageCommand,
-) -> list[str | dict[Any, Any]]:
-    content: list[str | dict[Any, Any]] = []
+) -> list[str | dict[str, Any]]:
+    content: list[str | dict[str, Any]] = []
 
     for part in command.message.parts:
         if isinstance(part, TextMessagePart):
@@ -277,20 +275,20 @@ def _convert_message_parts(
 
 def _convert_resource_part(
     part_type: str,
-    resource: str,
+    resource_reference: str,
     *,
     mime_type: str | None = None,
 ) -> dict[str, Any]:
-    if not resource.startswith("data:"):
-        result: dict[str, Any] = {"type": part_type, "url": resource}
+    if not resource_reference.startswith("data:"):
+        content: dict[str, Any] = {"type": part_type, "url": resource_reference}
         if mime_type is not None:
-            result["mime_type"] = mime_type
-        return result
+            content["mime_type"] = mime_type
+        return content
 
-    header, payload = resource.split(",", maxsplit=1)
-    declared_mime_type = header.removeprefix("data:").split(";", maxsplit=1)[0]
+    metadata, encoded_content = resource_reference.split(",", maxsplit=1)
+    declared_mime_type = metadata.removeprefix("data:").split(";", maxsplit=1)[0]
     return {
         "type": part_type,
-        "base64": unquote_to_bytes(payload).decode("ascii"),
+        "base64": unquote_to_bytes(encoded_content).decode("ascii"),
         "mime_type": mime_type or declared_mime_type,
     }
