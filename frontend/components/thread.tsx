@@ -544,27 +544,29 @@ const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
   ...rest
 }) => {
   return (
-    <BranchPickerPrimitive.Root
-      hideWhenSingleBranch
-      className={cn(
-        "aui-branch-picker-root text-muted-foreground -ms-2 me-2 inline-flex items-center text-xs",
-        className,
-      )}
-      {...rest}
-    >
-      <BranchPickerPrimitive.Previous asChild>
-        <TooltipIconButton tooltip="上一个">
-          <ChevronLeftIcon />
-        </TooltipIconButton>
-      </BranchPickerPrimitive.Previous>
-      <span className="aui-branch-picker-state font-medium">
-        <BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
-      </span>
-      <BranchPickerPrimitive.Next asChild>
-        <TooltipIconButton tooltip="下一个">
-          <ChevronRightIcon />
-        </TooltipIconButton>
-      </BranchPickerPrimitive.Next>
-    </BranchPickerPrimitive.Root>
+    <AuiIf condition={(s) => s.thread.capabilities.switchToBranch}>
+      <BranchPickerPrimitive.Root
+        hideWhenSingleBranch
+        className={cn(
+          "aui-branch-picker-root text-muted-foreground -ms-2 me-2 inline-flex items-center text-xs",
+          className,
+        )}
+        {...rest}
+      >
+        <BranchPickerPrimitive.Previous asChild>
+          <TooltipIconButton tooltip="上一个">
+            <ChevronLeftIcon />
+          </TooltipIconButton>
+        </BranchPickerPrimitive.Previous>
+        <span className="aui-branch-picker-state font-medium">
+          <BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
+        </span>
+        <BranchPickerPrimitive.Next asChild>
+          <TooltipIconButton tooltip="下一个">
+            <ChevronRightIcon />
+          </TooltipIconButton>
+        </BranchPickerPrimitive.Next>
+      </BranchPickerPrimitive.Root>
+    </AuiIf>
   );
 };

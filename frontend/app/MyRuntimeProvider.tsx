@@ -101,6 +101,9 @@ export function MyRuntimeProvider({ children }: MyRuntimeProviderProps) {
     },
     api: "/api/chat",
     converter,
+    capabilities: {
+      edit: true,
+    },
     headers: async () => {
       const accessToken = getAccessToken();
       const headers: Record<string, string> = {};
