@@ -51,6 +51,7 @@ async def _run(
     user_id: UUID,
     request: AgentChatRequest,
 ) -> None:
+    # 准备状态
     thread_id = f"{user_id}:{request.thread_id}"
     events: Any | None = None
 
@@ -63,6 +64,7 @@ async def _run(
         if controller.is_cancelled:
             return
 
+        # 准备输入
         config = await _get_config(
             agent,
             thread_id,
@@ -73,6 +75,7 @@ async def _run(
 
         config["callbacks"] = [CallbackHandler()]
 
+        # 运行 Agent
         with propagate_attributes(
             trace_name=TRACE_NAME,
             user_id=str(user_id),
@@ -98,8 +101,10 @@ async def _run(
         logger.exception(STREAM_ERROR_DETAIL)
         controller.add_error(STREAM_ERROR_DETAIL)
     finally:
+        # 收尾
         if events is not None:
             close = getattr(events, "aclose", None)
+
             if close is not None:
                 await close()
 
