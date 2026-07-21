@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "assistant-ui with Assistant Transport",
-  description:
-    "An example of using assistant-ui with the assistant-transport runtime",
+  title: "AI 助手",
+  description: "基于 assistant-ui 构建的 AI 助手",
 };
 
 export default function RootLayout({
@@ -13,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="zh-CN">
       <body className="font-sans antialiased">
         <div className="flex h-screen flex-col">
           <main className="flex-1 overflow-hidden">{children}</main>
