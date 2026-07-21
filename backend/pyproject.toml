@@ -38,11 +38,11 @@ build-backend = "hatchling.build"
 
 [tool.mypy]
 strict = true
-exclude = ["venv", ".venv", "alembic/versions"]
+exclude = ["venv", ".venv", "alembic/versions", "app/modules/agent/skills"]
 
 [tool.ruff]
 target-version = "py314"
-exclude = ["alembic/versions"]
+exclude = ["alembic/versions", "app/modules/agent/skills"]
 
 [tool.ruff.lint]
 select = [

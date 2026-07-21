@@ -33,14 +33,14 @@ def stream_chat(
     *,
     agent: Any,
     user_id: UUID,
-    request: AgentChatRequest,
+    chat_request: AgentChatRequest,
 ) -> AsyncGenerator[Any]:
     async def run(controller: RunController) -> None:
-        await _run(controller, agent, user_id, request)
+        await _run(controller, agent, user_id, chat_request)
 
     stream: AsyncGenerator[Any] = create_run(
         run,
-        state=request.state,
+        state=chat_request.state,
     )
 
     return stream
@@ -50,9 +50,9 @@ async def _run(
     controller: RunController,
     agent: Any,
     user_id: UUID,
-    request: AgentChatRequest,
+    chat_request: AgentChatRequest,
 ) -> None:
-    thread_id = f"{user_id}:{request.thread_id}"
+    thread_id = f"{user_id}:{chat_request.thread_id}"
     events: Any | None = None
 
     try:
@@ -67,10 +67,10 @@ async def _run(
         config = await _get_config(
             agent,
             thread_id,
-            request.commands,
+            chat_request.commands,
         )
 
-        inputs = _apply_commands(controller, request.commands)
+        inputs = _apply_commands(controller, chat_request.commands)
 
         config["callbacks"] = [CallbackHandler()]
 

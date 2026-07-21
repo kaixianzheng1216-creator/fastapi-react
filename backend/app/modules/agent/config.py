@@ -11,13 +11,15 @@ class AgentSettings(BaseSettings):
         extra="ignore",
     )
 
-    MODEL_PROVIDER: str | None = None
-    MODEL_NAME: str | None = None
-    MODEL_API_KEY: SecretStr | None = None
+    MODEL_PROVIDER: str
+    MODEL_NAME: str
+    MODEL_API_KEY: SecretStr
+
+    EXA_API_KEY: SecretStr | None = None
 
     IMAGE_API_KEY: SecretStr | None = None
     IMAGE_BASE_URL: str | None = None
     IMAGE_MODEL: str | None = None
 
 
-settings = AgentSettings()
+settings = AgentSettings.model_validate({})
