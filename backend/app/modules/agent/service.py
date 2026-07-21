@@ -102,6 +102,45 @@ async def _run_chat(
                 await close_stream()
 
 
+async def _create_graph_config(
+    agent: Any,
+    thread_id: str,
+    commands: list[AgentCommand],
+) -> RunnableConfig:
+    thread_config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
+    message_edit_commands = [
+        command
+        for command in commands
+        if isinstance(command, AddMessageCommand) and command.source_id is not None
+    ]
+
+    if not message_edit_commands:
+        return thread_config
+    if len(message_edit_commands) > 1:
+        raise ValueError("only one message can be edited per request")
+
+    parent_id = message_edit_commands[0].parent_id
+    async for snapshot in agent.aget_state_history(thread_config):
+        checkpoint_messages = snapshot.values.get("messages", [])
+        if _checkpoint_ends_with(checkpoint_messages, parent_id):
+            return cast(RunnableConfig, dict(snapshot.config))
+
+    raise ValueError("the checkpoint for the edited message was not found")
+
+
+def _checkpoint_ends_with(messages: list[Any], parent_id: str | None) -> bool:
+    if parent_id is None:
+        return not messages
+    if not messages:
+        return False
+
+    last_message = messages[-1]
+    if isinstance(last_message, dict):
+        return last_message.get("id") == parent_id
+
+    return getattr(last_message, "id", None) == parent_id
+
+
 def _apply_commands(
     controller: RunController,
     commands: list[AgentCommand],
@@ -176,45 +215,6 @@ def _find_message_index(messages: list[Any], message_id: str | None) -> int | No
             return index
 
     return None
-
-
-async def _create_graph_config(
-    agent: Any,
-    thread_id: str,
-    commands: list[AgentCommand],
-) -> RunnableConfig:
-    thread_config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
-    message_edit_commands = [
-        command
-        for command in commands
-        if isinstance(command, AddMessageCommand) and command.source_id is not None
-    ]
-
-    if not message_edit_commands:
-        return thread_config
-    if len(message_edit_commands) > 1:
-        raise ValueError("only one message can be edited per request")
-
-    parent_id = message_edit_commands[0].parent_id
-    async for snapshot in agent.aget_state_history(thread_config):
-        checkpoint_messages = snapshot.values.get("messages", [])
-        if _checkpoint_ends_with(checkpoint_messages, parent_id):
-            return cast(RunnableConfig, dict(snapshot.config))
-
-    raise ValueError("the checkpoint for the edited message was not found")
-
-
-def _checkpoint_ends_with(messages: list[Any], parent_id: str | None) -> bool:
-    if parent_id is None:
-        return not messages
-    if not messages:
-        return False
-
-    last_message = messages[-1]
-    if isinstance(last_message, dict):
-        return last_message.get("id") == parent_id
-
-    return getattr(last_message, "id", None) == parent_id
 
 
 def _convert_message_parts(
