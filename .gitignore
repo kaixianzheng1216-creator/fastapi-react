@@ -1,3 +1,5 @@
 .env
 .idea/*
 .omo/*
+
+frontend/node_modules/
