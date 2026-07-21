@@ -16,6 +16,7 @@ from langfuse.langchain import CallbackHandler
 
 from app.modules.agent.schemas import (
     AddMessageCommand,
+    AddToolResultCommand,
     AgentChatRequest,
     AgentCommand,
     FileMessagePart,
@@ -175,7 +176,7 @@ def _apply_commands(
                 content=_to_content(command),
                 id=str(uuid4()),
             )
-        else:
+        elif isinstance(command, AddToolResultCommand):
             if isinstance(command.result, str):
                 content = command.result
             else:
