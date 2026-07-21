@@ -60,6 +60,7 @@ const converter = (
 export function MyRuntimeProvider({ children }: MyRuntimeProviderProps) {
   const threadId = useRef<string | null>(null);
   const runtime = useAssistantTransportRuntime({
+    protocol: "assistant-transport",
     initialState: {
       messages: [],
     },
