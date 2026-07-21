@@ -1,14 +1,26 @@
 import { withAui } from "@assistant-ui/next";
+
+const backendUrl = process.env.BACKEND_API_URL ?? "http://localhost:8000";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   experimental: {
     optimizePackageImports: ["@assistant-ui/react"],
   },
   async rewrites() {
     return [
       {
-        source: "/assistant/:path*",
-        destination: "http://localhost:8000/assistant/:path*",
+        source: "/api/login",
+        destination: `${backendUrl}/api/v1/login/access-token`,
+      },
+      {
+        source: "/api/signup",
+        destination: `${backendUrl}/api/v1/users/signup`,
+      },
+      {
+        source: "/api/chat",
+        destination: `${backendUrl}/api/v1/agent/chat`,
       },
     ];
   },

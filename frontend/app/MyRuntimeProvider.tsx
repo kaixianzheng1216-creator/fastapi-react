@@ -2,18 +2,16 @@
 
 import {
   AssistantRuntimeProvider,
-  Tools,
   type AssistantTransportConnectionMetadata,
   unstable_createMessageConverter as createMessageConverter,
-  useAui,
   useAssistantTransportRuntime,
 } from "@assistant-ui/react";
 import {
   convertLangChainMessages,
   type LangChainMessage,
 } from "@assistant-ui/react-langgraph";
-import type { ReactNode } from "react";
-import toolkit from "./toolkit";
+import { clearAccessToken, getAccessToken } from "@/lib/auth";
+import { type ReactNode, useRef } from "react";
 
 type MyRuntimeProviderProps = {
   children: ReactNode;
@@ -60,41 +58,43 @@ const converter = (
 };
 
 export function MyRuntimeProvider({ children }: MyRuntimeProviderProps) {
+  const threadId = useRef<string | null>(null);
   const runtime = useAssistantTransportRuntime({
     initialState: {
       messages: [],
     },
-    api: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8010/assistant",
+    api: "/api/chat",
     converter,
-    headers: async () => ({
-      "Test-Header": "test-value",
-    }),
-    body: {
-      "Test-Body": "test-value",
+    headers: async () => {
+      const accessToken = getAccessToken();
+      const headers: Record<string, string> = {};
+
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
+      }
+
+      return headers;
     },
     prepareSendCommandsRequest: (body) => {
-      console.log("Assistant transport request tools:", body.tools);
-      return body;
+      if (threadId.current === null) {
+        threadId.current = body.threadId ?? crypto.randomUUID();
+      }
+
+      return {
+        ...body,
+        threadId: body.threadId ?? threadId.current,
+      };
     },
-    onResponse: () => {
-      console.log("Response received from server");
+    onResponse: (response) => {
+      if (response.status === 401) {
+        clearAccessToken();
+        window.location.assign("/login");
+      }
     },
-    onFinish: () => {
-      console.log("Conversation completed");
-    },
-    onError: (error: Error) => {
-      console.error("Assistant transport error:", error);
-    },
-    onCancel: () => {
-      console.log("Request cancelled");
-    },
-  });
-  const aui = useAui({
-    tools: Tools({ toolkit }),
   });
 
   return (
-    <AssistantRuntimeProvider aui={aui} runtime={runtime}>
+    <AssistantRuntimeProvider runtime={runtime}>
       {children}
     </AssistantRuntimeProvider>
   );

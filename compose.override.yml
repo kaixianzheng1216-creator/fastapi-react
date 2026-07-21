@@ -73,6 +73,27 @@ services:
         - path: ./backend/pyproject.toml
           action: rebuild
 
+  frontend:
+    restart: "no"
+    build:
+      target: development
+    ports:
+      - "3000:3000"
+    develop:
+      watch:
+        - path: ./frontend
+          action: sync
+          target: /app
+          ignore:
+            - node_modules/
+            - .next/
+            - package.json
+            - package-lock.json
+        - path: ./frontend/package.json
+          action: rebuild
+        - path: ./frontend/package-lock.json
+          action: rebuild
+
 networks:
   traefik-public:
     # 本地开发不依赖外部 Traefik 网络
