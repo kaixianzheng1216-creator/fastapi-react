@@ -94,7 +94,11 @@ class AddMessageCommand(BaseModel):
 class AddToolResultCommand(BaseModel):
     type: Literal["add-tool-result"]
     tool_call_id: str = Field(alias="toolCallId", min_length=1)
+    tool_name: str | None = Field(default=None, alias="toolName")
     result: Any
+    is_error: bool | None = Field(default=None, alias="isError")
+    artifact: Any | None = None
+    model_content: Any | None = Field(default=None, alias="modelContent")
 
 
 AgentCommand = Annotated[

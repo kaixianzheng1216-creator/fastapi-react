@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 from assistant_stream import RunController, create_run  # type: ignore[import-untyped]
 from assistant_stream.modules.langgraph import (  # type: ignore[import-untyped]
     append_langgraph_event,
+    get_tool_call_subgraph_state,
 )
 from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
@@ -91,8 +92,17 @@ async def _run(
                 if controller.is_cancelled:
                     break
 
+                state = get_tool_call_subgraph_state(
+                    controller,
+                    namespace=chunk["ns"],
+                    subgraph_node="tools",
+                    tool_name="task",
+                    artifact_field_name="subgraph_state",
+                    default_state={"messages": []},
+                )
+
                 append_langgraph_event(
-                    controller.state,
+                    state,
                     chunk["ns"],
                     chunk["type"],
                     chunk["data"],
@@ -173,14 +183,27 @@ def _apply_commands(
                 id=str(uuid4()),
             )
         elif isinstance(command, AddToolResultCommand):
-            if isinstance(command.result, str):
-                content = command.result
+            model_content = (
+                command.model_content
+                if command.model_content is not None
+                else command.result
+            )
+
+            if isinstance(model_content, str):
+                content = model_content
             else:
-                content = json.dumps(command.result, ensure_ascii=False)
+                content = json.dumps(model_content, ensure_ascii=False)
 
             message = ToolMessage(
                 content=content,
                 tool_call_id=command.tool_call_id,
+                name=command.tool_name,
+                artifact=(
+                    command.artifact
+                    if command.artifact is not None
+                    else command.result
+                ),
+                status="error" if command.is_error else "success",
                 id=str(uuid4()),
             )
 
