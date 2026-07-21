@@ -86,19 +86,22 @@ async def _run(
                 config=config,
                 stream_mode=["messages", "updates"],
                 subgraphs=True,
+                version="v2",
             )
-            async for namespace, event_type, event in events:
+
+            async for chunk in events:
                 if controller.is_cancelled:
                     break
 
                 append_langgraph_event(
                     controller.state,
-                    namespace,
-                    event_type,
-                    event,
+                    chunk["ns"],
+                    chunk["type"],
+                    chunk["data"],
                 )
     except Exception:
         logger.exception(STREAM_ERROR_DETAIL)
+
         controller.add_error(STREAM_ERROR_DETAIL)
     finally:
         # 收尾
