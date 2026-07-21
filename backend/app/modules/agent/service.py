@@ -34,25 +34,25 @@ def stream_chat(
     user_id: UUID,
     chat_request: AgentChatRequest,
 ) -> AsyncGenerator[Any]:
-    async def run_agent(controller: RunController) -> None:
-        await _run_chat(controller, agent, user_id, chat_request)
+    async def run(controller: RunController) -> None:
+        await _run(controller, agent, user_id, chat_request)
 
-    chat_stream: AsyncGenerator[Any] = create_run(
-        run_agent,
+    stream: AsyncGenerator[Any] = create_run(
+        run,
         state=chat_request.state,
     )
 
-    return chat_stream
+    return stream
 
 
-async def _run_chat(
+async def _run(
     controller: RunController,
     agent: Any,
     user_id: UUID,
-    chat_request: AgentChatRequest,
+    request: AgentChatRequest,
 ) -> None:
-    thread_id = f"{user_id}:{chat_request.thread_id}"
-    graph_event_stream: Any | None = None
+    thread_id = f"{user_id}:{request.thread_id}"
+    events: Any | None = None
 
     try:
         if controller.state is None:
@@ -63,26 +63,26 @@ async def _run_chat(
         if controller.is_cancelled:
             return
 
-        graph_config = await _create_graph_config(
+        config = await _get_config(
             agent,
             thread_id,
-            chat_request.commands,
+            request.commands,
         )
-        input_messages = _apply_commands(controller, chat_request.commands)
-        graph_config["callbacks"] = [CallbackHandler()]
+        inputs = _apply_commands(controller, request.commands)
+        config["callbacks"] = [CallbackHandler()]
 
         with propagate_attributes(
             trace_name=TRACE_NAME,
             user_id=str(user_id),
             session_id=thread_id,
         ):
-            graph_event_stream = agent.astream(
-                {"messages": input_messages},
-                config=graph_config,
+            events = agent.astream(
+                {"messages": inputs},
+                config=config,
                 stream_mode=["messages", "updates"],
                 subgraphs=True,
             )
-            async for namespace, event_type, event in graph_event_stream:
+            async for namespace, event_type, event in events:
                 if controller.is_cancelled:
                     break
 
@@ -96,70 +96,70 @@ async def _run_chat(
         logger.exception(STREAM_ERROR_DETAIL)
         controller.add_error(STREAM_ERROR_DETAIL)
     finally:
-        if graph_event_stream is not None:
-            close_stream = getattr(graph_event_stream, "aclose", None)
-            if close_stream is not None:
-                await close_stream()
+        if events is not None:
+            close = getattr(events, "aclose", None)
+            if close is not None:
+                await close()
 
 
-async def _create_graph_config(
+async def _get_config(
     agent: Any,
     thread_id: str,
     commands: list[AgentCommand],
 ) -> RunnableConfig:
-    thread_config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
-    message_edit_commands = [
+    config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
+    edits = [
         command
         for command in commands
         if isinstance(command, AddMessageCommand) and command.source_id is not None
     ]
 
-    if not message_edit_commands:
-        return thread_config
-    if len(message_edit_commands) > 1:
-        raise ValueError("only one message can be edited per request")
+    if not edits:
+        return config
+    if len(edits) > 1:
+        raise ValueError("每次请求只能编辑一条消息")
 
-    parent_id = message_edit_commands[0].parent_id
-    async for snapshot in agent.aget_state_history(thread_config):
-        checkpoint_messages = snapshot.values.get("messages", [])
-        if _checkpoint_ends_with(checkpoint_messages, parent_id):
+    parent_id = edits[0].parent_id
+    async for snapshot in agent.aget_state_history(config):
+        messages = snapshot.values.get("messages", [])
+        if _matches_checkpoint(messages, parent_id):
             return cast(RunnableConfig, dict(snapshot.config))
 
-    raise ValueError("the checkpoint for the edited message was not found")
+    raise ValueError("未找到被编辑消息对应的检查点")
 
 
-def _checkpoint_ends_with(messages: list[Any], parent_id: str | None) -> bool:
+def _matches_checkpoint(messages: list[Any], parent_id: str | None) -> bool:
     if parent_id is None:
         return not messages
     if not messages:
         return False
 
-    last_message = messages[-1]
-    if isinstance(last_message, dict):
-        return last_message.get("id") == parent_id
+    last = messages[-1]
+    if isinstance(last, dict):
+        return last.get("id") == parent_id
 
-    return getattr(last_message, "id", None) == parent_id
+    return getattr(last, "id", None) == parent_id
 
 
 def _apply_commands(
     controller: RunController,
     commands: list[AgentCommand],
 ) -> list[BaseMessage]:
-    input_messages: list[BaseMessage] = []
+    inputs: list[BaseMessage] = []
 
     for command in commands:
         message: BaseMessage
         if isinstance(command, AddMessageCommand):
-            current_messages = list(controller.state["messages"])
-            retained_messages = _truncate_messages_for_add_command(
-                current_messages,
+            messages = list(controller.state["messages"])
+            retained = _truncate_messages(
+                messages,
                 command,
             )
-            if retained_messages != current_messages:
-                controller.state["messages"] = retained_messages
+            if retained != messages:
+                controller.state["messages"] = retained
 
             message = HumanMessage(
-                content=_convert_message_parts(command),
+                content=_to_content(command),
                 id=str(uuid4()),
             )
         else:
@@ -175,38 +175,38 @@ def _apply_commands(
             )
 
         controller.state["messages"].append(message.model_dump())
-        input_messages.append(message)
+        inputs.append(message)
 
-    return input_messages
+    return inputs
 
 
-def _truncate_messages_for_add_command(
+def _truncate_messages(
     messages: list[Any],
     command: AddMessageCommand,
 ) -> list[Any]:
     if command.parent_id is None and command.source_id is None:
         return messages
 
-    source_index = _find_message_index(messages, command.source_id)
+    source_index = _find_index(messages, command.source_id)
     if command.source_id is not None and source_index is None:
-        raise ValueError("source message was not found")
+        raise ValueError("未找到源消息")
 
     if command.parent_id is None:
         if source_index != 0:
-            raise ValueError("a message without a parent must be the first message")
+            raise ValueError("没有父消息的消息必须是第一条消息")
         return []
 
-    parent_index = _find_message_index(messages, command.parent_id)
+    parent_index = _find_index(messages, command.parent_id)
     if parent_index is None:
-        raise ValueError("parent message was not found")
+        raise ValueError("未找到父消息")
 
     if source_index is not None and source_index != parent_index + 1:
-        raise ValueError("source message must immediately follow its parent")
+        raise ValueError("源消息必须紧跟在父消息之后")
 
     return messages[: parent_index + 1]
 
 
-def _find_message_index(messages: list[Any], message_id: str | None) -> int | None:
+def _find_index(messages: list[Any], message_id: str | None) -> int | None:
     if message_id is None:
         return None
 
@@ -217,7 +217,7 @@ def _find_message_index(messages: list[Any], message_id: str | None) -> int | No
     return None
 
 
-def _convert_message_parts(
+def _to_content(
     command: AddMessageCommand,
 ) -> list[str | dict[str, Any]]:
     content: list[str | dict[str, Any]] = []
@@ -226,9 +226,9 @@ def _convert_message_parts(
         if isinstance(part, TextMessagePart):
             content.append({"type": "text", "text": part.text})
         elif isinstance(part, ImageMessagePart):
-            content.append(_convert_resource_part("image", part.image))
+            content.append(_to_resource("image", part.image))
         elif isinstance(part, FileMessagePart):
-            file_content = _convert_resource_part(
+            file_content = _to_resource(
                 "file",
                 part.data,
                 mime_type=part.mime_type,
@@ -240,22 +240,22 @@ def _convert_message_parts(
     return content
 
 
-def _convert_resource_part(
+def _to_resource(
     part_type: str,
-    resource_reference: str,
+    resource: str,
     *,
     mime_type: str | None = None,
 ) -> dict[str, Any]:
-    if not resource_reference.startswith("data:"):
-        content: dict[str, Any] = {"type": part_type, "url": resource_reference}
+    if not resource.startswith("data:"):
+        content: dict[str, Any] = {"type": part_type, "url": resource}
         if mime_type is not None:
             content["mime_type"] = mime_type
         return content
 
-    metadata, encoded_content = resource_reference.split(",", maxsplit=1)
-    declared_mime_type = metadata.removeprefix("data:").split(";", maxsplit=1)[0]
+    header, data = resource.split(",", maxsplit=1)
+    declared_type = header.removeprefix("data:").split(";", maxsplit=1)[0]
     return {
         "type": part_type,
-        "base64": unquote_to_bytes(encoded_content).decode("ascii"),
-        "mime_type": mime_type or declared_mime_type,
+        "base64": unquote_to_bytes(data).decode("ascii"),
+        "mime_type": mime_type or declared_type,
     }
