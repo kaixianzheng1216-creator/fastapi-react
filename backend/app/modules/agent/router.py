@@ -28,5 +28,6 @@ async def chat(
     )
 
     response: StreamingResponse = AssistantTransportResponse(chat_stream)
+    response.headers["Cache-Control"] = "no-cache, no-transform"
 
     return response
