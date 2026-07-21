@@ -26,7 +26,9 @@ from app.modules.agent.schemas import (
 )
 
 SYSTEM_PROMPT = (
-    Path(__file__).with_name("instructions.md").read_text(encoding="utf-8").strip()
+    (Path(__file__).parent / "prompts" / "system_prompt.md")
+    .read_text(encoding="utf-8")
+    .strip()
 )
 STREAM_ERROR_DETAIL = "Agent 流式响应失败"
 TRACE_NAME = "agent-chat"

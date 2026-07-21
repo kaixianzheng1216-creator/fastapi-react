@@ -18,8 +18,8 @@ router = APIRouter(
 @router.post("/chat")
 async def chat(
     request: Request,
-    chat_request: AgentChatRequest,
     current_user: CurrentUser,
+    chat_request: AgentChatRequest,
 ) -> StreamingResponse:
     chat_stream = service.stream_chat(
         agent=request.app.state.agent,
