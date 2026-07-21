@@ -1,7 +1,6 @@
 import json
 import logging
 from collections.abc import AsyncGenerator
-from pathlib import Path
 from typing import Any, cast
 from urllib.parse import unquote_to_bytes
 from uuid import UUID, uuid4
@@ -10,17 +9,11 @@ from assistant_stream import RunController, create_run  # type: ignore[import-un
 from assistant_stream.modules.langgraph import (  # type: ignore[import-untyped]
     append_langgraph_event,
 )
-from deepagents import create_deep_agent
 from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
-from langchain_deepseek import ChatDeepSeek
 from langfuse import propagate_attributes
 from langfuse.langchain import CallbackHandler
-from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
-from app.core.config import settings
-from app.modules.agent.connections.exa import load_exa_tools
-from app.modules.agent.exceptions import AgentNotConfiguredError
 from app.modules.agent.schemas import (
     AddMessageCommand,
     AgentChatRequest,
@@ -30,35 +23,9 @@ from app.modules.agent.schemas import (
     TextMessagePart,
 )
 
-SYSTEM_PROMPT = (
-    (Path(__file__).parent / "prompts" / "system_prompt.md")
-    .read_text(encoding="utf-8")
-    .strip()
-)
 STREAM_ERROR_DETAIL = "Agent 流式响应失败"
 TRACE_NAME = "agent-chat"
 logger = logging.getLogger(__name__)
-
-
-async def create_agent(checkpointer: AsyncPostgresSaver) -> Any:
-    if not settings.DEEPSEEK_API_KEY:
-        raise AgentNotConfiguredError
-
-    tools = await load_exa_tools()
-
-    model = ChatDeepSeek(
-        model=settings.DEEPSEEK_MODEL,
-        api_key=settings.DEEPSEEK_API_KEY,
-        reasoning_effort="high",
-        extra_body={"thinking": {"type": "enabled"}},
-    )
-
-    return create_deep_agent(
-        model=model,
-        tools=tools,
-        system_prompt=SYSTEM_PROMPT,
-        checkpointer=checkpointer,
-    )
 
 
 def stream_chat(

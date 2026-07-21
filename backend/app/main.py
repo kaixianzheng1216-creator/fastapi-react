@@ -13,7 +13,7 @@ from starlette.middleware.cors import CORSMiddleware
 from app.api.exception_handlers import add_exception_handlers
 from app.api.router import api_router
 from app.core.config import settings
-from app.modules.agent import service as agent_service
+from app.modules.agent.agent import create_agent
 
 CHECKPOINT_SCHEMA = "agent"
 
@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     ) as checkpointer:
         await checkpointer.setup()
 
-        app.state.agent = await agent_service.create_agent(checkpointer)
+        app.state.agent = await create_agent(checkpointer)
 
         yield
 
