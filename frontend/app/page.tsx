@@ -2,8 +2,7 @@
 
 import { Thread } from "@/components/thread";
 import { TodoList } from "@/components/todo-list";
-import { Button } from "@/components/ui/button";
-import { clearAccessToken, getAccessToken } from "@/lib/auth";
+import { getAccessToken } from "@/lib/auth";
 import { useAui, AuiProvider, Suggestions } from "@assistant-ui/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -55,23 +54,9 @@ export default function Home() {
     return null;
   }
 
-  function logout() {
-    clearAccessToken();
-    router.replace("/login");
-  }
-
   return (
     <MyRuntimeProvider>
-      <div className="flex h-full flex-col">
-        <div className="flex justify-end p-2">
-          <Button variant="ghost" onClick={logout}>
-            退出登录
-          </Button>
-        </div>
-        <div className="min-h-0 flex-1">
-          <ThreadWithSuggestions />
-        </div>
-      </div>
+      <ThreadWithSuggestions />
     </MyRuntimeProvider>
   );
 }

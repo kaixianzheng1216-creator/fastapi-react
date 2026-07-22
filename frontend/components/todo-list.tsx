@@ -25,7 +25,7 @@ export function TodoList() {
   if (todos.length === 0) return null;
 
   return (
-    <aside className="hidden w-80 justify-self-end p-4 2xl:block">
+    <aside className="hidden w-80 justify-self-end p-8 2xl:block">
       <Card>
         <CardHeader>
           <CardTitle>任务清单</CardTitle>
