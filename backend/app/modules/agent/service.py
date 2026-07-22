@@ -233,7 +233,7 @@ def _truncate_messages(
     messages: list[Any],
     command: AddMessageCommand,
 ) -> list[Any]:
-    if command.parent_id is None and command.source_id is None:
+    if command.source_id is None:
         return messages
 
     source_index = _find_index(messages, command.source_id)
