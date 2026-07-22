@@ -5,6 +5,7 @@ from deepagents import FilesystemPermission, create_deep_agent
 from deepagents.backends import CompositeBackend, FilesystemBackend
 from langchain.chat_models import init_chat_model
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from langgraph.config import get_config
 
 from app.modules.agent.config import settings
 from app.modules.agent.connections.exa import load_exa_tools
@@ -53,7 +54,7 @@ async def create_agent(
         system_prompt=SYSTEM_PROMPT,
         skills=[SKILLS_PATH],
         backend=lambda runtime: CompositeBackend(
-            default=get_sandbox(runtime.config["configurable"]["thread_id"]),
+            default=get_sandbox(get_config()["configurable"]["thread_id"]),
             routes={
                 SKILLS_PATH: FilesystemBackend(
                     root_dir=AGENT_DIRECTORY / "skills",
