@@ -19,7 +19,6 @@ from langgraph.graph.message import REMOVE_ALL_MESSAGES
 
 from app.modules.agent.schemas import (
     AddMessageCommand,
-    AddToolResultCommand,
     AgentChatRequest,
     AgentCommand,
     FileMessagePart,
@@ -128,6 +127,7 @@ async def _prepare_run(
 ) -> tuple[RunnableConfig, list[BaseMessage]]:
     agent_config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
     input_messages: list[BaseMessage] = []
+    state_messages = controller.state["messages"]
     edit_command: AddMessageCommand | None = None
 
     for command in commands:
@@ -139,25 +139,24 @@ async def _prepare_run(
         if len(commands) != 1:
             raise ValueError("编辑消息不能与其他命令同时发送")
 
-        messages = controller.state["messages"]
         last_user_index: int | None = None
 
-        for index in range(len(messages) - 1, -1, -1):
-            if messages[index]["type"] == "human":
+        for index in reversed(range(len(state_messages))):
+            if state_messages[index]["type"] == "human":
                 last_user_index = index
                 break
 
         if (
             last_user_index is None
-            or messages[last_user_index]["id"] != edit_command.source_id
+            or state_messages[last_user_index]["id"] != edit_command.source_id
         ):
             raise ValueError("只允许编辑最后一条用户消息")
 
         if last_user_index == 0:
-            controller.state["messages"] = []
+            state_messages.clear()
             input_messages.append(RemoveMessage(id=REMOVE_ALL_MESSAGES))
         else:
-            previous_message_id = messages[last_user_index - 1]["id"]
+            previous_message_id = state_messages[last_user_index - 1]["id"]
             restored_config: RunnableConfig | None = None
 
             async for snapshot in agent.aget_state_history(agent_config):
@@ -174,7 +173,7 @@ async def _prepare_run(
                 raise ValueError("未找到被编辑消息对应的检查点")
 
             agent_config = restored_config
-            controller.state["messages"] = messages[:last_user_index]
+            del state_messages[last_user_index:]
 
     for command in commands:
         message: BaseMessage
@@ -184,33 +183,30 @@ async def _prepare_run(
                 content=_to_content(command),
                 id=str(uuid4()),
             )
-        elif isinstance(command, AddToolResultCommand):
-            model_content = (
-                command.model_content
-                if command.model_content is not None
-                else command.result
-            )
+        else:
+            content = command.model_content
 
-            if isinstance(model_content, str):
-                content = model_content
-            else:
-                content = json.dumps(model_content, ensure_ascii=False)
+            if content is None:
+                content = command.result
+
+            if not isinstance(content, str):
+                content = json.dumps(content, ensure_ascii=False)
+
+            artifact = command.artifact
+
+            if artifact is None:
+                artifact = command.result
 
             message = ToolMessage(
                 content=content,
                 tool_call_id=command.tool_call_id,
                 name=command.tool_name,
-                artifact=(
-                    command.artifact
-                    if command.artifact is not None
-                    else command.result
-                ),
+                artifact=artifact,
                 status="error" if command.is_error else "success",
                 id=str(uuid4()),
             )
 
-        controller.state["messages"].append(message.model_dump())
-
+        state_messages.append(message.model_dump())
         input_messages.append(message)
 
     return agent_config, input_messages
