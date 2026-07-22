@@ -17,7 +17,16 @@ type MyRuntimeProviderProps = {
   children: ReactNode;
 };
 
-type State = {
+export type Todo = {
+  content: string;
+  status: "pending" | "in_progress" | "completed";
+};
+
+export type TodoState = {
+  todos?: Todo[];
+};
+
+export type State = TodoState & {
   messages: LangChainMessage[];
 };
 
@@ -88,6 +97,7 @@ const converter = (
 
   return {
     messages: LangChainMessageConverter.toThreadMessages(messages, isRunning),
+    state: { todos: state.todos ?? [] } satisfies TodoState,
     isRunning,
   };
 };
