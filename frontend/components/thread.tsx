@@ -31,7 +31,9 @@ import {
   SuggestionPrimitive,
   ThreadPrimitive,
   type ToolCallMessagePartComponent,
+  useAui,
   useAuiState,
+  useAssistantTransportSendCommand,
 } from "@assistant-ui/react";
 import {
   ArrowDownIcon,
@@ -436,11 +438,7 @@ const AssistantActionBar: FC = () => {
           </AuiIf>
         </TooltipIconButton>
       </ActionBarPrimitive.Copy>
-      <ActionBarPrimitive.Reload asChild>
-        <TooltipIconButton tooltip="重新生成">
-          <RefreshCwIcon />
-        </TooltipIconButton>
-      </ActionBarPrimitive.Reload>
+      <RegenerateButton />
       <ActionBarMorePrimitive.Root>
         <ActionBarMorePrimitive.Trigger asChild>
           <TooltipIconButton
@@ -465,6 +463,56 @@ const AssistantActionBar: FC = () => {
         </ActionBarMorePrimitive.Content>
       </ActionBarMorePrimitive.Root>
     </ActionBarPrimitive.Root>
+  );
+};
+
+const RegenerateButton: FC = () => {
+  const aui = useAui();
+  const sendCommand = useAssistantTransportSendCommand();
+  const assistantMessage = useAuiState((state) => state.message);
+
+  const regenerate = () => {
+    if (assistantMessage.parentId === null) return;
+
+    const thread = aui.thread();
+    const userMessage = thread
+      .message({ id: assistantMessage.parentId })
+      .getState();
+
+    if (userMessage.role !== "user") return;
+
+    const parts: Array<
+      | { type: "text"; text: string }
+      | { type: "image"; image: string }
+    > = [];
+    const content = [
+      ...userMessage.content,
+      ...userMessage.attachments.flatMap((attachment) => attachment.content),
+    ];
+
+    for (const part of content) {
+      if (part.type === "text") {
+        parts.push({ type: "text", text: part.text });
+      } else if (part.type === "image") {
+        parts.push({ type: "image", image: part.image });
+      }
+    }
+
+    sendCommand({
+      type: "add-message",
+      message: {
+        role: "user",
+        parts,
+      },
+      parentId: userMessage.parentId,
+      sourceId: userMessage.id,
+    });
+  };
+
+  return (
+    <TooltipIconButton tooltip="重新生成" onClick={regenerate}>
+      <RefreshCwIcon />
+    </TooltipIconButton>
   );
 };
 

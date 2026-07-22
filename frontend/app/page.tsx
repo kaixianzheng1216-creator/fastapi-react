@@ -12,11 +12,13 @@ function ThreadWithSuggestions() {
   const aui = useAui({
     suggestions: Suggestions([
       {
-        title: "厦门今天天气怎么样？",
+        title: "厦门今天天气",
+        label: "怎么样？",
         prompt: "厦门今天天气怎么样？",
       },
       {
-        title: "介绍一下你自己以及你的能力",
+        title: "介绍一下你自己",
+        label: "以及你的能力",
         prompt: "你能帮助我做什么？",
       },
     ]),

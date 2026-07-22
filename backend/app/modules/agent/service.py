@@ -80,6 +80,7 @@ async def _run(
             agent,
             checkpoint_thread_id,
             chat_request.commands,
+            controller.state["messages"],
         )
         controller.state[CHECKPOINT_THREAD_ID_FIELD] = checkpoint_thread_id
 
@@ -135,6 +136,7 @@ async def _get_config(
     agent: Any,
     thread_id: str,
     commands: list[AgentCommand],
+    messages: list[Any],
 ) -> tuple[RunnableConfig, str]:
     config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
     edits: list[AddMessageCommand] = []
@@ -148,9 +150,12 @@ async def _get_config(
     if len(edits) > 1:
         raise ValueError("每次请求只能编辑一条消息")
 
-    parent_id = edits[0].parent_id
+    source_index = _find_index(messages, edits[0].source_id)
 
-    if parent_id is None:
+    if source_index is None:
+        raise ValueError("未找到源消息")
+
+    if source_index == 0:
         branch_thread_id = f"{thread_id}:branch:{uuid4()}"
         branch_config: RunnableConfig = {
             "configurable": {"thread_id": branch_thread_id}
@@ -158,16 +163,23 @@ async def _get_config(
 
         return branch_config, branch_thread_id
 
-    async for snapshot in agent.aget_state_history(config):
-        messages = snapshot.values.get("messages", [])
+    previous_message = messages[source_index - 1]
+    previous_message_id = (
+        previous_message.get("id")
+        if isinstance(previous_message, dict)
+        else getattr(previous_message, "id", None)
+    )
 
-        if not messages:
+    async for snapshot in agent.aget_state_history(config):
+        snapshot_messages = snapshot.values.get("messages", [])
+
+        if not snapshot_messages:
             continue
 
-        last = messages[-1]
+        last = snapshot_messages[-1]
         last_id = last.get("id") if isinstance(last, dict) else getattr(last, "id", None)
 
-        if last_id == parent_id:
+        if last_id == previous_message_id:
             return cast(RunnableConfig, dict(snapshot.config)), thread_id
 
     raise ValueError("未找到被编辑消息对应的检查点")
@@ -244,17 +256,15 @@ def _truncate_messages(
     if command.parent_id is None:
         if source_index != 0:
             raise ValueError("没有父消息的消息必须是第一条消息")
-        return []
+    else:
+        parent_index = _find_index(messages, command.parent_id)
 
-    parent_index = _find_index(messages, command.parent_id)
+        if parent_index is None:
+            raise ValueError("未找到父消息")
+        if parent_index >= source_index:
+            raise ValueError("父消息必须位于源消息之前")
 
-    if parent_index is None:
-        raise ValueError("未找到父消息")
-
-    if source_index is not None and source_index != parent_index + 1:
-        raise ValueError("源消息必须紧跟在父消息之后")
-
-    return messages[: parent_index + 1]
+    return messages[:source_index]
 
 
 def _find_index(messages: list[Any], message_id: str | None) -> int | None:
