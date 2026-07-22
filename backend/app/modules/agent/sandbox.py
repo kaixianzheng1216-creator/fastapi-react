@@ -42,4 +42,8 @@ def get_sandbox(thread_id: str) -> E2BSandbox:
         if setup.exit_code != 0:
             raise RuntimeError(f"无法初始化沙箱工作目录：{setup.stderr}")
 
-    return E2BSandbox(sandbox=sandbox, workdir=SANDBOX_WORKDIR)
+    return E2BSandbox(
+        sandbox=sandbox,
+        workdir=SANDBOX_WORKDIR,
+        timeout=SANDBOX_TIMEOUT_SECONDS,
+    )
