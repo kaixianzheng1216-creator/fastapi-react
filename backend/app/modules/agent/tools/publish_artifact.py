@@ -25,8 +25,8 @@ def load_publish_artifact_tools(settings: AgentSettings) -> list[BaseTool]:
     )
 
     @tool("publish_artifact")
-    async def publish_artifact(path: str, runtime: ToolRuntime) -> dict[str, str]:
-        """将 /workspace/artifacts/ 下的最终文件发布为可下载链接。"""
+    async def publish_artifact(path: str, runtime: ToolRuntime) -> str:
+        """将 /home/user/artifacts/ 下的最终文件发布为可下载链接。"""
         artifact_path = PurePosixPath(path)
 
         if artifact_path.parent != ARTIFACT_DIRECTORY or artifact_path.name in {
@@ -34,29 +34,18 @@ def load_publish_artifact_tools(settings: AgentSettings) -> list[BaseTool]:
             ".",
             "..",
         }:
-            raise ValueError("只能发布 /workspace/artifacts/ 目录中的单个文件")
+            raise ValueError("只能发布 /home/user/artifacts/ 目录中的单个文件")
 
         thread_id = runtime.config["configurable"]["thread_id"]
-
-        if not isinstance(thread_id, str):
-            raise ValueError("缺少会话标识")
-
         sandbox = await asyncio.to_thread(get_sandbox, thread_id)
-        downloaded = await asyncio.to_thread(
-            sandbox.download_files, [str(artifact_path)]
-        )
-        file = downloaded[0]
+        file = (await asyncio.to_thread(sandbox.download_files, [str(artifact_path)]))[
+            0
+        ]
 
         if file.error is not None or file.content is None:
             raise ValueError(f"无法读取产物文件：{file.error or path}")
 
-        object_key = "/".join(
-            [
-                COS_ARTIFACT_PREFIX,
-                uuid4().hex,
-                artifact_path.name,
-            ]
-        )
+        object_key = f"{COS_ARTIFACT_PREFIX}/{uuid4().hex}/{artifact_path.name}"
         content_type = mimetypes.guess_type(artifact_path.name)[0]
 
         await asyncio.to_thread(
@@ -71,9 +60,6 @@ def load_publish_artifact_tools(settings: AgentSettings) -> list[BaseTool]:
             f"{quote(object_key, safe='/')}"
         )
 
-        return {
-            "name": artifact_path.name,
-            "url": url,
-        }
+        return url
 
     return [publish_artifact]

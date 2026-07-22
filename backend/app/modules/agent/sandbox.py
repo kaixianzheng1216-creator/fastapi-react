@@ -5,7 +5,7 @@ from langchain_e2b import E2BSandbox  # type: ignore[import-untyped]
 
 from app.modules.agent.config import settings
 
-SANDBOX_WORKDIR = "/workspace"
+SANDBOX_WORKDIR = "/home/user"
 THREAD_METADATA_KEY = "agent_thread"
 SANDBOX_TIMEOUT_SECONDS = 300
 
@@ -37,9 +37,9 @@ def get_sandbox(thread_id: str) -> E2BSandbox:
             api_key=api_key,
         )
 
-    setup = sandbox.commands.run("mkdir -p /workspace/artifacts")
+        setup = sandbox.commands.run("mkdir -p /home/user/artifacts")
 
-    if setup.exit_code != 0:
-        raise RuntimeError(f"无法初始化沙箱工作目录：{setup.stderr}")
+        if setup.exit_code != 0:
+            raise RuntimeError(f"无法初始化沙箱工作目录：{setup.stderr}")
 
     return E2BSandbox(sandbox=sandbox, workdir=SANDBOX_WORKDIR)
