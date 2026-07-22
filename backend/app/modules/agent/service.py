@@ -151,15 +151,14 @@ async def _get_config(
     async for snapshot in agent.aget_state_history(config):
         snapshot_messages = snapshot.values.get("messages", [])
 
-        if source_index == 0:
-            if not snapshot_messages:
-                return cast(RunnableConfig, dict(snapshot.config))
-            continue
+        if source_index == 0 and not snapshot_messages:
+            return cast(RunnableConfig, dict(snapshot.config))
 
-        if not snapshot_messages:
-            continue
-
-        if snapshot_messages[-1].id == previous_message_id:
+        if (
+                source_index > 0
+                and snapshot_messages
+                and snapshot_messages[-1].id == previous_message_id
+        ):
             return cast(RunnableConfig, dict(snapshot.config))
 
     raise ValueError("未找到被编辑消息对应的检查点")
