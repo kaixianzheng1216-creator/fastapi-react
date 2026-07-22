@@ -549,11 +549,18 @@ const UserActionBar: FC = () => {
       autohide="not-last"
       className="aui-user-action-bar-root flex flex-col items-end"
     >
-      <ActionBarPrimitive.Edit asChild>
-        <TooltipIconButton tooltip="编辑" className="aui-user-action-edit">
-          <PencilIcon />
-        </TooltipIconButton>
-      </ActionBarPrimitive.Edit>
+      <AuiIf
+        condition={(s) =>
+          s.thread.messages.findLast((message) => message.role === "user")
+            ?.id === s.message.id
+        }
+      >
+        <ActionBarPrimitive.Edit asChild>
+          <TooltipIconButton tooltip="编辑" className="aui-user-action-edit">
+            <PencilIcon />
+          </TooltipIconButton>
+        </ActionBarPrimitive.Edit>
+      </AuiIf>
     </ActionBarPrimitive.Root>
   );
 };

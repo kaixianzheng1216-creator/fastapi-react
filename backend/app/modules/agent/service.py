@@ -1,7 +1,7 @@
 import json
 import logging
 from collections.abc import AsyncGenerator
-from typing import Any, cast
+from typing import Any
 from urllib.parse import unquote_to_bytes
 from uuid import UUID, uuid4
 
@@ -11,9 +11,11 @@ from assistant_stream.modules.langgraph import (  # type: ignore[import-untyped]
     get_tool_call_subgraph_state,
 )
 from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
+from langchain_core.messages.modifier import RemoveMessage
 from langchain_core.runnables import RunnableConfig
 from langfuse import propagate_attributes
 from langfuse.langchain import CallbackHandler
+from langgraph.graph.message import REMOVE_ALL_MESSAGES
 
 from app.modules.agent.schemas import (
     AddMessageCommand,
@@ -65,16 +67,14 @@ async def _run(
         if controller.is_cancelled:
             return
 
-        config = await _get_config(
+        agent_config, input_messages = await _prepare_run(
+            controller,
             agent,
             thread_id,
             chat_request.commands,
-            controller.state["messages"],
         )
 
-        inputs = _apply_commands(controller, chat_request.commands)
-
-        config["callbacks"] = [CallbackHandler()]
+        agent_config["callbacks"] = [CallbackHandler()]
 
         with propagate_attributes(
             trace_name=TRACE_NAME,
@@ -82,8 +82,8 @@ async def _run(
             session_id=thread_id,
         ):
             events = agent.astream(
-                {"messages": inputs},
-                config=config,
+                {"messages": input_messages},
+                config=agent_config,
                 stream_mode=["messages", "updates"],
                 subgraphs=True,
                 version="v2",
@@ -120,70 +120,66 @@ async def _run(
                 await close()
 
 
-async def _get_config(
+async def _prepare_run(
+    controller: RunController,
     agent: Any,
     thread_id: str,
     commands: list[AgentCommand],
-    messages: list[dict[str, Any]],
-) -> RunnableConfig:
-    config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
-    edits: list[AddMessageCommand] = []
+) -> tuple[RunnableConfig, list[BaseMessage]]:
+    agent_config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
+    input_messages: list[BaseMessage] = []
+    edit_command: AddMessageCommand | None = None
 
     for command in commands:
         if isinstance(command, AddMessageCommand) and command.source_id is not None:
-            edits.append(command)
+            edit_command = command
+            break
 
-    if not edits:
-        return config
-    if len(edits) > 1:
-        raise ValueError("每次请求只能编辑一条消息")
+    if edit_command is not None:
+        if len(commands) != 1:
+            raise ValueError("编辑消息不能与其他命令同时发送")
 
-    source_index = _find_index(messages, edits[0].source_id)
+        messages = controller.state["messages"]
+        last_user_index: int | None = None
 
-    if source_index is None:
-        raise ValueError("未找到源消息")
-
-    previous_message_id: str | None = None
-
-    if source_index > 0:
-        previous_message_id = messages[source_index - 1]["id"]
-
-    async for snapshot in agent.aget_state_history(config):
-        snapshot_messages = snapshot.values.get("messages", [])
-
-        if source_index == 0 and not snapshot_messages:
-            return cast(RunnableConfig, dict(snapshot.config))
+        for index in range(len(messages) - 1, -1, -1):
+            if messages[index]["type"] == "human":
+                last_user_index = index
+                break
 
         if (
-                source_index > 0
-                and snapshot_messages
-                and snapshot_messages[-1].id == previous_message_id
+            last_user_index is None
+            or messages[last_user_index]["id"] != edit_command.source_id
         ):
-            return cast(RunnableConfig, dict(snapshot.config))
+            raise ValueError("只允许编辑最后一条用户消息")
 
-    raise ValueError("未找到被编辑消息对应的检查点")
+        if last_user_index == 0:
+            controller.state["messages"] = []
+            input_messages.append(RemoveMessage(id=REMOVE_ALL_MESSAGES))
+        else:
+            previous_message_id = messages[last_user_index - 1]["id"]
+            restored_config: RunnableConfig | None = None
 
+            async for snapshot in agent.aget_state_history(agent_config):
+                snapshot_messages = snapshot.values.get("messages", [])
 
-def _apply_commands(
-    controller: RunController,
-    commands: list[AgentCommand],
-) -> list[BaseMessage]:
-    inputs: list[BaseMessage] = []
+                if (
+                    snapshot_messages
+                    and snapshot_messages[-1].id == previous_message_id
+                ):
+                    restored_config = snapshot.config
+                    break
+
+            if restored_config is None:
+                raise ValueError("未找到被编辑消息对应的检查点")
+
+            agent_config = restored_config
+            controller.state["messages"] = messages[:last_user_index]
 
     for command in commands:
         message: BaseMessage
 
         if isinstance(command, AddMessageCommand):
-            messages = list(controller.state["messages"])
-
-            retained = _truncate_messages(
-                messages,
-                command,
-            )
-
-            if retained != messages:
-                controller.state["messages"] = retained
-
             message = HumanMessage(
                 content=_to_content(command),
                 id=str(uuid4()),
@@ -215,49 +211,9 @@ def _apply_commands(
 
         controller.state["messages"].append(message.model_dump())
 
-        inputs.append(message)
+        input_messages.append(message)
 
-    return inputs
-
-
-def _truncate_messages(
-    messages: list[dict[str, Any]],
-    command: AddMessageCommand,
-) -> list[dict[str, Any]]:
-    if command.source_id is None:
-        return messages
-
-    source_index = _find_index(messages, command.source_id)
-
-    if command.source_id is not None and source_index is None:
-        raise ValueError("未找到源消息")
-
-    if command.parent_id is None:
-        if source_index != 0:
-            raise ValueError("没有父消息的消息必须是第一条消息")
-    else:
-        parent_index = _find_index(messages, command.parent_id)
-
-        if parent_index is None:
-            raise ValueError("未找到父消息")
-        if parent_index >= source_index:
-            raise ValueError("父消息必须位于源消息之前")
-
-    return messages[:source_index]
-
-
-def _find_index(
-    messages: list[dict[str, Any]],
-    message_id: str | None,
-) -> int | None:
-    if message_id is None:
-        return None
-
-    for index, message in enumerate(messages):
-        if message["id"] == message_id:
-            return index
-
-    return None
+    return agent_config, input_messages
 
 
 def _to_content(
