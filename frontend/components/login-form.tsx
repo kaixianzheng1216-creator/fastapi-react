@@ -76,7 +76,7 @@ export function LoginForm({
             <div className="flex size-8 items-center justify-center rounded-md">
               <GalleryVerticalEnd className="size-6" />
             </div>
-            <h1 className="text-xl font-bold">登录</h1>
+            <h1 className="text-xl font-bold">登录账号</h1>
             <FieldDescription>
               还没有账号？<Link href="/signup">立即注册</Link>
             </FieldDescription>
