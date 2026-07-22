@@ -107,7 +107,6 @@ async def _run(
                 )
     except Exception:
         logger.exception(STREAM_ERROR_DETAIL)
-
         controller.add_error(STREAM_ERROR_DETAIL)
     finally:
         if events is not None:
