@@ -27,7 +27,6 @@ from app.modules.agent.schemas import (
 
 STREAM_ERROR_DETAIL = "Agent 流式响应失败"
 TRACE_NAME = "agent-chat"
-CHECKPOINT_THREAD_ID_FIELD = "checkpoint_thread_id"
 logger = logging.getLogger(__name__)
 
 
@@ -66,23 +65,12 @@ async def _run(
         if controller.is_cancelled:
             return
 
-        checkpoint_thread_id = controller.state.get(
-            CHECKPOINT_THREAD_ID_FIELD,
-            thread_id,
-        )
-        if not isinstance(checkpoint_thread_id, str) or (
-            checkpoint_thread_id != thread_id
-            and not checkpoint_thread_id.startswith(f"{thread_id}:branch:")
-        ):
-            checkpoint_thread_id = thread_id
-
-        config, checkpoint_thread_id = await _get_config(
+        config = await _get_config(
             agent,
-            checkpoint_thread_id,
+            thread_id,
             chat_request.commands,
             controller.state["messages"],
         )
-        controller.state[CHECKPOINT_THREAD_ID_FIELD] = checkpoint_thread_id
 
         inputs = _apply_commands(controller, chat_request.commands)
 
@@ -136,8 +124,8 @@ async def _get_config(
     agent: Any,
     thread_id: str,
     commands: list[AgentCommand],
-    messages: list[Any],
-) -> tuple[RunnableConfig, str]:
+    messages: list[dict[str, Any]],
+) -> RunnableConfig:
     config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
     edits: list[AddMessageCommand] = []
 
@@ -146,7 +134,7 @@ async def _get_config(
             edits.append(command)
 
     if not edits:
-        return config, thread_id
+        return config
     if len(edits) > 1:
         raise ValueError("每次请求只能编辑一条消息")
 
@@ -155,32 +143,24 @@ async def _get_config(
     if source_index is None:
         raise ValueError("未找到源消息")
 
-    if source_index == 0:
-        branch_thread_id = f"{thread_id}:branch:{uuid4()}"
-        branch_config: RunnableConfig = {
-            "configurable": {"thread_id": branch_thread_id}
-        }
+    previous_message_id: str | None = None
 
-        return branch_config, branch_thread_id
-
-    previous_message = messages[source_index - 1]
-    previous_message_id = (
-        previous_message.get("id")
-        if isinstance(previous_message, dict)
-        else getattr(previous_message, "id", None)
-    )
+    if source_index > 0:
+        previous_message_id = messages[source_index - 1]["id"]
 
     async for snapshot in agent.aget_state_history(config):
         snapshot_messages = snapshot.values.get("messages", [])
 
+        if source_index == 0:
+            if not snapshot_messages:
+                return cast(RunnableConfig, dict(snapshot.config))
+            continue
+
         if not snapshot_messages:
             continue
 
-        last = snapshot_messages[-1]
-        last_id = last.get("id") if isinstance(last, dict) else getattr(last, "id", None)
-
-        if last_id == previous_message_id:
-            return cast(RunnableConfig, dict(snapshot.config)), thread_id
+        if snapshot_messages[-1].id == previous_message_id:
+            return cast(RunnableConfig, dict(snapshot.config))
 
     raise ValueError("未找到被编辑消息对应的检查点")
 
@@ -242,9 +222,9 @@ def _apply_commands(
 
 
 def _truncate_messages(
-    messages: list[Any],
+    messages: list[dict[str, Any]],
     command: AddMessageCommand,
-) -> list[Any]:
+) -> list[dict[str, Any]]:
     if command.source_id is None:
         return messages
 
@@ -267,12 +247,15 @@ def _truncate_messages(
     return messages[:source_index]
 
 
-def _find_index(messages: list[Any], message_id: str | None) -> int | None:
+def _find_index(
+    messages: list[dict[str, Any]],
+    message_id: str | None,
+) -> int | None:
     if message_id is None:
         return None
 
     for index, message in enumerate(messages):
-        if isinstance(message, dict) and message.get("id") == message_id:
+        if message["id"] == message_id:
             return index
 
     return None
