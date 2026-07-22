@@ -15,11 +15,19 @@ class AgentSettings(BaseSettings):
     MODEL_NAME: str
     MODEL_API_KEY: SecretStr
 
-    EXA_API_KEY: SecretStr | None = None
+    EXA_API_KEY: SecretStr
 
-    IMAGE_API_KEY: SecretStr | None = None
-    IMAGE_BASE_URL: str | None = None
-    IMAGE_MODEL: str | None = None
+    IMAGE_API_KEY: SecretStr
+    IMAGE_BASE_URL: str
+    IMAGE_MODEL: str
+
+    E2B_API_KEY: SecretStr
+    E2B_TEMPLATE: str | None = None
+
+    COS_SECRET_ID: SecretStr
+    COS_SECRET_KEY: SecretStr
+    COS_REGION: str
+    COS_BUCKET: str
 
 
 settings = AgentSettings.model_validate({})

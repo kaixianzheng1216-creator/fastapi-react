@@ -8,17 +8,6 @@ MAX_REFERENCE_IMAGES = 16
 
 
 def load_image_tools() -> list[BaseTool]:
-    api_key = settings.IMAGE_API_KEY
-
-    if api_key is None:
-        return []
-
-    base_url = settings.IMAGE_BASE_URL
-    model = settings.IMAGE_MODEL
-
-    if base_url is None or model is None:
-        raise RuntimeError("生图配置不完整")
-
     @tool("generate_image")
     async def generate_image(
         prompt: str,
@@ -32,15 +21,15 @@ def load_image_tools() -> list[BaseTool]:
             raise ValueError(f"参考图片不能超过 {MAX_REFERENCE_IMAGES} 张")
 
         async with AsyncOpenAI(
-            api_key=api_key.get_secret_value(),
-            base_url=base_url,
+            api_key=settings.IMAGE_API_KEY.get_secret_value(),
+            base_url=settings.IMAGE_BASE_URL,
         ) as client:
             if image_urls:
                 response = await client.post(
                     "/images/edits",
                     cast_to=ImagesResponse,
                     body={
-                        "model": model,
+                        "model": settings.IMAGE_MODEL,
                         "prompt": prompt,
                         "size": size,
                         "images": [{"image_url": url} for url in image_urls],
@@ -51,7 +40,7 @@ def load_image_tools() -> list[BaseTool]:
                     "/images/generations",
                     cast_to=ImagesResponse,
                     body={
-                        "model": model,
+                        "model": settings.IMAGE_MODEL,
                         "prompt": prompt,
                         "size": size,
                     },

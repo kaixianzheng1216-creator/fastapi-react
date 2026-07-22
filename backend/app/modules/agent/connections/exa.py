@@ -7,17 +7,12 @@ EXA_MCP_URL = "https://mcp.exa.ai/mcp"
 
 
 async def load_exa_tools() -> list[BaseTool]:
-    api_key = settings.EXA_API_KEY
-
-    if api_key is None:
-        return []
-
     client = MultiServerMCPClient(
         {
             "exa": {
                 "transport": "streamable_http",
                 "url": EXA_MCP_URL,
-                "headers": {"x-api-key": api_key.get_secret_value()},
+                "headers": {"x-api-key": settings.EXA_API_KEY.get_secret_value()},
             }
         }
     )
