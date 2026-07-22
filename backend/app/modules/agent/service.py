@@ -27,6 +27,7 @@ from app.modules.agent.schemas import (
 
 STREAM_ERROR_DETAIL = "Agent 流式响应失败"
 TRACE_NAME = "agent-chat"
+CHECKPOINT_THREAD_ID_FIELD = "checkpoint_thread_id"
 logger = logging.getLogger(__name__)
 
 
@@ -65,11 +66,22 @@ async def _run(
         if controller.is_cancelled:
             return
 
-        config = await _get_config(
-            agent,
+        checkpoint_thread_id = controller.state.get(
+            CHECKPOINT_THREAD_ID_FIELD,
             thread_id,
+        )
+        if not isinstance(checkpoint_thread_id, str) or (
+            checkpoint_thread_id != thread_id
+            and not checkpoint_thread_id.startswith(f"{thread_id}:branch:")
+        ):
+            checkpoint_thread_id = thread_id
+
+        config, checkpoint_thread_id = await _get_config(
+            agent,
+            checkpoint_thread_id,
             chat_request.commands,
         )
+        controller.state[CHECKPOINT_THREAD_ID_FIELD] = checkpoint_thread_id
 
         inputs = _apply_commands(controller, chat_request.commands)
 
@@ -123,7 +135,7 @@ async def _get_config(
     agent: Any,
     thread_id: str,
     commands: list[AgentCommand],
-) -> RunnableConfig:
+) -> tuple[RunnableConfig, str]:
     config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
     edits: list[AddMessageCommand] = []
 
@@ -132,19 +144,22 @@ async def _get_config(
             edits.append(command)
 
     if not edits:
-        return config
+        return config, thread_id
     if len(edits) > 1:
         raise ValueError("每次请求只能编辑一条消息")
 
     parent_id = edits[0].parent_id
 
+    if parent_id is None:
+        branch_thread_id = f"{thread_id}:branch:{uuid4()}"
+        branch_config: RunnableConfig = {
+            "configurable": {"thread_id": branch_thread_id}
+        }
+
+        return branch_config, branch_thread_id
+
     async for snapshot in agent.aget_state_history(config):
         messages = snapshot.values.get("messages", [])
-
-        if parent_id is None:
-            if not messages:
-                return cast(RunnableConfig, dict(snapshot.config))
-            continue
 
         if not messages:
             continue
@@ -153,7 +168,7 @@ async def _get_config(
         last_id = last.get("id") if isinstance(last, dict) else getattr(last, "id", None)
 
         if last_id == parent_id:
-            return cast(RunnableConfig, dict(snapshot.config))
+            return cast(RunnableConfig, dict(snapshot.config)), thread_id
 
     raise ValueError("未找到被编辑消息对应的检查点")
 
