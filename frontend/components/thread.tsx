@@ -330,6 +330,10 @@ const AssistantMessage: FC = () => {
     ToolGroup,
     ReasoningGroup,
   } = useContext(ThreadComponentsContext);
+  const isThinking = useAuiState((state) => {
+    const lastPart = state.message.parts.at(-1);
+    return state.thread.isRunning && lastPart?.type !== "text";
+  });
 
   const ACTION_BAR_PT = "pt-1.5";
   // Keep the action bar inside the contained root's paint box, then cancel its reserved space in flow.
@@ -355,11 +359,10 @@ const AssistantMessage: FC = () => {
           {({ part, children }) => {
             switch (part.type) {
               case "group-chainOfThought": {
-                const running = part.status.type === "running";
                 return (
-                  <ReasoningRoot streaming={running}>
-                    <ReasoningTrigger active={running} />
-                    <ReasoningContent aria-busy={running}>
+                  <ReasoningRoot streaming={isThinking}>
+                    <ReasoningTrigger active={isThinking} />
+                    <ReasoningContent aria-busy={isThinking}>
                       <ReasoningText>{children}</ReasoningText>
                     </ReasoningContent>
                   </ReasoningRoot>

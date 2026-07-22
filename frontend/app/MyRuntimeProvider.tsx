@@ -121,7 +121,7 @@ export function MyRuntimeProvider({ children }: MyRuntimeProviderProps) {
 
       return {
         ...body,
-        threadId: body.threadId ?? threadId.current,
+        threadId: threadId.current,
       };
     },
     onResponse: (response) => {
