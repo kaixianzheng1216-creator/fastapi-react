@@ -170,7 +170,13 @@ async def _prepare_run(
             raise ValueError("未找到编辑消息之前的检查点")
 
         agent_config = restored_config
-        del state_messages[last_user_index:]
+        messages_before_edit = [
+            state_messages[index] for index in range(last_user_index)
+        ]
+        state_messages.clear()
+
+        for state_message in messages_before_edit:
+            state_messages.append(state_message)
 
     for command in commands:
         message: BaseMessage
