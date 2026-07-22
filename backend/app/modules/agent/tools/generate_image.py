@@ -47,25 +47,26 @@ def load_image_tools() -> list[BaseTool]:
                     },
                 )
             else:
-                response = await client.images.generate(
-                    model=model,
-                    prompt=prompt,
-                    size=size,
+                response = await client.post(
+                    "/images/generations",
+                    cast_to=ImagesResponse,
+                    body={
+                        "model": model,
+                        "prompt": prompt,
+                        "size": size,
+                    },
                 )
 
-        return _get_image_result(response)
+        if not response.data:
+            raise RuntimeError("生图接口未返回图片")
 
-    return [generate_image]
+        image = response.data[0]
 
+        if image.url:
+            return image.url
+        if image.b64_json:
+            return f"data:image/png;base64,{image.b64_json}"
 
-def _get_image_result(response: ImagesResponse) -> str:
-    if not response.data:
         raise RuntimeError("生图接口未返回图片")
 
-    image = response.data[0]
-    if image.url:
-        return image.url
-    if image.b64_json:
-        return f"data:image/png;base64,{image.b64_json}"
-
-    raise RuntimeError("生图接口未返回图片")
+    return [generate_image]
