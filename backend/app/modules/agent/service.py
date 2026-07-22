@@ -11,11 +11,9 @@ from assistant_stream.modules.langgraph import (  # type: ignore[import-untyped]
     get_tool_call_subgraph_state,
 )
 from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
-from langchain_core.messages.modifier import RemoveMessage
 from langchain_core.runnables import RunnableConfig
 from langfuse import propagate_attributes
 from langfuse.langchain import CallbackHandler
-from langgraph.graph.message import REMOVE_ALL_MESSAGES
 
 from app.modules.agent.schemas import (
     AddMessageCommand,
@@ -152,28 +150,28 @@ async def _prepare_run(
         ):
             raise ValueError("只允许编辑最后一条用户消息")
 
-        if last_user_index == 0:
-            state_messages.clear()
-            input_messages.append(RemoveMessage(id=REMOVE_ALL_MESSAGES))
-        else:
-            previous_message_id = state_messages[last_user_index - 1]["id"]
-            restored_config: RunnableConfig | None = None
+        previous_message_id = (
+            None if last_user_index == 0 else state_messages[last_user_index - 1]["id"]
+        )
 
-            async for snapshot in agent.aget_state_history(agent_config):
-                snapshot_messages = snapshot.values.get("messages", [])
+        restored_config: RunnableConfig | None = None
 
-                if (
-                    snapshot_messages
-                    and snapshot_messages[-1].id == previous_message_id
-                ):
+        async for snapshot in agent.aget_state_history(agent_config):
+            snapshot_messages = snapshot.values.get("messages", [])
+
+            if previous_message_id is None:
+                if not snapshot_messages:
                     restored_config = snapshot.config
                     break
+            elif snapshot_messages and snapshot_messages[-1].id == previous_message_id:
+                restored_config = snapshot.config
+                break
 
-            if restored_config is None:
-                raise ValueError("未找到被编辑消息对应的检查点")
+        if restored_config is None:
+            raise ValueError("未找到编辑消息之前的检查点")
 
-            agent_config = restored_config
-            del state_messages[last_user_index:]
+        agent_config = restored_config
+        del state_messages[last_user_index:]
 
     for command in commands:
         message: BaseMessage
