@@ -46,7 +46,7 @@ services:
     restart: always
     depends_on: *langfuse-dependencies
     ports:
-      - "3000:3000"
+      - "3002:3000"
     environment:
       <<: *langfuse-environment
       NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET:?Variable not set}
