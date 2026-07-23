@@ -41,12 +41,14 @@ import {
   CheckIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  CloudSunIcon,
   CopyIcon,
   DownloadIcon,
   MicIcon,
   MoreHorizontalIcon,
   PencilIcon,
   RefreshCwIcon,
+  SparklesIcon,
   SquareIcon,
 } from "lucide-react";
 import {
@@ -207,13 +209,21 @@ const ThreadSuggestions: FC = () => {
 };
 
 const ThreadSuggestionItem: FC = () => {
+  const SuggestionIcon = useAuiState((s) =>
+    s.suggestion.title.includes("天气") ? CloudSunIcon : SparklesIcon,
+  );
+
   return (
     <div className="aui-thread-welcome-suggestion-display fade-in slide-in-from-bottom-2 animate-in fill-mode-both duration-200">
       <SuggestionPrimitive.Trigger send asChild>
         <Button
           variant="ghost"
-          className="aui-thread-welcome-suggestion text-foreground hover:bg-muted border-border/60 h-auto gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-normal whitespace-nowrap transition-colors"
+          className="aui-thread-welcome-suggestion text-foreground hover:bg-muted border-border/60 h-auto gap-2 rounded-full border px-3.5 py-1.5 text-sm font-normal whitespace-nowrap transition-colors"
         >
+          <SuggestionIcon
+            aria-hidden="true"
+            className="text-muted-foreground size-4 shrink-0"
+          />
           <SuggestionPrimitive.Title className="aui-thread-welcome-suggestion-text-1" />
           <SuggestionPrimitive.Description className="aui-thread-welcome-suggestion-text-2 empty:hidden" />
         </Button>
