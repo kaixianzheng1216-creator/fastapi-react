@@ -12,7 +12,7 @@ from langchain_mcp_adapters.interceptors import (
 
 XIAOHONGSHU_MCP_URL = "http://xiaohongshu-mcp:18060/mcp"
 XIAOHONGSHU_MAX_CONCURRENT_TOOL_CALLS = 1
-XIAOHONGSHU_TOOL_TIMEOUT_SECONDS = 60
+XIAOHONGSHU_TOOL_TIMEOUT_SECONDS = 300
 XIAOHONGSHU_TOOL_TIMEOUT_MESSAGE = "小红书工具调用超时，请稍后重试。"
 logger = logging.getLogger(__name__)
 _xiaohongshu_tool_semaphore = asyncio.Semaphore(
