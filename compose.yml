@@ -2,6 +2,25 @@ include:
   - compose.langfuse.yml
 
 services:
+  xiaohongshu-mcp:
+    image: xpzouying/xiaohongshu-mcp:latest
+    restart: always
+    init: true
+    volumes:
+      - xiaohongshu-data:/app/data
+      - xiaohongshu-images:/app/images
+    environment:
+      - ROD_BROWSER_BIN=/opt/browser/chrome
+      - COOKIES_PATH=/app/data/cookies.json
+      - HOME=/app/data/home
+      - XDG_CACHE_HOME=/app/data/cache
+      - XDG_CONFIG_HOME=/app/data/config
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:18060/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   db:
     image: postgres:18
     restart: always
@@ -56,6 +75,9 @@ services:
       - traefik-public
       - default
     depends_on:
+      xiaohongshu-mcp:
+        condition: service_healthy
+        restart: true
       db:
         condition: service_healthy
         restart: true
@@ -130,6 +152,8 @@ services:
 
 volumes:
   app-db-data:
+  xiaohongshu-data:
+  xiaohongshu-images:
 
 networks:
   traefik-public:
