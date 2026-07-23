@@ -22,6 +22,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -540,6 +545,10 @@ const ToolFallbackImpl: ToolCallMessagePartComponent = ({
   const isCancelled =
     status?.type === "incomplete" && status.reason === "cancelled";
   const isRequiresAction = status?.type === "requires-action";
+  const loginQrCode =
+    toolName === "get_login_qrcode" && Array.isArray(result)
+      ? result.find((block) => block.type === "image")
+      : null;
 
   const [open, setOpen] = useState(isRequiresAction);
   const [prevRequiresAction, setPrevRequiresAction] =
@@ -567,7 +576,27 @@ const ToolFallbackImpl: ToolCallMessagePartComponent = ({
             respondToApproval={respondToApproval}
           />
         )}
-        {!isCancelled && <ToolFallbackResult result={result} />}
+        {!isCancelled &&
+          (loginQrCode ? (
+            <Dialog>
+              <DialogTrigger aria-label="放大小红书登录二维码">
+                <img
+                  src={`data:${loginQrCode.mime_type};base64,${loginQrCode.base64}`}
+                  alt="小红书登录二维码"
+                  className="size-32 cursor-zoom-in rounded-md border object-contain"
+                />
+              </DialogTrigger>
+              <DialogContent className="w-fit">
+                <img
+                  src={`data:${loginQrCode.mime_type};base64,${loginQrCode.base64}`}
+                  alt="小红书登录二维码"
+                  className="w-[min(80vw,24rem)] [image-rendering:pixelated]"
+                />
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <ToolFallbackResult result={result} />
+          ))}
       </ToolFallbackContent>
     </ToolFallbackRoot>
   );
