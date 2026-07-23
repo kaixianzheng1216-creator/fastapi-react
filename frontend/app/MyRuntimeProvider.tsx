@@ -104,7 +104,7 @@ const converter = (
 
 export function MyRuntimeProvider({ children }: MyRuntimeProviderProps) {
   const threadId = useRef<string | null>(null);
-  const runtime = useAssistantTransportRuntime({
+  const runtime = useAssistantTransportRuntime<State>({
     protocol: "assistant-transport",
     initialState: {
       messages: [],
@@ -139,6 +139,26 @@ export function MyRuntimeProvider({ children }: MyRuntimeProviderProps) {
         clearAccessToken();
         window.location.assign("/login");
       }
+    },
+    onCancel: ({ updateState }) => {
+      updateState((state) => {
+        const lastMessage = state.messages.at(-1);
+
+        if (lastMessage?.type !== "ai") {
+          return state;
+        }
+
+        return {
+          ...state,
+          messages: [
+            ...state.messages.slice(0, -1),
+            {
+              ...lastMessage,
+              status: { type: "incomplete", reason: "cancelled" },
+            },
+          ],
+        };
+      });
     },
   });
 
