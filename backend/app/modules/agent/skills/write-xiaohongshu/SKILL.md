@@ -11,7 +11,6 @@ description: "Research high-performing Xiaohongshu (小红书 / XHS) image posts
 
 - Firecrawl MCP 和小红书 MCP 已配置，直接调用。
 - 工具调用失败时，报告真实错误并停止当前步骤。不要编造搜索、分析或发布结果。
-- 所有 `MCP` 保持大写。中文与英文、数字之间保留空格。
 
 ## 硬性限制
 
@@ -66,7 +65,7 @@ description: "Research high-performing Xiaohongshu (小红书 / XHS) image posts
 ### 5. 准备配图
 
 - 用户提供图片时，优先使用用户图片。
-- 用户未提供图片时，选择 1～2 张可商用、高清且与主题相关的图片，优先使用 9:16 竖图。
+- 用户未提供图片时，优选选择 1～2 张可商用、高清且与主题相关的网络图片，优先使用 9:16 竖图。
 - 给出每张图片的 URL 或本地路径。
 
 ### 6. 请求确认
