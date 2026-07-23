@@ -16,10 +16,7 @@ class AgentSettings(BaseSettings):
     MODEL_API_KEY: SecretStr
 
     FIRECRAWL_API_KEY: SecretStr
-
-    IMAGE_API_KEY: SecretStr
-    IMAGE_BASE_URL: str
-    IMAGE_MODEL: str
+    NEW_API_MCP_API_KEY: SecretStr
 
     E2B_API_KEY: SecretStr
     E2B_TEMPLATE: str | None = None

@@ -9,9 +9,9 @@ from langgraph.config import get_config
 
 from app.modules.agent.config import settings
 from app.modules.agent.connections.firecrawl import load_firecrawl_tools
+from app.modules.agent.connections.new_api import load_new_api_tools
 from app.modules.agent.connections.xiaohongshu import load_xiaohongshu_tools
 from app.modules.agent.sandbox import get_sandbox
-from app.modules.agent.tools.generate_image import load_image_tools
 from app.modules.agent.tools.publish_artifact import load_publish_artifact_tools
 
 AGENT_DIRECTORY = Path(__file__).parent
@@ -31,8 +31,8 @@ async def create_agent(
     api_key = settings.MODEL_API_KEY
 
     tools = await load_firecrawl_tools()
+    tools.extend(await load_new_api_tools())
     tools.extend(await load_xiaohongshu_tools())
-    tools.extend(load_image_tools())
     tools.extend(load_publish_artifact_tools(settings))
 
     if provider == "deepseek":
