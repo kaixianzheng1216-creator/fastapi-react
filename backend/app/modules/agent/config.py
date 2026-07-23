@@ -15,7 +15,7 @@ class AgentSettings(BaseSettings):
     MODEL_NAME: str
     MODEL_API_KEY: SecretStr
 
-    EXA_API_KEY: SecretStr
+    FIRECRAWL_API_KEY: SecretStr
 
     IMAGE_API_KEY: SecretStr
     IMAGE_BASE_URL: str

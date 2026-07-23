@@ -8,7 +8,7 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.config import get_config
 
 from app.modules.agent.config import settings
-from app.modules.agent.connections.exa import load_exa_tools
+from app.modules.agent.connections.firecrawl import load_firecrawl_tools
 from app.modules.agent.connections.xiaohongshu import load_xiaohongshu_tools
 from app.modules.agent.sandbox import get_sandbox
 from app.modules.agent.tools.generate_image import load_image_tools
@@ -30,7 +30,7 @@ async def create_agent(
     model_name = settings.MODEL_NAME
     api_key = settings.MODEL_API_KEY
 
-    tools = await load_exa_tools()
+    tools = await load_firecrawl_tools()
     tools.extend(await load_xiaohongshu_tools())
     tools.extend(load_image_tools())
     tools.extend(load_publish_artifact_tools(settings))
