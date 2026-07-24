@@ -65,8 +65,9 @@ description: "Research high-performing Xiaohongshu (小红书 / XHS) image posts
 ### 5. 准备配图
 
 - 用户提供图片时，优先使用用户图片。
-- 用户未提供图片时，优选选择 1～2 张可商用、高清且与主题相关的网络图片，优先使用 9:16 竖图。
-- 给出每张图片的 URL 或本地路径。
+- 用户未提供图片时，选择 1～2 张可商用、高清且与主题相关的网络图片，优先使用 9:16 竖图。
+- 对 `/home/user/artifacts/` 中的图片逐张调用 `publish_artifact`，将沙箱文件发布为 HTTPS 地址。小红书 MCP 无法读取 E2B 沙箱路径，不要把 `/home/user/...` 传给它。
+- 预览和后续发布都使用 `publish_artifact` 返回的 HTTPS 地址。
 
 ### 6. 请求确认
 
@@ -84,7 +85,7 @@ description: "Research high-performing Xiaohongshu (小红书 / XHS) image posts
 标签：#标签一 #标签二 #标签三
 
 配图：
-- <图片 URL 或路径>
+- <图片 HTTPS 地址>
 
 请回复“确认”“修改”或“取消”。
 ```
@@ -95,7 +96,7 @@ description: "Research high-performing Xiaohongshu (小红书 / XHS) image posts
 
 ### 7. 发布
 
-获得明确确认后，使用小红书 MCP 发布标题、正文、标签和图片。
+获得明确确认后，使用小红书 MCP 发布标题、正文、标签和图片。调用 `publish_content` 时，将准备阶段得到的 HTTPS 地址传入 `images`；不要传入 E2B 沙箱路径。
 
 发布成功后返回：
 
