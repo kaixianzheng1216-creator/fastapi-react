@@ -342,9 +342,13 @@ const AssistantMessage: FC = () => {
     ToolGroup,
     ReasoningGroup,
   } = useContext(ThreadComponentsContext);
-  const isThinking = useAuiState((state) => {
-    const lastPart = state.message.parts.at(-1);
-    return state.thread.isRunning && lastPart?.type !== "text";
+  const activeThinkingPartIndex = useAuiState((state) => {
+    if (state.message.status?.type !== "running") return -1;
+
+    const lastPartIndex = state.message.parts.length - 1;
+    const lastPart = state.message.parts[lastPartIndex];
+
+    return lastPart?.type === "text" ? -1 : lastPartIndex;
   });
 
   const ACTION_BAR_PT = "pt-1.5";
@@ -371,6 +375,10 @@ const AssistantMessage: FC = () => {
           {({ part, children }) => {
             switch (part.type) {
               case "group-chainOfThought": {
+                const isThinking = part.indices.includes(
+                  activeThinkingPartIndex,
+                );
+
                 return (
                   <ReasoningRoot streaming={isThinking}>
                     <ReasoningTrigger active={isThinking} />
