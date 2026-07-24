@@ -30,11 +30,6 @@ async def create_agent(
     model_name = settings.MODEL_NAME
     api_key = settings.MODEL_API_KEY
 
-    tools = await load_firecrawl_tools()
-    tools.extend(await load_new_api_tools())
-    tools.extend(await load_xiaohongshu_tools())
-    tools.extend(load_publish_artifact_tools(settings))
-
     if provider == "deepseek":
         model = init_chat_model(
             model=model_name,
@@ -49,6 +44,11 @@ async def create_agent(
             model_provider=provider,
             api_key=api_key.get_secret_value(),
         )
+
+    tools = await load_firecrawl_tools()
+    tools.extend(await load_new_api_tools())
+    tools.extend(await load_xiaohongshu_tools())
+    tools.extend(load_publish_artifact_tools(settings))
 
     return create_deep_agent(
         model=model,

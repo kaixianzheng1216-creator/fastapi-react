@@ -33,7 +33,6 @@ def get_sandbox(thread_id: str) -> E2BSandbox:
             template=settings.E2B_TEMPLATE,
             timeout=SANDBOX_TIMEOUT_SECONDS,
             metadata=metadata,
-            lifecycle={"on_timeout": "kill"},
             api_key=api_key,
         )
 
