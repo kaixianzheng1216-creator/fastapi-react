@@ -6,6 +6,7 @@ const agentProxyTimeoutMilliseconds = 11 * 60 * 1000;
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
+  allowedDevOrigins: ["broodier-gleanable-alix.ngrok-free.dev"],
   experimental: {
     optimizePackageImports: ["@assistant-ui/react"],
     proxyTimeout: agentProxyTimeoutMilliseconds,

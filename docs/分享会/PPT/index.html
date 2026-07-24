@@ -1343,9 +1343,12 @@ messages = [{
       <div class="half" style="padding:4.2vh 3vw 3.8vh;justify-content:space-between;background:var(--paper)">
         <div class="chrome-min tight"><div class="l">PYTHON · REACT LOOP</div><div class="r">THINK → ACT → OBSERVE</div></div>
         <pre data-anim="rules" style="margin:0;white-space:pre-wrap;font-family:var(--mono);font-size:max(14px,.74vw);font-weight:500;line-height:1.38;color:var(--text-primary);tab-size:4"><code>while not done:
-    response = model.invoke(messages, tools=agent.tools)
+    response = model(messages, tools=agent.tools)
 
     if response.has_tool_calls():
+        # 记录模型发出的工具调用
+        messages.append(response.message)
+
         for tool_call in response.tool_calls:
             # 模型返回结构化 JSON
             # {"name": "generate_image",
@@ -1354,9 +1357,6 @@ messages = [{
             tool_func = find_tool(tool_call.name)
             result = tool_func(**tool_call.args)
 
-            # 记录模型发出的工具调用
-            messages.append(response.message)
-
             # 记录工具执行结果
             messages.append({
                 "role": "tool",
@@ -1364,6 +1364,8 @@ messages = [{
                 "content": result
             })
     else:
+        # 用户消息已在 messages 中，记录模型最终回复
+        messages.append(response.message)
         print(response.content)
         done = True</code></pre>
         <div data-anim="foot" style="border-top:1px solid var(--accent);padding-top:1.4vh"><span class="t-meta" style="color:var(--accent)">系统负责解析与执行；模型负责决定下一步。</span></div>
