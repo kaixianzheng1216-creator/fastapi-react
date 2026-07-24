@@ -29,7 +29,7 @@ export function TodoList() {
     <aside className="hidden w-80 justify-self-end p-4 2xl:block">
       <Card className="gap-2 py-4">
         <CardHeader>
-          <CardTitle className="font-normal">
+          <CardTitle className="text-muted-foreground font-normal">
             任务清单
           </CardTitle>
         </CardHeader>
