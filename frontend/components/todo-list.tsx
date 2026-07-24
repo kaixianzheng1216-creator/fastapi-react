@@ -22,8 +22,6 @@ export function TodoList() {
     | null;
   const todos = todoState?.todos ?? [];
 
-  if (todos.length === 0) return null;
-
   return (
     <aside className="hidden w-80 justify-self-end p-4 2xl:block">
       <Card>
