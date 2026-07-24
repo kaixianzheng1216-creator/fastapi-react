@@ -28,6 +28,7 @@ export type TodoState = {
 
 export type State = TodoState & {
   messages: LangChainMessage[];
+  cancelledToolCallIds?: string[];
 };
 
 const convertDeepSeekMessage: typeof convertLangChainMessages = (
@@ -94,9 +95,26 @@ const converter = (
 
   const messages = [...state.messages, ...optimisticStateMessages.flat()];
   const isRunning = connectionMetadata.isSending || false;
+  const threadMessages = LangChainMessageConverter.toThreadMessages(
+    messages,
+    isRunning,
+  );
+  const cancelledToolCallIds = new Set(state.cancelledToolCallIds);
 
   return {
-    messages: LangChainMessageConverter.toThreadMessages(messages, isRunning),
+    messages: threadMessages.map((message) =>
+      message.role === "assistant" &&
+      message.content.some(
+        (part) =>
+          part.type === "tool-call" &&
+          cancelledToolCallIds.has(part.toolCallId),
+      )
+        ? {
+            ...message,
+            status: { type: "incomplete" as const, reason: "cancelled" as const },
+          }
+        : message,
+    ),
     state: { todos: state.todos ?? [] } satisfies TodoState,
     isRunning,
   };
@@ -142,20 +160,20 @@ export function MyRuntimeProvider({ children }: MyRuntimeProviderProps) {
     },
     onCancel: ({ updateState }) => {
       updateState((state) => {
-        const lastMessage = state.messages.at(-1);
+        const toolCallIds = state.messages
+          .findLast((message) => message.type === "ai")
+          ?.tool_calls?.map((toolCall) => toolCall.id)
+          .filter((id): id is string => Boolean(id));
 
-        if (lastMessage?.type !== "ai") {
-          return state;
-        }
+        if (!toolCallIds?.length) return state;
 
         return {
           ...state,
-          messages: [
-            ...state.messages.slice(0, -1),
-            {
-              ...lastMessage,
-              status: { type: "incomplete", reason: "cancelled" },
-            },
+          cancelledToolCallIds: [
+            ...new Set([
+              ...(state.cancelledToolCallIds ?? []),
+              ...toolCallIds,
+            ]),
           ],
         };
       });
