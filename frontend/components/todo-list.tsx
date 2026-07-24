@@ -33,13 +33,15 @@ export function TodoList() {
             任务清单
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <ul className="space-y-3 text-sm">
-            {todos.map((todo, index) => (
-              <TodoItem key={`${todo.content}-${index}`} todo={todo} />
-            ))}
-          </ul>
-        </CardContent>
+        {todos.length > 0 && (
+          <CardContent>
+            <ul className="space-y-3 text-sm">
+              {todos.map((todo, index) => (
+                <TodoItem key={`${todo.content}-${index}`} todo={todo} />
+              ))}
+            </ul>
+          </CardContent>
+        )}
       </Card>
     </aside>
   );
