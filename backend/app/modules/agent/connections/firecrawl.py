@@ -1,5 +1,6 @@
 from langchain_core.tools import BaseTool
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from app.modules.agent.config import settings
 
@@ -7,6 +8,7 @@ FIRECRAWL_MCP_URL = "https://mcp.firecrawl.dev/v2/mcp"
 FIRECRAWL_TOOL_NAMES = {"firecrawl_search", "firecrawl_scrape"}
 
 
+@retry(stop=stop_after_attempt(3))
 async def load_firecrawl_tools() -> list[BaseTool]:
     client = MultiServerMCPClient(
         {

@@ -17,16 +17,21 @@ const statusIcon = {
 };
 
 export function TodoList() {
+  const hasMessages = useAuiState((state) => state.thread.messages.length > 0);
   const todoState = useAuiState((state) => state.thread.state) as
     | TodoState
     | null;
   const todos = todoState?.todos ?? [];
 
+  if (!hasMessages) return null;
+
   return (
     <aside className="hidden w-80 justify-self-end p-4 2xl:block">
       <Card>
         <CardHeader>
-          <CardTitle>任务清单</CardTitle>
+          <CardTitle className="text-muted-foreground text-base font-normal">
+            任务清单
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="space-y-3 text-sm">
