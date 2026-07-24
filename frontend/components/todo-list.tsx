@@ -27,15 +27,15 @@ export function TodoList() {
 
   return (
     <aside className="hidden w-80 justify-self-end p-4 2xl:block">
-      <Card>
+      <Card className="gap-2 py-4">
         <CardHeader>
-          <CardTitle className="text-muted-foreground text-base font-normal">
+          <CardTitle className="font-normal">
             任务清单
           </CardTitle>
         </CardHeader>
         {todos.length > 0 && (
           <CardContent>
-            <ul className="space-y-3 text-sm">
+            <ul className="space-y-3">
               {todos.map((todo, index) => (
                 <TodoItem key={`${todo.content}-${index}`} todo={todo} />
               ))}
