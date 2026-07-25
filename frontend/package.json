@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "generate-client": "openapi-ts",
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@assistant-ui/react": "latest",
@@ -27,6 +29,7 @@
   },
   "devDependencies": {
     "@assistant-ui/next": "latest",
+    "@hey-api/openapi-ts": "0.99.0",
     "@tailwindcss/postcss": "^4.3.2",
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",

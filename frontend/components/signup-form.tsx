@@ -14,11 +14,9 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { getApiErrorMessage } from "@/lib/api-error"
+import { usersRegisterUser } from "@/lib/client"
 import { cn } from "@/lib/utils"
-
-type ErrorResponse = {
-  detail?: string
-}
 
 export function SignupForm({
   className,
@@ -39,21 +37,16 @@ export function SignupForm({
     const password = String(formData.get("password"))
 
     try {
-      const response = await fetch("/api/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const { data, error } = await usersRegisterUser({
+        body: {
           full_name: fullName || null,
           username,
           password,
-        }),
+        },
       })
 
-      if (!response.ok) {
-        const body = (await response.json()) as ErrorResponse
-        setError(body.detail ?? "注册失败")
+      if (!data) {
+        setError(getApiErrorMessage(error, "注册失败"))
 
         return
       }

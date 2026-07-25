@@ -11,6 +11,11 @@ import {
   type LangChainMessage,
 } from "@assistant-ui/react-langgraph";
 import { clearAccessToken, getAccessToken } from "@/lib/auth";
+import {
+  agentCreateConversation,
+  agentGenerateConversationTitle,
+  type ConversationTitleRequest,
+} from "@/lib/client";
 import { type ReactNode, useRef } from "react";
 
 type MyRuntimeProviderProps = {
@@ -146,9 +151,38 @@ export function MyRuntimeProvider({ children }: MyRuntimeProviderProps) {
 
       return headers;
     },
-    prepareSendCommandsRequest: (body) => {
+    prepareSendCommandsRequest: async (body) => {
       if (threadId.current === null) {
-        threadId.current = body.threadId ?? crypto.randomUUID();
+        const result = await agentCreateConversation({
+          auth: getAccessToken() ?? undefined,
+        });
+
+        if (!result.data) {
+          if (result.response?.status === 401) {
+            clearAccessToken();
+            window.location.assign("/login");
+          }
+
+          throw new Error("创建会话失败");
+        }
+
+        threadId.current = result.data.id;
+
+        const firstMessage = body.commands.find(
+          (command) => command.type === "add-message",
+        )?.message;
+
+        if (
+          firstMessage?.parts.some(
+            (part) => part.type === "text" && part.text.trim(),
+          )
+        ) {
+          void agentGenerateConversationTitle({
+            auth: getAccessToken() ?? undefined,
+            body: firstMessage as ConversationTitleRequest,
+            path: { conversation_id: threadId.current },
+          });
+        }
       }
 
       return {

@@ -14,16 +14,10 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { loginLoginAccessToken } from "@/lib/client"
+import { getApiErrorMessage } from "@/lib/api-error"
 import { saveAccessToken } from "@/lib/auth"
 import { cn } from "@/lib/utils"
-
-type LoginResponse = {
-  access_token: string
-}
-
-type ErrorResponse = {
-  detail?: string
-}
 
 export function LoginForm({
   className,
@@ -43,23 +37,20 @@ export function LoginForm({
     const password = String(formData.get("password"))
 
     try {
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+      const { data, error } = await loginLoginAccessToken({
+        body: {
+          username,
+          password,
         },
-        body: new URLSearchParams({ username, password }),
       })
 
-      if (!response.ok) {
-        const body = (await response.json()) as ErrorResponse
-        setError(body.detail ?? "登录失败")
+      if (!data) {
+        setError(getApiErrorMessage(error, "登录失败"))
 
         return
       }
 
-      const body = (await response.json()) as LoginResponse
-      saveAccessToken(body.access_token)
+      saveAccessToken(data.access_token)
       router.replace("/")
     } catch {
       setError("无法连接到服务器")
