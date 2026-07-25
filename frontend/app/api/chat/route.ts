@@ -12,6 +12,7 @@ export async function POST(request: Request): Promise<Response> {
     body,
     headers: authorization ? { Authorization: authorization } : undefined,
     parseAs: "stream",
+    signal: request.signal,
   });
 
   if (!result.response) throw result.error;
