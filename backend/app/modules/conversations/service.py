@@ -4,9 +4,10 @@ from collections.abc import Sequence
 from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langfuse import propagate_attributes
 from langfuse.langchain import CallbackHandler
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from sqlmodel import Session, col, func, select
 
 from app.modules.conversations.exceptions import (
@@ -145,6 +146,81 @@ async def get_conversation_detail(
     )
 
 
+def rename_conversation(
+    *,
+    session: Session,
+    current_user: User,
+    conversation_id: uuid.UUID,
+    title: str,
+) -> Conversation:
+    conversation = get_conversation(
+        session=session,
+        current_user=current_user,
+        conversation_id=conversation_id,
+    )
+    conversation.title = title
+    conversation.updated_at = get_datetime_utc()
+    session.commit()
+    session.refresh(conversation)
+
+    return conversation
+
+
+def archive_conversation(
+    *,
+    session: Session,
+    current_user: User,
+    conversation_id: uuid.UUID,
+) -> Conversation:
+    conversation = get_conversation(
+        session=session,
+        current_user=current_user,
+        conversation_id=conversation_id,
+    )
+    conversation.archived = True
+    conversation.updated_at = get_datetime_utc()
+    session.commit()
+    session.refresh(conversation)
+
+    return conversation
+
+
+def unarchive_conversation(
+    *,
+    session: Session,
+    current_user: User,
+    conversation_id: uuid.UUID,
+) -> Conversation:
+    conversation = get_conversation(
+        session=session,
+        current_user=current_user,
+        conversation_id=conversation_id,
+    )
+    conversation.archived = False
+    conversation.updated_at = get_datetime_utc()
+    session.commit()
+    session.refresh(conversation)
+
+    return conversation
+
+
+async def delete_conversation(
+    *,
+    session: Session,
+    current_user: User,
+    conversation_id: uuid.UUID,
+    checkpointer: AsyncPostgresSaver,
+) -> None:
+    conversation = get_conversation(
+        session=session,
+        current_user=current_user,
+        conversation_id=conversation_id,
+    )
+    await checkpointer.adelete_thread(f"{current_user.id}:{conversation.id}")
+    session.delete(conversation)
+    session.commit()
+
+
 def touch_conversation(
     *,
     session: Session,
@@ -189,6 +265,7 @@ def to_public(conversation: Conversation) -> ConversationPublic:
     return ConversationPublic(
         id=conversation.id,
         title=conversation.title or DEFAULT_CONVERSATION_TITLE,
+        archived=conversation.archived,
         created_at=conversation.created_at,
         updated_at=conversation.updated_at,
     )

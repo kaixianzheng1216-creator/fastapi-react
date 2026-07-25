@@ -37,6 +37,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     ) as checkpointer:
         await checkpointer.setup()
 
+        app.state.checkpointer = checkpointer
         app.state.title_model = create_chat_model(enable_reasoning=False)
         app.state.agent = await create_agent(
             checkpointer,

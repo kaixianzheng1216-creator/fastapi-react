@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
-from typing import Any, Literal, Self
+from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, StringConstraints, model_validator
 
 from app.modules.agent.schemas import Message, TextMessagePart
 
@@ -10,6 +10,7 @@ from app.modules.agent.schemas import Message, TextMessagePart
 class ConversationPublic(BaseModel):
     id: uuid.UUID
     title: str
+    archived: bool
     created_at: datetime = Field(serialization_alias="createdAt")
     updated_at: datetime = Field(serialization_alias="updatedAt")
 
@@ -29,6 +30,13 @@ class ConversationTitleRequest(Message):
             for part in self.parts
             if isinstance(part, TextMessagePart) and part.text.strip()
         )
+
+
+class ConversationRenameRequest(BaseModel):
+    title: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, min_length=1, max_length=100),
+    ]
 
 
 class ConversationsPublic(BaseModel):

@@ -21,6 +21,7 @@ class Conversation(SQLModel, table=True):
         ondelete="CASCADE",
     )
     title: str | None = Field(default=None, max_length=100)
+    archived: bool = Field(default=False, nullable=False)
     created_at: datetime = Field(
         default_factory=get_datetime_utc,
         sa_type=DateTime(timezone=True),  # type: ignore

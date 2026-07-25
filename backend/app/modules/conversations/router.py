@@ -9,6 +9,7 @@ from app.modules.conversations import service
 from app.modules.conversations.schemas import (
     ConversationDetailPublic,
     ConversationPublic,
+    ConversationRenameRequest,
     ConversationsPublic,
     ConversationTitleRequest,
 )
@@ -91,4 +92,70 @@ async def read_conversation(
         current_user=current_user,
         conversation_id=conversation_id,
         agent=request.app.state.agent,
+    )
+
+
+@router.patch("/{conversation_id}", response_model=ConversationPublic)
+def rename_conversation(
+    session: SessionDep,
+    current_user: CurrentUser,
+    conversation_id: uuid.UUID,
+    body: ConversationRenameRequest,
+) -> ConversationPublic:
+    """重命名会话。"""
+    conversation = service.rename_conversation(
+        session=session,
+        current_user=current_user,
+        conversation_id=conversation_id,
+        title=body.title,
+    )
+
+    return service.to_public(conversation)
+
+
+@router.post("/{conversation_id}/archive", response_model=ConversationPublic)
+def archive_conversation(
+    session: SessionDep,
+    current_user: CurrentUser,
+    conversation_id: uuid.UUID,
+) -> ConversationPublic:
+    """归档会话。"""
+    conversation = service.archive_conversation(
+        session=session,
+        current_user=current_user,
+        conversation_id=conversation_id,
+    )
+
+    return service.to_public(conversation)
+
+
+@router.post("/{conversation_id}/unarchive", response_model=ConversationPublic)
+def unarchive_conversation(
+    session: SessionDep,
+    current_user: CurrentUser,
+    conversation_id: uuid.UUID,
+) -> ConversationPublic:
+    """取消归档会话。"""
+    conversation = service.unarchive_conversation(
+        session=session,
+        current_user=current_user,
+        conversation_id=conversation_id,
+    )
+
+    return service.to_public(conversation)
+
+
+@router.delete("/{conversation_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_conversation(
+    request: Request,
+    session: SessionDep,
+    current_user: CurrentUser,
+    conversation_id: uuid.UUID,
+) -> None:
+    """删除会话。"""
+    await service.delete_conversation(
+        session=session,
+        current_user=current_user,
+        conversation_id=conversation_id,
+        checkpointer=request.app.state.checkpointer,
     )

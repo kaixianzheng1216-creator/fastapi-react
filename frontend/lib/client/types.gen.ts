@@ -120,6 +120,10 @@ export type ConversationDetailPublic = {
      */
     title: string;
     /**
+     * Archived
+     */
+    archived: boolean;
+    /**
      * Createdat
      */
     createdAt: string;
@@ -143,6 +147,10 @@ export type ConversationPublic = {
      */
     title: string;
     /**
+     * Archived
+     */
+    archived: boolean;
+    /**
      * Createdat
      */
     createdAt: string;
@@ -150,6 +158,16 @@ export type ConversationPublic = {
      * Updatedat
      */
     updatedAt: string;
+};
+
+/**
+ * ConversationRenameRequest
+ */
+export type ConversationRenameRequest = {
+    /**
+     * Title
+     */
+    title: string;
 };
 
 /**
@@ -1094,6 +1112,36 @@ export type AgentGenerateConversationTitleResponses = {
 
 export type AgentGenerateConversationTitleResponse = AgentGenerateConversationTitleResponses[keyof AgentGenerateConversationTitleResponses];
 
+export type AgentDeleteConversationData = {
+    body?: never;
+    path: {
+        /**
+         * Conversation Id
+         */
+        conversation_id: string;
+    };
+    query?: never;
+    url: '/api/v1/agent/conversations/{conversation_id}';
+};
+
+export type AgentDeleteConversationErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AgentDeleteConversationError = AgentDeleteConversationErrors[keyof AgentDeleteConversationErrors];
+
+export type AgentDeleteConversationResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type AgentDeleteConversationResponse = AgentDeleteConversationResponses[keyof AgentDeleteConversationResponses];
+
 export type AgentReadConversationData = {
     body?: never;
     path: {
@@ -1123,6 +1171,96 @@ export type AgentReadConversationResponses = {
 };
 
 export type AgentReadConversationResponse = AgentReadConversationResponses[keyof AgentReadConversationResponses];
+
+export type AgentRenameConversationData = {
+    body: ConversationRenameRequest;
+    path: {
+        /**
+         * Conversation Id
+         */
+        conversation_id: string;
+    };
+    query?: never;
+    url: '/api/v1/agent/conversations/{conversation_id}';
+};
+
+export type AgentRenameConversationErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AgentRenameConversationError = AgentRenameConversationErrors[keyof AgentRenameConversationErrors];
+
+export type AgentRenameConversationResponses = {
+    /**
+     * Successful Response
+     */
+    200: ConversationPublic;
+};
+
+export type AgentRenameConversationResponse = AgentRenameConversationResponses[keyof AgentRenameConversationResponses];
+
+export type AgentArchiveConversationData = {
+    body?: never;
+    path: {
+        /**
+         * Conversation Id
+         */
+        conversation_id: string;
+    };
+    query?: never;
+    url: '/api/v1/agent/conversations/{conversation_id}/archive';
+};
+
+export type AgentArchiveConversationErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AgentArchiveConversationError = AgentArchiveConversationErrors[keyof AgentArchiveConversationErrors];
+
+export type AgentArchiveConversationResponses = {
+    /**
+     * Successful Response
+     */
+    200: ConversationPublic;
+};
+
+export type AgentArchiveConversationResponse = AgentArchiveConversationResponses[keyof AgentArchiveConversationResponses];
+
+export type AgentUnarchiveConversationData = {
+    body?: never;
+    path: {
+        /**
+         * Conversation Id
+         */
+        conversation_id: string;
+    };
+    query?: never;
+    url: '/api/v1/agent/conversations/{conversation_id}/unarchive';
+};
+
+export type AgentUnarchiveConversationErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AgentUnarchiveConversationError = AgentUnarchiveConversationErrors[keyof AgentUnarchiveConversationErrors];
+
+export type AgentUnarchiveConversationResponses = {
+    /**
+     * Successful Response
+     */
+    200: ConversationPublic;
+};
+
+export type AgentUnarchiveConversationResponse = AgentUnarchiveConversationResponses[keyof AgentUnarchiveConversationResponses];
 
 export type AgentChatData = {
     body: AgentChatRequest;

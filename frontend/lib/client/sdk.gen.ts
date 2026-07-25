@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AgentChatData, AgentChatErrors, AgentChatResponses, AgentCreateConversationData, AgentCreateConversationResponses, AgentGenerateConversationTitleData, AgentGenerateConversationTitleErrors, AgentGenerateConversationTitleResponses, AgentReadConversationData, AgentReadConversationErrors, AgentReadConversationResponses, AgentReadConversationsData, AgentReadConversationsErrors, AgentReadConversationsResponses, ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginTestTokenData, LoginTestTokenResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
+import type { AgentArchiveConversationData, AgentArchiveConversationErrors, AgentArchiveConversationResponses, AgentChatData, AgentChatErrors, AgentChatResponses, AgentCreateConversationData, AgentCreateConversationResponses, AgentDeleteConversationData, AgentDeleteConversationErrors, AgentDeleteConversationResponses, AgentGenerateConversationTitleData, AgentGenerateConversationTitleErrors, AgentGenerateConversationTitleResponses, AgentReadConversationData, AgentReadConversationErrors, AgentReadConversationResponses, AgentReadConversationsData, AgentReadConversationsErrors, AgentReadConversationsResponses, AgentRenameConversationData, AgentRenameConversationErrors, AgentRenameConversationResponses, AgentUnarchiveConversationData, AgentUnarchiveConversationErrors, AgentUnarchiveConversationResponses, ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginTestTokenData, LoginTestTokenResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -279,6 +279,17 @@ export const agentGenerateConversationTitle = <ThrowOnError extends boolean = fa
 });
 
 /**
+ * Delete Conversation
+ *
+ * 删除会话。
+ */
+export const agentDeleteConversation = <ThrowOnError extends boolean = false>(options: Options<AgentDeleteConversationData, ThrowOnError>): RequestResult<AgentDeleteConversationResponses, AgentDeleteConversationErrors, ThrowOnError> => (options.client ?? client).delete<AgentDeleteConversationResponses, AgentDeleteConversationErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/agent/conversations/{conversation_id}',
+    ...options
+});
+
+/**
  * Read Conversation
  *
  * 读取会话详情。
@@ -286,6 +297,43 @@ export const agentGenerateConversationTitle = <ThrowOnError extends boolean = fa
 export const agentReadConversation = <ThrowOnError extends boolean = false>(options: Options<AgentReadConversationData, ThrowOnError>): RequestResult<AgentReadConversationResponses, AgentReadConversationErrors, ThrowOnError> => (options.client ?? client).get<AgentReadConversationResponses, AgentReadConversationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/agent/conversations/{conversation_id}',
+    ...options
+});
+
+/**
+ * Rename Conversation
+ *
+ * 重命名会话。
+ */
+export const agentRenameConversation = <ThrowOnError extends boolean = false>(options: Options<AgentRenameConversationData, ThrowOnError>): RequestResult<AgentRenameConversationResponses, AgentRenameConversationErrors, ThrowOnError> => (options.client ?? client).patch<AgentRenameConversationResponses, AgentRenameConversationErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/agent/conversations/{conversation_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Archive Conversation
+ *
+ * 归档会话。
+ */
+export const agentArchiveConversation = <ThrowOnError extends boolean = false>(options: Options<AgentArchiveConversationData, ThrowOnError>): RequestResult<AgentArchiveConversationResponses, AgentArchiveConversationErrors, ThrowOnError> => (options.client ?? client).post<AgentArchiveConversationResponses, AgentArchiveConversationErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/agent/conversations/{conversation_id}/archive',
+    ...options
+});
+
+/**
+ * Unarchive Conversation
+ *
+ * 取消归档会话。
+ */
+export const agentUnarchiveConversation = <ThrowOnError extends boolean = false>(options: Options<AgentUnarchiveConversationData, ThrowOnError>): RequestResult<AgentUnarchiveConversationResponses, AgentUnarchiveConversationErrors, ThrowOnError> => (options.client ?? client).post<AgentUnarchiveConversationResponses, AgentUnarchiveConversationErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/agent/conversations/{conversation_id}/unarchive',
     ...options
 });
 
