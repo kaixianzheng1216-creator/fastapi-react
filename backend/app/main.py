@@ -12,7 +12,7 @@ from starlette.middleware.cors import CORSMiddleware
 from app.api.exception_handlers import add_exception_handlers
 from app.api.router import api_router
 from app.core.config import settings
-from app.modules.agent.agent import create_agent
+from app.modules.agent.agent import create_agent, create_chat_model
 
 CHECKPOINT_SCHEMA = "agent"
 
@@ -37,7 +37,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     ) as checkpointer:
         await checkpointer.setup()
 
-        app.state.agent = await create_agent(checkpointer)
+        app.state.title_model = create_chat_model(enable_reasoning=False)
+        app.state.agent = await create_agent(
+            checkpointer,
+            create_chat_model(enable_reasoning=True),
+        )
 
         yield
 

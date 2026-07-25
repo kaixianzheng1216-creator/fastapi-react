@@ -4,9 +4,11 @@ from assistant_stream.serialization import (  # type: ignore[import-untyped]
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 
+from app.api.dependencies import SessionDep
 from app.modules.agent import service
 from app.modules.agent.schemas import AgentChatRequest
 from app.modules.auth.dependencies import CurrentUser, get_current_user
+from app.modules.conversations import service as conversation_service
 
 router = APIRouter(
     prefix="/agent",
@@ -18,9 +20,15 @@ router = APIRouter(
 @router.post("/chat")
 async def chat(
     request: Request,
+    session: SessionDep,
     current_user: CurrentUser,
     chat_request: AgentChatRequest,
 ) -> StreamingResponse:
+    conversation_service.touch_conversation(
+        session=session,
+        current_user=current_user,
+        conversation_id=chat_request.thread_id,
+    )
     chat_stream = service.stream_chat(
         agent=request.app.state.agent,
         user_id=current_user.id,

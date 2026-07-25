@@ -2,6 +2,7 @@ import base64
 import binascii
 from typing import Annotated, Any, Literal
 from urllib.parse import urlparse
+from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -109,10 +110,6 @@ AgentCommand = Annotated[
 
 # 请求外层结构
 class AgentChatRequest(BaseModel):
-    thread_id: str = Field(
-        alias="threadId",
-        min_length=1,
-        max_length=MAX_IDENTIFIER_LENGTH,
-    )
+    thread_id: UUID = Field(alias="threadId")
     state: dict[str, Any] | None = None
     commands: list[AgentCommand] = Field(min_length=1)

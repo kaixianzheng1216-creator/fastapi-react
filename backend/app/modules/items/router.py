@@ -19,7 +19,7 @@ router = APIRouter(
 def create_item(
     *, session: SessionDep, current_user: CurrentUser, item_in: ItemCreate
 ) -> ItemPublic:
-    """创建新物品。"""
+    """创建物品。"""
     item = service.create_item(
         session=session, current_user=current_user, item_create=item_in
     )

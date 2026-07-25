@@ -4,6 +4,7 @@ from typing import Any
 from deepagents import FilesystemPermission, create_deep_agent
 from deepagents.backends import CompositeBackend, FilesystemBackend
 from langchain.chat_models import init_chat_model
+from langchain_core.language_models.chat_models import BaseChatModel
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.config import get_config
 
@@ -23,27 +24,30 @@ SYSTEM_PROMPT = (
 )
 
 
-async def create_agent(
-    checkpointer: AsyncPostgresSaver,
-) -> Any:
+def create_chat_model(*, enable_reasoning: bool) -> BaseChatModel:
     provider = settings.MODEL_PROVIDER
     model_name = settings.MODEL_NAME
     api_key = settings.MODEL_API_KEY
 
-    if provider == "deepseek":
-        model = init_chat_model(
+    if provider == "deepseek" and enable_reasoning:
+        return init_chat_model(
             model=model_name,
             model_provider=provider,
             api_key=api_key.get_secret_value(),
             reasoning_effort="high",
             extra_body={"thinking": {"type": "enabled"}},
         )
-    else:
-        model = init_chat_model(
-            model=model_name,
-            model_provider=provider,
-            api_key=api_key.get_secret_value(),
-        )
+    return init_chat_model(
+        model=model_name,
+        model_provider=provider,
+        api_key=api_key.get_secret_value(),
+    )
+
+
+async def create_agent(
+    checkpointer: AsyncPostgresSaver,
+    model: BaseChatModel,
+) -> Any:
 
     tools = await load_firecrawl_tools()
     tools.extend(await load_new_api_tools())

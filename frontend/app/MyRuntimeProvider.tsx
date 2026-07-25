@@ -102,19 +102,23 @@ const converter = (
   const cancelledToolCallIds = new Set(state.cancelledToolCallIds);
 
   return {
-    messages: threadMessages.map((message) =>
-      message.role === "assistant" &&
-      message.content.some(
-        (part) =>
-          part.type === "tool-call" &&
-          cancelledToolCallIds.has(part.toolCallId),
-      )
-        ? {
-            ...message,
-            status: { type: "incomplete" as const, reason: "cancelled" as const },
-          }
-        : message,
-    ),
+    messages: threadMessages.map((message) => {
+      if (
+        message.role === "assistant" &&
+        message.content.some(
+          (part) =>
+            part.type === "tool-call" &&
+            cancelledToolCallIds.has(part.toolCallId),
+        )
+      ) {
+        return {
+          ...message,
+          status: { type: "incomplete" as const, reason: "cancelled" as const },
+        };
+      }
+
+      return message;
+    }),
     state: { todos: state.todos ?? [] } satisfies TodoState,
     isRunning,
   };
