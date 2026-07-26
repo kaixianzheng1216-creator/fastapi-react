@@ -29,11 +29,16 @@ class AgentContext(TypedDict):
     model_name: str | None
 
 
-def create_chat_model(*, model_name: str | None = None) -> BaseChatModel:
+def create_chat_model(
+    *,
+    model_name: str | None = None,
+    enable_thinking: bool = True,
+) -> BaseChatModel:
     return ChatOpenAI(
         model=model_name or settings.DEFAULT_MODEL_NAME,
         api_key=settings.LITELLM_API_KEY,
         base_url=settings.LITELLM_BASE_URL,
+        extra_body={"thinking": {"type": "enabled"}} if enable_thinking else None,
         use_responses_api=False,
     )
 
