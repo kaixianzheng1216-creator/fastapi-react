@@ -1,18 +1,29 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
+import { searchConversations } from "@/lib/conversation-thread-list-adapter";
+import type { ConversationPublic } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import {
   AuiIf,
   ThreadListItemMorePrimitive,
   ThreadListItemPrimitive,
   ThreadListPrimitive,
+  useAui,
   useAuiState,
 } from "@assistant-ui/react";
 import {
   ArchiveIcon,
+  MessageCircleIcon,
   MoreHorizontalIcon,
   SearchIcon,
   SquarePenIcon,
@@ -21,52 +32,74 @@ import {
 import {
   forwardRef,
   Fragment,
+  useEffect,
   useMemo,
   useState,
   type ComponentPropsWithoutRef,
   type FC,
 } from "react";
 
-export const ThreadList: FC = () => {
-  const [search, setSearch] = useState("");
+const SEARCH_DEBOUNCE_MS = 300;
 
+export const ThreadList: FC = () => {
   return (
     <ThreadListRoot>
-      <ThreadListSearch value={search} onValueChange={setSearch} />
+      <ThreadListSearch />
       <ThreadListNew />
-      <ThreadListItems searchQuery={search} />
+      <ThreadListItems />
     </ThreadListRoot>
   );
 };
 
-export const ThreadListSearch = forwardRef<
-  HTMLInputElement,
-  Omit<ComponentPropsWithoutRef<typeof Input>, "value" | "onChange"> & {
-    value: string;
-    onValueChange: (value: string) => void;
-  }
->(({ className, value, onValueChange, ...props }, ref) => {
-  return (
-    <div data-slot="aui_thread-list-search" className="relative py-1">
-      <SearchIcon
-        data-slot="aui_thread-list-search-icon"
-        className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2"
-      />
-      <Input
-        ref={ref}
-        type="search"
-        value={value}
-        onChange={(event) => onValueChange(event.target.value)}
-        aria-label="搜索对话"
-        placeholder="搜索对话"
-        className={cn("h-8 ps-8 text-sm", className)}
-        {...props}
-      />
-    </div>
-  );
-});
+export const ThreadListSearch: FC = () => {
+  const aui = useAui();
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
-ThreadListSearch.displayName = "ThreadListSearch";
+  return (
+    <>
+      <Button
+        variant="outline"
+        className="bg-muted/50 text-muted-foreground justify-start font-normal"
+        onClick={() => setOpen(true)}
+      >
+        <SearchIcon />
+        搜索...
+      </Button>
+      <CommandDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="搜索对话"
+        description="搜索已有对话"
+      >
+        <CommandInput
+          value={search}
+          onValueChange={setSearch}
+          placeholder="搜索对话"
+        />
+        <CommandList>
+          {!search && (
+            <CommandGroup heading="快捷创建">
+              <CommandItem
+                onSelect={() => {
+                  aui.threads().switchToNewThread();
+                  setOpen(false);
+                }}
+              >
+                <SquarePenIcon />
+                新对话
+              </CommandItem>
+            </CommandGroup>
+          )}
+          <ThreadListSearchResults
+            searchQuery={search.trim()}
+            onSelect={() => setOpen(false)}
+          />
+        </CommandList>
+      </CommandDialog>
+    </>
+  );
+};
 
 export const ThreadListRoot: FC<
   ComponentPropsWithoutRef<typeof ThreadListPrimitive.Root>
@@ -74,15 +107,16 @@ export const ThreadListRoot: FC<
   return (
     <ThreadListPrimitive.Root
       data-slot="aui_thread-list-root"
-      className={cn("flex flex-col gap-1.5", className)}
+      className={cn("flex flex-col gap-2", className)}
       {...props}
     />
   );
 };
 
-export const ThreadListItems: FC<
-  ComponentPropsWithoutRef<"div"> & { searchQuery?: string }
-> = ({ className, searchQuery = "", ...props }) => {
+export const ThreadListItems: FC<ComponentPropsWithoutRef<"div">> = ({
+  className,
+  ...props
+}) => {
   return (
     <div
       data-slot="aui_thread-list-items"
@@ -93,7 +127,7 @@ export const ThreadListItems: FC<
         <ThreadListSkeleton />
       </AuiIf>
       <AuiIf condition={(s) => !s.threads.isLoading}>
-        <ThreadListItemGroups searchQuery={searchQuery} />
+        <ThreadListItemGroups />
       </AuiIf>
     </div>
   );
@@ -112,29 +146,16 @@ const dateGroupLabel = (
 
 type ThreadListGroup = { label: string; indices: number[] };
 
-const ThreadListItemGroups: FC<{ searchQuery?: string }> = ({
-  searchQuery = "",
-}) => {
+const ThreadListItemGroups: FC = () => {
   const threadIds = useAuiState((s) => s.threads.threadIds);
   const threadItems = useAuiState((s) => s.threads.threadItems);
 
-  const query = searchQuery.trim().toLowerCase();
-
-  const { filteredIndices, groups } = useMemo(() => {
+  const groups = useMemo(() => {
     const itemsById = new Map(threadItems.map((item) => [item.id, item]));
     const dates = threadIds.map((id) => itemsById.get(id)?.lastMessageAt);
-    const filteredIndices = threadIds
-      .map((id, index) => ({ id, index }))
-      .filter(
-        ({ id }) =>
-          !query ||
-          (itemsById.get(id)?.title || "新对话")
-            .toLowerCase()
-            .includes(query),
-      )
-      .map(({ index }) => index);
-    if (!filteredIndices.some((index) => dates[index])) {
-      return { filteredIndices, groups: null };
+    const indices = threadIds.map((_, index) => index);
+    if (!indices.some((index) => dates[index])) {
+      return null;
     }
 
     const now = new Date();
@@ -145,7 +166,7 @@ const ThreadListItemGroups: FC<{ searchQuery?: string }> = ({
     ).getTime();
     const time = (index: number) =>
       dates[index]?.getTime() ?? Number.MAX_SAFE_INTEGER;
-    const sorted = [...filteredIndices].sort((a, b) => time(b) - time(a));
+    const sorted = [...indices].sort((a, b) => time(b) - time(a));
 
     const result: ThreadListGroup[] = [];
     for (const index of sorted) {
@@ -157,24 +178,13 @@ const ThreadListItemGroups: FC<{ searchQuery?: string }> = ({
         result.push({ label, indices: [index] });
       }
     }
-    return { filteredIndices, groups: result };
-  }, [threadIds, threadItems, query]);
-
-  if (query && filteredIndices.length === 0) {
-    return (
-      <div
-        data-slot="aui_thread-list-empty"
-        className="text-muted-foreground px-2.5 py-4 text-sm"
-      >
-        未找到对话
-      </div>
-    );
-  }
+    return result;
+  }, [threadIds, threadItems]);
 
   if (!groups) {
-    return filteredIndices.map((index) => (
+    return threadIds.map((threadId, index) => (
       <ThreadListPrimitive.ItemByIndex
-        key={threadIds[index]}
+        key={threadId}
         index={index}
         components={{ ThreadListItem }}
       />
@@ -200,6 +210,55 @@ const ThreadListItemGroups: FC<{ searchQuery?: string }> = ({
   ));
 };
 
+const ThreadListSearchResults: FC<{
+  searchQuery: string;
+  onSelect: () => void;
+}> = ({ searchQuery, onSelect }) => {
+  const aui = useAui();
+  const [results, setResults] = useState<ConversationPublic[] | null>();
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setResults(undefined);
+    const timeout = window.setTimeout(() => {
+      void searchConversations(searchQuery || undefined, controller.signal)
+        .then(setResults)
+        .catch((error: unknown) => {
+          if (!(error instanceof DOMException && error.name === "AbortError")) {
+            setResults(null);
+          }
+        });
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [searchQuery]);
+
+  if (results === undefined) return <ThreadListSkeleton />;
+  if (results === null) return <CommandEmpty>搜索失败</CommandEmpty>;
+  if (results.length === 0) return <CommandEmpty>未找到对话</CommandEmpty>;
+
+  return (
+    <CommandGroup heading={searchQuery ? "搜索结果" : "最近对话"}>
+      {results.map((conversation) => (
+        <CommandItem
+          key={conversation.id}
+          value={`${conversation.title} ${conversation.id}`}
+          onSelect={() => {
+            void aui.threads().switchToThread(conversation.id);
+            onSelect();
+          }}
+        >
+          <MessageCircleIcon />
+          {conversation.title}
+        </CommandItem>
+      ))}
+    </CommandGroup>
+  );
+};
+
 export const ThreadListNew = forwardRef<
   HTMLButtonElement,
   ComponentPropsWithoutRef<typeof Button> & { labelClassName?: string }
@@ -211,17 +270,14 @@ export const ThreadListNew = forwardRef<
         variant="ghost"
         data-slot="aui_thread-list-new"
         className={cn(
-          "hover:bg-muted data-active:bg-background data-active:font-semibold data-active:shadow-sm data-active:hover:bg-background h-8 justify-start gap-2 rounded-md px-2.5 text-sm font-normal",
+          "hover:bg-muted data-active:bg-muted data-active:font-semibold h-8 justify-start px-2.5 font-normal",
           className,
         )}
         {...props}
       >
         {children ?? (
           <>
-            <SquarePenIcon
-              data-slot="aui_thread-list-new-icon"
-              className="size-4 shrink-0"
-            />
+            <SquarePenIcon data-slot="aui_thread-list-new-icon" />
             <span
               data-slot="aui_thread-list-new-label"
               className={cn("whitespace-nowrap", labelClassName)}
@@ -303,7 +359,7 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
           size="icon"
           data-slot="aui_thread-list-item-more"
           className={cn(
-            "data-[state=open]:bg-accent p-0 data-[state=open]:opacity-100",
+            "data-[state=open]:bg-accent data-[state=open]:opacity-100",
             triggerClassName ??
               "absolute end-1.5 top-1/2 size-6 -translate-y-1/2 opacity-0 group-hover/thread-item:opacity-100",
           )}

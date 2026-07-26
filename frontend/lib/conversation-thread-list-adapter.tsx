@@ -125,7 +125,7 @@ export async function readConversationState(remoteId: string) {
 }
 
 export async function searchConversations(
-  search: string,
+  search: string | undefined,
   signal: AbortSignal,
 ): Promise<ConversationPublic[]> {
   const { data } = await agentReadConversations({
