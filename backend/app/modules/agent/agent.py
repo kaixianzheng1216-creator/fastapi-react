@@ -5,7 +5,7 @@ from deepagents import FilesystemPermission, create_deep_agent
 from deepagents.backends import CompositeBackend, FilesystemBackend
 from langchain.agents.middleware import wrap_model_call
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_openai import ChatOpenAI
+from langchain_litellm import ChatLiteLLM
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.config import get_config
 
@@ -34,12 +34,15 @@ def create_chat_model(
     model_name: str | None = None,
     enable_thinking: bool = True,
 ) -> BaseChatModel:
-    return ChatOpenAI(
-        model=model_name or settings.DEFAULT_MODEL_NAME,
-        api_key=settings.LITELLM_API_KEY,
-        base_url=settings.LITELLM_BASE_URL,
-        extra_body={"thinking": {"type": "enabled"}} if enable_thinking else None,
-        use_responses_api=False,
+    return ChatLiteLLM(
+        model=f"openai/{model_name or settings.DEFAULT_MODEL_NAME}",
+        api_key=settings.LITELLM_API_KEY.get_secret_value(),
+        api_base=str(settings.LITELLM_BASE_URL),
+        model_kwargs=(
+            {"extra_body": {"thinking": {"type": "enabled"}}}
+            if enable_thinking
+            else {}
+        ),
     )
 
 

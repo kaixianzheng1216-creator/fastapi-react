@@ -39,41 +39,8 @@ export type State = TodoState & {
   cancelledToolCallIds?: string[];
 };
 
-const convertDeepSeekMessage: typeof convertLangChainMessages = (
-  message,
-  metadata,
-) => {
-  if (message.type !== "ai") {
-    return convertLangChainMessages(message, metadata);
-  }
-
-  const additionalKwargs = message.additional_kwargs;
-  const reasoningContent =
-    additionalKwargs && "reasoning_content" in additionalKwargs
-      ? additionalKwargs.reasoning_content
-      : undefined;
-
-  if (typeof reasoningContent !== "string" || !reasoningContent) {
-    return convertLangChainMessages(message, metadata);
-  }
-
-  return convertLangChainMessages(
-    {
-      ...message,
-      additional_kwargs: {
-        ...additionalKwargs,
-        reasoning: {
-          type: "reasoning",
-          reasoning: reasoningContent,
-        },
-      },
-    },
-    metadata,
-  );
-};
-
 const LangChainMessageConverter = createMessageConverter(
-  convertDeepSeekMessage,
+  convertLangChainMessages,
 );
 
 const converter = (
