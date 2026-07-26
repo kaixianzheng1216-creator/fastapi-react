@@ -40,6 +40,30 @@ import {
 } from "react";
 
 const SEARCH_DEBOUNCE_MS = 300;
+const DAY_IN_MS = 86_400_000;
+
+const formatConversationTime = (updatedAt: string): string => {
+  const date = new Date(updatedAt);
+  const now = new Date();
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).getTime();
+  const time = new Intl.DateTimeFormat("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+
+  if (date.getTime() >= startOfToday) return time;
+  if (date.getTime() >= startOfToday - DAY_IN_MS) return `昨天 ${time}`;
+
+  return `${new Intl.DateTimeFormat("zh-CN", {
+    month: "long",
+    day: "numeric",
+  }).format(date)} ${time}`;
+};
 
 export const ThreadList: FC = () => {
   return (
@@ -71,6 +95,7 @@ export const ThreadListSearch: FC = () => {
         onOpenChange={setOpen}
         title="搜索对话"
         description="搜索已有对话"
+        className="sm:max-w-3xl [&_[data-slot=command-input-wrapper]]:border-b-0 [&_[data-slot=command-list]]:max-h-[70vh]"
       >
         <CommandInput
           value={search}
@@ -132,8 +157,6 @@ export const ThreadListItems: FC<ComponentPropsWithoutRef<"div">> = ({
     </div>
   );
 };
-
-const DAY_IN_MS = 86_400_000;
 
 const dateGroupLabel = (
   date: Date | undefined,
@@ -252,7 +275,10 @@ const ThreadListSearchResults: FC<{
           }}
         >
           <MessageCircleIcon />
-          {conversation.title}
+          <span className="min-w-0 flex-1 truncate">{conversation.title}</span>
+          <span className="text-muted-foreground text-xs">
+            {formatConversationTime(conversation.updatedAt)}
+          </span>
         </CommandItem>
       ))}
     </CommandGroup>
