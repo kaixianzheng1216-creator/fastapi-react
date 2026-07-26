@@ -66,6 +66,10 @@ export type AgentChatRequest = {
      */
     threadId: string;
     /**
+     * Model
+     */
+    model?: string | null;
+    /**
      * State
      */
     state?: {
@@ -75,6 +79,30 @@ export type AgentChatRequest = {
      * Commands
      */
     commands: Array<AddMessageCommand | AddToolResultCommand>;
+};
+
+/**
+ * AgentModelPublic
+ */
+export type AgentModelPublic = {
+    /**
+     * Id
+     */
+    id: string;
+};
+
+/**
+ * AgentModelsPublic
+ */
+export type AgentModelsPublic = {
+    /**
+     * Data
+     */
+    data: Array<AgentModelPublic>;
+    /**
+     * Defaultmodel
+     */
+    defaultModel: string;
 };
 
 /**
@@ -1261,6 +1289,22 @@ export type AgentUnarchiveConversationResponses = {
 };
 
 export type AgentUnarchiveConversationResponse = AgentUnarchiveConversationResponses[keyof AgentUnarchiveConversationResponses];
+
+export type AgentReadModelsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/agent/models';
+};
+
+export type AgentReadModelsResponses = {
+    /**
+     * Successful Response
+     */
+    200: AgentModelsPublic;
+};
+
+export type AgentReadModelsResponse = AgentReadModelsResponses[keyof AgentReadModelsResponses];
 
 export type AgentChatData = {
     body: AgentChatRequest;

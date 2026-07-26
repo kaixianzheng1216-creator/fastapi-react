@@ -14,7 +14,10 @@ from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langfuse import propagate_attributes
 from langfuse.langchain import CallbackHandler
+from openai import APIError, AsyncOpenAI
 
+from app.modules.agent.config import settings
+from app.modules.agent.exceptions import ModelsUnavailableError
 from app.modules.agent.schemas import (
     AddMessageCommand,
     AgentChatRequest,
@@ -25,8 +28,23 @@ from app.modules.agent.schemas import (
 )
 
 STREAM_ERROR_DETAIL = "Agent 流式响应失败"
+MODELS_UNAVAILABLE_ERROR_LOG = "LiteLLM 模型列表请求失败"
 TRACE_NAME = "agent-chat"
 logger = logging.getLogger(__name__)
+
+
+async def list_models() -> list[str]:
+    try:
+        async with AsyncOpenAI(
+            api_key=settings.LITELLM_API_KEY.get_secret_value(),
+            base_url=settings.LITELLM_BASE_URL,
+        ) as client:
+            models = await client.models.list()
+    except APIError as error:
+        logger.exception(MODELS_UNAVAILABLE_ERROR_LOG)
+        raise ModelsUnavailableError from error
+
+    return [model.id for model in models.data]
 
 
 def stream_chat(
@@ -81,6 +99,7 @@ async def _run(
             events = agent.astream(
                 {"messages": input_messages},
                 config=agent_config,
+                context={"model_name": chat_request.model},
                 stream_mode=["messages", "updates"],
                 subgraphs=True,
                 version="v2",

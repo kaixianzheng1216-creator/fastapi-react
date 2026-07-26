@@ -11,9 +11,9 @@ class AgentSettings(BaseSettings):
         extra="ignore",
     )
 
-    MODEL_PROVIDER: str
-    MODEL_NAME: str
-    MODEL_API_KEY: SecretStr
+    LITELLM_BASE_URL: str
+    LITELLM_API_KEY: SecretStr
+    DEFAULT_MODEL_NAME: str
 
     FIRECRAWL_API_KEY: SecretStr
     NEW_API_MCP_API_KEY: SecretStr

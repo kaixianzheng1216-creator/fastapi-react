@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, field_validator
 MAX_TEXT_PART_LENGTH = 20_000
 MAX_RESOURCE_REFERENCE_LENGTH = 14_000_000
 MAX_IDENTIFIER_LENGTH = 200
+MAX_MODEL_NAME_LENGTH = 200
 MAX_FILENAME_LENGTH = 255
 MAX_MIME_TYPE_LENGTH = 255
 ALLOWED_RESOURCE_SCHEMES = {"http", "https"}
@@ -111,5 +112,19 @@ AgentCommand = Annotated[
 # 请求外层结构
 class AgentChatRequest(BaseModel):
     thread_id: UUID = Field(alias="threadId")
+    model: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=MAX_MODEL_NAME_LENGTH,
+    )
     state: dict[str, Any] | None = None
     commands: list[AgentCommand] = Field(min_length=1)
+
+
+class AgentModelPublic(BaseModel):
+    id: str
+
+
+class AgentModelsPublic(BaseModel):
+    data: list[AgentModelPublic]
+    default_model: str = Field(alias="defaultModel")
