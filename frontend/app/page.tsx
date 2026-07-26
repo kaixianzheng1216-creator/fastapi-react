@@ -30,7 +30,7 @@ function ThreadWithSuggestions() {
     return (
         <AuiProvider value={aui}>
             <div
-                className="grid h-full min-h-0 grid-cols-1 grid-rows-[minmax(0,1fr)] 2xl:grid-cols-[1fr_minmax(0,44rem)_1fr]">
+                className="grid h-full min-h-0 grid-cols-1 grid-rows-[minmax(0,1fr)] 2xl:grid-cols-[1fr_minmax(0,52rem)_1fr]">
                 <div className="hidden 2xl:block"/>
                 <div className="min-h-0 min-w-0">
                     <Thread/>
