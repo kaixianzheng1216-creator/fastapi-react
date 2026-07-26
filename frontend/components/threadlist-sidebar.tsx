@@ -1,7 +1,7 @@
 "use client";
 
 import type * as React from "react";
-import { ChevronRightIcon, LogOutIcon, Repeat2Icon } from "lucide-react";
+import { ChevronRightIcon, LogOutIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ThreadList } from "@/components/thread-list";
@@ -36,11 +36,6 @@ export function ThreadListSidebar({
       throwOnError: true,
     }).then(({ data }) => setUser(data));
   }, []);
-
-  function changeAccount(): void {
-    clearAccessToken();
-    router.push("/login");
-  }
 
   function logOut(): void {
     clearAccessToken();
@@ -77,10 +72,6 @@ export function ThreadListSidebar({
                   align="start"
                   className="w-48"
                 >
-                  <DropdownMenuItem onClick={changeAccount}>
-                    <Repeat2Icon />
-                    切换账号
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={logOut}>
                     <LogOutIcon />
                     退出登录
