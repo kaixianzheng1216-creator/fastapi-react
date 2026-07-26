@@ -17,13 +17,12 @@ const statusIcon = {
 };
 
 export function TodoList() {
-  const hasMessages = useAuiState((state) => state.thread.messages.length > 0);
   const todoState = useAuiState((state) => state.thread.state) as
     | TodoState
     | null;
   const todos = todoState?.todos ?? [];
 
-  if (!hasMessages) return null;
+  if (todos.length === 0) return null;
 
   return (
     <aside className="hidden w-80 justify-self-end p-4 2xl:block">
@@ -33,15 +32,13 @@ export function TodoList() {
             任务清单
           </CardTitle>
         </CardHeader>
-        {todos.length > 0 && (
-          <CardContent>
-            <ul className="space-y-3">
-              {todos.map((todo, index) => (
-                <TodoItem key={`${todo.content}-${index}`} todo={todo} />
-              ))}
-            </ul>
-          </CardContent>
-        )}
+        <CardContent>
+          <ul className="space-y-3">
+            {todos.map((todo, index) => (
+              <TodoItem key={`${todo.content}-${index}`} todo={todo} />
+            ))}
+          </ul>
+        </CardContent>
       </Card>
     </aside>
   );

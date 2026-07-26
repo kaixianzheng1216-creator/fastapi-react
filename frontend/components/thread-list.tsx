@@ -29,15 +29,12 @@ import {
 
 export const ThreadList: FC = () => {
   const [search, setSearch] = useState("");
-  const hasThreads = useAuiState((s) => s.threads.threadIds.length > 0);
 
   return (
     <ThreadListRoot>
-      {hasThreads && (
-        <ThreadListSearch value={search} onValueChange={setSearch} />
-      )}
+      <ThreadListSearch value={search} onValueChange={setSearch} />
       <ThreadListNew />
-      <ThreadListItems searchQuery={hasThreads ? search : ""} />
+      <ThreadListItems searchQuery={search} />
     </ThreadListRoot>
   );
 };
