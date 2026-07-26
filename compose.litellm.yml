@@ -1,0 +1,33 @@
+# LiteLLM official Quickstart stack, adapted to coexist with this project's database.
+services:
+  litellm:
+    image: docker.litellm.ai/berriai/litellm-database:v1.90.2
+    restart: always
+    ports:
+      - "127.0.0.1:4000:4000"
+    environment:
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY?Variable not set}
+      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY?Variable not set}
+      DATABASE_URL: postgresql://litellm:${LITELLM_POSTGRES_PASSWORD?Variable not set}@litellm-db:5432/litellm
+      STORE_MODEL_IN_DB: "True"
+    depends_on:
+      litellm-db:
+        condition: service_healthy
+
+  litellm-db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: ${LITELLM_POSTGRES_PASSWORD?Variable not set}
+      POSTGRES_DB: litellm
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litellm -d litellm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - litellm-db-data:/var/lib/postgresql/data
+
+volumes:
+  litellm-db-data:

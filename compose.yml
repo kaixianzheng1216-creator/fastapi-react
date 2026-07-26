@@ -1,5 +1,6 @@
 include:
   - compose.langfuse.yml
+  - compose.litellm.yml
   - compose.xiaohongshu-mcp.yml
 
 services:
