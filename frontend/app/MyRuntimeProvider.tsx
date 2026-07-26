@@ -175,7 +175,11 @@ function useConversationRuntime() {
         }
       }
 
-      return { ...body, threadId: remoteId };
+      return {
+        ...body,
+        threadId: remoteId,
+        model: body.config?.modelName,
+      };
     },
     capabilities: {
       edit: true,

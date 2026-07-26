@@ -5,6 +5,7 @@ import {
   ComposerAttachments,
   UserMessageAttachments,
 } from "@/components/attachment";
+import { ComposerModelSelector } from "@/components/composer-model-selector";
 import { ThreadFollowupSuggestions } from "@/components/follow-up-suggestions";
 import { MarkdownText } from "@/components/markdown-text";
 import {
@@ -259,7 +260,10 @@ const Composer: FC = () => {
 const ComposerAction: FC = () => {
   return (
     <div className="aui-composer-action-wrapper relative flex items-center justify-between">
-      <ComposerAddAttachment />
+      <div className="flex items-center">
+        <ComposerAddAttachment />
+        <ComposerModelSelector />
+      </div>
       <div className="flex items-center gap-1.5">
         <AuiIf condition={(s) => s.thread.capabilities.dictation}>
           <AuiIf condition={(s) => s.composer.dictation == null}>
