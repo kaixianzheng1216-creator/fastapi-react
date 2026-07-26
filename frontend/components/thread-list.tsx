@@ -33,10 +33,10 @@ export const ThreadList: FC = () => {
 
   return (
     <ThreadListRoot>
-      <ThreadListNew />
       {hasThreads && (
         <ThreadListSearch value={search} onValueChange={setSearch} />
       )}
+      <ThreadListNew />
       <ThreadListItems searchQuery={hasThreads ? search : ""} />
     </ThreadListRoot>
   );
@@ -50,7 +50,7 @@ export const ThreadListSearch = forwardRef<
   }
 >(({ className, value, onValueChange, ...props }, ref) => {
   return (
-    <div data-slot="aui_thread-list-search" className="relative px-0.5 py-1">
+    <div data-slot="aui_thread-list-search" className="relative py-1">
       <SearchIcon
         data-slot="aui_thread-list-search-icon"
         className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2"
@@ -60,8 +60,8 @@ export const ThreadListSearch = forwardRef<
         type="search"
         value={value}
         onChange={(event) => onValueChange(event.target.value)}
-        aria-label="Search threads"
-        placeholder="Search threads"
+        aria-label="搜索对话"
+        placeholder="搜索对话"
         className={cn("h-8 ps-8 text-sm", className)}
         {...props}
       />
@@ -77,7 +77,7 @@ export const ThreadListRoot: FC<
   return (
     <ThreadListPrimitive.Root
       data-slot="aui_thread-list-root"
-      className={cn("flex flex-col gap-0.5", className)}
+      className={cn("flex flex-col gap-1.5", className)}
       {...props}
     />
   );
@@ -108,9 +108,9 @@ const dateGroupLabel = (
   date: Date | undefined,
   startOfToday: number,
 ): string => {
-  if (!date || date.getTime() >= startOfToday) return "Today";
-  if (date.getTime() >= startOfToday - DAY_IN_MS) return "Yesterday";
-  return "Earlier";
+  if (!date || date.getTime() >= startOfToday) return "今天";
+  if (date.getTime() >= startOfToday - DAY_IN_MS) return "昨天";
+  return "更早";
 };
 
 type ThreadListGroup = { label: string; indices: number[] };
@@ -131,7 +131,7 @@ const ThreadListItemGroups: FC<{ searchQuery?: string }> = ({
       .filter(
         ({ id }) =>
           !query ||
-          (itemsById.get(id)?.title || "New Chat")
+          (itemsById.get(id)?.title || "新对话")
             .toLowerCase()
             .includes(query),
       )
@@ -169,7 +169,7 @@ const ThreadListItemGroups: FC<{ searchQuery?: string }> = ({
         data-slot="aui_thread-list-empty"
         className="text-muted-foreground px-2.5 py-4 text-sm"
       >
-        No threads found
+        未找到对话
       </div>
     );
   }
@@ -229,7 +229,7 @@ export const ThreadListNew = forwardRef<
               data-slot="aui_thread-list-new-label"
               className={cn("whitespace-nowrap", labelClassName)}
             >
-              New Thread
+              新对话
             </span>
           </>
         )}
@@ -265,17 +265,17 @@ export const ThreadListItem: FC = () => {
   return (
     <ThreadListItemPrimitive.Root
       data-slot="aui_thread-list-item"
-      className="group hover:bg-muted focus-visible:bg-muted data-active:bg-muted has-focus-visible:bg-muted has-data-[state=open]:bg-muted relative flex h-8 items-center rounded-md transition-colors focus-visible:outline-none"
+      className="group/thread-item hover:bg-muted focus-visible:bg-muted data-active:bg-background data-active:font-semibold data-active:shadow-sm data-active:hover:bg-background has-focus-visible:bg-muted has-data-[state=open]:bg-muted relative flex h-8 items-center rounded-md transition-colors focus-visible:outline-none"
     >
       <ThreadListItemPrimitive.Trigger
         data-slot="aui_thread-list-item-trigger"
-        className="focus-visible:ring-ring/50 flex h-full min-w-0 flex-1 items-center rounded-md px-2.5 text-start text-sm outline-none group-hover:pe-9 group-has-focus-visible:pe-9 group-has-data-[state=open]:pe-9 group-data-active:pe-9 focus-visible:ring-[3px]"
+        className="focus-visible:ring-ring/50 flex h-full min-w-0 flex-1 items-center rounded-md px-2.5 text-start text-sm outline-none group-hover/thread-item:pe-9 group-has-focus-visible/thread-item:pe-9 group-has-data-[state=open]/thread-item:pe-9 group-data-active/thread-item:pe-9 focus-visible:ring-[3px]"
       >
         <span
           data-slot="aui_thread-list-item-title"
           className="min-w-0 flex-1 truncate"
         >
-          <ThreadListItemPrimitive.Title fallback="New Chat" />
+          <ThreadListItemPrimitive.Title fallback="新对话" />
         </span>
       </ThreadListItemPrimitive.Trigger>
       <ThreadListItemMore />
@@ -283,23 +283,41 @@ export const ThreadListItem: FC = () => {
   );
 };
 
-const ThreadListItemMore: FC = () => {
+type ThreadListItemMoreProps = {
+  align?: "start" | "center" | "end";
+  side?: "top" | "right" | "bottom" | "left";
+  sharedFocusGroup?: boolean;
+  triggerClassName?: string;
+};
+
+export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
+  align = "start",
+  sharedFocusGroup = true,
+  side = "right",
+  triggerClassName,
+}) => {
   return (
-    <ThreadListItemMorePrimitive.Root sharedFocusGroup>
+    <ThreadListItemMorePrimitive.Root
+      sharedFocusGroup={sharedFocusGroup}
+    >
       <ThreadListItemMorePrimitive.Trigger asChild>
         <Button
           variant="ghost"
           size="icon"
           data-slot="aui_thread-list-item-more"
-          className="data-[state=open]:bg-accent absolute end-1.5 top-1/2 size-6 -translate-y-1/2 p-0 opacity-0 group-hover:opacity-100 group-has-focus-visible:opacity-100 group-data-active:opacity-100 data-[state=open]:opacity-100"
+          className={cn(
+            "data-[state=open]:bg-accent p-0 data-[state=open]:opacity-100",
+            triggerClassName ??
+              "absolute end-1.5 top-1/2 size-6 -translate-y-1/2 opacity-0 group-hover/thread-item:opacity-100",
+          )}
         >
           <MoreHorizontalIcon className="size-3.5" />
-          <span className="sr-only">More options</span>
+          <span className="sr-only">更多操作</span>
         </Button>
       </ThreadListItemMorePrimitive.Trigger>
       <ThreadListItemMorePrimitive.Content
-        side="right"
-        align="start"
+        side={side}
+        align={align}
         sideOffset={6}
         data-slot="aui_thread-list-item-more-content"
         className="bg-popover/95 text-popover-foreground data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:animate-out data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-32 overflow-hidden rounded-xl border p-1.5 shadow-lg backdrop-blur-sm"
@@ -310,7 +328,7 @@ const ThreadListItemMore: FC = () => {
             className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm outline-none select-none"
           >
             <ArchiveIcon className="size-4" />
-            Archive
+            归档
           </ThreadListItemMorePrimitive.Item>
         </ThreadListItemPrimitive.Archive>
         <ThreadListItemPrimitive.Delete asChild>
@@ -319,7 +337,7 @@ const ThreadListItemMore: FC = () => {
             className="text-destructive hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm outline-none select-none"
           >
             <TrashIcon className="size-4" />
-            Delete
+            删除
           </ThreadListItemMorePrimitive.Item>
         </ThreadListItemPrimitive.Delete>
       </ThreadListItemMorePrimitive.Content>
