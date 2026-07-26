@@ -1,7 +1,7 @@
 "use client";
 
 import type * as React from "react";
-import { LogOutIcon, Repeat2Icon } from "lucide-react";
+import { ChevronRightIcon, LogOutIcon, Repeat2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ThreadList } from "@/components/thread-list";
@@ -59,16 +59,24 @@ export function ThreadListSidebar({
             <SidebarMenuItem>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton size="lg">
-                    <Avatar size="sm">
+                  <SidebarMenuButton
+                    size="lg"
+                    className="cursor-pointer hover:bg-transparent active:bg-transparent data-[state=open]:hover:bg-transparent"
+                  >
+                    <Avatar>
                       <AvatarFallback>
                         {user.username.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <span>{user.username}</span>
+                    <ChevronRightIcon />
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent side="top" align="start">
+                <DropdownMenuContent
+                  side="top"
+                  align="start"
+                  className="w-48"
+                >
                   <DropdownMenuItem onClick={changeAccount}>
                     <Repeat2Icon />
                     切换账号
