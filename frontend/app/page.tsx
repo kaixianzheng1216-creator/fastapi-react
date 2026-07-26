@@ -1,7 +1,10 @@
 "use client";
 
 import { Thread } from "@/components/thread";
+import { ThreadListPopover } from "@/components/thread-list-popover";
+import { ThreadListSidebar } from "@/components/threadlist-sidebar";
 import { TodoList } from "@/components/todo-list";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { getAccessToken } from "@/lib/auth";
 import { useAui, AuiProvider, Suggestions } from "@assistant-ui/react";
 import { useRouter } from "next/navigation";
@@ -56,7 +59,13 @@ export default function Home() {
 
   return (
     <MyRuntimeProvider>
-      <ThreadWithSuggestions />
+      <SidebarProvider defaultOpen className="h-full min-h-0">
+        <ThreadListSidebar />
+        <SidebarInset className="relative h-full">
+          <ThreadListPopover />
+          <ThreadWithSuggestions />
+        </SidebarInset>
+      </SidebarProvider>
     </MyRuntimeProvider>
   );
 }

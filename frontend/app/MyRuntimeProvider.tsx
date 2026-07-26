@@ -4,7 +4,9 @@ import {
   AssistantRuntimeProvider,
   type AssistantTransportConnectionMetadata,
   unstable_createMessageConverter as createMessageConverter,
+  useAuiState,
   useAssistantTransportRuntime,
+  useRemoteThreadListRuntime,
 } from "@assistant-ui/react";
 import {
   convertLangChainMessages,
@@ -12,11 +14,10 @@ import {
 } from "@assistant-ui/react-langgraph";
 import { clearAccessToken, getAccessToken } from "@/lib/auth";
 import {
-  agentCreateConversation,
-  agentGenerateConversationTitle,
-  type ConversationTitleRequest,
-} from "@/lib/client";
-import { type ReactNode, useRef } from "react";
+  conversationThreadListAdapter,
+  readConversationState,
+} from "@/lib/conversation-thread-list-adapter";
+import { type ReactNode, useEffect } from "react";
 
 type MyRuntimeProviderProps = {
   children: ReactNode;
@@ -130,7 +131,24 @@ const converter = (
 };
 
 export function MyRuntimeProvider({ children }: MyRuntimeProviderProps) {
-  const threadId = useRef<string | null>(null);
+  const runtime = useRemoteThreadListRuntime({
+    adapter: conversationThreadListAdapter,
+    runtimeHook: useConversationRuntime,
+  });
+
+  return (
+    <AssistantRuntimeProvider runtime={runtime}>
+      {children}
+    </AssistantRuntimeProvider>
+  );
+}
+
+function useConversationRuntime() {
+  const remoteId = useAuiState((state) =>
+    state.threadListItem.custom?.persisted
+      ? state.threadListItem.remoteId
+      : undefined,
+  );
   const runtime = useAssistantTransportRuntime<State>({
     protocol: "assistant-transport",
     initialState: {
@@ -150,45 +168,6 @@ export function MyRuntimeProvider({ children }: MyRuntimeProviderProps) {
       }
 
       return headers;
-    },
-    prepareSendCommandsRequest: async (body) => {
-      if (threadId.current === null) {
-        const result = await agentCreateConversation({
-          auth: getAccessToken() ?? undefined,
-        });
-
-        if (!result.data) {
-          if (result.response?.status === 401) {
-            clearAccessToken();
-            window.location.assign("/login");
-          }
-
-          throw new Error("创建会话失败");
-        }
-
-        threadId.current = result.data.id;
-
-        const firstMessage = body.commands.find(
-          (command) => command.type === "add-message",
-        )?.message;
-
-        if (
-          firstMessage?.parts.some(
-            (part) => part.type === "text" && part.text.trim(),
-          )
-        ) {
-          void agentGenerateConversationTitle({
-            auth: getAccessToken() ?? undefined,
-            body: firstMessage as ConversationTitleRequest,
-            path: { conversation_id: threadId.current },
-          });
-        }
-      }
-
-      return {
-        ...body,
-        threadId: threadId.current,
-      };
     },
     onResponse: (response) => {
       if (response.status === 401) {
@@ -218,9 +197,13 @@ export function MyRuntimeProvider({ children }: MyRuntimeProviderProps) {
     },
   });
 
-  return (
-    <AssistantRuntimeProvider runtime={runtime}>
-      {children}
-    </AssistantRuntimeProvider>
-  );
+  useEffect(() => {
+    if (!remoteId) return;
+
+    void readConversationState(remoteId).then((state) => {
+      runtime.thread.importExternalState(state);
+    });
+  }, [remoteId, runtime]);
+
+  return runtime;
 }
