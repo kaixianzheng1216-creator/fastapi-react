@@ -8,6 +8,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langfuse import propagate_attributes
 from langfuse.langchain import CallbackHandler
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from sqlalchemy.sql.elements import ColumnElement
 from sqlmodel import Session, col, func, select
 
 from app.modules.conversations.exceptions import (
@@ -87,18 +88,28 @@ def list_conversations(
     current_user: User,
     offset: int,
     limit: int,
+    search: str | None = None,
+    archived: bool | None = None,
 ) -> tuple[Sequence[Conversation], int]:
-    owner_filter = Conversation.owner_id == current_user.id
+    filters: list[ColumnElement[bool]] = [
+        col(Conversation.owner_id) == current_user.id
+    ]
+
+    if search is not None:
+        filters.append(col(Conversation.title).contains(search))
+
+    if archived is not None:
+        filters.append(col(Conversation.archived) == archived)
 
     count_statement = (
         select(func.count())
         .select_from(Conversation)
-        .where(owner_filter)
+        .where(*filters)
     )
 
     statement = (
         select(Conversation)
-        .where(owner_filter)
+        .where(*filters)
         .order_by(col(Conversation.updated_at).desc())
         .offset(offset)
         .limit(limit)

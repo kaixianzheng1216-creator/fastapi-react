@@ -14,6 +14,7 @@ import {
   agentReadConversations,
   agentRenameConversation,
   agentUnarchiveConversation,
+  type ConversationPublic,
   type ConversationTitleRequest,
 } from "@/lib/client";
 
@@ -121,4 +122,18 @@ export async function readConversationState(remoteId: string) {
   });
 
   return data.state;
+}
+
+export async function searchConversations(
+  search: string,
+  signal: AbortSignal,
+): Promise<ConversationPublic[]> {
+  const { data } = await agentReadConversations({
+    auth: getAccessToken() ?? undefined,
+    query: { search, archived: false, limit: PAGE_SIZE },
+    signal,
+    throwOnError: true,
+  });
+
+  return data.data;
 }

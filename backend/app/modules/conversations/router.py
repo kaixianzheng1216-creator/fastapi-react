@@ -64,6 +64,8 @@ def read_conversations(
     current_user: CurrentUser,
     offset: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    search: Annotated[str | None, Query(min_length=1, max_length=100)] = None,
+    archived: bool | None = None,
 ) -> ConversationsPublic:
     """读取会话列表。"""
     conversations, count = service.list_conversations(
@@ -71,6 +73,8 @@ def read_conversations(
         current_user=current_user,
         offset=offset,
         limit=limit,
+        search=search,
+        archived=archived,
     )
 
     return ConversationsPublic(

@@ -1072,6 +1072,14 @@ export type AgentReadConversationsData = {
          * Limit
          */
         limit?: number;
+        /**
+         * Search
+         */
+        search?: string | null;
+        /**
+         * Archived
+         */
+        archived?: boolean | null;
     };
     url: '/api/v1/agent/conversations';
 };
