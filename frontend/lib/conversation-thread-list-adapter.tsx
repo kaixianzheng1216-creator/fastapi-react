@@ -14,6 +14,7 @@ import {
   agentReadConversations,
   agentRenameConversation,
   agentUnarchiveConversation,
+  type ConversationTitleRequest,
 } from "@/lib/client";
 
 const PAGE_SIZE = 100;
@@ -62,22 +63,8 @@ export const conversationThreadListAdapter: RemoteThreadListAdapter = {
     };
   },
 
-  async generateTitle(remoteId, messages) {
-    const firstUserMessage = messages.find((message) => message.role === "user")!;
-    const text = firstUserMessage.content
-      .filter((part) => part.type === "text")
-      .map((part) => part.text)
-      .join("\n");
-    const { data } = await agentGenerateConversationTitle({
-      auth: getAccessToken() ?? undefined,
-      body: { role: "user", parts: [{ type: "text", text }] },
-      path: { conversation_id: remoteId },
-      throwOnError: true,
-    });
-
-    return createAssistantStream((controller) => {
-      controller.appendText(data.title);
-    });
+  async generateTitle() {
+    return createAssistantStream(() => {});
   },
 
   async rename(remoteId, newTitle) {
@@ -113,6 +100,18 @@ export const conversationThreadListAdapter: RemoteThreadListAdapter = {
     });
   },
 };
+
+export async function generateConversationTitle(
+  remoteId: string,
+  parts: ConversationTitleRequest["parts"],
+): Promise<void> {
+  await agentGenerateConversationTitle({
+    auth: getAccessToken() ?? undefined,
+    body: { role: "user", parts },
+    path: { conversation_id: remoteId },
+    throwOnError: true,
+  });
+}
 
 export async function readConversationState(remoteId: string) {
   const { data } = await agentReadConversation({

@@ -4,6 +4,7 @@ import {
   AssistantRuntimeProvider,
   type AssistantTransportConnectionMetadata,
   unstable_createMessageConverter as createMessageConverter,
+  useAui,
   useAuiState,
   useAssistantTransportRuntime,
   useRemoteThreadListRuntime,
@@ -15,6 +16,7 @@ import {
 import { clearAccessToken, getAccessToken } from "@/lib/auth";
 import {
   conversationThreadListAdapter,
+  generateConversationTitle,
   readConversationState,
 } from "@/lib/conversation-thread-list-adapter";
 import { type ReactNode, useEffect } from "react";
@@ -144,6 +146,7 @@ export function MyRuntimeProvider({ children }: MyRuntimeProviderProps) {
 }
 
 function useConversationRuntime() {
+  const aui = useAui();
   const remoteId = useAuiState((state) =>
     state.threadListItem.custom?.persisted
       ? state.threadListItem.remoteId
@@ -156,6 +159,24 @@ function useConversationRuntime() {
     },
     api: "/api/chat",
     converter,
+    prepareSendCommandsRequest: async (body) => {
+      const isFirstMessage = !body.threadId;
+      const { remoteId } = await aui.threadListItem().initialize();
+
+      if (isFirstMessage) {
+        const command = body.commands.find(
+          (command) => command.type === "add-message",
+        );
+
+        if (command?.type === "add-message" && command.message.role === "user") {
+          void generateConversationTitle(remoteId, [...command.message.parts])
+            .then(() => aui.threads().reload())
+            .catch(console.error);
+        }
+      }
+
+      return { ...body, threadId: remoteId };
+    },
     capabilities: {
       edit: true,
     },

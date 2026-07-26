@@ -14,8 +14,8 @@ import {
 import {
   ArchiveIcon,
   MoreHorizontalIcon,
-  PlusIcon,
   SearchIcon,
+  SquarePenIcon,
   TrashIcon,
 } from "lucide-react";
 import {
@@ -211,14 +211,14 @@ export const ThreadListNew = forwardRef<
         variant="ghost"
         data-slot="aui_thread-list-new"
         className={cn(
-          "hover:bg-muted data-active:bg-muted h-8 justify-start gap-2 rounded-md px-2.5 text-sm font-normal",
+          "hover:bg-muted data-active:bg-background data-active:font-semibold data-active:shadow-sm data-active:hover:bg-background h-8 justify-start gap-2 rounded-md px-2.5 text-sm font-normal",
           className,
         )}
         {...props}
       >
         {children ?? (
           <>
-            <PlusIcon
+            <SquarePenIcon
               data-slot="aui_thread-list-new-icon"
               className="size-4 shrink-0"
             />
