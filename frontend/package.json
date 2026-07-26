@@ -17,6 +17,7 @@
     "assistant-stream": "^0.3.26",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "lucide-react": "^1.24.0",
     "next": "^16.2.10",
     "radix-ui": "^1.6.4",
