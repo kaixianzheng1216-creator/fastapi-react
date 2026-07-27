@@ -13,6 +13,8 @@ services:
       LITELLM_SALT_KEY: ${LITELLM_SALT_KEY?Variable not set}
       DATABASE_URL: postgresql://litellm:${LITELLM_POSTGRES_PASSWORD?Variable not set}@litellm-db:5432/litellm
       STORE_MODEL_IN_DB: "True"
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY?Variable not set}
+      MOONSHOT_API_KEY: ${MOONSHOT_API_KEY?Variable not set}
       FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY?Variable not set}
       NEW_API_MCP_API_KEY: ${NEW_API_MCP_API_KEY?Variable not set}
     depends_on:
