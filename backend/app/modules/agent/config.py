@@ -15,9 +15,6 @@ class AgentSettings(BaseSettings):
     LITELLM_API_KEY: SecretStr
     DEFAULT_MODEL_NAME: str
 
-    FIRECRAWL_API_KEY: SecretStr
-    NEW_API_MCP_API_KEY: SecretStr
-
     E2B_API_KEY: SecretStr
     E2B_TEMPLATE: str | None = None
 
