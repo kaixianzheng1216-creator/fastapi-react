@@ -58,6 +58,9 @@ services:
       - traefik-public
       - default
     depends_on:
+      litellm:
+        condition: service_healthy
+        restart: true
       xiaohongshu-mcp:
         condition: service_healthy
         restart: true
@@ -73,6 +76,7 @@ services:
       - ENVIRONMENT=${ENVIRONMENT}
       - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
       - SECRET_KEY=${SECRET_KEY?Variable not set}
+      - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
       - FIRST_SUPERUSER_USERNAME=${FIRST_SUPERUSER_USERNAME?Variable not set}
       - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD?Variable not set}
       - POSTGRES_SERVER=db
