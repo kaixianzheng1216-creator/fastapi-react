@@ -16,7 +16,6 @@ import {
 import { clearAccessToken, getAccessToken } from "@/lib/auth";
 import {
   conversationThreadListAdapter,
-  generateConversationTitle,
   readConversationState,
 } from "@/lib/conversation-thread-list-adapter";
 import { type ReactNode, useEffect } from "react";
@@ -114,11 +113,13 @@ export function MyRuntimeProvider({ children }: MyRuntimeProviderProps) {
 
 function useConversationRuntime() {
   const aui = useAui();
+
   const remoteId = useAuiState((state) =>
     state.threadListItem.custom?.persisted
       ? state.threadListItem.remoteId
       : undefined,
   );
+
   const runtime = useAssistantTransportRuntime<State>({
     protocol: "assistant-transport",
     initialState: {
@@ -131,15 +132,7 @@ function useConversationRuntime() {
       const { remoteId } = await aui.threadListItem().initialize();
 
       if (isFirstMessage) {
-        const command = body.commands.find(
-          (command) => command.type === "add-message",
-        );
-
-        if (command?.type === "add-message" && command.message.role === "user") {
-          void generateConversationTitle(remoteId, [...command.message.parts])
-            .then(() => aui.threads().reload())
-            .catch(console.error);
-        }
+        aui.threadListItem().generateTitle();
       }
 
       return {

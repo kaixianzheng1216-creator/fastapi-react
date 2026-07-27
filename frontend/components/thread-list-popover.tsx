@@ -1,6 +1,7 @@
 "use client";
 
 import {PanelLeftIcon, SquarePenIcon} from "lucide-react";
+import {useState} from "react";
 import {ThreadList, ThreadListNew} from "@/components/thread-list";
 import {Button} from "@/components/ui/button";
 import {
@@ -9,11 +10,12 @@ import {
     HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import {useSidebar} from "@/components/ui/sidebar";
-import {useState} from "react";
+import {useCurrentUser, UserProfile} from "@/components/user-info";
 
 export function ThreadListPopover() {
     const [previewOpen, setPreviewOpen] = useState(false);
     const {open, setOpen} = useSidebar();
+    const user = useCurrentUser();
 
     return (
         <div className="absolute top-3 left-3 flex gap-1">
@@ -37,7 +39,7 @@ export function ThreadListPopover() {
                 </HoverCardTrigger>
                 <HoverCardContent
                     align="start"
-                    className="max-h-[calc(100vh-4rem)] w-72 overflow-y-auto p-2"
+                    className="max-h-[calc(100vh-28rem)] w-72 overflow-y-auto p-2"
                 >
                     <ThreadList/>
                 </HoverCardContent>

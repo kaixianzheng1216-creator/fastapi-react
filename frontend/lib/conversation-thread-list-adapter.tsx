@@ -1,8 +1,6 @@
 "use client";
 
-import {
-  type RemoteThreadListAdapter,
-} from "@assistant-ui/react";
+import { type RemoteThreadListAdapter, type ThreadMessage } from "@assistant-ui/react";
 import { createAssistantStream } from "assistant-stream";
 import { getAccessToken } from "@/lib/auth";
 import {
@@ -15,10 +13,30 @@ import {
   agentRenameConversation,
   agentUnarchiveConversation,
   type ConversationPublic,
-  type ConversationTitleRequest,
 } from "@/lib/client";
 
 const PAGE_SIZE = 100;
+
+const threadIdToRemoteId = new Map<string, string>();
+
+function resolveRemoteId(threadId: string): string {
+  return threadIdToRemoteId.get(threadId) ?? threadId;
+}
+
+function getFirstUserText(messages: readonly ThreadMessage[]): string {
+  for (const message of messages) {
+    if (message.role !== "user") continue;
+
+    const text = message.content
+      .filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .join("\n");
+
+    if (text) return text;
+  }
+
+  return "";
+}
 
 export const conversationThreadListAdapter: RemoteThreadListAdapter = {
   async list() {
@@ -39,11 +57,13 @@ export const conversationThreadListAdapter: RemoteThreadListAdapter = {
     };
   },
 
-  async initialize() {
+  async initialize(threadId) {
     const { data } = await agentCreateConversation({
       auth: getAccessToken() ?? undefined,
       throwOnError: true,
     });
+
+    threadIdToRemoteId.set(threadId, data.id);
 
     return { remoteId: data.id, externalId: undefined };
   },
@@ -64,15 +84,27 @@ export const conversationThreadListAdapter: RemoteThreadListAdapter = {
     };
   },
 
-  async generateTitle() {
-    return createAssistantStream(() => {});
+  async generateTitle(remoteId, messages) {
+    const text = getFirstUserText(messages);
+    if (!text) return createAssistantStream(() => {});
+
+    const { data } = await agentGenerateConversationTitle({
+      auth: getAccessToken() ?? undefined,
+      body: { role: "user", parts: [{ type: "text", text }] },
+      path: { conversation_id: remoteId },
+      throwOnError: true,
+    });
+
+    return createAssistantStream((controller) => {
+      controller.appendText(data.title);
+    });
   },
 
   async rename(remoteId, newTitle) {
     await agentRenameConversation({
       auth: getAccessToken() ?? undefined,
       body: { title: newTitle },
-      path: { conversation_id: remoteId },
+      path: { conversation_id: resolveRemoteId(remoteId) },
       throwOnError: true,
     });
   },
@@ -80,7 +112,7 @@ export const conversationThreadListAdapter: RemoteThreadListAdapter = {
   async archive(remoteId) {
     await agentArchiveConversation({
       auth: getAccessToken() ?? undefined,
-      path: { conversation_id: remoteId },
+      path: { conversation_id: resolveRemoteId(remoteId) },
       throwOnError: true,
     });
   },
@@ -88,31 +120,23 @@ export const conversationThreadListAdapter: RemoteThreadListAdapter = {
   async unarchive(remoteId) {
     await agentUnarchiveConversation({
       auth: getAccessToken() ?? undefined,
-      path: { conversation_id: remoteId },
+      path: { conversation_id: resolveRemoteId(remoteId) },
       throwOnError: true,
     });
   },
 
   async delete(remoteId) {
+    const resolvedRemoteId = resolveRemoteId(remoteId);
+
     await agentDeleteConversation({
       auth: getAccessToken() ?? undefined,
-      path: { conversation_id: remoteId },
+      path: { conversation_id: resolvedRemoteId },
       throwOnError: true,
     });
+
+    threadIdToRemoteId.delete(remoteId);
   },
 };
-
-export async function generateConversationTitle(
-  remoteId: string,
-  parts: ConversationTitleRequest["parts"],
-): Promise<void> {
-  await agentGenerateConversationTitle({
-    auth: getAccessToken() ?? undefined,
-    body: { role: "user", parts },
-    path: { conversation_id: remoteId },
-    throwOnError: true,
-  });
-}
 
 export async function readConversationState(remoteId: string) {
   const { data } = await agentReadConversation({

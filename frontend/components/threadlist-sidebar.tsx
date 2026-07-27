@@ -3,9 +3,7 @@
 import type * as React from "react";
 import { ChevronRightIcon, LogOutIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { ThreadList } from "@/components/thread-list";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,21 +19,14 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { clearAccessToken, getAccessToken } from "@/lib/auth";
-import { type UserPublic, usersReadUserMe } from "@/lib/client";
+import { clearAccessToken } from "@/lib/auth";
+import { useCurrentUser, UserProfile } from "@/components/user-info";
 
 export function ThreadListSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
-  const [user, setUser] = useState<UserPublic>();
-
-  useEffect(() => {
-    void usersReadUserMe({
-      auth: getAccessToken()!,
-      throwOnError: true,
-    }).then(({ data }) => setUser(data));
-  }, []);
+  const user = useCurrentUser();
 
   function logOut(): void {
     clearAccessToken();
@@ -55,12 +46,7 @@ export function ThreadListSidebar({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton size="lg">
-                    <Avatar>
-                      <AvatarFallback>
-                        {user.username.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{user.username}</span>
+                    <UserProfile user={user} />
                     <ChevronRightIcon />
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
