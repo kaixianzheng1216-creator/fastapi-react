@@ -54,10 +54,7 @@ export function ThreadListSidebar({
             <SidebarMenuItem>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton
-                    size="lg"
-                    className="cursor-pointer hover:bg-transparent active:bg-transparent data-[state=open]:hover:bg-transparent"
-                  >
+                  <SidebarMenuButton size="lg">
                     <Avatar>
                       <AvatarFallback>
                         {user.username.charAt(0).toUpperCase()}
