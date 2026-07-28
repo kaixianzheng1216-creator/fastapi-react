@@ -1,12 +1,7 @@
 "use client";
 
 import { type Todo, type TodoState } from "@/app/MyRuntimeProvider";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuiState } from "@assistant-ui/react";
 import { CheckCircle2Icon, CircleIcon, LoaderCircleIcon } from "lucide-react";
 
@@ -17,9 +12,9 @@ const statusIcon = {
 };
 
 export function TodoList() {
-  const todoState = useAuiState((state) => state.thread.state) as
-    | TodoState
-    | null;
+  const todoState = useAuiState(
+    (state) => state.thread.state,
+  ) as TodoState | null;
   const todos = todoState?.todos ?? [];
 
   if (todos.length === 0) return null;

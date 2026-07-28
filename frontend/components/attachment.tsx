@@ -27,11 +27,7 @@ import {
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { TooltipIconButton } from "@/components/tooltip-icon-button";
 import { cn } from "@/lib/utils";
 
@@ -105,9 +101,7 @@ const AttachmentPreviewDialog: FC<PropsWithChildren> = ({ children }) => {
         {children}
       </DialogTrigger>
       <DialogContent className="aui-attachment-preview-dialog-content [&>button]:bg-foreground/60 [&_svg]:text-background [&>button]:hover:[&_svg]:text-destructive p-2 sm:max-w-3xl [&>button]:rounded-full [&>button]:p-1 [&>button]:opacity-100 [&>button]:ring-0!">
-        <DialogTitle className="aui-sr-only sr-only">
-          图片附件预览
-        </DialogTitle>
+        <DialogTitle className="aui-sr-only sr-only">图片附件预览</DialogTitle>
         <div className="aui-attachment-preview bg-background relative mx-auto flex max-h-[80dvh] w-full items-center justify-center overflow-hidden">
           <AttachmentPreview src={src} />
         </div>

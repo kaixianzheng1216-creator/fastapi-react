@@ -376,9 +376,7 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
   triggerClassName,
 }) => {
   return (
-    <ThreadListItemMorePrimitive.Root
-      sharedFocusGroup={sharedFocusGroup}
-    >
+    <ThreadListItemMorePrimitive.Root sharedFocusGroup={sharedFocusGroup}>
       <ThreadListItemMorePrimitive.Trigger asChild>
         <Button
           variant="ghost"

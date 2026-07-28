@@ -22,9 +22,7 @@ export function UserProfile({ user }: { user: UserPublic }) {
   return (
     <>
       <Avatar className="size-8">
-        <AvatarFallback>
-          {user.username.charAt(0).toUpperCase()}
-        </AvatarFallback>
+        <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
       </Avatar>
       <span className="min-w-0 flex-1 truncate">{user.username}</span>
     </>

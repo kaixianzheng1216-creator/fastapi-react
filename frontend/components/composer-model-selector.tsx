@@ -2,10 +2,7 @@
 
 import { ModelSelector } from "@/components/model-selector";
 import { getAccessToken } from "@/lib/auth";
-import {
-  agentReadModels,
-  type AgentModelsPublic,
-} from "@/lib/client";
+import { agentReadModels, type AgentModelsPublic } from "@/lib/client";
 import { useEffect, useState } from "react";
 
 export function ComposerModelSelector() {

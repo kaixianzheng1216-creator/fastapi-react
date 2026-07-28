@@ -74,11 +74,9 @@ export type ThreadComponents = {
   Welcome?: ComponentType | undefined;
   ToolFallback?: ToolCallMessagePartComponent | undefined;
   ToolGroup?:
-    | ComponentType<PropsWithChildren<{ group: ThreadGroupPart }>>
-    | undefined;
+    ComponentType<PropsWithChildren<{ group: ThreadGroupPart }>> | undefined;
   ReasoningGroup?:
-    | ComponentType<PropsWithChildren<{ group: ThreadGroupPart }>>
-    | undefined;
+    ComponentType<PropsWithChildren<{ group: ThreadGroupPart }>> | undefined;
 };
 
 export type ThreadProps = {
@@ -504,8 +502,7 @@ const RegenerateButton: FC = () => {
     if (userMessage.role !== "user") return;
 
     const parts: Array<
-      | { type: "text"; text: string }
-      | { type: "image"; image: string }
+      { type: "text"; text: string } | { type: "image"; image: string }
     > = [];
     const content = [
       ...userMessage.content,

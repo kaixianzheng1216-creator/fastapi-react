@@ -1,6 +1,9 @@
 "use client";
 
-import { type RemoteThreadListAdapter, type ThreadMessage } from "@assistant-ui/react";
+import {
+  type RemoteThreadListAdapter,
+  type ThreadMessage,
+} from "@assistant-ui/react";
 import { createAssistantStream } from "assistant-stream";
 import { getAccessToken } from "@/lib/auth";
 import {

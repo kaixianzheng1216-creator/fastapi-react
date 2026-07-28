@@ -50,11 +50,7 @@ export function ThreadListSidebar({
                     <ChevronRightIcon />
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  side="top"
-                  align="start"
-                  className="w-48"
-                >
+                <DropdownMenuContent side="top" align="start" className="w-48">
                   <DropdownMenuItem onClick={logOut}>
                     <LogOutIcon />
                     退出登录

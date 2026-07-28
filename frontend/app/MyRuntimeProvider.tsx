@@ -172,10 +172,7 @@ function useConversationRuntime() {
         return {
           ...state,
           cancelledToolCallIds: [
-            ...new Set([
-              ...(state.cancelledToolCallIds ?? []),
-              ...toolCallIds,
-            ]),
+            ...new Set([...(state.cancelledToolCallIds ?? []), ...toolCallIds]),
           ],
         };
       });

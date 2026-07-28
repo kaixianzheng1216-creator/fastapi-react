@@ -1,40 +1,40 @@
-"use client"
+"use client";
 
-import { GalleryVerticalEnd } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { type FormEvent, useState } from "react"
+import { GalleryVerticalEnd } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useState } from "react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { getApiErrorMessage } from "@/lib/api-error"
-import { usersRegisterUser } from "@/lib/client"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { usersRegisterUser } from "@/lib/client";
+import { cn } from "@/lib/utils";
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const router = useRouter()
-  const [error, setError] = useState("")
-  const [submitting, setSubmitting] = useState(false)
+  const router = useRouter();
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setError("")
-    setSubmitting(true)
+    event.preventDefault();
+    setError("");
+    setSubmitting(true);
 
-    const formData = new FormData(event.currentTarget)
-    const fullName = String(formData.get("fullName"))
-    const username = String(formData.get("username"))
-    const password = String(formData.get("password"))
+    const formData = new FormData(event.currentTarget);
+    const fullName = String(formData.get("fullName"));
+    const username = String(formData.get("username"));
+    const password = String(formData.get("password"));
 
     try {
       const { data, error } = await usersRegisterUser({
@@ -43,19 +43,19 @@ export function SignupForm({
           username,
           password,
         },
-      })
+      });
 
       if (!data) {
-        setError(getApiErrorMessage(error, "注册失败"))
+        setError(getApiErrorMessage(error, "注册失败"));
 
-        return
+        return;
       }
 
-      router.replace("/login")
+      router.replace("/login");
     } catch {
-      setError("无法连接到服务器")
+      setError("无法连接到服务器");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   }
 
@@ -118,5 +118,5 @@ export function SignupForm({
         </FieldGroup>
       </form>
     </div>
-  )
+  );
 }
