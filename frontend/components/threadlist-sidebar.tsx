@@ -3,7 +3,12 @@
 import type * as React from "react";
 import { ChevronRightIcon, LogOutIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { ThreadList } from "@/components/thread-list";
+import {
+  ThreadListItems,
+  ThreadListNew,
+  ThreadListRoot,
+  ThreadListSearch,
+} from "@/components/thread-list";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +19,7 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -35,11 +41,17 @@ export function ThreadListSidebar({
 
   return (
     <Sidebar {...props}>
-      <SidebarContent className="aui-sidebar-content px-3 py-3">
-        <ThreadList />
-      </SidebarContent>
+      <ThreadListRoot className="min-h-0 flex-1 gap-0">
+        <SidebarHeader className="p-3 pb-2">
+          <ThreadListSearch />
+          <ThreadListNew />
+        </SidebarHeader>
+        <SidebarContent className="px-3 pb-3">
+          <ThreadListItems />
+        </SidebarContent>
+      </ThreadListRoot>
       <SidebarRail />
-      <SidebarFooter className="aui-sidebar-footer border-t">
+      <SidebarFooter className="border-t">
         {user && (
           <SidebarMenu>
             <SidebarMenuItem>

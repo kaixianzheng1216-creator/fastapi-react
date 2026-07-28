@@ -96,7 +96,7 @@ export const ThreadListSearch: FC = () => {
     <>
       <Button
         variant="outline"
-        className="bg-muted/50 text-muted-foreground hover:text-muted-foreground justify-start font-normal"
+        className="bg-muted/25 text-muted-foreground hover:text-muted-foreground justify-start font-normal"
         onClick={() => setOpen(true)}
       >
         <SearchIcon />
