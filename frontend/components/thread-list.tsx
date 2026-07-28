@@ -9,6 +9,15 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { searchConversations } from "@/lib/conversation-thread-list-adapter";
 import type { ConversationPublic } from "@/lib/client";
@@ -25,6 +34,7 @@ import {
   ArchiveIcon,
   MessageCircleIcon,
   MoreHorizontalIcon,
+  PencilIcon,
   SearchIcon,
   SquarePenIcon,
   TrashIcon,
@@ -37,6 +47,7 @@ import {
   useState,
   type ComponentPropsWithoutRef,
   type FC,
+  type SubmitEvent,
 } from "react";
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -375,6 +386,23 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
   side = "right",
   triggerClassName,
 }) => {
+  const aui = useAui();
+  const currentTitle = useAuiState((state) => state.threadListItem.title ?? "");
+  const [isRenameOpen, setRenameOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+
+  const renameConversation = async (
+    event: SubmitEvent<HTMLFormElement>,
+  ): Promise<void> => {
+    event.preventDefault();
+
+    const title = newTitle.trim();
+    if (!title) return;
+
+    await aui.threadListItem().rename(title);
+    setRenameOpen(false);
+  };
+
   return (
     <ThreadListItemMorePrimitive.Root sharedFocusGroup={sharedFocusGroup}>
       <ThreadListItemMorePrimitive.Trigger asChild>
@@ -399,6 +427,17 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
         data-slot="aui_thread-list-item-more-content"
         className="bg-popover/95 text-popover-foreground data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:animate-out data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-32 overflow-hidden rounded-xl border p-1.5 shadow-lg backdrop-blur-sm"
       >
+        <ThreadListItemMorePrimitive.Item
+          data-slot="aui_thread-list-item-more-item"
+          className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm outline-none select-none"
+          onSelect={() => {
+            setNewTitle(currentTitle);
+            setRenameOpen(true);
+          }}
+        >
+          <PencilIcon className="size-4" />
+          重命名
+        </ThreadListItemMorePrimitive.Item>
         <ThreadListItemPrimitive.Archive asChild>
           <ThreadListItemMorePrimitive.Item
             data-slot="aui_thread-list-item-more-item"
@@ -418,6 +457,26 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
           </ThreadListItemMorePrimitive.Item>
         </ThreadListItemPrimitive.Delete>
       </ThreadListItemMorePrimitive.Content>
+
+      <Dialog open={isRenameOpen} onOpenChange={setRenameOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>重命名对话</DialogTitle>
+            <DialogDescription>输入新的对话标题。</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={renameConversation}>
+            <Input
+              autoFocus
+              aria-label="对话标题"
+              value={newTitle}
+              onChange={(event) => setNewTitle(event.target.value)}
+            />
+            <DialogFooter className="mt-4">
+              <Button type="submit">保存</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </ThreadListItemMorePrimitive.Root>
   );
 };
