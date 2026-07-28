@@ -1,4 +1,9 @@
 # 前端
+调研更多组件库：
+https://ui.aceternity.com/components
+https://magicui.design/docs/components
+https://www.kibo-ui.com/components/avatar-stack
+
 前端增加查看归档后会话功能
 
 弹出的侧边栏 UI 调整，增加用户名称和头像
