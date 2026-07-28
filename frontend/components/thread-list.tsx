@@ -32,6 +32,7 @@ import {
 } from "@assistant-ui/react";
 import {
   ArchiveIcon,
+  CornerUpLeftIcon,
   MessageCircleIcon,
   MoreHorizontalIcon,
   PencilIcon,
@@ -106,7 +107,7 @@ export const ThreadListSearch: FC = () => {
         onOpenChange={setOpen}
         title="搜索对话"
         description="搜索已有对话"
-        className="sm:max-w-3xl [&_[data-slot=command-input-wrapper]]:border-b-0 [&_[data-slot=command-list]]:max-h-[70vh]"
+        className="sm:max-w-3xl"
       >
         <CommandInput
           value={search}
@@ -279,6 +280,7 @@ const ThreadListSearchResults: FC<{
       {results.map((conversation) => (
         <CommandItem
           key={conversation.id}
+          className="group"
           value={`${conversation.title} ${conversation.id}`}
           onSelect={() => {
             void aui.threads().switchToThread(conversation.id);
@@ -287,9 +289,10 @@ const ThreadListSearchResults: FC<{
         >
           <MessageCircleIcon />
           <span className="min-w-0 flex-1 truncate">{conversation.title}</span>
-          <span className="text-muted-foreground text-xs">
+          <span className="text-muted-foreground text-xs group-hover:hidden">
             {formatConversationTime(conversation.updatedAt)}
           </span>
+          <CornerUpLeftIcon className="hidden group-hover:block" />
         </CommandItem>
       ))}
     </CommandGroup>
@@ -375,6 +378,7 @@ export const ThreadListItem: FC = () => {
 
 type ThreadListItemMoreProps = {
   align?: "start" | "center" | "end";
+  disabled?: boolean;
   side?: "top" | "right" | "bottom" | "left";
   sharedFocusGroup?: boolean;
   triggerClassName?: string;
@@ -382,6 +386,7 @@ type ThreadListItemMoreProps = {
 
 export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
   align = "start",
+  disabled = false,
   sharedFocusGroup = true,
   side = "right",
   triggerClassName,
@@ -409,6 +414,7 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
         <Button
           variant="ghost"
           size="icon"
+          disabled={disabled}
           data-slot="aui_thread-list-item-more"
           className={cn(
             "data-[state=open]:bg-accent data-[state=open]:opacity-100",

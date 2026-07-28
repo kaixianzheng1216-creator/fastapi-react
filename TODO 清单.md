@@ -1,9 +1,5 @@
 # 前端
-为我的项目加入 https://github.com/aidenybai/react-grab.git
-
 前端增加查看归档后会话功能
-
-搜索按钮 UI 调整，点击不再展示粗写
 
 弹出的侧边栏 UI 调整，增加用户名称和头像
 
