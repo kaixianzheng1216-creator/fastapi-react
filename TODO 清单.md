@@ -4,7 +4,11 @@ https://ui.aceternity.com/components
 https://magicui.design/docs/components
 https://www.kibo-ui.com/components/avatar-stack
 
+切换对话需要保持 SSE 连接
+
 前端增加查看归档后会话功能
+
+可以切换普通和暗黑模式
 
 弹出的侧边栏 UI 调整，增加用户名称和头像
 
