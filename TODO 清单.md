@@ -4,8 +4,6 @@
 - https://magicui.design/docs/components
 - https://www.kibo-ui.com/components/avatar-stack
 
-待办清单、产物通过右侧抽屉展示，参考 Qoder 的 UI
-
 # 后端
 支持上传文件聊天
 

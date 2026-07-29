@@ -1,7 +1,13 @@
 "use client";
 
 import { type Todo, type TodoState } from "@/app/MyRuntimeProvider";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useAuiState } from "@assistant-ui/react";
 import { CheckCircle2Icon, CircleIcon, LoaderCircleIcon } from "lucide-react";
 
@@ -12,27 +18,32 @@ const statusIcon = {
 };
 
 export function TodoList() {
+  const hasStarted = useAuiState((state) => state.thread.messages.length > 0);
   const todoState = useAuiState(
     (state) => state.thread.state,
   ) as TodoState | null;
   const todos = todoState?.todos ?? [];
 
-  if (todos.length === 0) return null;
+  if (!hasStarted) return null;
 
   return (
     <aside className="hidden w-80 justify-self-end p-4 2xl:block">
-      <Card className="gap-2 py-4">
+      <Card className="gap-2 py-4 text-base">
         <CardHeader>
-          <CardTitle className="text-muted-foreground font-normal">
-            任务清单
+          <CardTitle className="font-normal">
+            代办
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-3">
-            {todos.map((todo, index) => (
-              <TodoItem key={`${todo.content}-${index}`} todo={todo} />
-            ))}
-          </ul>
+          {todos.length === 0 ? (
+            <CardDescription className="text-base">暂无代办</CardDescription>
+          ) : (
+            <ul className="space-y-3">
+              {todos.map((todo, index) => (
+                <TodoItem key={`${todo.content}-${index}`} todo={todo} />
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
     </aside>
