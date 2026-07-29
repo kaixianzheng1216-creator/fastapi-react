@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
         {process.env.NODE_ENV === "development" && (
           <Script
@@ -24,9 +25,16 @@ export default function RootLayout({
         )}
       </head>
       <body className="font-sans antialiased">
-        <div className="flex h-screen flex-col">
-          <main className="flex-1 overflow-hidden">{children}</main>
-        </div>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className="flex h-screen flex-col">
+            <main className="flex-1 overflow-hidden">{children}</main>
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

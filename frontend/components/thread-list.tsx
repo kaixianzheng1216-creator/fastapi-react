@@ -87,35 +87,47 @@ export const ThreadList: FC = () => {
   );
 };
 
-export const ThreadListSearch: FC = () => {
+export const ThreadListSearch: FC<{
+  archived?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}> = ({ archived = false, open: controlledOpen, onOpenChange }) => {
   const aui = useAui();
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const open = controlledOpen ?? uncontrolledOpen;
+
+  function setOpen(value: boolean): void {
+    setUncontrolledOpen(value);
+    onOpenChange?.(value);
+  }
 
   return (
     <>
-      <Button
-        variant="outline"
-        className="bg-muted/25 text-muted-foreground hover:text-muted-foreground justify-start font-normal"
-        onClick={() => setOpen(true)}
-      >
-        <SearchIcon />
-        搜索...
-      </Button>
+      {!archived && (
+        <Button
+          variant="outline"
+          className="bg-muted/25 text-muted-foreground hover:text-muted-foreground justify-start font-normal"
+          onClick={() => setOpen(true)}
+        >
+          <SearchIcon />
+          搜索...
+        </Button>
+      )}
       <CommandDialog
         open={open}
         onOpenChange={setOpen}
-        title="搜索对话"
-        description="搜索已有对话"
+        title={archived ? "已归档对话" : "搜索对话"}
+        description={archived ? "查看已归档的对话" : "搜索已有对话"}
         className="sm:max-w-3xl"
       >
         <CommandInput
           value={search}
           onValueChange={setSearch}
-          placeholder="搜索对话"
+          placeholder={archived ? "搜索已归档对话" : "搜索对话"}
         />
         <CommandList>
-          {!search && (
+          {!archived && !search && (
             <CommandGroup heading="快捷创建">
               <CommandItem
                 onSelect={() => {
@@ -129,6 +141,7 @@ export const ThreadListSearch: FC = () => {
             </CommandGroup>
           )}
           <ThreadListSearchResults
+            archived={archived}
             searchQuery={search.trim()}
             onSelect={() => setOpen(false)}
           />
@@ -245,10 +258,11 @@ const ThreadListItemGroups: FC = () => {
   ));
 };
 
-const ThreadListSearchResults: FC<{
+export const ThreadListSearchResults: FC<{
+  archived?: boolean;
   searchQuery: string;
   onSelect: () => void;
-}> = ({ searchQuery, onSelect }) => {
+}> = ({ archived = false, searchQuery, onSelect }) => {
   const aui = useAui();
   const [results, setResults] = useState<ConversationPublic[] | null>();
 
@@ -256,7 +270,11 @@ const ThreadListSearchResults: FC<{
     const controller = new AbortController();
     setResults(undefined);
     const timeout = window.setTimeout(() => {
-      void searchConversations(searchQuery || undefined, controller.signal)
+      void searchConversations(
+        searchQuery || undefined,
+        archived,
+        controller.signal,
+      )
         .then(setResults)
         .catch((error: unknown) => {
           if (!(error instanceof DOMException && error.name === "AbortError")) {
@@ -269,14 +287,16 @@ const ThreadListSearchResults: FC<{
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [searchQuery]);
+  }, [archived, searchQuery]);
 
   if (results === undefined) return <ThreadListSkeleton />;
   if (results === null) return <CommandEmpty>搜索失败</CommandEmpty>;
   if (results.length === 0) return <CommandEmpty>未找到对话</CommandEmpty>;
 
   return (
-    <CommandGroup heading={searchQuery ? "搜索结果" : "最近对话"}>
+    <CommandGroup
+      heading={searchQuery ? "搜索结果" : archived ? "已归档对话" : "最近对话"}
+    >
       {results.map((conversation) => (
         <CommandItem
           key={conversation.id}

@@ -1,8 +1,9 @@
 "use client";
 
 import type * as React from "react";
-import { ChevronRightIcon, LogOutIcon } from "lucide-react";
+import { ArchiveIcon, ChevronRightIcon, LogOutIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   ThreadListItems,
   ThreadListNew,
@@ -13,8 +14,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AppearanceMenu } from "@/components/appearance-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -33,6 +36,7 @@ export function ThreadListSidebar({
 }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const user = useCurrentUser();
+  const [isArchivedDialogOpen, setIsArchivedDialogOpen] = useState(false);
 
   function logOut(): void {
     clearAccessToken();
@@ -63,6 +67,14 @@ export function ThreadListSidebar({
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="top" align="start" className="w-48">
+                  <DropdownMenuItem
+                    onSelect={() => setIsArchivedDialogOpen(true)}
+                  >
+                    <ArchiveIcon />
+                    已归档对话
+                  </DropdownMenuItem>
+                  <AppearanceMenu />
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={logOut}>
                     <LogOutIcon />
                     退出登录
@@ -73,6 +85,12 @@ export function ThreadListSidebar({
           </SidebarMenu>
         )}
       </SidebarFooter>
+
+      <ThreadListSearch
+        archived
+        open={isArchivedDialogOpen}
+        onOpenChange={setIsArchivedDialogOpen}
+      />
     </Sidebar>
   );
 }

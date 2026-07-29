@@ -153,11 +153,12 @@ export async function readConversationState(remoteId: string) {
 
 export async function searchConversations(
   search: string | undefined,
+  archived: boolean,
   signal: AbortSignal,
 ): Promise<ConversationPublic[]> {
   const { data } = await agentReadConversations({
     auth: getAccessToken() ?? undefined,
-    query: { search, archived: false, limit: PAGE_SIZE },
+    query: { search, archived, limit: PAGE_SIZE },
     signal,
     throwOnError: true,
   });
