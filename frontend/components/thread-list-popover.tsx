@@ -39,9 +39,16 @@ export function ThreadListPopover() {
         </HoverCardTrigger>
         <HoverCardContent
           align="start"
-          className="max-h-[calc(100vh-28rem)] w-72 overflow-y-auto p-2"
+          className="flex max-h-[calc(100vh-28rem)] w-72 flex-col overflow-hidden p-2"
         >
-          <ThreadList />
+          <div className="overflow-y-auto px-1">
+            <ThreadList />
+          </div>
+          {user && (
+            <div className="mt-2 flex items-center gap-2 border-t px-2 pt-2 text-sm">
+              <UserProfile user={user} />
+            </div>
+          )}
         </HoverCardContent>
       </HoverCard>
 
