@@ -1,6 +1,10 @@
 from sqlmodel import SQLModel
 
-from app.modules.conversations.models import Conversation  # noqa: F401
+from app.modules.conversations.models import (  # noqa: F401
+    Conversation,
+    ConversationFile,
+)
+from app.modules.files.models import StoredFile  # noqa: F401
 from app.modules.items.models import Item  # noqa: F401
 from app.modules.users.models import User  # noqa: F401
 

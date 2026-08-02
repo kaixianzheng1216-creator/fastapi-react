@@ -8,14 +8,14 @@ from langchain_core.tools import BaseTool, tool
 from langgraph.prebuilt import ToolRuntime
 from qcloud_cos import CosConfig, CosS3Client  # type: ignore[import-untyped]
 
-from app.modules.agent.config import AgentSettings
+from app.core.config import settings
 from app.modules.agent.sandbox import SANDBOX_WORKDIR, get_sandbox
 
 ARTIFACT_DIRECTORY = PurePosixPath(SANDBOX_WORKDIR) / "artifacts"
 COS_ARTIFACT_PREFIX = "agent-artifacts"
 
 
-def load_publish_artifact_tools(settings: AgentSettings) -> list[BaseTool]:
+def load_publish_artifact_tools() -> list[BaseTool]:
     cos_client = CosS3Client(
         CosConfig(
             Region=settings.COS_REGION,

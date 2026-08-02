@@ -70,6 +70,10 @@ export type AgentChatRequest = {
      */
     model?: string | null;
     /**
+     * Thinkingenabled
+     */
+    thinkingEnabled?: boolean;
+    /**
      * State
      */
     state?: {
@@ -89,6 +93,10 @@ export type AgentModelPublic = {
      * Id
      */
     id: string;
+    /**
+     * Supportsthinking
+     */
+    supportsThinking: boolean;
 };
 
 /**
@@ -243,6 +251,20 @@ export type ConversationsPublic = {
 };
 
 /**
+ * FileCompletePublic
+ */
+export type FileCompletePublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Downloadurl
+     */
+    downloadUrl: string;
+};
+
+/**
  * FileMessagePart
  */
 export type FileMessagePart = {
@@ -262,6 +284,44 @@ export type FileMessagePart = {
      * Filename
      */
     filename?: string | null;
+};
+
+/**
+ * FileUploadPublic
+ */
+export type FileUploadPublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Uploadurl
+     */
+    uploadUrl: string;
+    /**
+     * Uploadheaders
+     */
+    uploadHeaders: {
+        [key: string]: string;
+    };
+};
+
+/**
+ * FileUploadRequest
+ */
+export type FileUploadRequest = {
+    /**
+     * Filename
+     */
+    filename: string;
+    /**
+     * Contenttype
+     */
+    contentType: string;
+    /**
+     * Size
+     */
+    size: number;
 };
 
 /**
@@ -1297,6 +1357,121 @@ export type AgentUnarchiveConversationResponses = {
 };
 
 export type AgentUnarchiveConversationResponse = AgentUnarchiveConversationResponses[keyof AgentUnarchiveConversationResponses];
+
+export type FilesCreateFileUploadData = {
+    body: FileUploadRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/files';
+};
+
+export type FilesCreateFileUploadErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FilesCreateFileUploadError = FilesCreateFileUploadErrors[keyof FilesCreateFileUploadErrors];
+
+export type FilesCreateFileUploadResponses = {
+    /**
+     * Successful Response
+     */
+    200: FileUploadPublic;
+};
+
+export type FilesCreateFileUploadResponse = FilesCreateFileUploadResponses[keyof FilesCreateFileUploadResponses];
+
+export type FilesCompleteFileUploadData = {
+    body?: never;
+    path: {
+        /**
+         * File Id
+         */
+        file_id: string;
+    };
+    query?: never;
+    url: '/api/v1/files/{file_id}/complete';
+};
+
+export type FilesCompleteFileUploadErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FilesCompleteFileUploadError = FilesCompleteFileUploadErrors[keyof FilesCompleteFileUploadErrors];
+
+export type FilesCompleteFileUploadResponses = {
+    /**
+     * Successful Response
+     */
+    200: FileCompletePublic;
+};
+
+export type FilesCompleteFileUploadResponse = FilesCompleteFileUploadResponses[keyof FilesCompleteFileUploadResponses];
+
+export type FilesDeleteUnreferencedFileData = {
+    body?: never;
+    path: {
+        /**
+         * File Id
+         */
+        file_id: string;
+    };
+    query?: never;
+    url: '/api/v1/files/{file_id}';
+};
+
+export type FilesDeleteUnreferencedFileErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FilesDeleteUnreferencedFileError = FilesDeleteUnreferencedFileErrors[keyof FilesDeleteUnreferencedFileErrors];
+
+export type FilesDeleteUnreferencedFileResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type FilesDeleteUnreferencedFileResponse = FilesDeleteUnreferencedFileResponses[keyof FilesDeleteUnreferencedFileResponses];
+
+export type FilesGetFileDownloadUrlData = {
+    body?: never;
+    path: {
+        /**
+         * File Id
+         */
+        file_id: string;
+    };
+    query?: never;
+    url: '/api/v1/files/{file_id}';
+};
+
+export type FilesGetFileDownloadUrlErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FilesGetFileDownloadUrlError = FilesGetFileDownloadUrlErrors[keyof FilesGetFileDownloadUrlErrors];
+
+export type FilesGetFileDownloadUrlResponses = {
+    /**
+     * Successful Response
+     */
+    200: FileCompletePublic;
+};
+
+export type FilesGetFileDownloadUrlResponse = FilesGetFileDownloadUrlResponses[keyof FilesGetFileDownloadUrlResponses];
 
 export type AgentReadModelsData = {
     body?: never;

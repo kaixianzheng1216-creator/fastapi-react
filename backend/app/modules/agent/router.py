@@ -25,10 +25,16 @@ router = APIRouter(
 @router.get("/models", response_model=AgentModelsPublic)
 async def read_models() -> AgentModelsPublic:
     """读取可用模型。"""
-    model_ids = await service.list_models()
+    models = await service.list_models()
 
     return AgentModelsPublic(
-        data=[AgentModelPublic(id=model_id) for model_id in model_ids],
+        data=[
+            AgentModelPublic(
+                id=model.model_name,
+                supportsThinking=model.supports_thinking,
+            )
+            for model in models
+        ],
         defaultModel=settings.DEFAULT_MODEL_NAME,
     )
 
@@ -48,6 +54,7 @@ async def chat(
 
     chat_stream = service.stream_chat(
         agent=request.app.state.agent,
+        session=session,
         user_id=current_user.id,
         chat_request=chat_request,
     )

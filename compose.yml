@@ -23,6 +23,22 @@ services:
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_DB=${POSTGRES_DB?Variable not set}
 
+  docling:
+    image: ghcr.io/docling-project/docling-serve-cpu:v1.21.0
+    restart: always
+    environment:
+      - DOCLING_SERVE_MAX_FILE_SIZE=104857600
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:5001/health')
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
   prestart:
     image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
     build:
@@ -67,6 +83,9 @@ services:
       db:
         condition: service_healthy
         restart: true
+      docling:
+        condition: service_healthy
+        restart: true
       prestart:
         condition: service_completed_successfully
     env_file:
@@ -86,6 +105,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - LANGFUSE_BASE_URL=http://langfuse-web:3000
       - LANGFUSE_TRACING_ENVIRONMENT=${ENVIRONMENT}
+      - DOCLING_BASE_URL=${DOCLING_BASE_URL?Variable not set}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
       interval: 10s

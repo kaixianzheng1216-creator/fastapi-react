@@ -32,3 +32,19 @@ class Conversation(SQLModel, table=True):
         sa_type=DateTime(timezone=True),  # type: ignore
         nullable=False,
     )
+
+
+class ConversationFile(SQLModel, table=True):
+    __tablename__ = "conversation_file"
+    __table_args__ = (Index("ix_conversation_file_conversation", "conversation_id"),)
+
+    stored_file_id: uuid.UUID = Field(
+        foreign_key="stored_file.id",
+        primary_key=True,
+    )
+
+    conversation_id: uuid.UUID = Field(
+        foreign_key="conversation.id",
+        nullable=False,
+        ondelete="CASCADE",
+    )

@@ -5,6 +5,9 @@ from typing import Any
 from sqlmodel import Session, col, func, select
 
 from app.core.security import get_password_hash, verify_password
+from app.modules.files import object_storage
+from app.modules.files import service as file_service
+from app.modules.files.exceptions import FileStorageUnavailableError
 from app.modules.users.exceptions import (
     IncorrectPasswordError,
     InsufficientPrivilegesError,
@@ -80,8 +83,7 @@ def delete_current_user(*, session: Session, current_user: User) -> None:
     if current_user.is_superuser:
         raise SelfDeletionForbiddenError
 
-    session.delete(current_user)
-    session.commit()
+    _delete_user(session=session, user=current_user)
 
 
 def list_users(
@@ -156,5 +158,23 @@ def delete_user_by_id(
     if user == current_user:
         raise SelfDeletionForbiddenError
 
+    _delete_user(session=session, user=user)
+
+
+def _delete_user(*, session: Session, user: User) -> None:
+    object_keys = file_service.list_owner_object_keys(
+        session=session,
+        owner_id=user.id,
+    )
+
     session.delete(user)
+    session.flush()
+
+    try:
+        object_storage.delete_objects(object_keys)
+    except FileStorageUnavailableError:
+        session.rollback()
+
+        raise
+
     session.commit()

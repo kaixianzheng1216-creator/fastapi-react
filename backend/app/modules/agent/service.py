@@ -2,7 +2,6 @@ import json
 import logging
 from collections.abc import AsyncGenerator
 from typing import Any
-from urllib.parse import unquote_to_bytes
 from uuid import UUID, uuid4
 
 from assistant_stream import RunController, create_run  # type: ignore[import-untyped]
@@ -10,14 +9,29 @@ from assistant_stream.modules.langgraph import (  # type: ignore[import-untyped]
     append_langgraph_event,
     get_tool_call_subgraph_state,
 )
-from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
+from langchain_core.messages import (
+    BaseMessage,
+    HumanMessage,
+    ToolMessage,
+)
 from langchain_core.runnables import RunnableConfig
 from langfuse import propagate_attributes
 from langfuse.langchain import CallbackHandler
-from openai import APIError, AsyncOpenAI
+from openai import APIError
+from sqlmodel import Session
 
+from app.common.exceptions import ApplicationError
 from app.modules.agent.config import settings
-from app.modules.agent.exceptions import ModelsUnavailableError
+from app.modules.agent.exceptions import (
+    ImageInputNotSupportedError,
+    ModelServiceUnavailableError,
+    ThinkingNotSupportedError,
+)
+from app.modules.agent.model_capabilities import (
+    ModelCapabilities,
+    get_capabilities,
+    list_capabilities,
+)
 from app.modules.agent.schemas import (
     AddMessageCommand,
     AgentChatRequest,
@@ -26,35 +40,30 @@ from app.modules.agent.schemas import (
     ImageMessagePart,
     TextMessagePart,
 )
+from app.modules.conversations import file_service as conversation_file_service
+from app.modules.conversations.message_files import refresh_message_file_urls
+from app.modules.files import service as file_service
+from app.modules.files.exceptions import FileTypeNotAllowedError
 
 STREAM_ERROR_DETAIL = "Agent 流式响应失败"
-MODELS_UNAVAILABLE_ERROR_LOG = "LiteLLM 模型列表请求失败"
+MODEL_REQUEST_ERROR_LOG = "模型请求失败"
 TRACE_NAME = "agent-chat"
 logger = logging.getLogger(__name__)
 
 
-async def list_models() -> list[str]:
-    try:
-        async with AsyncOpenAI(
-            api_key=settings.LITELLM_API_KEY.get_secret_value(),
-            base_url=settings.LITELLM_BASE_URL,
-        ) as client:
-            models = await client.models.list()
-    except APIError as error:
-        logger.exception(MODELS_UNAVAILABLE_ERROR_LOG)
-        raise ModelsUnavailableError from error
-
-    return [model.id for model in models.data]
+async def list_models() -> list[ModelCapabilities]:
+    return await list_capabilities()
 
 
 def stream_chat(
     *,
     agent: Any,
+    session: Session,
     user_id: UUID,
     chat_request: AgentChatRequest,
 ) -> AsyncGenerator[Any]:
     async def run(controller: RunController) -> None:
-        await _run(controller, agent, user_id, chat_request)
+        await _run(controller, agent, session, user_id, chat_request)
 
     stream: AsyncGenerator[Any] = create_run(
         run,
@@ -67,6 +76,7 @@ def stream_chat(
 async def _run(
     controller: RunController,
     agent: Any,
+    session: Session,
     user_id: UUID,
     chat_request: AgentChatRequest,
 ) -> None:
@@ -82,10 +92,27 @@ async def _run(
         if controller.is_cancelled:
             return
 
+        capabilities = await get_capabilities(
+            chat_request.model or settings.DEFAULT_MODEL_NAME
+        )
+
+        if chat_request.thinking_enabled and not capabilities.supports_thinking:
+            raise ThinkingNotSupportedError
+
+        _validate_command_model_input(
+            session=session,
+            user_id=user_id,
+            commands=chat_request.commands,
+            capabilities=capabilities,
+        )
+
         agent_config, input_messages = await _prepare_run(
             controller,
             agent,
+            session,
+            user_id,
             thread_id,
+            chat_request.thread_id,
             chat_request.commands,
         )
 
@@ -99,7 +126,13 @@ async def _run(
             events = agent.astream(
                 {"messages": input_messages},
                 config=agent_config,
-                context={"model_name": chat_request.model},
+                context={
+                    "model_name": capabilities.model_name,
+                    "user_id": user_id,
+                    "supports_vision": capabilities.supports_vision,
+                    "supports_thinking": capabilities.supports_thinking,
+                    "thinking_enabled": chat_request.thinking_enabled,
+                },
                 stream_mode=["messages", "updates"],
                 subgraphs=True,
                 version="v2",
@@ -108,6 +141,13 @@ async def _run(
             async for chunk in events:
                 if controller.is_cancelled:
                     break
+
+                if chunk["type"] == "messages":
+                    message = chunk["data"][0]
+                    reasoning = message.additional_kwargs.get("reasoning_content")
+
+                    if isinstance(reasoning, str):
+                        controller.append_reasoning(reasoning)
 
                 state = get_tool_call_subgraph_state(
                     controller,
@@ -124,6 +164,12 @@ async def _run(
                     chunk["type"],
                     chunk["data"],
                 )
+    except ApplicationError as error:
+        logger.warning("Agent 请求被拒绝: %s", type(error).__name__)
+        controller.add_error(error.detail)
+    except APIError:
+        logger.exception(MODEL_REQUEST_ERROR_LOG)
+        controller.add_error(ModelServiceUnavailableError.detail)
     except Exception:
         logger.exception(STREAM_ERROR_DETAIL)
         controller.add_error(STREAM_ERROR_DETAIL)
@@ -135,10 +181,43 @@ async def _run(
                 await close()
 
 
+def _validate_command_model_input(
+    *,
+    session: Session,
+    user_id: UUID,
+    commands: list[AgentCommand],
+    capabilities: ModelCapabilities,
+) -> None:
+    has_image = False
+
+    for command in commands:
+        if not isinstance(command, AddMessageCommand):
+            continue
+
+        for part in command.message.parts:
+            if isinstance(part, ImageMessagePart):
+                stored_file = file_service.resolve_file_reference(
+                    session=session,
+                    user_id=user_id,
+                    reference=part.image,
+                )
+
+                if not stored_file.content_type.startswith("image/"):
+                    raise FileTypeNotAllowedError
+
+                has_image = True
+
+    if has_image and not capabilities.supports_vision:
+        raise ImageInputNotSupportedError
+
+
 async def _prepare_run(
     controller: RunController,
     agent: Any,
+    session: Session,
+    user_id: UUID,
     thread_id: str,
+    conversation_id: UUID,
     commands: list[AgentCommand],
 ) -> tuple[RunnableConfig, list[BaseMessage]]:
     agent_config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
@@ -201,9 +280,17 @@ async def _prepare_run(
         message: BaseMessage
 
         if isinstance(command, AddMessageCommand):
-            message = HumanMessage(
-                content=_to_content(command),
-                id=str(uuid4()),
+            message = refresh_message_file_urls(
+                HumanMessage(
+                    content=_to_content(
+                        command,
+                        session=session,
+                        user_id=user_id,
+                        conversation_id=conversation_id,
+                    ),
+                    id=str(uuid4()),
+                ),
+                user_id,
             )
         else:
             content = command.model_content
@@ -231,11 +318,17 @@ async def _prepare_run(
         state_messages.append(message.model_dump())
         input_messages.append(message)
 
+    session.commit()
+
     return agent_config, input_messages
 
 
 def _to_content(
     command: AddMessageCommand,
+    *,
+    session: Session,
+    user_id: UUID,
+    conversation_id: UUID,
 ) -> list[str | dict[str, Any]]:
     content: list[str | dict[str, Any]] = []
 
@@ -243,18 +336,25 @@ def _to_content(
         if isinstance(part, TextMessagePart):
             content.append({"type": "text", "text": part.text})
         elif isinstance(part, ImageMessagePart):
-            content.append(_to_resource("image", part.image))
-        elif isinstance(part, FileMessagePart):
-            file_content = _to_resource(
-                "file",
-                part.data,
-                mime_type=part.mime_type,
+            content.append(
+                _to_resource(
+                    "image",
+                    part.image,
+                    session=session,
+                    user_id=user_id,
+                    conversation_id=conversation_id,
+                )
             )
-
-            if part.filename is not None:
-                file_content["extras"] = {"filename": part.filename}
-
-            content.append(file_content)
+        elif isinstance(part, FileMessagePart):
+            content.append(
+                _to_resource(
+                    "file",
+                    part.data,
+                    session=session,
+                    user_id=user_id,
+                    conversation_id=conversation_id,
+                )
+            )
 
     return content
 
@@ -263,22 +363,37 @@ def _to_resource(
     part_type: str,
     resource: str,
     *,
-    mime_type: str | None = None,
+    session: Session,
+    user_id: UUID,
+    conversation_id: UUID,
 ) -> dict[str, Any]:
-    if not resource.startswith("data:"):
-        content: dict[str, Any] = {"type": part_type, "url": resource}
+    stored_file = conversation_file_service.attach_file(
+        session=session,
+        user_id=user_id,
+        conversation_id=conversation_id,
+        reference=resource,
+    )
 
-        if mime_type is not None:
-            content["mime_type"] = mime_type
+    metadata = {
+        "file_id": str(stored_file.id),
+        "filename": stored_file.filename,
+        "object_key": stored_file.object_key,
+    }
 
-        return content
+    if part_type == "image":
+        if not stored_file.content_type.startswith("image/"):
+            raise FileTypeNotAllowedError
 
-    header, data = resource.split(",", maxsplit=1)
-
-    declared_type = header.removeprefix("data:").split(";", maxsplit=1)[0]
+        return {
+            "type": "image_url",
+            "image_url": {"url": resource},
+            "metadata": metadata,
+        }
 
     return {
-        "type": part_type,
-        "base64": unquote_to_bytes(data).decode("ascii"),
-        "mime_type": mime_type or declared_type,
+        "type": "file",
+        "url": resource,
+        "mime_type": stored_file.content_type,
+        "metadata": metadata,
+        "source_type": "url",
     }

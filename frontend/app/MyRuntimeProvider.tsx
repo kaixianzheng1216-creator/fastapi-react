@@ -3,6 +3,9 @@
 import {
   AssistantRuntimeProvider,
   type AssistantTransportConnectionMetadata,
+  type CompleteAttachment,
+  type FileMessagePart,
+  type ThreadUserMessagePart,
   unstable_createMessageConverter as createMessageConverter,
   useAui,
   useAuiState,
@@ -18,7 +21,8 @@ import {
   conversationThreadListAdapter,
   readConversationState,
 } from "@/lib/conversation-thread-list-adapter";
-import { type ReactNode, useEffect } from "react";
+import { createFileAttachmentTransport } from "@/lib/file-upload-adapter";
+import { type ReactNode, useEffect, useMemo } from "react";
 
 type MyRuntimeProviderProps = {
   children: ReactNode;
@@ -45,34 +49,76 @@ const LangChainMessageConverter = createMessageConverter(
 const converter = (
   state: State,
   connectionMetadata: AssistantTransportConnectionMetadata,
+  stagedFiles: readonly FileMessagePart[],
 ) => {
-  const optimisticStateMessages = connectionMetadata.pendingCommands.map(
-    (c): LangChainMessage[] => {
-      if (c.type === "add-message") {
-        return [
-          {
-            type: "human" as const,
-            content: [
-              {
-                type: "text" as const,
-                text: c.message.parts
-                  .map((p) => (p.type === "text" ? p.text : ""))
-                  .join("\n"),
-              },
-            ],
-          },
-        ];
-      }
-      return [];
-    },
+  const pendingMessages = connectionMetadata.pendingCommands.filter(
+    (command) => command.type === "add-message",
   );
 
-  const messages = [...state.messages, ...optimisticStateMessages.flat()];
-  const isRunning = connectionMetadata.isSending || false;
+  const optimisticStateMessages: LangChainMessage[] = pendingMessages.map(
+    (command) => ({
+      type: "human",
+      content: [
+        ...command.message.parts.map((part) =>
+          part.type === "text"
+            ? { type: "text" as const, text: part.text }
+            : {
+                type: "image_url" as const,
+                image_url: { url: part.image },
+              },
+        ),
+        ...stagedFiles.map((part) => ({
+          type: "file" as const,
+          url: part.data,
+          mime_type: part.mimeType,
+          source_type: "url" as const,
+          metadata: { filename: part.filename },
+        })),
+      ],
+    }),
+  );
+
+  const messages = [...state.messages, ...optimisticStateMessages];
+
+  const isRunning = connectionMetadata.isSending;
+
   const threadMessages = LangChainMessageConverter.toThreadMessages(
     messages,
     isRunning,
-  );
+  ).map((message) => {
+    if (message.role !== "user") return message;
+
+    const attachmentParts = message.content.filter(
+      (
+        part,
+      ): part is Extract<ThreadUserMessagePart, { type: "file" | "image" }> =>
+        part.type === "file" || part.type === "image",
+    );
+
+    if (attachmentParts.length === 0) return message;
+
+    const attachments: CompleteAttachment[] = attachmentParts.map(
+      (part, index) => {
+        return {
+          id: `${message.id}:${index}`,
+          type: part.type === "image" ? "image" : "document",
+          name: part.filename ?? (part.type === "image" ? "图片" : "文件"),
+          contentType: part.type === "file" ? part.mimeType : undefined,
+          status: { type: "complete" },
+          content: [part],
+        };
+      },
+    );
+
+    return {
+      ...message,
+      content: message.content.filter(
+        (part) => part.type !== "file" && part.type !== "image",
+      ),
+      attachments: [...message.attachments, ...attachments],
+    };
+  });
+
   const cancelledToolCallIds = new Set(state.cancelledToolCallIds);
 
   return {
@@ -113,6 +159,7 @@ export function MyRuntimeProvider({ children }: MyRuntimeProviderProps) {
 
 function useConversationRuntime() {
   const aui = useAui();
+  const fileTransport = useMemo(createFileAttachmentTransport, []);
 
   const remoteId = useAuiState((state) =>
     state.threadListItem.custom?.persisted
@@ -122,11 +169,11 @@ function useConversationRuntime() {
 
   const runtime = useAssistantTransportRuntime<State>({
     protocol: "assistant-transport",
-    initialState: {
-      messages: [],
-    },
+    initialState: { messages: [] },
     api: "/api/chat",
-    converter,
+    converter: (state, connectionMetadata) =>
+      converter(state, connectionMetadata, fileTransport.getFilesForRequest()),
+    adapters: { attachments: fileTransport.attachmentAdapter },
     prepareSendCommandsRequest: async (body) => {
       const isFirstMessage = !body.threadId;
       const { remoteId } = await aui.threadListItem().initialize();
@@ -135,23 +182,18 @@ function useConversationRuntime() {
         aui.threadListItem().generateTitle();
       }
 
-      return {
+      return fileTransport.prepareRequest({
         ...body,
         threadId: remoteId,
         model: body.config?.modelName,
-      };
+        thinkingEnabled: body.config?.reasoningEffort === "enabled",
+      });
     },
-    capabilities: {
-      edit: true,
-    },
+    capabilities: { edit: true },
     headers: async () => {
       const accessToken = getAccessToken();
       const headers: Record<string, string> = {};
-
-      if (accessToken) {
-        headers.Authorization = `Bearer ${accessToken}`;
-      }
-
+      if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
       return headers;
     },
     onResponse: (response) => {
@@ -160,7 +202,11 @@ function useConversationRuntime() {
         window.location.assign("/login");
       }
     },
-    onCancel: ({ updateState }) => {
+    onFinish: fileTransport.complete,
+    onError: fileTransport.discard,
+    onCancel: ({ updateState, error }) => {
+      if (!error) void fileTransport.discard();
+
       updateState((state) => {
         const toolCallIds = state.messages
           .findLast((message) => message.type === "ai")

@@ -19,7 +19,7 @@ export function AppearanceMenu() {
         <MonitorIcon />
         外观
       </DropdownMenuSubTrigger>
-      <DropdownMenuSubContent>
+      <DropdownMenuSubContent className="w-40">
         <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
           <DropdownMenuRadioItem value="light">
             <SunIcon />

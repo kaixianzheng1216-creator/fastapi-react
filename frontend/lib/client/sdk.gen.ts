@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AgentArchiveConversationData, AgentArchiveConversationErrors, AgentArchiveConversationResponses, AgentChatData, AgentChatErrors, AgentChatResponses, AgentCreateConversationData, AgentCreateConversationResponses, AgentDeleteConversationData, AgentDeleteConversationErrors, AgentDeleteConversationResponses, AgentGenerateConversationTitleData, AgentGenerateConversationTitleErrors, AgentGenerateConversationTitleResponses, AgentReadConversationData, AgentReadConversationErrors, AgentReadConversationResponses, AgentReadConversationsData, AgentReadConversationsErrors, AgentReadConversationsResponses, AgentReadModelsData, AgentReadModelsResponses, AgentRenameConversationData, AgentRenameConversationErrors, AgentRenameConversationResponses, AgentUnarchiveConversationData, AgentUnarchiveConversationErrors, AgentUnarchiveConversationResponses, ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginTestTokenData, LoginTestTokenResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
+import type { AgentArchiveConversationData, AgentArchiveConversationErrors, AgentArchiveConversationResponses, AgentChatData, AgentChatErrors, AgentChatResponses, AgentCreateConversationData, AgentCreateConversationResponses, AgentDeleteConversationData, AgentDeleteConversationErrors, AgentDeleteConversationResponses, AgentGenerateConversationTitleData, AgentGenerateConversationTitleErrors, AgentGenerateConversationTitleResponses, AgentReadConversationData, AgentReadConversationErrors, AgentReadConversationResponses, AgentReadConversationsData, AgentReadConversationsErrors, AgentReadConversationsResponses, AgentReadModelsData, AgentReadModelsResponses, AgentRenameConversationData, AgentRenameConversationErrors, AgentRenameConversationResponses, AgentUnarchiveConversationData, AgentUnarchiveConversationErrors, AgentUnarchiveConversationResponses, FilesCompleteFileUploadData, FilesCompleteFileUploadErrors, FilesCompleteFileUploadResponses, FilesCreateFileUploadData, FilesCreateFileUploadErrors, FilesCreateFileUploadResponses, FilesDeleteUnreferencedFileData, FilesDeleteUnreferencedFileErrors, FilesDeleteUnreferencedFileResponses, FilesGetFileDownloadUrlData, FilesGetFileDownloadUrlErrors, FilesGetFileDownloadUrlResponses, ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginTestTokenData, LoginTestTokenResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -334,6 +334,54 @@ export const agentArchiveConversation = <ThrowOnError extends boolean = false>(o
 export const agentUnarchiveConversation = <ThrowOnError extends boolean = false>(options: Options<AgentUnarchiveConversationData, ThrowOnError>): RequestResult<AgentUnarchiveConversationResponses, AgentUnarchiveConversationErrors, ThrowOnError> => (options.client ?? client).post<AgentUnarchiveConversationResponses, AgentUnarchiveConversationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/agent/conversations/{conversation_id}/unarchive',
+    ...options
+});
+
+/**
+ * Create File Upload
+ *
+ * 创建文件上传凭证。
+ */
+export const filesCreateFileUpload = <ThrowOnError extends boolean = false>(options: Options<FilesCreateFileUploadData, ThrowOnError>): RequestResult<FilesCreateFileUploadResponses, FilesCreateFileUploadErrors, ThrowOnError> => (options.client ?? client).post<FilesCreateFileUploadResponses, FilesCreateFileUploadErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/files',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Complete File Upload
+ *
+ * 确认文件上传。
+ */
+export const filesCompleteFileUpload = <ThrowOnError extends boolean = false>(options: Options<FilesCompleteFileUploadData, ThrowOnError>): RequestResult<FilesCompleteFileUploadResponses, FilesCompleteFileUploadErrors, ThrowOnError> => (options.client ?? client).post<FilesCompleteFileUploadResponses, FilesCompleteFileUploadErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/files/{file_id}/complete',
+    ...options
+});
+
+/**
+ * Delete Unreferenced File
+ *
+ * 删除未关联文件。
+ */
+export const filesDeleteUnreferencedFile = <ThrowOnError extends boolean = false>(options: Options<FilesDeleteUnreferencedFileData, ThrowOnError>): RequestResult<FilesDeleteUnreferencedFileResponses, FilesDeleteUnreferencedFileErrors, ThrowOnError> => (options.client ?? client).delete<FilesDeleteUnreferencedFileResponses, FilesDeleteUnreferencedFileErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/files/{file_id}',
+    ...options
+});
+
+/**
+ * Get File Download Url
+ *
+ * 获取文件下载地址。
+ */
+export const filesGetFileDownloadUrl = <ThrowOnError extends boolean = false>(options: Options<FilesGetFileDownloadUrlData, ThrowOnError>): RequestResult<FilesGetFileDownloadUrlResponses, FilesGetFileDownloadUrlErrors, ThrowOnError> => (options.client ?? client).get<FilesGetFileDownloadUrlResponses, FilesGetFileDownloadUrlErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/files/{file_id}',
     ...options
 });
 

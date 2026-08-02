@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import uuid
 from collections.abc import Sequence
@@ -15,12 +16,17 @@ from app.modules.conversations.exceptions import (
     ConversationNotFoundError,
     ConversationTitleGenerationError,
 )
+from app.modules.conversations.file_service import list_file_ids
+from app.modules.conversations.message_files import refresh_message_file_urls
 from app.modules.conversations.models import Conversation, get_datetime_utc
 from app.modules.conversations.schemas import (
     ConversationDetailPublic,
     ConversationPublic,
     ConversationStatePublic,
 )
+from app.modules.files.exceptions import FileStorageUnavailableError
+from app.modules.files.object_storage import delete_objects
+from app.modules.files.service import delete_file_records
 from app.modules.users.models import User
 
 DEFAULT_CONVERSATION_TITLE = "新对话"
@@ -31,6 +37,7 @@ TITLE_SYSTEM_PROMPT = (
 )
 TITLE_TRACE_NAME = "conversation-title"
 TITLE_GENERATION_ERROR_LOG = "生成会话标题失败"
+CONVERSATION_CLEANUP_ERROR_LOG = "清理对话检查点失败"
 logger = logging.getLogger(__name__)
 
 
@@ -91,9 +98,7 @@ def list_conversations(
     search: str | None = None,
     archived: bool | None = None,
 ) -> tuple[Sequence[Conversation], int]:
-    filters: list[ColumnElement[bool]] = [
-        col(Conversation.owner_id) == current_user.id
-    ]
+    filters: list[ColumnElement[bool]] = [col(Conversation.owner_id) == current_user.id]
 
     if search is not None:
         filters.append(col(Conversation.title).contains(search))
@@ -101,11 +106,7 @@ def list_conversations(
     if archived is not None:
         filters.append(col(Conversation.archived) == archived)
 
-    count_statement = (
-        select(func.count())
-        .select_from(Conversation)
-        .where(*filters)
-    )
+    count_statement = select(func.count()).select_from(Conversation).where(*filters)
 
     statement = (
         select(Conversation)
@@ -146,7 +147,8 @@ async def get_conversation_detail(
 
     state = ConversationStatePublic(
         messages=[
-            message.model_dump(mode="json") for message in values.get("messages", [])
+            refresh_message_file_urls(message, current_user.id).model_dump(mode="json")
+            for message in values.get("messages", [])
         ],
         todos=values.get("todos", []),
     )
@@ -227,9 +229,33 @@ async def delete_conversation(
         current_user=current_user,
         conversation_id=conversation_id,
     )
-    await checkpointer.adelete_thread(f"{current_user.id}:{conversation.id}")
+    file_ids = list_file_ids(
+        session=session,
+        conversation_id=conversation.id,
+    )
+    conversation_id_value = conversation.id
+    thread_id = f"{current_user.id}:{conversation_id_value}"
     session.delete(conversation)
+    session.flush()
+
+    object_keys = delete_file_records(session=session, file_ids=file_ids)
+    session.flush()
+
+    try:
+        await asyncio.to_thread(delete_objects, object_keys)
+    except FileStorageUnavailableError:
+        session.rollback()
+        raise
+
     session.commit()
+
+    try:
+        await checkpointer.adelete_thread(thread_id)
+    except Exception:
+        logger.exception(
+            CONVERSATION_CLEANUP_ERROR_LOG,
+            extra={"conversation_id": str(conversation_id_value)},
+        )
 
 
 def touch_conversation(

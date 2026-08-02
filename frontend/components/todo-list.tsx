@@ -30,9 +30,7 @@ export function TodoList() {
     <aside className="hidden w-80 justify-self-end p-4 2xl:block">
       <Card className="gap-2 py-4 text-base">
         <CardHeader>
-          <CardTitle className="font-normal">
-            代办
-          </CardTitle>
+          <CardTitle className="font-normal">代办</CardTitle>
         </CardHeader>
         <CardContent>
           {todos.length === 0 ? (

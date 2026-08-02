@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -13,6 +14,7 @@ from app.api.exception_handlers import add_exception_handlers
 from app.api.router import api_router
 from app.core.config import settings
 from app.modules.agent.agent import create_agent, create_chat_model
+from app.modules.files.cleanup import run_file_cleanup
 
 CHECKPOINT_SCHEMA = "agent"
 
@@ -38,10 +40,20 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await checkpointer.setup()
 
         app.state.checkpointer = checkpointer
-        app.state.title_model = create_chat_model(enable_thinking=False)
+        app.state.title_model = create_chat_model()
         app.state.agent = await create_agent(checkpointer)
 
-        yield
+        file_cleanup_task = asyncio.create_task(run_file_cleanup())
+
+        try:
+            yield
+        finally:
+            file_cleanup_task.cancel()
+
+            try:
+                await file_cleanup_task
+            except asyncio.CancelledError:
+                pass
 
 
 app = FastAPI(

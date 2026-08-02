@@ -18,10 +18,4 @@ class AgentSettings(BaseSettings):
     E2B_API_KEY: SecretStr
     E2B_TEMPLATE: str | None = None
 
-    COS_SECRET_ID: SecretStr
-    COS_SECRET_KEY: SecretStr
-    COS_REGION: str
-    COS_BUCKET: str
-
-
 settings = AgentSettings.model_validate({})

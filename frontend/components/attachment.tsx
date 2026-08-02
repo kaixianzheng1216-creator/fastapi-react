@@ -58,7 +58,7 @@ const useAttachmentSrc = () => {
       if (s.attachment.file) return { file: s.attachment.file };
       const src = s.attachment.content?.filter((c) => c.type === "image")[0]
         ?.image;
-      if (!src) return {};
+      if (!src || src.startsWith("file:")) return {};
       return { src };
     }),
   );
@@ -129,9 +129,19 @@ const AttachmentThumb: FC = () => {
 
 const AttachmentUI: FC = () => {
   const aui = useAui();
+
   const isComposer = aui.attachment.source !== "message";
 
   const isImage = useAuiState((s) => s.attachment.type === "image");
+
+  const downloadUrl = useAuiState((state) => {
+    const file = state.attachment.content?.find((part) => part.type === "file");
+
+    if (!file || file.data.startsWith("file:")) return undefined;
+
+    return file.data;
+  });
+
   const typeLabel = useAuiState((s) => {
     const type = s.attachment.type;
     switch (type) {
@@ -183,6 +193,11 @@ const AttachmentUI: FC = () => {
               )}
               role="button"
               tabIndex={0}
+              onClick={() => {
+                if (downloadUrl) {
+                  window.open(downloadUrl, "_blank", "noopener,noreferrer");
+                }
+              }}
               aria-label={`${typeLabel}附件${
                 isError ? "，上传失败" : isUploading ? "，正在上传" : ""
               }`}

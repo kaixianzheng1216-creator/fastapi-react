@@ -3,9 +3,11 @@ import warnings
 from typing import Annotated, Any, Literal, Self
 
 from pydantic import (
+    AnyHttpUrl,
     AnyUrl,
     BeforeValidator,
     PostgresDsn,
+    SecretStr,
     computed_field,
     model_validator,
 )
@@ -79,6 +81,12 @@ class Settings(BaseSettings):
 
     FIRST_SUPERUSER_USERNAME: str
     FIRST_SUPERUSER_PASSWORD: str
+
+    COS_SECRET_ID: SecretStr
+    COS_SECRET_KEY: SecretStr
+    COS_REGION: str
+    COS_BUCKET: str
+    DOCLING_BASE_URL: AnyHttpUrl
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":

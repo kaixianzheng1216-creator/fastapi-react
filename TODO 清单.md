@@ -17,16 +17,27 @@
 | 13 | [Kokonut UI](https://github.com/kokonut-labs/kokonutui)                      | 开源 MIT            | 2.0k Stars；偏视觉效果和 Motion 组件                       |
 | 14 | [Shadcn UI Expansions](https://github.com/hsuanyi-chou/shadcn-ui-expansions) | 开源 MIT            | 1.9k Stars；以补充实用业务组件为主                            |
 
+数据来源展示
+
+新对话的激活状态需要 UI
+
+搜索对话和已归档对话 UI 细节
+
+左上角代办 UI 可以收起来
+
+生成的产物也可以在左上角显示
 
 # 后端
+来源：网络、知识库、抖音、小红书
+
+能本地允许就本地运行
+
 支持上传文件聊天
 
-增加素材库功能
+支持用户上传 Skill
 
-增加知识库功能
+支持用户选择官方 MCP
 
-增加保存为笔记功能
+支持知识库
 
-支持用户上传 Skill 和选择 Skill
-
-官方 MCP 和接入 MCP
+生成小红书笔记并保存

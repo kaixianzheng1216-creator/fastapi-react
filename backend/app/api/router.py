@@ -6,6 +6,7 @@ from app.modules.auth.router import (
 )
 from app.modules.auth.router import public_router as public_auth_router
 from app.modules.conversations.router import router as conversations_router
+from app.modules.files.router import router as files_router
 from app.modules.items.router import router as items_router
 from app.modules.system.router import router as system_router
 from app.modules.users.router import admin_router as admin_users_router
@@ -24,4 +25,5 @@ api_router.include_router(authenticated_users_router)
 api_router.include_router(admin_users_router)
 api_router.include_router(items_router)
 api_router.include_router(conversations_router)
+api_router.include_router(files_router)
 api_router.include_router(agent_router)

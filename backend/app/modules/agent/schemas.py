@@ -1,38 +1,26 @@
-import base64
-import binascii
 from typing import Annotated, Any, Literal
-from urllib.parse import urlparse
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
 MAX_TEXT_PART_LENGTH = 20_000
-MAX_RESOURCE_REFERENCE_LENGTH = 14_000_000
+MAX_MESSAGE_ATTACHMENT_COUNT = 20
+MAX_FILE_REFERENCE_LENGTH = 41
 MAX_IDENTIFIER_LENGTH = 200
 MAX_MODEL_NAME_LENGTH = 200
 MAX_FILENAME_LENGTH = 255
 MAX_MIME_TYPE_LENGTH = 255
-ALLOWED_RESOURCE_SCHEMES = {"http", "https"}
+FILE_REFERENCE_PREFIX = "file:"
 
 
-def _validate_resource_reference(resource_reference: str) -> str:
-    if resource_reference.startswith("data:"):
-        metadata, comma, encoded_content = resource_reference.partition(",")
+def _validate_file_reference(resource_reference: str) -> str:
+    if not resource_reference.startswith(FILE_REFERENCE_PREFIX):
+        raise ValueError("附件引用无效")
 
-        if not comma or ";base64" not in metadata or not encoded_content:
-            raise ValueError("Data URI 必须包含 Base64 编码内容")
-
-        try:
-            base64.b64decode(encoded_content, validate=True)
-        except (binascii.Error, ValueError) as error:
-            raise ValueError("Data URI 包含无效的 Base64 内容") from error
-
-        return resource_reference
-
-    parsed_url = urlparse(resource_reference)
-
-    if parsed_url.scheme not in ALLOWED_RESOURCE_SCHEMES or not parsed_url.netloc:
-        raise ValueError("资源必须是 HTTP(S) URL 或 Base64 Data URI")
+    try:
+        UUID(resource_reference.removeprefix(FILE_REFERENCE_PREFIX))
+    except ValueError as error:
+        raise ValueError("附件引用无效") from error
 
     return resource_reference
 
@@ -45,15 +33,15 @@ class TextMessagePart(BaseModel):
 
 class ImageMessagePart(BaseModel):
     type: Literal["image"]
-    image: str = Field(min_length=1, max_length=MAX_RESOURCE_REFERENCE_LENGTH)
+    image: str = Field(min_length=1, max_length=MAX_FILE_REFERENCE_LENGTH)
     filename: str | None = Field(default=None, max_length=MAX_FILENAME_LENGTH)
 
-    _validate_image = field_validator("image")(_validate_resource_reference)
+    _validate_image = field_validator("image")(_validate_file_reference)
 
 
 class FileMessagePart(BaseModel):
     type: Literal["file"]
-    data: str = Field(min_length=1, max_length=MAX_RESOURCE_REFERENCE_LENGTH)
+    data: str = Field(min_length=1, max_length=MAX_FILE_REFERENCE_LENGTH)
     mime_type: str = Field(
         alias="mimeType",
         min_length=1,
@@ -61,7 +49,7 @@ class FileMessagePart(BaseModel):
     )
     filename: str | None = Field(default=None, max_length=MAX_FILENAME_LENGTH)
 
-    _validate_data = field_validator("data")(_validate_resource_reference)
+    _validate_data = field_validator("data")(_validate_file_reference)
 
 
 MessagePart = Annotated[
@@ -73,6 +61,18 @@ MessagePart = Annotated[
 class Message(BaseModel):
     role: Literal["user"]
     parts: list[MessagePart] = Field(min_length=1)
+
+    @field_validator("parts")
+    @classmethod
+    def validate_attachment_count(cls, parts: list[MessagePart]) -> list[MessagePart]:
+        attachment_count = sum(
+            isinstance(part, ImageMessagePart | FileMessagePart) for part in parts
+        )
+
+        if attachment_count > MAX_MESSAGE_ATTACHMENT_COUNT:
+            raise ValueError(f"单条消息最多添加 {MAX_MESSAGE_ATTACHMENT_COUNT} 个附件")
+
+        return parts
 
 
 # 命令
@@ -117,12 +117,14 @@ class AgentChatRequest(BaseModel):
         min_length=1,
         max_length=MAX_MODEL_NAME_LENGTH,
     )
+    thinking_enabled: bool = Field(default=False, alias="thinkingEnabled")
     state: dict[str, Any] | None = None
     commands: list[AgentCommand] = Field(min_length=1)
 
 
 class AgentModelPublic(BaseModel):
     id: str
+    supports_thinking: bool = Field(alias="supportsThinking")
 
 
 class AgentModelsPublic(BaseModel):

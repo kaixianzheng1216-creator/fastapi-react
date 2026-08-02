@@ -42,14 +42,12 @@ import {
   CheckIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  CloudSunIcon,
   CopyIcon,
   DownloadIcon,
   MicIcon,
   MoreHorizontalIcon,
   PencilIcon,
   RefreshCwIcon,
-  SparklesIcon,
   SquareIcon,
 } from "lucide-react";
 import {
@@ -208,10 +206,6 @@ const ThreadSuggestions: FC = () => {
 };
 
 const ThreadSuggestionItem: FC = () => {
-  const SuggestionIcon = useAuiState((s) =>
-    s.suggestion.title.includes("天气") ? CloudSunIcon : SparklesIcon,
-  );
-
   return (
     <div className="aui-thread-welcome-suggestion-display fade-in slide-in-from-bottom-2 animate-in fill-mode-both duration-200">
       <SuggestionPrimitive.Trigger send asChild>
@@ -219,10 +213,6 @@ const ThreadSuggestionItem: FC = () => {
           variant="ghost"
           className="aui-thread-welcome-suggestion text-foreground hover:bg-muted border-border/60 h-auto gap-2 rounded-full border px-3.5 py-1.5 text-sm font-normal whitespace-nowrap transition-colors"
         >
-          <SuggestionIcon
-            aria-hidden="true"
-            className="text-muted-foreground size-4 shrink-0"
-          />
           <SuggestionPrimitive.Title className="aui-thread-welcome-suggestion-text-1" />
           <SuggestionPrimitive.Description className="aui-thread-welcome-suggestion-text-2 empty:hidden" />
         </Button>
@@ -344,14 +334,6 @@ const AssistantMessage: FC = () => {
     ToolGroup,
     ReasoningGroup,
   } = useContext(ThreadComponentsContext);
-  const activeThinkingPartIndex = useAuiState((state) => {
-    if (state.message.status?.type !== "running") return -1;
-
-    const lastPartIndex = state.message.parts.length - 1;
-    const lastPart = state.message.parts[lastPartIndex];
-
-    return lastPart?.type === "text" ? -1 : lastPartIndex;
-  });
 
   const ACTION_BAR_PT = "pt-1.5";
   // Keep the action bar inside the contained root's paint box, then cancel its reserved space in flow.
@@ -377,9 +359,7 @@ const AssistantMessage: FC = () => {
           {({ part, children }) => {
             switch (part.type) {
               case "group-chainOfThought": {
-                const isThinking = part.indices.includes(
-                  activeThinkingPartIndex,
-                );
+                const isThinking = part.status.type === "running";
 
                 return (
                   <ReasoningRoot streaming={isThinking}>

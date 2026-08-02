@@ -48,6 +48,9 @@ services:
     ports:
       - "5432:5432"
 
+  docling:
+    restart: "no"
+
   xiaohongshu-mcp:
     restart: "no"
     ports:
