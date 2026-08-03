@@ -119,14 +119,14 @@ export const ThreadListSearch: FC<{
         onOpenChange={setOpen}
         title={archived ? "已归档对话" : "搜索对话"}
         description={archived ? "查看已归档的对话" : "搜索已有对话"}
-        className="sm:max-w-3xl"
+        className="h-[80dvh] sm:max-w-3xl"
       >
         <CommandInput
           value={search}
           onValueChange={setSearch}
           placeholder={archived ? "搜索已归档对话" : "搜索对话"}
         />
-        <CommandList>
+        <CommandList className="max-h-none min-h-0 flex-1">
           {!archived && !search && (
             <CommandGroup heading="快捷创建">
               <CommandItem
