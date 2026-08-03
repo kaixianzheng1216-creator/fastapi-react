@@ -142,13 +142,6 @@ async def _run(
                 if controller.is_cancelled:
                     break
 
-                if chunk["type"] == "messages":
-                    message = chunk["data"][0]
-                    reasoning = message.additional_kwargs.get("reasoning_content")
-
-                    if isinstance(reasoning, str):
-                        controller.append_reasoning(reasoning)
-
                 state = get_tool_call_subgraph_state(
                     controller,
                     namespace=chunk["ns"],

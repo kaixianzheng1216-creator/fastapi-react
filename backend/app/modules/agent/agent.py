@@ -91,6 +91,7 @@ def create_chat_model(
             api_key=settings.LITELLM_API_KEY,
             base_url=api_base,
             extra_body=extra_body,
+            output_version="v1",
             streaming=True,
         )
 
@@ -99,6 +100,7 @@ def create_chat_model(
             model=selected_model_name,
             api_key=settings.LITELLM_API_KEY,
             base_url=api_base,
+            output_version="v1",
             thinking=thinking_enabled,
             streaming=True,
         )
