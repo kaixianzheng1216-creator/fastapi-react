@@ -291,7 +291,13 @@ export const ThreadListSearchResults: FC<{
 
   if (results === undefined) return <ThreadListSkeleton />;
   if (results === null) return <CommandEmpty>搜索失败</CommandEmpty>;
-  if (results.length === 0) return <CommandEmpty>未找到对话</CommandEmpty>;
+  if (results.length === 0) {
+    return (
+      <div className="text-muted-foreground py-6 text-center text-sm">
+        未找到对话
+      </div>
+    );
+  }
 
   return (
     <CommandGroup
