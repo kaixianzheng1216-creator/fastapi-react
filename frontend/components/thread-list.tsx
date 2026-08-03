@@ -337,7 +337,10 @@ export const ThreadListNew = forwardRef<
       >
         {children ?? (
           <>
-            <SquarePenIcon data-slot="aui_thread-list-new-icon" />
+            <SquarePenIcon
+              data-slot="aui_thread-list-new-icon"
+              className="size-4 shrink-0 text-muted-foreground"
+            />
             <span
               data-slot="aui_thread-list-new-label"
               className={cn("whitespace-nowrap", labelClassName)}
@@ -382,8 +385,12 @@ export const ThreadListItem: FC = () => {
     >
       <ThreadListItemPrimitive.Trigger
         data-slot="aui_thread-list-item-trigger"
-        className="focus-visible:ring-ring/50 flex h-full min-w-0 flex-1 items-center rounded-md px-2.5 text-start text-sm outline-none group-hover/thread-item:pe-9 group-has-focus-visible/thread-item:pe-9 group-has-data-[state=open]/thread-item:pe-9 group-data-active/thread-item:pe-9 focus-visible:ring-[3px]"
+        className="focus-visible:ring-ring/50 flex h-full min-w-0 flex-1 items-center gap-2 rounded-md px-2.5 text-start text-sm outline-none group-hover/thread-item:pe-9 group-has-focus-visible/thread-item:pe-9 group-has-data-[state=open]/thread-item:pe-9 group-data-active/thread-item:pe-9 focus-visible:ring-[3px]"
       >
+        <MessageCircleIcon
+          aria-hidden="true"
+          className="size-4 shrink-0 text-muted-foreground"
+        />
         <span
           data-slot="aui_thread-list-item-title"
           className="min-w-0 flex-1 truncate"
