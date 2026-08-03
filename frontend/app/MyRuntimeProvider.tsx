@@ -37,7 +37,17 @@ export type TodoState = {
   todos?: Todo[];
 };
 
-export type State = TodoState & {
+export type Artifact = {
+  name: string;
+  url: string;
+  contentType: string;
+};
+
+export type ArtifactState = {
+  artifacts?: Artifact[];
+};
+
+export type State = TodoState & ArtifactState & {
   messages: LangChainMessage[];
   cancelledToolCallIds?: string[];
 };
@@ -139,7 +149,10 @@ const converter = (
 
       return message;
     }),
-    state: { todos: state.todos ?? [] } satisfies TodoState,
+    state: {
+      todos: state.todos ?? [],
+      artifacts: state.artifacts ?? [],
+    } satisfies TodoState & ArtifactState,
     isRunning,
   };
 };

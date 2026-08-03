@@ -1,9 +1,11 @@
+from operator import add
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Annotated, Any, TypedDict
 from uuid import UUID
 
 from deepagents import FilesystemPermission, create_deep_agent
 from deepagents.backends import CompositeBackend, FilesystemBackend
+from deepagents.graph import DeepAgentState
 from langchain.agents.middleware import wrap_model_call
 from langchain_core.language_models import BaseChatModel
 from langchain_deepseek import ChatDeepSeek
@@ -19,7 +21,10 @@ from app.modules.agent.exceptions import ModelNotAvailableError
 from app.modules.agent.file_messages import prepare_message_file_inputs
 from app.modules.agent.model_capabilities import ModelCapabilities
 from app.modules.agent.sandbox import get_sandbox
-from app.modules.agent.tools.publish_artifact import load_publish_artifact_tools
+from app.modules.agent.tools.publish_artifact import (
+    Artifact,
+    load_publish_artifact_tools,
+)
 
 AGENT_DIRECTORY = Path(__file__).parent
 SKILLS_PATH = "/skills/"
@@ -38,6 +43,10 @@ class AgentContext(TypedDict):
     supports_vision: bool
     supports_thinking: bool
     thinking_enabled: bool
+
+
+class AgentState(DeepAgentState):
+    artifacts: Annotated[list[Artifact], add]
 
 
 async def create_agent(checkpointer: AsyncPostgresSaver) -> Any:
@@ -67,6 +76,7 @@ async def create_agent(checkpointer: AsyncPostgresSaver) -> Any:
             )
         ],
         context_schema=AgentContext,
+        state_schema=AgentState,
         checkpointer=checkpointer,
     )
 

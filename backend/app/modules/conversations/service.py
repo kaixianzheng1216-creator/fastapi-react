@@ -151,6 +151,7 @@ async def get_conversation_detail(
             for message in values.get("messages", [])
         ],
         todos=values.get("todos", []),
+        artifacts=values.get("artifacts", []),
     )
 
     return ConversationDetailPublic(

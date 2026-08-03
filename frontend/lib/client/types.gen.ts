@@ -114,6 +114,24 @@ export type AgentModelsPublic = {
 };
 
 /**
+ * ArtifactPublic
+ */
+export type ArtifactPublic = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Contenttype
+     */
+    contentType: string;
+};
+
+/**
  * Body_login-login_access_token
  */
 export type BodyLoginLoginAccessToken = {
@@ -220,6 +238,10 @@ export type ConversationStatePublic = {
      * Todos
      */
     todos: Array<TodoPublic>;
+    /**
+     * Artifacts
+     */
+    artifacts: Array<ArtifactPublic>;
 };
 
 /**

@@ -1,11 +1,14 @@
 import asyncio
 import mimetypes
 from pathlib import PurePosixPath
+from typing import TypedDict
 from urllib.parse import quote
 from uuid import uuid4
 
+from langchain_core.messages import ToolMessage
 from langchain_core.tools import BaseTool, tool
 from langgraph.prebuilt import ToolRuntime
+from langgraph.types import Command
 from qcloud_cos import CosConfig, CosS3Client  # type: ignore[import-untyped]
 
 from app.core.config import settings
@@ -13,6 +16,12 @@ from app.modules.agent.sandbox import SANDBOX_WORKDIR, get_sandbox
 
 ARTIFACT_DIRECTORY = PurePosixPath(SANDBOX_WORKDIR) / "artifacts"
 COS_ARTIFACT_PREFIX = "agent-artifacts"
+
+
+class Artifact(TypedDict):
+    name: str
+    url: str
+    contentType: str
 
 
 def load_publish_artifact_tools() -> list[BaseTool]:
@@ -25,7 +34,7 @@ def load_publish_artifact_tools() -> list[BaseTool]:
     )
 
     @tool("publish_artifact")
-    async def publish_artifact(path: str, runtime: ToolRuntime) -> str:
+    async def publish_artifact(path: str, runtime: ToolRuntime) -> Command[None]:
         """将 /home/user/artifacts/ 下的最终文件发布为可下载链接。"""
         artifact_path = PurePosixPath(path)
 
@@ -60,6 +69,25 @@ def load_publish_artifact_tools() -> list[BaseTool]:
             f"{quote(object_key, safe='/')}"
         )
 
-        return url
+        if runtime.tool_call_id is None:
+            raise RuntimeError("发布产物时缺少工具调用 ID")
+
+        return Command(
+            update={
+                "messages": [
+                    ToolMessage(
+                        content=url,
+                        tool_call_id=runtime.tool_call_id,
+                    )
+                ],
+                "artifacts": [
+                    Artifact(
+                        name=artifact_path.name,
+                        url=url,
+                        contentType=content_type or "application/octet-stream",
+                    )
+                ],
+            }
+        )
 
     return [publish_artifact]

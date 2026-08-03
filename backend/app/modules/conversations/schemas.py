@@ -49,9 +49,16 @@ class TodoPublic(BaseModel):
     status: Literal["pending", "in_progress", "completed"]
 
 
+class ArtifactPublic(BaseModel):
+    name: str
+    url: str
+    content_type: str = Field(alias="contentType")
+
+
 class ConversationStatePublic(BaseModel):
     messages: list[dict[str, Any]]
     todos: list[TodoPublic]
+    artifacts: list[ArtifactPublic]
 
 
 class ConversationDetailPublic(ConversationPublic):

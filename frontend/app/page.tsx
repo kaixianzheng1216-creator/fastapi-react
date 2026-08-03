@@ -1,10 +1,10 @@
 "use client";
 
+import { ConversationSidebar } from "@/components/conversation-sidebar";
 import { Thread } from "@/components/thread";
 import { ThreadHeader } from "@/components/thread-header";
 import { ThreadListPopover } from "@/components/thread-list-popover";
 import { ThreadListSidebar } from "@/components/threadlist-sidebar";
-import { TodoList } from "@/components/todo-list";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { getAccessToken } from "@/lib/auth";
 import { useAui, AuiProvider, Suggestions } from "@assistant-ui/react";
@@ -34,7 +34,7 @@ function ThreadWithSuggestions() {
         <div className="min-h-0 min-w-0">
           <Thread />
         </div>
-        <TodoList />
+        <ConversationSidebar />
       </div>
     </AuiProvider>
   );
