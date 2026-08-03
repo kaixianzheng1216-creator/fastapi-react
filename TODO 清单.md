@@ -17,15 +17,13 @@
 | 13 | [Kokonut UI](https://github.com/kokonut-labs/kokonutui)                      | 开源 MIT            | 2.0k Stars；偏视觉效果和 Motion 组件                       |
 | 14 | [Shadcn UI Expansions](https://github.com/hsuanyi-chou/shadcn-ui-expansions) | 开源 MIT            | 1.9k Stars；以补充实用业务组件为主                            |
 
-数据来源展示
-
 新对话的激活状态需要 UI
 
 搜索对话和已归档对话 UI 细节
 
 左上角代办 UI 可以收起来
 
-生成的产物也可以在左上角显示
+来源、产物展示
 
 # 后端
 来源：网络、知识库、抖音、小红书
