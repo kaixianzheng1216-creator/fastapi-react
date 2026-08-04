@@ -195,12 +195,22 @@ function useConversationRuntime() {
         aui.threadListItem().generateTitle();
       }
 
-      return fileTransport.prepareRequest({
-        ...body,
-        threadId: remoteId,
+      const request = {
+        ...fileTransport.prepareRequest({
+          ...body,
+          threadId: remoteId,
+        }),
+      };
+
+      delete request.config;
+      delete request.modelName;
+      delete request.reasoningEffort;
+
+      return {
+        ...request,
         model: body.config?.modelName,
         thinkingEnabled: body.config?.reasoningEffort === "enabled",
-      });
+      };
     },
     capabilities: { edit: true },
     headers: async () => {
