@@ -1,6 +1,5 @@
 include:
   - compose.litellm.yml
-  - compose.xiaohongshu-mcp.yml
 
 services:
   db:
@@ -74,9 +73,6 @@ services:
       - default
     depends_on:
       litellm:
-        condition: service_healthy
-        restart: true
-      xiaohongshu-mcp:
         condition: service_healthy
         restart: true
       db:

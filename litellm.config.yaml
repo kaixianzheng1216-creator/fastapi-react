@@ -18,11 +18,3 @@ mcp_servers:
     transport: http
     auth_type: bearer_token
     auth_value: os.environ/FIRECRAWL_API_KEY
-  new_api:
-    url: http://43.139.210.125:18888/mcp
-    transport: http
-    auth_type: bearer_token
-    auth_value: os.environ/NEW_API_MCP_API_KEY
-  xiaohongshu:
-    url: http://xiaohongshu-mcp:18060/mcp
-    transport: http

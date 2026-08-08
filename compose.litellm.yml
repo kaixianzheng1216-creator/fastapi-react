@@ -16,7 +16,6 @@ services:
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY?Variable not set}
       MOONSHOT_API_KEY: ${MOONSHOT_API_KEY?Variable not set}
       FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY?Variable not set}
-      NEW_API_MCP_API_KEY: ${NEW_API_MCP_API_KEY?Variable not set}
     depends_on:
       litellm-db:
         condition: service_healthy
