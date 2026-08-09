@@ -4,7 +4,7 @@ from typing import Annotated, Any, TypedDict
 from uuid import UUID
 
 from deepagents import FilesystemPermission, create_deep_agent
-from deepagents.backends import CompositeBackend, FilesystemBackend
+from deepagents.backends import CompositeBackend, FilesystemBackend, StoreBackend
 from deepagents.graph import DeepAgentState
 from langchain.agents.middleware import wrap_model_call
 from langchain_core.language_models import BaseChatModel
@@ -12,6 +12,7 @@ from langchain_deepseek import ChatDeepSeek
 from langchain_moonshot import ChatMoonshot
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.config import get_config
+from langgraph.store.postgres.aio import AsyncPostgresStore
 from sqlmodel import Session
 
 from app.db.session import engine
@@ -21,13 +22,19 @@ from app.modules.agent.exceptions import ModelNotAvailableError
 from app.modules.agent.file_messages import prepare_message_file_inputs
 from app.modules.agent.model_capabilities import ModelCapabilities
 from app.modules.agent.sandbox import get_sandbox
+from app.modules.agent.skill_sync import (
+    BUILTIN_SKILLS_DIRECTORY,
+    BUILTIN_SKILLS_PATH,
+    USER_SKILLS_PATH,
+    SkillSandboxMiddleware,
+)
 from app.modules.agent.tools.publish_artifact import (
     Artifact,
     load_publish_artifact_tools,
 )
+from app.modules.skills.service import get_skill_namespace
 
 AGENT_DIRECTORY = Path(__file__).parent
-SKILLS_PATH = "/skills/"
 SYSTEM_PROMPT = (
     (AGENT_DIRECTORY / "prompts" / "system_prompt.md")
     .read_text(encoding="utf-8")
@@ -49,35 +56,44 @@ class AgentState(DeepAgentState):
     artifacts: Annotated[list[Artifact], add]
 
 
-async def create_agent(checkpointer: AsyncPostgresSaver) -> Any:
+async def create_agent(
+    checkpointer: AsyncPostgresSaver,
+    store: AsyncPostgresStore,
+) -> Any:
     tools = await load_litellm_mcp_tools()
     tools.extend(load_publish_artifact_tools())
 
     return create_deep_agent(
         model=create_chat_model(),
         tools=tools,
-        middleware=[select_chat_model],
+        middleware=[SkillSandboxMiddleware(), select_chat_model],
         system_prompt=SYSTEM_PROMPT,
-        skills=[SKILLS_PATH],
+        skills=[BUILTIN_SKILLS_PATH, USER_SKILLS_PATH],
         backend=lambda runtime: CompositeBackend(
             default=get_sandbox(get_config()["configurable"]["thread_id"]),
             routes={
-                SKILLS_PATH: FilesystemBackend(
-                    root_dir=AGENT_DIRECTORY / "skills",
+                BUILTIN_SKILLS_PATH: FilesystemBackend(
+                    root_dir=BUILTIN_SKILLS_DIRECTORY,
                     virtual_mode=True,
-                )
+                ),
+                USER_SKILLS_PATH: StoreBackend(
+                    namespace=lambda skill_runtime: get_skill_namespace(
+                        skill_runtime.context["user_id"]
+                    )
+                ),
             },
         ),
         permissions=[
             FilesystemPermission(
                 operations=["write"],
-                paths=[f"{SKILLS_PATH}**"],
+                paths=["/skills/**"],
                 mode="deny",
             )
         ],
         context_schema=AgentContext,
         state_schema=AgentState,
         checkpointer=checkpointer,
+        store=store,
     )
 
 

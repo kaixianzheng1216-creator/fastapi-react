@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRoute
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from langgraph.store.postgres.aio import AsyncPostgresStore
 from psycopg import AsyncConnection
 from scalar_fastapi import get_scalar_api_reference
 from starlette.middleware.cors import CORSMiddleware
@@ -34,14 +35,19 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     ) as connection:
         await connection.execute(f"CREATE SCHEMA IF NOT EXISTS {CHECKPOINT_SCHEMA}")
 
-    async with AsyncPostgresSaver.from_conn_string(
-        f"{database_uri}?options=-csearch_path%3D{CHECKPOINT_SCHEMA}"
-    ) as checkpointer:
+    store_uri = f"{database_uri}?options=-csearch_path%3D{CHECKPOINT_SCHEMA}"
+
+    async with (
+        AsyncPostgresSaver.from_conn_string(store_uri) as checkpointer,
+        AsyncPostgresStore.from_conn_string(store_uri) as store,
+    ):
         await checkpointer.setup()
+        await store.setup()
 
         app.state.checkpointer = checkpointer
+        app.state.store = store
         app.state.title_model = create_chat_model()
-        app.state.agent = await create_agent(checkpointer)
+        app.state.agent = await create_agent(checkpointer, store)
 
         file_cleanup_task = asyncio.create_task(run_file_cleanup())
 

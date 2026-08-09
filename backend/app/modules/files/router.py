@@ -14,7 +14,11 @@ from app.modules.files.schemas import (
 router = APIRouter(prefix="/files", tags=["files"])
 
 
-@router.post("", response_model=FileUploadPublic)
+@router.post(
+    "",
+    response_model=FileUploadPublic,
+    status_code=status.HTTP_201_CREATED,
+)
 def create_file_upload(
     session: SessionDep,
     current_user: CurrentUser,

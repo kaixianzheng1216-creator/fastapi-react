@@ -162,6 +162,16 @@ export type BodyLoginLoginAccessToken = {
 };
 
 /**
+ * Body_skills-create_zip_skill
+ */
+export type BodySkillsCreateZipSkill = {
+    /**
+     * Skill Zip
+     */
+    skill_zip: Blob | File;
+};
+
+/**
  * ConversationDetailPublic
  */
 export type ConversationDetailPublic = {
@@ -442,6 +452,8 @@ export type ItemsPublic = {
     count: number;
 };
 
+export type JsonValue = unknown;
+
 /**
  * Message
  */
@@ -464,6 +476,88 @@ export type MessageOutput = {
      * Message
      */
     message: string;
+};
+
+/**
+ * SkillFileNodePublic
+ */
+export type SkillFileNodePublic = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Path
+     */
+    path: string;
+    /**
+     * Type
+     */
+    type: 'file' | 'folder';
+    /**
+     * Size
+     */
+    size?: number | null;
+    /**
+     * Children
+     */
+    children?: Array<SkillFileNodePublic> | null;
+};
+
+/**
+ * SkillMdRequest
+ */
+export type SkillMdRequest = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Content
+     */
+    content: string;
+};
+
+/**
+ * SkillPublic
+ */
+export type SkillPublic = {
+    /**
+     * Frontmatter
+     */
+    frontmatter: {
+        [key: string]: JsonValue;
+    };
+    /**
+     * Content
+     */
+    content: string;
+    /**
+     * Filecount
+     */
+    fileCount: number;
+    /**
+     * Files
+     */
+    files: Array<SkillFileNodePublic>;
+};
+
+/**
+ * SkillSummaryPublic
+ */
+export type SkillSummaryPublic = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string;
 };
 
 /**
@@ -723,7 +817,7 @@ export type UsersRegisterUserResponses = {
     /**
      * Successful Response
      */
-    200: UserPublic;
+    201: UserPublic;
 };
 
 export type UsersRegisterUserResponse = UsersRegisterUserResponses[keyof UsersRegisterUserResponses];
@@ -773,7 +867,7 @@ export type UsersDeleteUserMeResponses = {
     /**
      * Successful Response
      */
-    200: MessageOutput;
+    204: void;
 };
 
 export type UsersDeleteUserMeResponse = UsersDeleteUserMeResponses[keyof UsersDeleteUserMeResponses];
@@ -869,7 +963,7 @@ export type UsersDeleteUserResponses = {
     /**
      * Successful Response
      */
-    200: MessageOutput;
+    204: void;
 };
 
 export type UsersDeleteUserResponse = UsersDeleteUserResponses[keyof UsersDeleteUserResponses];
@@ -988,7 +1082,7 @@ export type UsersCreateUserResponses = {
     /**
      * Successful Response
      */
-    200: UserPublic;
+    201: UserPublic;
 };
 
 export type UsersCreateUserResponse = UsersCreateUserResponses[keyof UsersCreateUserResponses];
@@ -1047,7 +1141,7 @@ export type ItemsCreateItemResponses = {
     /**
      * Successful Response
      */
-    200: ItemPublic;
+    201: ItemPublic;
 };
 
 export type ItemsCreateItemResponse = ItemsCreateItemResponses[keyof ItemsCreateItemResponses];
@@ -1077,7 +1171,7 @@ export type ItemsDeleteItemResponses = {
     /**
      * Successful Response
      */
-    200: MessageOutput;
+    204: void;
 };
 
 export type ItemsDeleteItemResponse = ItemsDeleteItemResponses[keyof ItemsDeleteItemResponses];
@@ -1400,7 +1494,7 @@ export type FilesCreateFileUploadResponses = {
     /**
      * Successful Response
      */
-    200: FileUploadPublic;
+    201: FileUploadPublic;
 };
 
 export type FilesCreateFileUploadResponse = FilesCreateFileUploadResponses[keyof FilesCreateFileUploadResponses];
@@ -1494,6 +1588,166 @@ export type FilesGetFileDownloadUrlResponses = {
 };
 
 export type FilesGetFileDownloadUrlResponse = FilesGetFileDownloadUrlResponses[keyof FilesGetFileDownloadUrlResponses];
+
+export type SkillsCreateMdSkillData = {
+    body: SkillMdRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/skills/md';
+};
+
+export type SkillsCreateMdSkillErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SkillsCreateMdSkillError = SkillsCreateMdSkillErrors[keyof SkillsCreateMdSkillErrors];
+
+export type SkillsCreateMdSkillResponses = {
+    /**
+     * Successful Response
+     */
+    201: SkillPublic;
+};
+
+export type SkillsCreateMdSkillResponse = SkillsCreateMdSkillResponses[keyof SkillsCreateMdSkillResponses];
+
+export type SkillsCreateZipSkillData = {
+    body: BodySkillsCreateZipSkill;
+    path?: never;
+    query?: never;
+    url: '/api/v1/skills/zip';
+};
+
+export type SkillsCreateZipSkillErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SkillsCreateZipSkillError = SkillsCreateZipSkillErrors[keyof SkillsCreateZipSkillErrors];
+
+export type SkillsCreateZipSkillResponses = {
+    /**
+     * Successful Response
+     */
+    201: SkillPublic;
+};
+
+export type SkillsCreateZipSkillResponse = SkillsCreateZipSkillResponses[keyof SkillsCreateZipSkillResponses];
+
+export type SkillsReadSkillsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/skills';
+};
+
+export type SkillsReadSkillsResponses = {
+    /**
+     * Response Skills-Read Skills
+     *
+     * Successful Response
+     */
+    200: Array<SkillSummaryPublic>;
+};
+
+export type SkillsReadSkillsResponse = SkillsReadSkillsResponses[keyof SkillsReadSkillsResponses];
+
+export type SkillsDeleteSkillData = {
+    body?: never;
+    path: {
+        /**
+         * Skill Name
+         */
+        skill_name: string;
+    };
+    query?: never;
+    url: '/api/v1/skills/{skill_name}';
+};
+
+export type SkillsDeleteSkillErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SkillsDeleteSkillError = SkillsDeleteSkillErrors[keyof SkillsDeleteSkillErrors];
+
+export type SkillsDeleteSkillResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type SkillsDeleteSkillResponse = SkillsDeleteSkillResponses[keyof SkillsDeleteSkillResponses];
+
+export type SkillsReadSkillData = {
+    body?: never;
+    path: {
+        /**
+         * Skill Name
+         */
+        skill_name: string;
+    };
+    query?: never;
+    url: '/api/v1/skills/{skill_name}';
+};
+
+export type SkillsReadSkillErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SkillsReadSkillError = SkillsReadSkillErrors[keyof SkillsReadSkillErrors];
+
+export type SkillsReadSkillResponses = {
+    /**
+     * Successful Response
+     */
+    200: SkillPublic;
+};
+
+export type SkillsReadSkillResponse = SkillsReadSkillResponses[keyof SkillsReadSkillResponses];
+
+export type SkillsReadSkillFileData = {
+    body?: never;
+    path: {
+        /**
+         * Skill Name
+         */
+        skill_name: string;
+        /**
+         * File Path
+         */
+        file_path: string;
+    };
+    query?: never;
+    url: '/api/v1/skills/{skill_name}/files/{file_path}';
+};
+
+export type SkillsReadSkillFileErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SkillsReadSkillFileError = SkillsReadSkillFileErrors[keyof SkillsReadSkillFileErrors];
+
+export type SkillsReadSkillFileResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type AgentReadModelsData = {
     body?: never;

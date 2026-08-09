@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
 from app.api.dependencies import SessionDep
 from app.common.schemas import Message
@@ -35,7 +35,11 @@ admin_router = APIRouter(
 )
 
 
-@public_router.post("/signup", response_model=UserPublic)
+@public_router.post(
+    "/signup",
+    response_model=UserPublic,
+    status_code=status.HTTP_201_CREATED,
+)
 def register_user(session: SessionDep, user_in: UserRegister) -> UserPublic:
     """无需登录即可创建新用户。"""
     user = service.create_unique_user(
@@ -79,15 +83,17 @@ def update_password_me(
     return Message(message="Password updated successfully")
 
 
-@authenticated_router.delete("/me", response_model=Message)
-def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Message:
+@authenticated_router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user_me(session: SessionDep, current_user: CurrentUser) -> None:
     """删除当前用户。"""
     service.delete_current_user(session=session, current_user=current_user)
 
-    return Message(message="User deleted successfully")
 
-
-@admin_router.post("/", response_model=UserPublic)
+@admin_router.post(
+    "/",
+    response_model=UserPublic,
+    status_code=status.HTTP_201_CREATED,
+)
 def create_user(*, session: SessionDep, user_in: UserCreate) -> UserPublic:
     """创建新用户。"""
     user = service.create_unique_user(session=session, user_create=user_in)
@@ -128,13 +134,11 @@ def update_user(
     return UserPublic.model_validate(user)
 
 
-@admin_router.delete("/{user_id}")
+@admin_router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(
     session: SessionDep, current_user: CurrentUser, user_id: uuid.UUID
-) -> Message:
+) -> None:
     """删除用户。"""
     service.delete_user_by_id(
         session=session, current_user=current_user, user_id=user_id
     )
-
-    return Message(message="User deleted successfully")

@@ -1,9 +1,8 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
 from app.api.dependencies import SessionDep
-from app.common.schemas import Message
 from app.modules.auth.dependencies import CurrentUser, get_current_user
 from app.modules.items import service
 from app.modules.items.schemas import ItemCreate, ItemPublic, ItemsPublic, ItemUpdate
@@ -15,7 +14,11 @@ router = APIRouter(
 )
 
 
-@router.post("/", response_model=ItemPublic)
+@router.post(
+    "/",
+    response_model=ItemPublic,
+    status_code=status.HTTP_201_CREATED,
+)
 def create_item(
     *, session: SessionDep, current_user: CurrentUser, item_in: ItemCreate
 ) -> ItemPublic:
@@ -71,11 +74,9 @@ def update_item(
     return ItemPublic.model_validate(item)
 
 
-@router.delete("/{id}")
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_item(
     session: SessionDep, current_user: CurrentUser, id: uuid.UUID
-) -> Message:
+) -> None:
     """删除物品。"""
     service.delete_item(session=session, current_user=current_user, item_id=id)
-
-    return Message(message="Item deleted successfully")
