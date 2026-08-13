@@ -250,7 +250,6 @@ def remove_unreferenced_file(
         owner_id=current_user.id,
         file_id=file_id,
     )
-
     object_key = stored_file.object_key
 
     session.delete(stored_file)
@@ -264,29 +263,15 @@ def remove_unreferenced_file(
             raise SentFileDeletionForbiddenError from error
         raise
 
-    try:
-        object_storage.delete_objects([object_key])
-    except FileStorageUnavailableError:
-        session.rollback()
-
-        raise
-
     session.commit()
+    cleanup_objects([object_key])
 
 
 def delete_files(*, session: Session, file_ids: list[uuid.UUID]) -> None:
     # 批量删除文件记录及其对象存储内容。
     object_keys = delete_file_records(session=session, file_ids=file_ids)
-    session.flush()
-
-    try:
-        object_storage.delete_objects(object_keys)
-    except FileStorageUnavailableError:
-        session.rollback()
-
-        raise
-
     session.commit()
+    cleanup_objects(object_keys)
 
 
 def delete_file_records(*, session: Session, file_ids: list[uuid.UUID]) -> list[str]:
@@ -352,14 +337,17 @@ def _get_uploaded_file_for_owner(
 
 
 async def _delete_invalid_upload(session: Session, stored_file: StoredFile) -> None:
-    # 删除校验失败的文件记录和对象存储内容。
+    object_key = stored_file.object_key
+
     session.delete(stored_file)
-    session.flush()
-
-    try:
-        await asyncio.to_thread(object_storage.delete_objects, [stored_file.object_key])
-    except FileStorageUnavailableError:
-        session.rollback()
-        raise
-
     session.commit()
+
+    await asyncio.to_thread(cleanup_objects, [object_key])
+
+
+def cleanup_objects(object_keys: list[str]) -> None:
+    for object_key in object_keys:
+        try:
+            object_storage.delete_objects([object_key])
+        except FileStorageUnavailableError:
+            continue

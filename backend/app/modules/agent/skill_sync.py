@@ -1,7 +1,6 @@
 import asyncio
 from pathlib import Path
-from typing import Any, TypedDict
-from uuid import UUID
+from typing import Any
 
 from langchain.agents.middleware import AgentMiddleware
 from langgraph.config import get_config
@@ -16,15 +15,11 @@ USER_SKILLS_PATH = "/skills/user/"
 SKILL_SYNC_MARKER_PATH = "/skills/.synced"
 
 
-class SkillRuntimeContext(TypedDict):
-    user_id: UUID
-
-
-class SkillSandboxMiddleware(AgentMiddleware[Any, SkillRuntimeContext, Any]):
+class SkillSandboxMiddleware(AgentMiddleware[Any, Any, Any]):
     async def abefore_agent(
         self,
         _state: Any,
-        runtime: Runtime[SkillRuntimeContext],
+        runtime: Runtime[Any],
     ) -> None:
         if runtime.store is None:
             raise RuntimeError("Agent Store 未初始化")

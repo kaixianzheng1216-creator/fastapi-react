@@ -24,9 +24,10 @@ from app.modules.conversations.schemas import (
     ConversationPublic,
     ConversationStatePublic,
 )
-from app.modules.files.exceptions import FileStorageUnavailableError
-from app.modules.files.object_storage import delete_objects
-from app.modules.files.service import delete_file_records
+from app.modules.files.service import (
+    cleanup_objects,
+    delete_file_records,
+)
 from app.modules.users.models import User
 
 DEFAULT_CONVERSATION_TITLE = "新对话"
@@ -242,13 +243,9 @@ async def delete_conversation(
     object_keys = delete_file_records(session=session, file_ids=file_ids)
     session.flush()
 
-    try:
-        await asyncio.to_thread(delete_objects, object_keys)
-    except FileStorageUnavailableError:
-        session.rollback()
-        raise
-
     session.commit()
+
+    await asyncio.to_thread(cleanup_objects, object_keys)
 
     try:
         await checkpointer.adelete_thread(thread_id)

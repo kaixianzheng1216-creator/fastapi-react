@@ -7,7 +7,7 @@ from pathlib import PurePosixPath
 import frontmatter
 from deepagents.backends import StoreBackend
 from langgraph.store.base import BaseStore, SearchItem
-from pydantic import ValidationError
+from pydantic import JsonValue, TypeAdapter, ValidationError
 from yaml import YAMLError
 
 from app.modules.skills.exceptions import (
@@ -32,6 +32,7 @@ MAX_ZIP_SIZE = 10 * 1024 * 1024  # 10 MiB
 MAX_ZIP_FILE_COUNT = 100  # files
 MAX_ZIP_CONTENT_SIZE = 20 * 1024 * 1024  # 20 MiB
 STORE_SEARCH_PAGE_SIZE = 100  # items per page
+FRONTMATTER_ADAPTER = TypeAdapter(dict[str, JsonValue])
 
 
 async def create_md_skill(
@@ -352,6 +353,7 @@ def _parse_skill_md(skill_md: bytes) -> tuple[SkillMetadata, str]:
     try:
         post = frontmatter.loads(skill_md.decode("utf-8-sig"))
         metadata = SkillMetadata.model_validate(post.metadata)
+        FRONTMATTER_ADAPTER.validate_python(metadata.model_dump())
 
         return metadata, post.content
     except UnicodeDecodeError, YAMLError, ValidationError:
@@ -436,9 +438,18 @@ async def _create_skill(
         if path != "SKILL.md":
             upload_files.append((f"/{skill_name}/{path}", content))
 
-    upload_files.append((skill_md_path, files["SKILL.md"]))
+    if upload_files:
+        uploads = await backend.aupload_files(upload_files)
 
-    await backend.aupload_files(upload_files)
+        if any(upload.error is not None for upload in uploads):
+            raise RuntimeError("Skill 文件写入失败")
+
+    skill_md_upload = (
+        await backend.aupload_files([(skill_md_path, files["SKILL.md"])])
+    )[0]
+
+    if skill_md_upload.error is not None:
+        raise RuntimeError("SKILL.md 写入失败")
 
 
 async def _search_user_skill_items(

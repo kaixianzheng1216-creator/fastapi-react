@@ -5,9 +5,7 @@ from typing import Any
 from sqlmodel import Session, col, func, select
 
 from app.core.security import get_password_hash, verify_password
-from app.modules.files import object_storage
 from app.modules.files import service as file_service
-from app.modules.files.exceptions import FileStorageUnavailableError
 from app.modules.users.exceptions import (
     IncorrectPasswordError,
     InsufficientPrivilegesError,
@@ -162,19 +160,13 @@ def delete_user_by_id(
 
 
 def _delete_user(*, session: Session, user: User) -> None:
+    session.delete(user)
+    session.flush()
+    session.commit()
+
     object_keys = file_service.list_owner_object_keys(
         session=session,
         owner_id=user.id,
     )
 
-    session.delete(user)
-    session.flush()
-
-    try:
-        object_storage.delete_objects(object_keys)
-    except FileStorageUnavailableError:
-        session.rollback()
-
-        raise
-
-    session.commit()
+    file_service.cleanup_objects(object_keys)
