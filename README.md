@@ -1,7 +1,5 @@
 # Full Stack FastAPI Template
 
-<a href="https://github.com/fastapi/full-stack-fastapi-template/actions?query=workflow%3A%22Test+Docker+Compose%22" target="_blank"><img src="https://github.com/fastapi/full-stack-fastapi-template/workflows/Test%20Docker%20Compose/badge.svg" alt="Test Docker Compose"></a>
-
 ## 技术栈与功能特性
 
 - ⚡ [**FastAPI**](https://fastapi.tiangolo.com) 作为 Python 后端 API。
@@ -11,9 +9,7 @@
 - 🐋 [Docker Compose](https://www.docker.com) 用于开发和生产环境。
 - 🔒 默认启用安全的密码哈希。
 - 🔑 JWT (JSON Web Token) 身份认证。
-- 📞 [Traefik](https://traefik.io) 作为反向代理 / 负载均衡器。
 - 🚢 提供使用 Docker Compose 的部署说明。
-- 🏭 基于 GitHub Actions 的 CI（持续集成）和 CD（持续部署）。
 
 ## 如何使用
 

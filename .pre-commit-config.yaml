@@ -1,5 +1,3 @@
-# 更多信息请参阅 https://pre-commit.com
-# 更多钩子请参阅 https://pre-commit.com/hooks.html
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
@@ -44,12 +42,4 @@ repos:
         entry: uv run ty check backend/app backend/scripts
         require_serial: true
         language: unsupported
-        pass_filenames: false
-
-      - id: zizmor
-        name: zizmor
-        language: python
-        entry: uv run zizmor .
-        files: ^\.github\/workflows\/
-        require_serial: true
         pass_filenames: false

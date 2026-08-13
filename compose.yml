@@ -42,9 +42,6 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    networks:
-      - traefik-public
-      - default
     depends_on:
       db:
         condition: service_healthy
@@ -53,7 +50,6 @@ services:
     env_file:
       - .env
     environment:
-      - DOMAIN=${DOMAIN}
       - ENVIRONMENT=${ENVIRONMENT}
       - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
       - SECRET_KEY=${SECRET_KEY?Variable not set}
@@ -68,9 +64,6 @@ services:
   backend:
     image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
     restart: always
-    networks:
-      - traefik-public
-      - default
     depends_on:
       litellm:
         condition: service_healthy
@@ -86,7 +79,6 @@ services:
     env_file:
       - .env
     environment:
-      - DOMAIN=${DOMAIN}
       - ENVIRONMENT=${ENVIRONMENT}
       - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
       - SECRET_KEY=${SECRET_KEY?Variable not set}
@@ -108,26 +100,10 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=traefik-public
-      - traefik.constraint-label=traefik-public
-      - traefik.http.services.${STACK_NAME?Variable not set}-backend.loadbalancer.server.port=8000
-      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.rule=Host(`api.${DOMAIN?Variable not set}`)
-      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.entrypoints=http
-      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-https.rule=Host(`api.${DOMAIN?Variable not set}`)
-      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-https.entrypoints=https
-      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-https.tls=true
-      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-https.tls.certresolver=le
-      # 启用 HTTP 到 HTTPS 的重定向
-      - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.middlewares=https-redirect
 
   frontend:
     image: '${DOCKER_IMAGE_FRONTEND?Variable not set}:${TAG-latest}'
     restart: always
-    networks:
-      - traefik-public
-      - default
     depends_on:
       backend:
         condition: service_healthy
@@ -138,23 +114,6 @@ services:
         BACKEND_API_URL: http://backend:8000
     environment:
       - BACKEND_API_URL=http://backend:8000
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=traefik-public
-      - traefik.constraint-label=traefik-public
-      - traefik.http.services.${STACK_NAME?Variable not set}-frontend.loadbalancer.server.port=3000
-      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.rule=Host(`${DOMAIN?Variable not set}`)
-      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.entrypoints=http
-      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-https.rule=Host(`${DOMAIN?Variable not set}`)
-      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-https.entrypoints=https
-      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-https.tls=true
-      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-https.tls.certresolver=le
-      - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.middlewares=https-redirect
 
 volumes:
   app-db-data:
-
-networks:
-  traefik-public:
-    # 允许在测试时将其设置为 false
-    external: true

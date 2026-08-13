@@ -1,48 +1,4 @@
 services:
-  # 本地服务既可以通过各自端口访问，也可以通过以下地址访问：
-  # http://api.localhost.tiangolo.com：后端
-  # 要启用此功能，请在 .env 中设置：
-  # DOMAIN=localhost.tiangolo.com
-  proxy:
-    image: traefik:3.6
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - "80:80"
-      - "8090:8080"
-    # 复制 compose.yml 中的命令，并额外添加 --api.insecure=true
-    command:
-      # 在 Traefik 中启用 Docker，使其能够读取 Docker 服务的标签
-      - --providers.docker
-      # 添加约束，只使用带有当前技术栈标签的服务
-      - --providers.docker.constraints=Label(`traefik.constraint-label`, `traefik-public`)
-      # 不公开所有 Docker 服务，只公开明确启用的服务
-      - --providers.docker.exposedbydefault=false
-      # 创建监听 80 端口的 "http" 入口点
-      - --entrypoints.http.address=:80
-      # 创建监听 443 端口的 "https" 入口点
-      - --entrypoints.https.address=:443
-      # 启用记录 HTTP 请求的访问日志
-      - --accesslog
-      # 启用 Traefik 日志，记录配置和错误
-      - --log
-      # 为本地开发启用调试日志
-      - --log.level=DEBUG
-      # 启用管理面板和 API
-      - --api
-      # 在本地开发中以不安全模式启用管理面板和 API
-      - --api.insecure=true
-    labels:
-      # 为此服务启用 Traefik，使其能够通过公共网络访问
-      - traefik.enable=true
-      - traefik.constraint-label=traefik-public
-      # 本地使用的虚拟 https-redirect 中间件，不会真正执行重定向，
-      # 仅用于确保配置可以在本地运行
-      - traefik.http.middlewares.https-redirect.contenttype.autodetect=false
-    networks:
-      - traefik-public
-      - default
-
   db:
     restart: "no"
     ports:
@@ -53,12 +9,6 @@ services:
 
   backend:
     restart: "no"
-    ports:
-      - "8000:8000"
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    # command: sleep infinity  # 通过无限循环让容器保持运行，但不执行任何工作
     command:
       - uvicorn
       - app.main:app
@@ -96,8 +46,3 @@ services:
           action: rebuild
         - path: ./frontend/package-lock.json
           action: rebuild
-
-networks:
-  traefik-public:
-    # 本地开发不依赖外部 Traefik 网络
-    external: false
