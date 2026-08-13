@@ -2,6 +2,14 @@
 .idea/*
 .omo/*
 
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.cache/
+
 frontend/node_modules/
 frontend/.next/
 frontend/next-env.d.ts

@@ -1,11 +1,8 @@
-# LiteLLM official Quickstart stack, adapted to coexist with this project's database.
 services:
   litellm:
     image: docker.litellm.ai/berriai/litellm-database:v1.94.0
     restart: always
     command: --config /app/config.yaml
-    ports:
-      - "127.0.0.1:4000:4000"
     volumes:
       - ./litellm.config.yaml:/app/config.yaml:ro
     environment:

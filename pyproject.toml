@@ -5,19 +5,3 @@ dev = [
 
 [tool.uv.workspace]
 members = ["backend"]
-
-[tool.typos.files]
-extend-exclude = [
-    "uv.lock",
-]
-
-[tool.typos.default]
-extend-ignore-re = [
-    # @提及中的 GitHub 用户名
-    "@[a-zA-Z0-9](?:-?[a-zA-Z0-9])*",
-    # PR 标题中的软件包名称
-    "Bump certifi ",
-]
-
-[tool.typos.default.extend-identifiers]
-alls = "alls"

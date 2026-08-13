@@ -1,0 +1,7 @@
+.git
+.agents
+.idea
+.env
+.venv
+**/__pycache__
+frontend

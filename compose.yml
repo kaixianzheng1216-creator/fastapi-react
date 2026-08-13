@@ -6,20 +6,17 @@ services:
     image: postgres:18
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       retries: 5
       start_period: 30s
       timeout: 10s
     volumes:
-      - app-db-data:/var/lib/postgresql/data/pgdata
-    env_file:
-      - .env
+      - app-db-data:/var/lib/postgresql
     environment:
-      - PGDATA=/var/lib/postgresql/data/pgdata
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
-      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
-      - POSTGRES_DB=${POSTGRES_DB?Variable not set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?Variable not set}
+      POSTGRES_USER: ${POSTGRES_USER?Variable not set}
+      POSTGRES_DB: ${POSTGRES_DB?Variable not set}
 
   docling:
     image: ghcr.io/docling-project/docling-serve-cpu:v1.21.0
@@ -38,62 +35,39 @@ services:
       start_period: 30s
 
   prestart:
-    image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
+    image: backend
     build:
       context: .
       dockerfile: backend/Dockerfile
     depends_on:
       db:
         condition: service_healthy
-        restart: true
     command: bash scripts/prestart.sh
     env_file:
       - .env
     environment:
-      - ENVIRONMENT=${ENVIRONMENT}
-      - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
-      - SECRET_KEY=${SECRET_KEY?Variable not set}
-      - FIRST_SUPERUSER_USERNAME=${FIRST_SUPERUSER_USERNAME?Variable not set}
-      - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD?Variable not set}
       - POSTGRES_SERVER=db
-      - POSTGRES_PORT=${POSTGRES_PORT}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
 
   backend:
-    image: '${DOCKER_IMAGE_BACKEND?Variable not set}:${TAG-latest}'
+    image: backend
     restart: always
     depends_on:
       litellm:
         condition: service_healthy
-        restart: true
       db:
         condition: service_healthy
-        restart: true
       docling:
         condition: service_healthy
-        restart: true
       prestart:
         condition: service_completed_successfully
     env_file:
       - .env
     environment:
-      - ENVIRONMENT=${ENVIRONMENT}
-      - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
-      - SECRET_KEY=${SECRET_KEY?Variable not set}
       - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
-      - FIRST_SUPERUSER_USERNAME=${FIRST_SUPERUSER_USERNAME?Variable not set}
-      - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD?Variable not set}
       - POSTGRES_SERVER=db
-      - POSTGRES_PORT=${POSTGRES_PORT}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - LANGFUSE_TRACING_ENVIRONMENT=${ENVIRONMENT}
-      - DOCLING_BASE_URL=${DOCLING_BASE_URL?Variable not set}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/utils/health-check/')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -102,18 +76,19 @@ services:
       dockerfile: backend/Dockerfile
 
   frontend:
-    image: '${DOCKER_IMAGE_FRONTEND?Variable not set}:${TAG-latest}'
+    image: frontend
     restart: always
     depends_on:
       backend:
         condition: service_healthy
-        restart: true
     build:
       context: ./frontend
       args:
         BACKEND_API_URL: http://backend:8000
     environment:
       - BACKEND_API_URL=http://backend:8000
+    ports:
+      - "3001:3000"
 
 volumes:
   app-db-data:

@@ -36,7 +36,6 @@ dependencies = [
 [dependency-groups]
 dev = [
     "mypy<3.0.0,>=1.8.0",
-    "ty>=0.0.25",
     "ruff<1.0.0,>=0.2.2",
     "types-PyYAML>=6.0.12.20250915",
 ]
@@ -75,6 +74,3 @@ ignore = [
 [tool.ruff.lint.pyupgrade]
 # 即使文件导入了 `from __future__ import annotations`，也保留运行时类型。
 keep-runtime-typing = true
-
-[tool.ty.terminal]
-error-on-warning = true

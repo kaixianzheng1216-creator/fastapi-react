@@ -23,6 +23,7 @@ services:
           ignore:
             - ./backend/.venv
             - .venv
+            - pyproject.toml
         - path: ./backend/pyproject.toml
           action: rebuild
 
@@ -30,8 +31,6 @@ services:
     restart: "no"
     build:
       target: development
-    ports:
-      - "3001:3000"
     develop:
       watch:
         - path: ./frontend
