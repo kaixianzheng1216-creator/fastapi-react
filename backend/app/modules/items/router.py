@@ -3,14 +3,21 @@ import uuid
 from fastapi import APIRouter, Depends, status
 
 from app.api.dependencies import SessionDep
+from app.api.responses import error_responses
 from app.modules.auth.dependencies import CurrentUser, get_current_user
+from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
 from app.modules.items import service
+from app.modules.items.exceptions import ItemNotFoundError, ItemPermissionError
 from app.modules.items.schemas import ItemCreate, ItemPublic, ItemsPublic, ItemUpdate
 
 router = APIRouter(
     prefix="/items",
     tags=["items"],
     dependencies=[Depends(get_current_user)],
+    responses=error_responses(
+        CredentialsValidationError,
+        InactiveUserError,
+    ),
 )
 
 
@@ -43,7 +50,11 @@ def read_items(
     return ItemsPublic(data=public_items, count=count)
 
 
-@router.get("/{id}", response_model=ItemPublic)
+@router.get(
+    "/{id}",
+    response_model=ItemPublic,
+    responses=error_responses(ItemNotFoundError, ItemPermissionError),
+)
 def read_item(
     session: SessionDep, current_user: CurrentUser, id: uuid.UUID
 ) -> ItemPublic:
@@ -55,7 +66,11 @@ def read_item(
     return ItemPublic.model_validate(item)
 
 
-@router.put("/{id}", response_model=ItemPublic)
+@router.put(
+    "/{id}",
+    response_model=ItemPublic,
+    responses=error_responses(ItemNotFoundError, ItemPermissionError),
+)
 def update_item(
     *,
     session: SessionDep,
@@ -74,9 +89,11 @@ def update_item(
     return ItemPublic.model_validate(item)
 
 
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_item(
-    session: SessionDep, current_user: CurrentUser, id: uuid.UUID
-) -> None:
+@router.delete(
+    "/{id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=error_responses(ItemNotFoundError, ItemPermissionError),
+)
+def delete_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> None:
     """删除物品。"""
     service.delete_item(session=session, current_user=current_user, item_id=id)

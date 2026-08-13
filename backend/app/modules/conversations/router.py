@@ -4,8 +4,14 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Request, status
 
 from app.api.dependencies import SessionDep
+from app.api.responses import error_responses
 from app.modules.auth.dependencies import CurrentUser, get_current_user
+from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
 from app.modules.conversations import service
+from app.modules.conversations.exceptions import (
+    ConversationNotFoundError,
+    ConversationTitleGenerationError,
+)
 from app.modules.conversations.schemas import (
     ConversationDetailPublic,
     ConversationPublic,
@@ -13,11 +19,16 @@ from app.modules.conversations.schemas import (
     ConversationsPublic,
     ConversationTitleRequest,
 )
+from app.modules.files.exceptions import FileStorageUnavailableError
 
 router = APIRouter(
     prefix="/agent/conversations",
     tags=["agent"],
     dependencies=[Depends(get_current_user)],
+    responses=error_responses(
+        CredentialsValidationError,
+        InactiveUserError,
+    ),
 )
 
 
@@ -38,6 +49,10 @@ def create_conversation(
 @router.post(
     "/{conversation_id}/generate-title",
     response_model=ConversationPublic,
+    responses=error_responses(
+        ConversationNotFoundError,
+        ConversationTitleGenerationError,
+    ),
 )
 async def generate_conversation_title(
     request: Request,
@@ -83,7 +98,11 @@ def read_conversations(
     )
 
 
-@router.get("/{conversation_id}", response_model=ConversationDetailPublic)
+@router.get(
+    "/{conversation_id}",
+    response_model=ConversationDetailPublic,
+    responses=error_responses(ConversationNotFoundError),
+)
 async def read_conversation(
     request: Request,
     session: SessionDep,
@@ -99,7 +118,11 @@ async def read_conversation(
     )
 
 
-@router.patch("/{conversation_id}", response_model=ConversationPublic)
+@router.patch(
+    "/{conversation_id}",
+    response_model=ConversationPublic,
+    responses=error_responses(ConversationNotFoundError),
+)
 def rename_conversation(
     session: SessionDep,
     current_user: CurrentUser,
@@ -117,7 +140,11 @@ def rename_conversation(
     return service.to_public(conversation)
 
 
-@router.post("/{conversation_id}/archive", response_model=ConversationPublic)
+@router.post(
+    "/{conversation_id}/archive",
+    response_model=ConversationPublic,
+    responses=error_responses(ConversationNotFoundError),
+)
 def archive_conversation(
     session: SessionDep,
     current_user: CurrentUser,
@@ -133,7 +160,11 @@ def archive_conversation(
     return service.to_public(conversation)
 
 
-@router.post("/{conversation_id}/unarchive", response_model=ConversationPublic)
+@router.post(
+    "/{conversation_id}/unarchive",
+    response_model=ConversationPublic,
+    responses=error_responses(ConversationNotFoundError),
+)
 def unarchive_conversation(
     session: SessionDep,
     current_user: CurrentUser,
@@ -149,7 +180,14 @@ def unarchive_conversation(
     return service.to_public(conversation)
 
 
-@router.delete("/{conversation_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{conversation_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=error_responses(
+        ConversationNotFoundError,
+        FileStorageUnavailableError,
+    ),
+)
 async def delete_conversation(
     request: Request,
     session: SessionDep,

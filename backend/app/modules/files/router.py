@@ -3,21 +3,49 @@ import uuid
 from fastapi import APIRouter, status
 
 from app.api.dependencies import SessionDep
+from app.api.responses import error_responses
 from app.modules.auth.dependencies import CurrentUser
+from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
 from app.modules.files import object_storage, service
+from app.modules.files.exceptions import (
+    DocumentContentTooLargeError,
+    DocumentParsingError,
+    DocumentParsingUnavailableError,
+    FileContentTypeMismatchError,
+    FileNotFoundError,
+    FileSizeMismatchError,
+    FileStorageUnavailableError,
+    FileTypeNotAllowedError,
+    FileUploadIncompleteError,
+    SentFileDeletionForbiddenError,
+    TextFileEncodingError,
+    TextFileTooLargeError,
+)
 from app.modules.files.schemas import (
     FileCompletePublic,
     FileUploadPublic,
     FileUploadRequest,
 )
 
-router = APIRouter(prefix="/files", tags=["files"])
+router = APIRouter(
+    prefix="/files",
+    tags=["files"],
+    responses=error_responses(
+        CredentialsValidationError,
+        InactiveUserError,
+    ),
+)
 
 
 @router.post(
     "",
     response_model=FileUploadPublic,
     status_code=status.HTTP_201_CREATED,
+    responses=error_responses(
+        FileTypeNotAllowedError,
+        TextFileTooLargeError,
+        FileStorageUnavailableError,
+    ),
 )
 def create_file_upload(
     session: SessionDep,
@@ -38,7 +66,20 @@ def create_file_upload(
     )
 
 
-@router.post("/{file_id}/complete", response_model=FileCompletePublic)
+@router.post(
+    "/{file_id}/complete",
+    response_model=FileCompletePublic,
+    responses=error_responses(
+        FileNotFoundError,
+        FileSizeMismatchError,
+        FileContentTypeMismatchError,
+        TextFileEncodingError,
+        DocumentParsingError,
+        DocumentContentTooLargeError,
+        DocumentParsingUnavailableError,
+        FileStorageUnavailableError,
+    ),
+)
 async def complete_file_upload(
     session: SessionDep,
     current_user: CurrentUser,
@@ -54,7 +95,14 @@ async def complete_file_upload(
     return FileCompletePublic(id=stored_file.id, download_url=download_url)
 
 
-@router.get("/{file_id}", response_model=FileCompletePublic)
+@router.get(
+    "/{file_id}",
+    response_model=FileCompletePublic,
+    responses=error_responses(
+        FileNotFoundError,
+        FileUploadIncompleteError,
+    ),
+)
 def get_file_download_url(
     session: SessionDep,
     current_user: CurrentUser,
@@ -73,7 +121,15 @@ def get_file_download_url(
     )
 
 
-@router.delete("/{file_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{file_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=error_responses(
+        FileNotFoundError,
+        SentFileDeletionForbiddenError,
+        FileStorageUnavailableError,
+    ),
+)
 def delete_unreferenced_file(
     session: SessionDep,
     current_user: CurrentUser,

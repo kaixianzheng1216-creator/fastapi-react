@@ -12,7 +12,11 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import { useCurrentUser, UserProfile } from "@/components/user-info";
 
-export function ThreadListPopover() {
+export function ThreadListPopover({
+  onShowConversation,
+}: {
+  onShowConversation?: () => void;
+}) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const { open, setOpen } = useSidebar();
   const user = useCurrentUser();
@@ -41,7 +45,7 @@ export function ThreadListPopover() {
           align="start"
           className="flex max-h-[calc(100vh-28rem)] w-72 flex-col overflow-hidden p-2"
         >
-          <div className="overflow-y-auto px-1">
+          <div className="overflow-y-auto px-1" onClick={onShowConversation}>
             <ThreadList />
           </div>
           {user && (
@@ -54,6 +58,7 @@ export function ThreadListPopover() {
 
       <ThreadListNew
         className="size-9 justify-center px-0 data-active:hidden"
+        onClick={onShowConversation}
         aria-label="新对话"
       >
         <SquarePenIcon />

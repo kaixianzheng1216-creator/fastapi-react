@@ -4,8 +4,14 @@ from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.api.dependencies import SessionDep
+from app.api.responses import error_responses
 from app.modules.auth import service
 from app.modules.auth.dependencies import CurrentUser, get_current_user
+from app.modules.auth.exceptions import (
+    CredentialsValidationError,
+    InactiveUserError,
+    InvalidCredentialsError,
+)
 from app.modules.auth.schemas import Token
 from app.modules.users.schemas import UserPublic
 
@@ -14,10 +20,20 @@ public_router = APIRouter(tags=["login"])
 authenticated_router = APIRouter(
     tags=["login"],
     dependencies=[Depends(get_current_user)],
+    responses=error_responses(
+        CredentialsValidationError,
+        InactiveUserError,
+    ),
 )
 
 
-@public_router.post("/login/access-token")
+@public_router.post(
+    "/login/access-token",
+    responses=error_responses(
+        InvalidCredentialsError,
+        InactiveUserError,
+    ),
+)
 def login_access_token(
     session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> Token:

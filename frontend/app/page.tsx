@@ -1,6 +1,7 @@
 "use client";
 
 import { ConversationSidebar } from "@/components/conversation-sidebar";
+import { SkillBrowser } from "@/components/skill-browser";
 import { Thread } from "@/components/thread";
 import { ThreadHeader } from "@/components/thread-header";
 import { ThreadListPopover } from "@/components/thread-list-popover";
@@ -43,6 +44,9 @@ function ThreadWithSuggestions() {
 export default function Home() {
   const router = useRouter();
   const [authenticated, setAuthenticated] = useState(false);
+  const [activeView, setActiveView] = useState<"conversation" | "skills">(
+    "conversation",
+  );
 
   useEffect(() => {
     if (getAccessToken()) {
@@ -61,13 +65,31 @@ export default function Home() {
   return (
     <MyRuntimeProvider>
       <SidebarProvider defaultOpen className="h-full min-h-0">
-        <ThreadListSidebar />
+        <ThreadListSidebar
+          activeView={activeView}
+          onShowConversation={() => setActiveView("conversation")}
+          onShowSkills={() => setActiveView("skills")}
+        />
         <SidebarInset className="min-h-0">
-          <ThreadHeader />
-          <ThreadListPopover />
-          <div className="min-h-0 flex-1">
-            <ThreadWithSuggestions />
-          </div>
+          {activeView === "conversation" ? (
+            <>
+              <ThreadHeader />
+              <ThreadListPopover />
+              <div className="min-h-0 flex-1">
+                <ThreadWithSuggestions />
+              </div>
+            </>
+          ) : (
+            <>
+              <header className="flex h-14 items-center justify-center border-b">
+                <h1 className="text-sm font-medium">Skills</h1>
+              </header>
+              <ThreadListPopover
+                onShowConversation={() => setActiveView("conversation")}
+              />
+              <SkillBrowser />
+            </>
+          )}
         </SidebarInset>
       </SidebarProvider>
     </MyRuntimeProvider>

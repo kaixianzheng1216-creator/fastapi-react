@@ -283,6 +283,16 @@ export type ConversationsPublic = {
 };
 
 /**
+ * ErrorResponse
+ */
+export type ErrorResponse = {
+    /**
+     * Detail
+     */
+    detail: string;
+};
+
+/**
  * FileCompletePublic
  */
 export type FileCompletePublic = {
@@ -494,10 +504,6 @@ export type SkillFileNodePublic = {
      * Type
      */
     type: 'file' | 'folder';
-    /**
-     * Size
-     */
-    size?: number | null;
     /**
      * Children
      */
@@ -781,6 +787,10 @@ export type LoginLoginAccessTokenData = {
 
 export type LoginLoginAccessTokenErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
@@ -805,6 +815,10 @@ export type UsersRegisterUserData = {
 };
 
 export type UsersRegisterUserErrors = {
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
     /**
      * Validation Error
      */
@@ -847,6 +861,19 @@ export type LoginTestTokenData = {
     url: '/api/v1/login/test-token';
 };
 
+export type LoginTestTokenErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+};
+
+export type LoginTestTokenError = LoginTestTokenErrors[keyof LoginTestTokenErrors];
+
 export type LoginTestTokenResponses = {
     /**
      * Successful Response
@@ -863,6 +890,27 @@ export type UsersDeleteUserMeData = {
     url: '/api/v1/users/me';
 };
 
+export type UsersDeleteUserMeErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponse;
+};
+
+export type UsersDeleteUserMeError = UsersDeleteUserMeErrors[keyof UsersDeleteUserMeErrors];
+
 export type UsersDeleteUserMeResponses = {
     /**
      * Successful Response
@@ -878,6 +926,19 @@ export type UsersReadUserMeData = {
     query?: never;
     url: '/api/v1/users/me';
 };
+
+export type UsersReadUserMeErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+};
+
+export type UsersReadUserMeError = UsersReadUserMeErrors[keyof UsersReadUserMeErrors];
 
 export type UsersReadUserMeResponses = {
     /**
@@ -896,6 +957,18 @@ export type UsersUpdateUserMeData = {
 };
 
 export type UsersUpdateUserMeErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
     /**
      * Validation Error
      */
@@ -921,6 +994,14 @@ export type UsersUpdatePasswordMeData = {
 };
 
 export type UsersUpdatePasswordMeErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
     /**
      * Validation Error
      */
@@ -952,9 +1033,29 @@ export type UsersDeleteUserData = {
 
 export type UsersDeleteUserErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponse;
 };
 
 export type UsersDeleteUserError = UsersDeleteUserErrors[keyof UsersDeleteUserErrors];
@@ -981,6 +1082,22 @@ export type UsersReadUserByIdData = {
 };
 
 export type UsersReadUserByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
     /**
      * Validation Error
      */
@@ -1011,6 +1128,26 @@ export type UsersUpdateUserData = {
 };
 
 export type UsersUpdateUserErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
     /**
      * Validation Error
      */
@@ -1046,6 +1183,18 @@ export type UsersReadUsersData = {
 
 export type UsersReadUsersErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
@@ -1070,6 +1219,22 @@ export type UsersCreateUserData = {
 };
 
 export type UsersCreateUserErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
     /**
      * Validation Error
      */
@@ -1105,6 +1270,14 @@ export type ItemsReadItemsData = {
 
 export type ItemsReadItemsErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
@@ -1129,6 +1302,14 @@ export type ItemsCreateItemData = {
 };
 
 export type ItemsCreateItemErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
     /**
      * Validation Error
      */
@@ -1160,6 +1341,22 @@ export type ItemsDeleteItemData = {
 
 export type ItemsDeleteItemErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
@@ -1190,6 +1387,22 @@ export type ItemsReadItemData = {
 
 export type ItemsReadItemErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
@@ -1219,6 +1432,22 @@ export type ItemsUpdateItemData = {
 };
 
 export type ItemsUpdateItemErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
     /**
      * Validation Error
      */
@@ -1262,6 +1491,14 @@ export type AgentReadConversationsData = {
 
 export type AgentReadConversationsErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
@@ -1284,6 +1521,19 @@ export type AgentCreateConversationData = {
     query?: never;
     url: '/api/v1/agent/conversations';
 };
+
+export type AgentCreateConversationErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+};
+
+export type AgentCreateConversationError = AgentCreateConversationErrors[keyof AgentCreateConversationErrors];
 
 export type AgentCreateConversationResponses = {
     /**
@@ -1308,9 +1558,25 @@ export type AgentGenerateConversationTitleData = {
 
 export type AgentGenerateConversationTitleErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponse;
 };
 
 export type AgentGenerateConversationTitleError = AgentGenerateConversationTitleErrors[keyof AgentGenerateConversationTitleErrors];
@@ -1338,9 +1604,25 @@ export type AgentDeleteConversationData = {
 
 export type AgentDeleteConversationErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponse;
 };
 
 export type AgentDeleteConversationError = AgentDeleteConversationErrors[keyof AgentDeleteConversationErrors];
@@ -1367,6 +1649,18 @@ export type AgentReadConversationData = {
 };
 
 export type AgentReadConversationErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
     /**
      * Validation Error
      */
@@ -1398,6 +1692,18 @@ export type AgentRenameConversationData = {
 
 export type AgentRenameConversationErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
@@ -1427,6 +1733,18 @@ export type AgentArchiveConversationData = {
 };
 
 export type AgentArchiveConversationErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
     /**
      * Validation Error
      */
@@ -1458,6 +1776,18 @@ export type AgentUnarchiveConversationData = {
 
 export type AgentUnarchiveConversationErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
@@ -1483,9 +1813,21 @@ export type FilesCreateFileUploadData = {
 
 export type FilesCreateFileUploadErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponse;
 };
 
 export type FilesCreateFileUploadError = FilesCreateFileUploadErrors[keyof FilesCreateFileUploadErrors];
@@ -1513,9 +1855,25 @@ export type FilesCompleteFileUploadData = {
 
 export type FilesCompleteFileUploadErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponse;
 };
 
 export type FilesCompleteFileUploadError = FilesCompleteFileUploadErrors[keyof FilesCompleteFileUploadErrors];
@@ -1543,9 +1901,29 @@ export type FilesDeleteUnreferencedFileData = {
 
 export type FilesDeleteUnreferencedFileErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponse;
 };
 
 export type FilesDeleteUnreferencedFileError = FilesDeleteUnreferencedFileErrors[keyof FilesDeleteUnreferencedFileErrors];
@@ -1573,6 +1951,22 @@ export type FilesGetFileDownloadUrlData = {
 
 export type FilesGetFileDownloadUrlErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
@@ -1597,6 +1991,22 @@ export type SkillsCreateMdSkillData = {
 };
 
 export type SkillsCreateMdSkillErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Content Too Large
+     */
+    413: ErrorResponse;
     /**
      * Validation Error
      */
@@ -1623,6 +2033,22 @@ export type SkillsCreateZipSkillData = {
 
 export type SkillsCreateZipSkillErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Content Too Large
+     */
+    413: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
@@ -1645,6 +2071,27 @@ export type SkillsReadSkillsData = {
     query?: never;
     url: '/api/v1/skills';
 };
+
+export type SkillsReadSkillsErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Content Too Large
+     */
+    413: ErrorResponse;
+};
+
+export type SkillsReadSkillsError = SkillsReadSkillsErrors[keyof SkillsReadSkillsErrors];
 
 export type SkillsReadSkillsResponses = {
     /**
@@ -1670,6 +2117,18 @@ export type SkillsDeleteSkillData = {
 };
 
 export type SkillsDeleteSkillErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
     /**
      * Validation Error
      */
@@ -1700,6 +2159,22 @@ export type SkillsReadSkillData = {
 };
 
 export type SkillsReadSkillErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Content Too Large
+     */
+    413: ErrorResponse;
     /**
      * Validation Error
      */
@@ -1735,6 +2210,18 @@ export type SkillsReadSkillFileData = {
 
 export type SkillsReadSkillFileErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
@@ -1744,10 +2231,12 @@ export type SkillsReadSkillFileError = SkillsReadSkillFileErrors[keyof SkillsRea
 
 export type SkillsReadSkillFileResponses = {
     /**
-     * Successful Response
+     * Skill 文件内容
      */
-    200: unknown;
+    200: Blob | File;
 };
+
+export type SkillsReadSkillFileResponse = SkillsReadSkillFileResponses[keyof SkillsReadSkillFileResponses];
 
 export type AgentReadModelsData = {
     body?: never;
@@ -1755,6 +2244,23 @@ export type AgentReadModelsData = {
     query?: never;
     url: '/api/v1/agent/models';
 };
+
+export type AgentReadModelsErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponse;
+};
+
+export type AgentReadModelsError = AgentReadModelsErrors[keyof AgentReadModelsErrors];
 
 export type AgentReadModelsResponses = {
     /**
@@ -1773,6 +2279,18 @@ export type AgentChatData = {
 };
 
 export type AgentChatErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
     /**
      * Validation Error
      */

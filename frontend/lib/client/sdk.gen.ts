@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AgentArchiveConversationData, AgentArchiveConversationErrors, AgentArchiveConversationResponses, AgentChatData, AgentChatErrors, AgentChatResponses, AgentCreateConversationData, AgentCreateConversationResponses, AgentDeleteConversationData, AgentDeleteConversationErrors, AgentDeleteConversationResponses, AgentGenerateConversationTitleData, AgentGenerateConversationTitleErrors, AgentGenerateConversationTitleResponses, AgentReadConversationData, AgentReadConversationErrors, AgentReadConversationResponses, AgentReadConversationsData, AgentReadConversationsErrors, AgentReadConversationsResponses, AgentReadModelsData, AgentReadModelsResponses, AgentRenameConversationData, AgentRenameConversationErrors, AgentRenameConversationResponses, AgentUnarchiveConversationData, AgentUnarchiveConversationErrors, AgentUnarchiveConversationResponses, FilesCompleteFileUploadData, FilesCompleteFileUploadErrors, FilesCompleteFileUploadResponses, FilesCreateFileUploadData, FilesCreateFileUploadErrors, FilesCreateFileUploadResponses, FilesDeleteUnreferencedFileData, FilesDeleteUnreferencedFileErrors, FilesDeleteUnreferencedFileResponses, FilesGetFileDownloadUrlData, FilesGetFileDownloadUrlErrors, FilesGetFileDownloadUrlResponses, ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginTestTokenData, LoginTestTokenResponses, SkillsCreateMdSkillData, SkillsCreateMdSkillErrors, SkillsCreateMdSkillResponses, SkillsCreateZipSkillData, SkillsCreateZipSkillErrors, SkillsCreateZipSkillResponses, SkillsDeleteSkillData, SkillsDeleteSkillErrors, SkillsDeleteSkillResponses, SkillsReadSkillData, SkillsReadSkillErrors, SkillsReadSkillFileData, SkillsReadSkillFileErrors, SkillsReadSkillFileResponses, SkillsReadSkillResponses, SkillsReadSkillsData, SkillsReadSkillsResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
+import type { AgentArchiveConversationData, AgentArchiveConversationErrors, AgentArchiveConversationResponses, AgentChatData, AgentChatErrors, AgentChatResponses, AgentCreateConversationData, AgentCreateConversationErrors, AgentCreateConversationResponses, AgentDeleteConversationData, AgentDeleteConversationErrors, AgentDeleteConversationResponses, AgentGenerateConversationTitleData, AgentGenerateConversationTitleErrors, AgentGenerateConversationTitleResponses, AgentReadConversationData, AgentReadConversationErrors, AgentReadConversationResponses, AgentReadConversationsData, AgentReadConversationsErrors, AgentReadConversationsResponses, AgentReadModelsData, AgentReadModelsErrors, AgentReadModelsResponses, AgentRenameConversationData, AgentRenameConversationErrors, AgentRenameConversationResponses, AgentUnarchiveConversationData, AgentUnarchiveConversationErrors, AgentUnarchiveConversationResponses, FilesCompleteFileUploadData, FilesCompleteFileUploadErrors, FilesCompleteFileUploadResponses, FilesCreateFileUploadData, FilesCreateFileUploadErrors, FilesCreateFileUploadResponses, FilesDeleteUnreferencedFileData, FilesDeleteUnreferencedFileErrors, FilesDeleteUnreferencedFileResponses, FilesGetFileDownloadUrlData, FilesGetFileDownloadUrlErrors, FilesGetFileDownloadUrlResponses, ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginTestTokenData, LoginTestTokenErrors, LoginTestTokenResponses, SkillsCreateMdSkillData, SkillsCreateMdSkillErrors, SkillsCreateMdSkillResponses, SkillsCreateZipSkillData, SkillsCreateZipSkillErrors, SkillsCreateZipSkillResponses, SkillsDeleteSkillData, SkillsDeleteSkillErrors, SkillsDeleteSkillResponses, SkillsReadSkillData, SkillsReadSkillErrors, SkillsReadSkillFileData, SkillsReadSkillFileErrors, SkillsReadSkillFileResponses, SkillsReadSkillResponses, SkillsReadSkillsData, SkillsReadSkillsErrors, SkillsReadSkillsResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeErrors, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeErrors, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -57,7 +57,7 @@ export const utilsHealthCheck = <ThrowOnError extends boolean = false>(options?:
  *
  * 测试访问令牌
  */
-export const loginTestToken = <ThrowOnError extends boolean = false>(options?: Options<LoginTestTokenData, ThrowOnError>): RequestResult<LoginTestTokenResponses, unknown, ThrowOnError> => (options?.client ?? client).post<LoginTestTokenResponses, unknown, ThrowOnError>({
+export const loginTestToken = <ThrowOnError extends boolean = false>(options?: Options<LoginTestTokenData, ThrowOnError>): RequestResult<LoginTestTokenResponses, LoginTestTokenErrors, ThrowOnError> => (options?.client ?? client).post<LoginTestTokenResponses, LoginTestTokenErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/login/test-token',
     ...options
@@ -68,7 +68,7 @@ export const loginTestToken = <ThrowOnError extends boolean = false>(options?: O
  *
  * 删除当前用户。
  */
-export const usersDeleteUserMe = <ThrowOnError extends boolean = false>(options?: Options<UsersDeleteUserMeData, ThrowOnError>): RequestResult<UsersDeleteUserMeResponses, unknown, ThrowOnError> => (options?.client ?? client).delete<UsersDeleteUserMeResponses, unknown, ThrowOnError>({
+export const usersDeleteUserMe = <ThrowOnError extends boolean = false>(options?: Options<UsersDeleteUserMeData, ThrowOnError>): RequestResult<UsersDeleteUserMeResponses, UsersDeleteUserMeErrors, ThrowOnError> => (options?.client ?? client).delete<UsersDeleteUserMeResponses, UsersDeleteUserMeErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/users/me',
     ...options
@@ -79,7 +79,7 @@ export const usersDeleteUserMe = <ThrowOnError extends boolean = false>(options?
  *
  * 获取当前用户。
  */
-export const usersReadUserMe = <ThrowOnError extends boolean = false>(options?: Options<UsersReadUserMeData, ThrowOnError>): RequestResult<UsersReadUserMeResponses, unknown, ThrowOnError> => (options?.client ?? client).get<UsersReadUserMeResponses, unknown, ThrowOnError>({
+export const usersReadUserMe = <ThrowOnError extends boolean = false>(options?: Options<UsersReadUserMeData, ThrowOnError>): RequestResult<UsersReadUserMeResponses, UsersReadUserMeErrors, ThrowOnError> => (options?.client ?? client).get<UsersReadUserMeResponses, UsersReadUserMeErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/users/me',
     ...options
@@ -257,7 +257,7 @@ export const agentReadConversations = <ThrowOnError extends boolean = false>(opt
  *
  * 创建会话。
  */
-export const agentCreateConversation = <ThrowOnError extends boolean = false>(options?: Options<AgentCreateConversationData, ThrowOnError>): RequestResult<AgentCreateConversationResponses, unknown, ThrowOnError> => (options?.client ?? client).post<AgentCreateConversationResponses, unknown, ThrowOnError>({
+export const agentCreateConversation = <ThrowOnError extends boolean = false>(options?: Options<AgentCreateConversationData, ThrowOnError>): RequestResult<AgentCreateConversationResponses, AgentCreateConversationErrors, ThrowOnError> => (options?.client ?? client).post<AgentCreateConversationResponses, AgentCreateConversationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/agent/conversations',
     ...options
@@ -421,7 +421,7 @@ export const skillsCreateZipSkill = <ThrowOnError extends boolean = false>(optio
  *
  * 读取当前用户的 Skill 列表。
  */
-export const skillsReadSkills = <ThrowOnError extends boolean = false>(options?: Options<SkillsReadSkillsData, ThrowOnError>): RequestResult<SkillsReadSkillsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<SkillsReadSkillsResponses, unknown, ThrowOnError>({
+export const skillsReadSkills = <ThrowOnError extends boolean = false>(options?: Options<SkillsReadSkillsData, ThrowOnError>): RequestResult<SkillsReadSkillsResponses, SkillsReadSkillsErrors, ThrowOnError> => (options?.client ?? client).get<SkillsReadSkillsResponses, SkillsReadSkillsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/skills',
     ...options
@@ -465,7 +465,7 @@ export const skillsReadSkillFile = <ThrowOnError extends boolean = false>(option
  *
  * 读取可用模型。
  */
-export const agentReadModels = <ThrowOnError extends boolean = false>(options?: Options<AgentReadModelsData, ThrowOnError>): RequestResult<AgentReadModelsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<AgentReadModelsResponses, unknown, ThrowOnError>({
+export const agentReadModels = <ThrowOnError extends boolean = false>(options?: Options<AgentReadModelsData, ThrowOnError>): RequestResult<AgentReadModelsResponses, AgentReadModelsErrors, ThrowOnError> => (options?.client ?? client).get<AgentReadModelsResponses, AgentReadModelsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/agent/models',
     ...options
