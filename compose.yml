@@ -1,6 +1,3 @@
-include:
-  - compose.litellm.yml
-
 services:
   db:
     image: postgres:18
@@ -33,6 +30,24 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
+
+  litellm:
+    image: docker.litellm.ai/berriai/litellm:v1.94.0
+    restart: always
+    command: --config /app/config.yaml
+    volumes:
+      - ./litellm.config.yaml:/app/config.yaml:ro
+    environment:
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY?Variable not set}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY?Variable not set}
+      MOONSHOT_API_KEY: ${MOONSHOT_API_KEY?Variable not set}
+      FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY?Variable not set}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/readiness')"]
+      interval: 5s
+      timeout: 5s
+      start_period: 90s
+      retries: 10
 
   prestart:
     image: backend

@@ -29,5 +29,5 @@ repos:
         name: mypy
         entry: uv run --directory backend mypy app scripts
         language: system
-        files: ^backend/.*\.py$
+        files: ^backend/(app|scripts)/.*\.py$
         pass_filenames: false

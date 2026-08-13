@@ -1,7 +1,6 @@
 [project]
 name = "app"
 version = "0.1.0"
-description = ""
 requires-python = ">=3.14,<4.0"
 dependencies = [
     "fastapi>=0.138.1,<1.0.0",
@@ -46,11 +45,11 @@ build-backend = "hatchling.build"
 
 [tool.mypy]
 strict = true
-exclude = ["venv", ".venv", "alembic/versions", "app/modules/agent/skills"]
+exclude = "app/modules/agent/skills"
 
 [tool.ruff]
 target-version = "py314"
-exclude = ["alembic/versions", "app/modules/agent/skills"]
+extend-exclude = ["alembic/versions", "app/modules/agent/skills"]
 
 [tool.ruff.lint]
 select = [
@@ -70,7 +69,3 @@ ignore = [
     "W191",  # 缩进中包含制表符
     "B904",  # 允许 HTTPException 不使用 from e 直接抛出
 ]
-
-[tool.ruff.lint.pyupgrade]
-# 即使文件导入了 `from __future__ import annotations`，也保留运行时类型。
-keep-runtime-typing = true

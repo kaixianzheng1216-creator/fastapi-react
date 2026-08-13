@@ -21,7 +21,6 @@ services:
           action: sync
           target: /app/backend
           ignore:
-            - ./backend/.venv
             - .venv
             - pyproject.toml
         - path: ./backend/pyproject.toml
@@ -37,8 +36,6 @@ services:
           action: sync
           target: /app
           ignore:
-            - node_modules/
-            - .next/
             - package.json
             - package-lock.json
         - path: ./frontend/package.json
