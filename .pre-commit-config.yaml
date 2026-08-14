@@ -15,14 +15,14 @@ repos:
         name: ruff check
         entry: uv run ruff check --fix --force-exclude
         language: system
-        files: ^backend/(app|scripts)/
+        files: ^backend/(app/|scripts/|alembic/env\.py$)
         types: [python]
 
       - id: ruff-format
         name: ruff format
         entry: uv run ruff format --force-exclude
         language: system
-        files: ^backend/(app|scripts)/
+        files: ^backend/(app/|scripts/|alembic/env\.py$)
         types: [python]
 
       - id: mypy

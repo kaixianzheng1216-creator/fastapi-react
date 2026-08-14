@@ -80,7 +80,7 @@ wheels = [
 [[package]]
 name = "app"
 version = "0.1.0"
-source = { editable = "backend" }
+source = { virtual = "backend" }
 dependencies = [
     { name = "alembic" },
     { name = "assistant-stream" },

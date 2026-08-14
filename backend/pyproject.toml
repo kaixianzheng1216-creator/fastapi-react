@@ -39,10 +39,6 @@ dev = [
     "types-PyYAML>=6.0.12.20250915",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [tool.mypy]
 strict = true
 exclude = "app/modules/agent/skills"
@@ -67,5 +63,4 @@ ignore = [
     "E501",  # 行过长，由格式化工具处理
     "B008",  # 不要在参数默认值中调用函数
     "W191",  # 缩进中包含制表符
-    "B904",  # 允许 HTTPException 不使用 from e 直接抛出
 ]

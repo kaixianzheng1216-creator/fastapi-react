@@ -7,6 +7,9 @@ services:
   docling:
     restart: "no"
 
+  litellm:
+    restart: "no"
+
   backend:
     restart: "no"
     command:
@@ -21,7 +24,6 @@ services:
           action: sync
           target: /app/backend
           ignore:
-            - .venv
             - pyproject.toml
         - path: ./backend/pyproject.toml
           action: rebuild

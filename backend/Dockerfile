@@ -16,7 +16,7 @@ COPY pyproject.toml uv.lock ./
 COPY backend/pyproject.toml backend/pyproject.toml
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-dev --no-install-workspace --package app
+    uv sync --locked --no-dev --package app
 
 COPY backend/scripts /app/backend/scripts
 COPY backend/alembic.ini /app/backend/alembic.ini
