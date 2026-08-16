@@ -25,6 +25,11 @@ class SkillSummaryPublic(BaseModel):
     description: str
 
 
+class SkillsPublic(BaseModel):
+    data: list[SkillSummaryPublic]
+    count: int
+
+
 class SkillFileNodePublic(BaseModel):
     name: str
     path: str

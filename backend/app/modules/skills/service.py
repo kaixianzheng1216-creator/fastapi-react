@@ -91,7 +91,10 @@ async def list_skills(
     *,
     store: BaseStore,
     user_id: uuid.UUID,
-) -> list[SkillSummaryPublic]:
+    offset: int,
+    limit: int,
+    search: str | None = None,
+) -> tuple[list[SkillSummaryPublic], int]:
     items = await _search_user_skill_items(store=store, user_id=user_id)
 
     skill_md_paths: list[str] = []
@@ -103,10 +106,9 @@ async def list_skills(
     skill_md_paths.sort()
 
     if not skill_md_paths:
-        return []
+        return [], 0
 
     backend = _get_store_backend(store=store, user_id=user_id)
-
     downloads = await backend.adownload_files(skill_md_paths)
 
     skills: list[SkillSummaryPublic] = []
@@ -124,7 +126,21 @@ async def list_skills(
             )
         )
 
-    return skills
+    if search is not None:
+        normalized_search = search.casefold()
+
+        filtered_skills: list[SkillSummaryPublic] = []
+
+        for skill in skills:
+            if (
+                normalized_search in skill.name.casefold()
+                or normalized_search in skill.description.casefold()
+            ):
+                filtered_skills.append(skill)
+
+        skills = filtered_skills
+
+    return skills[offset : offset + limit], len(skills)
 
 
 async def get_skill(

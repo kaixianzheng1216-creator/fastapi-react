@@ -495,10 +495,6 @@ export type SkillFileNodePublic = {
      */
     type: 'file' | 'folder';
     /**
-     * Size
-     */
-    size?: number | null;
-    /**
      * Children
      */
     children?: Array<SkillFileNodePublic> | null;
@@ -558,6 +554,20 @@ export type SkillSummaryPublic = {
      * Description
      */
     description: string;
+};
+
+/**
+ * SkillsPublic
+ */
+export type SkillsPublic = {
+    /**
+     * Data
+     */
+    data: Array<SkillSummaryPublic>;
+    /**
+     * Count
+     */
+    count: number;
 };
 
 /**
@@ -1642,17 +1652,37 @@ export type SkillsCreateZipSkillResponse = SkillsCreateZipSkillResponses[keyof S
 export type SkillsReadSkillsData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Offset
+         */
+        offset?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Search
+         */
+        search?: string | null;
+    };
     url: '/api/v1/skills';
 };
 
+export type SkillsReadSkillsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SkillsReadSkillsError = SkillsReadSkillsErrors[keyof SkillsReadSkillsErrors];
+
 export type SkillsReadSkillsResponses = {
     /**
-     * Response Skills-Read Skills
-     *
      * Successful Response
      */
-    200: Array<SkillSummaryPublic>;
+    200: SkillsPublic;
 };
 
 export type SkillsReadSkillsResponse = SkillsReadSkillsResponses[keyof SkillsReadSkillsResponses];

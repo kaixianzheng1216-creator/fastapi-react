@@ -1,6 +1,7 @@
 import mimetypes
+from typing import Annotated
 
-from fastapi import APIRouter, File, UploadFile, status
+from fastapi import APIRouter, File, Query, UploadFile, status
 from fastapi.responses import Response
 
 from app.api.dependencies import StoreDep
@@ -9,7 +10,7 @@ from app.modules.skills import service
 from app.modules.skills.schemas import (
     SkillMdRequest,
     SkillPublic,
-    SkillSummaryPublic,
+    SkillsPublic,
 )
 
 router = APIRouter(prefix="/skills", tags=["skills"])
@@ -53,13 +54,24 @@ async def create_zip_skill(
     )
 
 
-@router.get("", response_model=list[SkillSummaryPublic])
+@router.get("", response_model=SkillsPublic)
 async def read_skills(
     store: StoreDep,
     current_user: CurrentUser,
-) -> list[SkillSummaryPublic]:
+    offset: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    search: Annotated[str | None, Query(min_length=1, max_length=100)] = None,
+) -> SkillsPublic:
     """读取当前用户的 Skill 列表。"""
-    return await service.list_skills(store=store, user_id=current_user.id)
+    skills, count = await service.list_skills(
+        store=store,
+        user_id=current_user.id,
+        offset=offset,
+        limit=limit,
+        search=search,
+    )
+
+    return SkillsPublic(data=skills, count=count)
 
 
 @router.get(
