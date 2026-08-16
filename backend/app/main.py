@@ -13,7 +13,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.api.exception_handlers import add_exception_handlers
 from app.api.router import api_router
-from app.core.config import settings
+from app.core.config import API_V1_PREFIX, PROJECT_NAME, settings
 from app.modules.agent.agent import create_agent, create_chat_model
 from app.modules.files.cleanup import run_file_cleanup
 
@@ -63,8 +63,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    title=PROJECT_NAME,
+    openapi_url=f"{API_V1_PREFIX}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id,
     lifespan=lifespan,
     docs_url=None,
@@ -77,8 +77,8 @@ add_exception_handlers(app)
 @app.get("/scalar", include_in_schema=False)
 async def scalar_html() -> HTMLResponse:
     return get_scalar_api_reference(
-        openapi_url=f"{settings.API_V1_STR}/openapi.json",
-        title=settings.PROJECT_NAME,
+        openapi_url=f"{API_V1_PREFIX}/openapi.json",
+        title=PROJECT_NAME,
     )
 
 
@@ -91,4 +91,4 @@ if settings.all_cors_origins:
         allow_headers=["*"],
     )
 
-app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(api_router, prefix=API_V1_PREFIX)

@@ -3,7 +3,7 @@ from datetime import timedelta
 from sqlmodel import Session
 
 from app.core import security
-from app.core.config import settings
+from app.core.config import ACCESS_TOKEN_EXPIRE_MINUTES
 from app.modules.auth.exceptions import InactiveUserError, InvalidCredentialsError
 from app.modules.users import service as users_service
 
@@ -31,7 +31,7 @@ def login(*, session: Session, username: str, password: str) -> str:
     if not user.is_active:
         raise InactiveUserError
 
-    expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(user.id, expires_delta=expires)
 
     return access_token

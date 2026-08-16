@@ -8,14 +8,14 @@ from pydantic import ValidationError
 
 from app.api.dependencies import SessionDep
 from app.core import security
-from app.core.config import settings
+from app.core.config import API_V1_PREFIX, settings
 from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
 from app.modules.auth.schemas import TokenPayload
 from app.modules.users.exceptions import InsufficientPrivilegesError
 from app.modules.users.models import User
 
 reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/login/access-token", auto_error=False
+    tokenUrl=f"{API_V1_PREFIX}/login/access-token", auto_error=False
 )
 TokenDep = Annotated[str | None, Depends(reusable_oauth2)]
 

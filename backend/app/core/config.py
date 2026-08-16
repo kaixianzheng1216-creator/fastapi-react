@@ -12,6 +12,11 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+API_V1_PREFIX = "/api/v1"
+# 60 分钟 * 24 小时 * 8 天 = 8 天
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 8
+PROJECT_NAME = "FastAPI React Project"
+
 
 def parse_cors(v: Any) -> list[str] | str:
     if isinstance(v, str) and not v.startswith("["):
@@ -30,10 +35,7 @@ class Settings(BaseSettings):
         env_ignore_empty=True,
         extra="ignore",
     )
-    API_V1_STR: str = "/api/v1"
     SECRET_KEY: str
-    # 60 分钟 * 24 小时 * 8 天 = 8 天
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     ENVIRONMENT: Literal["local", "production"] = "local"
 
     BACKEND_CORS_ORIGINS: Annotated[
@@ -47,7 +49,6 @@ class Settings(BaseSettings):
 
         return origins
 
-    PROJECT_NAME: str
     POSTGRES_SERVER: str
     POSTGRES_PORT: int = 5432
     POSTGRES_USER: str
