@@ -16,6 +16,7 @@ class AgentSettings(BaseSettings):
     DEFAULT_MODEL_NAME: str
 
     E2B_API_KEY: SecretStr
-    E2B_TEMPLATE: str | None = None
+    E2B_TEMPLATE: str
+
 
 settings = AgentSettings.model_validate({})

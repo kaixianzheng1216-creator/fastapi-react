@@ -75,8 +75,6 @@ def update_item(
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_item(
-    session: SessionDep, current_user: CurrentUser, id: uuid.UUID
-) -> None:
+def delete_item(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> None:
     """删除物品。"""
     service.delete_item(session=session, current_user=current_user, item_id=id)

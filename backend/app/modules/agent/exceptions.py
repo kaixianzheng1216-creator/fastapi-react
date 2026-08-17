@@ -26,4 +26,3 @@ class ThinkingNotSupportedError(ApplicationError):
 class ImageInputNotSupportedError(ApplicationError):
     status_code = status.HTTP_400_BAD_REQUEST
     detail = "当前模型不支持图片，请切换支持图片识别的模型"
-

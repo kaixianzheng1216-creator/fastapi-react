@@ -13,7 +13,7 @@ BUILTIN_SKILLS_DIRECTORY = Path(__file__).parent / "skills"
 BUILTIN_SKILLS_PATH = "/skills/builtin/"
 USER_SKILLS_PATH = "/skills/user/"
 SKILL_SYNC_MARKER_PATH = "/skills/.synced"
-SKILL_SANDBOX_ROOT = "/skills"
+USER_SKILLS_DIRECTORY = USER_SKILLS_PATH.rstrip("/")
 
 
 class SkillSandboxMiddleware(AgentMiddleware[Any, Any, Any]):
@@ -49,16 +49,13 @@ class SkillSandboxMiddleware(AgentMiddleware[Any, Any, Any]):
             user_id=runtime.context["user_id"],
         )
 
-        skill_files = await asyncio.to_thread(_read_builtin_skill_files)
-
-        for path, content in user_skill_files:
-            skill_files.append((f"{USER_SKILLS_PATH.rstrip('/')}{path}", content))
+        skill_files = [
+            (f"{USER_SKILLS_DIRECTORY}{path}", content)
+            for path, content in user_skill_files
+        ]
 
         reset = await sandbox.aexecute(
-            f"rm -rf -- {SKILL_SANDBOX_ROOT}/builtin "
-            f"{SKILL_SANDBOX_ROOT}/user && "
-            f"mkdir -p -- {SKILL_SANDBOX_ROOT}/builtin "
-            f"{SKILL_SANDBOX_ROOT}/user"
+            f"rm -rf -- {USER_SKILLS_DIRECTORY} && mkdir -p -- {USER_SKILLS_DIRECTORY}"
         )
 
         if reset.exit_code != 0:
@@ -76,22 +73,3 @@ class SkillSandboxMiddleware(AgentMiddleware[Any, Any, Any]):
 
         if marker_upload.error is not None:
             raise RuntimeError("无法同步 Skill 到沙箱")
-
-
-def _read_builtin_skill_files() -> list[tuple[str, bytes]]:
-    skill_files: list[tuple[str, bytes]] = []
-
-    for file_path in sorted(BUILTIN_SKILLS_DIRECTORY.rglob("*")):
-        if not file_path.is_file():
-            continue
-
-        relative_path = file_path.relative_to(BUILTIN_SKILLS_DIRECTORY).as_posix()
-
-        skill_files.append(
-            (
-                f"{BUILTIN_SKILLS_PATH}{relative_path}",
-                file_path.read_bytes(),
-            )
-        )
-
-    return skill_files
