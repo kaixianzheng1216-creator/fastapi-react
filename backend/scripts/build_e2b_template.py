@@ -12,6 +12,8 @@ template = (
         "/skills/builtin",
         user="user",
     )
+    .make_dir("/skills/user", user="root")
+    .run_cmd("chown user:user /skills /skills/user", user="root")
 )
 
 Template.build(
