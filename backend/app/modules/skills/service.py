@@ -1,6 +1,7 @@
 import stat
 import uuid
 import zipfile
+from hashlib import sha256
 from io import BytesIO
 from pathlib import PurePosixPath
 
@@ -273,6 +274,30 @@ async def download_user_skill_files(
         files.append((download.path, download.content))
 
     return files
+
+
+async def get_user_skills_version(
+    *,
+    store: BaseStore,
+    user_id: uuid.UUID,
+) -> str:
+    """返回当前用户所有已完成 Skill 的稳定版本指纹。"""
+    items = await _search_user_skill_items(store=store, user_id=user_id)
+
+    version = sha256()
+
+    skill_items = sorted(
+        (item for item in items if item.key.endswith("/SKILL.md")),
+        key=lambda item: item.key,
+    )
+
+    for item in skill_items:
+        version.update(item.key.encode())
+        version.update(b"\0")
+        version.update(item.updated_at.isoformat().encode())
+        version.update(b"\0")
+
+    return version.hexdigest()
 
 
 def get_skill_namespace(user_id: uuid.UUID) -> tuple[str, str]:
