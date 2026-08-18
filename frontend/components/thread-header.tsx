@@ -2,7 +2,9 @@
 
 import { AppHeader } from "@/components/app-header";
 import { ThreadListItemMore } from "@/components/thread-list";
+import { Button } from "@/components/ui/button";
 import { useAuiState } from "@assistant-ui/react";
+import { Columns2Icon } from "lucide-react";
 
 function useMainThreadTitle(fallback: string): string {
   return useAuiState((s) => {
@@ -12,31 +14,47 @@ function useMainThreadTitle(fallback: string): string {
   });
 }
 
-function useMainThreadPersisted(): boolean {
+function useMainThreadInitialized(): boolean {
   return useAuiState((state) => {
     const mainThreadId = state.threads.mainThreadId;
     const item = state.threads.threadItems.find(
       (item) => item.id === mainThreadId,
     );
-    return item?.custom?.persisted === true;
+    return item?.remoteId !== undefined;
   });
 }
 
-export function ThreadHeader() {
+export function ThreadHeader({
+  sidebarOpen,
+  onSidebarOpenChange,
+}: {
+  sidebarOpen: boolean;
+  onSidebarOpenChange: (open: boolean) => void;
+}) {
   const title = useMainThreadTitle("新对话");
-  const isPersisted = useMainThreadPersisted();
+  const isInitialized = useMainThreadInitialized();
 
   return (
     <AppHeader
       title={title}
       actions={
-        <ThreadListItemMore
-          disabled={!isPersisted}
-          sharedFocusGroup={false}
-          side="bottom"
-          align="end"
-          triggerClassName="shrink-0"
-        />
+        <div className="flex items-center">
+          <ThreadListItemMore
+            disabled={!isInitialized}
+            sharedFocusGroup={false}
+            side="bottom"
+            align="end"
+            triggerClassName="shrink-0"
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={sidebarOpen ? "收起会话侧栏" : "展开会话侧栏"}
+            onClick={() => onSidebarOpenChange(!sidebarOpen)}
+          >
+            <Columns2Icon />
+          </Button>
+        </div>
       }
     />
   );

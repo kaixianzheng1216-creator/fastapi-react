@@ -5,10 +5,10 @@ import { TodoList } from "@/components/todo-list";
 import { Card } from "@/components/ui/card";
 import { useAuiState } from "@assistant-ui/react";
 
-export function ConversationSidebar() {
+export function ConversationSidebar({ open }: { open: boolean }) {
   const hasStarted = useAuiState((state) => state.thread.messages.length > 0);
 
-  if (!hasStarted) return null;
+  if (!open || !hasStarted) return null;
 
   return (
     <aside className="hidden w-80 justify-self-end p-4 2xl:block">

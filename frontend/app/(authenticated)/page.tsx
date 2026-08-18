@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
+
 import { ConversationSidebar } from "@/components/conversation-sidebar";
 import { Thread } from "@/components/thread";
 import { ThreadHeader } from "@/components/thread-header";
 import { AuiProvider, Suggestions, useAui } from "@assistant-ui/react";
 
-function ThreadWithSuggestions() {
+function ThreadWithSuggestions({ sidebarOpen }: { sidebarOpen: boolean }) {
   const aui = useAui({
     suggestions: Suggestions([
       {
@@ -28,18 +30,23 @@ function ThreadWithSuggestions() {
         <div className="min-h-0 min-w-0">
           <Thread />
         </div>
-        <ConversationSidebar />
+        <ConversationSidebar open={sidebarOpen} />
       </div>
     </AuiProvider>
   );
 }
 
 export default function Home() {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
   return (
     <>
-      <ThreadHeader />
+      <ThreadHeader
+        sidebarOpen={sidebarOpen}
+        onSidebarOpenChange={setSidebarOpen}
+      />
       <div className="min-h-0 flex-1">
-        <ThreadWithSuggestions />
+        <ThreadWithSuggestions sidebarOpen={sidebarOpen} />
       </div>
     </>
   );
