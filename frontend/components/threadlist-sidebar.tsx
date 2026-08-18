@@ -5,7 +5,7 @@ import {
   ArchiveIcon,
   ChevronRightIcon,
   LogOutIcon,
-  SparklesIcon,
+  PuzzleIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -65,7 +65,7 @@ export function ThreadListSidebar({
                 isActive={pathname.startsWith("/skills")}
               >
                 <Link href="/skills">
-                  <SparklesIcon />
+                  <PuzzleIcon />
                   <span>技能</span>
                 </Link>
               </SidebarItemButton>
