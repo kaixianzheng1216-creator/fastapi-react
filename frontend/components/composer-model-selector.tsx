@@ -1,9 +1,8 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { ModelSelector } from "@/components/model-selector";
-import { getAccessToken } from "@/lib/auth";
-import { agentReadModels, type AgentModelsPublic } from "@/lib/client";
-import { useEffect, useState } from "react";
+import { agentReadModels } from "@/lib/client";
 
 const THINKING_OPTIONS = [
   { id: "disabled", name: "关闭" },
@@ -11,14 +10,18 @@ const THINKING_OPTIONS = [
 ] as const;
 
 export function ComposerModelSelector() {
-  const [models, setModels] = useState<AgentModelsPublic>();
+  const { data: models } = useQuery({
+    queryKey: ["models"],
+    queryFn: async () => {
+      const { data } = await agentReadModels({
+        throwOnError: true,
+      });
 
-  useEffect(() => {
-    void agentReadModels({
-      auth: getAccessToken() ?? undefined,
-      throwOnError: true,
-    }).then(({ data }) => setModels(data));
-  }, []);
+      return data;
+    },
+    retry: false,
+    staleTime: Infinity,
+  });
 
   if (!models) return null;
 

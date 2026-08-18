@@ -1,8 +1,14 @@
 "use client";
 
 import type * as React from "react";
-import { ArchiveIcon, ChevronRightIcon, LogOutIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {
+  ArchiveIcon,
+  ChevronRightIcon,
+  LogOutIcon,
+  SparklesIcon,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   ThreadListItems,
@@ -10,6 +16,7 @@ import {
   ThreadListRoot,
   ThreadListSearch,
 } from "@/components/thread-list";
+import { SidebarItemButton } from "@/components/sidebar-item-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +34,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { clearAccessToken } from "@/lib/auth";
 import { useCurrentUser, UserProfile } from "@/components/user-info";
@@ -34,6 +42,7 @@ import { useCurrentUser, UserProfile } from "@/components/user-info";
 export function ThreadListSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
   const router = useRouter();
   const user = useCurrentUser();
   const [isArchivedDialogOpen, setIsArchivedDialogOpen] = useState(false);
@@ -49,41 +58,53 @@ export function ThreadListSidebar({
         <SidebarHeader className="p-3 pb-2">
           <ThreadListSearch />
           <ThreadListNew />
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarItemButton
+                asChild
+                isActive={pathname.startsWith("/skills")}
+              >
+                <Link href="/skills">
+                  <SparklesIcon />
+                  <span>技能</span>
+                </Link>
+              </SidebarItemButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         </SidebarHeader>
         <SidebarContent className="px-3 pb-3">
           <ThreadListItems />
         </SidebarContent>
       </ThreadListRoot>
       <SidebarRail />
-      <SidebarFooter className="border-t">
-        {user && (
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton size="lg">
-                    <UserProfile user={user} />
-                    <ChevronRightIcon />
-                  </SidebarMenuButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="top" align="start" className="w-48">
-                  <DropdownMenuItem
-                    onSelect={() => setIsArchivedDialogOpen(true)}
-                  >
-                    <ArchiveIcon />
-                    已归档对话
-                  </DropdownMenuItem>
-                  <AppearanceMenu />
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logOut}>
-                    <LogOutIcon />
-                    退出登录
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        )}
+      <SidebarSeparator />
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton size="lg">
+                  <UserProfile user={user} />
+                  <ChevronRightIcon />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="start">
+                <DropdownMenuItem
+                  onSelect={() => setIsArchivedDialogOpen(true)}
+                >
+                  <ArchiveIcon />
+                  已归档对话
+                </DropdownMenuItem>
+                <AppearanceMenu />
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logOut}>
+                  <LogOutIcon />
+                  退出登录
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
 
       <ThreadListSearch

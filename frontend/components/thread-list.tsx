@@ -19,9 +19,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SidebarItemButton } from "@/components/sidebar-item-button";
 import { searchConversations } from "@/lib/conversation-thread-list-adapter";
-import type { ConversationPublic } from "@/lib/client";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { useDebounce } from "use-debounce";
 import {
   AuiIf,
   ThreadListItemMorePrimitive,
@@ -40,10 +42,10 @@ import {
   SquarePenIcon,
   TrashIcon,
 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   forwardRef,
   Fragment,
-  useEffect,
   useMemo,
   useState,
   type ComponentPropsWithoutRef,
@@ -93,6 +95,7 @@ export const ThreadListSearch: FC<{
   onOpenChange?: (open: boolean) => void;
 }> = ({ archived = false, open: controlledOpen, onOpenChange }) => {
   const aui = useAui();
+  const router = useRouter();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [search, setSearch] = useState("");
   const open = controlledOpen ?? uncontrolledOpen;
@@ -132,6 +135,7 @@ export const ThreadListSearch: FC<{
               <CommandItem
                 onSelect={() => {
                   aui.threads().switchToNewThread();
+                  router.replace("/");
                   setOpen(false);
                 }}
               >
@@ -264,33 +268,32 @@ export const ThreadListSearchResults: FC<{
   onSelect: () => void;
 }> = ({ archived = false, searchQuery, onSelect }) => {
   const aui = useAui();
-  const [results, setResults] = useState<ConversationPublic[] | null>();
+  const router = useRouter();
+  const [debouncedSearchQuery] = useDebounce(
+    searchQuery,
+    SEARCH_DEBOUNCE_MS,
+  );
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setResults(undefined);
-    const timeout = window.setTimeout(() => {
-      void searchConversations(
-        searchQuery || undefined,
+  const {
+    data: results,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: ["conversations", "search", debouncedSearchQuery, archived],
+    queryFn: ({ signal }) =>
+      searchConversations(
+        debouncedSearchQuery || undefined,
         archived,
-        controller.signal,
-      )
-        .then(setResults)
-        .catch((error: unknown) => {
-          if (!(error instanceof DOMException && error.name === "AbortError")) {
-            setResults(null);
-          }
-        });
-    }, SEARCH_DEBOUNCE_MS);
+        signal,
+      ),
+    retry: false,
+  });
 
-    return () => {
-      window.clearTimeout(timeout);
-      controller.abort();
-    };
-  }, [archived, searchQuery]);
-
-  if (results === undefined) return <ThreadListSkeleton />;
-  if (results === null) return <CommandEmpty>搜索失败</CommandEmpty>;
+  if (searchQuery !== debouncedSearchQuery || isFetching) {
+    return <ThreadListSkeleton />;
+  }
+  if (isError) return <CommandEmpty>搜索失败</CommandEmpty>;
+  if (!results) return <ThreadListSkeleton />;
   if (results.length === 0) {
     return (
       <div className="text-muted-foreground py-6 text-center text-sm">
@@ -310,6 +313,7 @@ export const ThreadListSearchResults: FC<{
           value={`${conversation.title} ${conversation.id}`}
           onSelect={() => {
             void aui.threads().switchToThread(conversation.id);
+            router.replace("/");
             onSelect();
           }}
         >
@@ -327,36 +331,37 @@ export const ThreadListSearchResults: FC<{
 
 export const ThreadListNew = forwardRef<
   HTMLButtonElement,
-  ComponentPropsWithoutRef<typeof Button> & { labelClassName?: string }
->(({ className, labelClassName, children, ...props }, ref) => {
+  ComponentPropsWithoutRef<typeof SidebarItemButton>
+>(({ className, children, onClick, ...props }, ref) => {
+  const aui = useAui();
+  const pathname = usePathname();
+  const router = useRouter();
+  const isNewThread = useAuiState(
+    (state) => state.threads.newThreadId === state.threads.mainThreadId,
+  );
+
   return (
-    <ThreadListPrimitive.New asChild>
-      <Button
-        ref={ref}
-        variant="ghost"
-        data-slot="aui_thread-list-new"
-        className={cn(
-          "hover:bg-muted data-active:bg-background data-active:hover:bg-background data-active:font-semibold data-active:shadow-sm h-8 justify-start px-2.5 font-normal",
-          className,
-        )}
-        {...props}
-      >
-        {children ?? (
-          <>
-            <SquarePenIcon
-              data-slot="aui_thread-list-new-icon"
-              className="size-4 shrink-0 text-muted-foreground"
-            />
-            <span
-              data-slot="aui_thread-list-new-label"
-              className={cn("whitespace-nowrap", labelClassName)}
-            >
-              新对话
-            </span>
-          </>
-        )}
-      </Button>
-    </ThreadListPrimitive.New>
+    <SidebarItemButton
+      ref={ref}
+      isActive={pathname === "/" && isNewThread}
+      data-slot="aui_thread-list-new"
+      className={className}
+      {...props}
+      onClick={(event) => {
+        onClick?.(event);
+        if (!event.defaultPrevented) {
+          aui.threads().switchToNewThread();
+          router.replace("/");
+        }
+      }}
+    >
+      {children ?? (
+        <>
+          <SquarePenIcon data-slot="aui_thread-list-new-icon" />
+          <span data-slot="aui_thread-list-new-label">新对话</span>
+        </>
+      )}
+    </SidebarItemButton>
   );
 });
 
@@ -384,26 +389,32 @@ const ThreadListSkeleton: FC = () => {
 };
 
 export const ThreadListItem: FC = () => {
+  const pathname = usePathname();
+  const router = useRouter();
+  const isActive = useAuiState(
+    (state) => state.threads.mainThreadId === state.threadListItem.id,
+  );
+
   return (
     <ThreadListItemPrimitive.Root
       data-slot="aui_thread-list-item"
-      className="group/thread-item hover:bg-muted focus-visible:bg-muted data-active:bg-background data-active:font-semibold data-active:shadow-sm data-active:hover:bg-background has-focus-visible:bg-muted has-data-[state=open]:bg-muted relative flex h-8 items-center rounded-md transition-colors focus-visible:outline-none"
+      className="group/thread-item relative"
     >
-      <ThreadListItemPrimitive.Trigger
-        data-slot="aui_thread-list-item-trigger"
-        className="focus-visible:ring-ring/50 flex h-full min-w-0 flex-1 items-center gap-2 rounded-md px-2.5 text-start text-sm outline-none group-hover/thread-item:pe-9 group-has-focus-visible/thread-item:pe-9 group-has-data-[state=open]/thread-item:pe-9 group-data-active/thread-item:pe-9 focus-visible:ring-[3px]"
+      <SidebarItemButton
+        asChild
+        isActive={pathname === "/" && isActive}
+        className="group-hover/thread-item:pe-9 group-has-focus-visible/thread-item:pe-9 group-has-data-[state=open]/thread-item:bg-sidebar-accent group-has-data-[state=open]/thread-item:pe-9"
       >
-        <MessageCircleIcon
-          aria-hidden="true"
-          className="size-4 shrink-0 text-muted-foreground"
-        />
-        <span
-          data-slot="aui_thread-list-item-title"
-          className="min-w-0 flex-1 truncate"
+        <ThreadListItemPrimitive.Trigger
+          data-slot="aui_thread-list-item-trigger"
+          onClick={() => router.replace("/")}
         >
-          <ThreadListItemPrimitive.Title fallback="新对话" />
-        </span>
-      </ThreadListItemPrimitive.Trigger>
+          <MessageCircleIcon aria-hidden="true" />
+          <span data-slot="aui_thread-list-item-title">
+            <ThreadListItemPrimitive.Title fallback="新对话" />
+          </span>
+        </ThreadListItemPrimitive.Trigger>
+      </SidebarItemButton>
       <ThreadListItemMore />
     </ThreadListItemPrimitive.Root>
   );
@@ -455,7 +466,7 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
               "absolute end-1.5 top-1/2 size-6 -translate-y-1/2 opacity-0 group-hover/thread-item:opacity-100",
           )}
         >
-          <MoreHorizontalIcon className="size-3.5" />
+          <MoreHorizontalIcon />
           <span className="sr-only">更多操作</span>
         </Button>
       </ThreadListItemMorePrimitive.Trigger>

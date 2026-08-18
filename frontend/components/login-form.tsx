@@ -3,7 +3,10 @@
 import { GalleryVerticalEnd } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,49 +22,50 @@ import { getApiErrorMessage } from "@/lib/api-error";
 import { saveAccessToken } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
+const loginSchema = z.object({
+  username: z.string().trim().min(1, "请输入用户名"),
+  password: z.string().min(1, "请输入密码"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter();
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const loginForm = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError("");
-    setSubmitting(true);
-
-    const formData = new FormData(event.currentTarget);
-    const username = String(formData.get("username"));
-    const password = String(formData.get("password"));
-
-    try {
-      const { data, error } = await loginLoginAccessToken({
-        body: {
-          username,
-          password,
-        },
+  const loginMutation = useMutation({
+    mutationFn: async ({
+      username,
+      password,
+    }: LoginFormValues) => {
+      const { data } = await loginLoginAccessToken({
+        body: { username, password },
+        throwOnError: true,
       });
 
-      if (!data) {
-        setError(getApiErrorMessage(error, "登录失败"));
-
-        return;
-      }
-
+      return data;
+    },
+    onSuccess: (data) => {
       saveAccessToken(data.access_token);
       router.replace("/");
-    } catch {
-      setError("无法连接到服务器");
-    } finally {
-      setSubmitting(false);
-    }
+    },
+  });
+  const error = loginMutation.error
+    ? getApiErrorMessage(loginMutation.error, "登录失败")
+    : "";
+
+  function submitLogin(values: LoginFormValues): void {
+    loginMutation.mutate(values);
   }
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <form onSubmit={handleSubmit}>
+      <form noValidate onSubmit={loginForm.handleSubmit(submitLogin)}>
         <FieldGroup>
           <div className="flex flex-col items-center gap-2 text-center">
             <div className="flex size-8 items-center justify-center rounded-md">
@@ -73,32 +77,34 @@ export function LoginForm({
             </FieldDescription>
           </div>
 
-          <Field>
+          <Field data-invalid={!!loginForm.formState.errors.username}>
             <FieldLabel htmlFor="username">用户名</FieldLabel>
             <Input
               id="username"
-              name="username"
               autoComplete="username"
-              required
+              aria-invalid={!!loginForm.formState.errors.username}
+              {...loginForm.register("username")}
             />
+            <FieldError errors={[loginForm.formState.errors.username]} />
           </Field>
 
-          <Field>
+          <Field data-invalid={!!loginForm.formState.errors.password}>
             <FieldLabel htmlFor="password">密码</FieldLabel>
             <Input
               id="password"
-              name="password"
               type="password"
               autoComplete="current-password"
-              required
+              aria-invalid={!!loginForm.formState.errors.password}
+              {...loginForm.register("password")}
             />
+            <FieldError errors={[loginForm.formState.errors.password]} />
           </Field>
 
           <FieldError>{error}</FieldError>
 
           <Field>
-            <Button disabled={submitting} type="submit">
-              {submitting ? "登录中..." : "登录"}
+            <Button disabled={loginMutation.isPending} type="submit">
+              {loginMutation.isPending ? "登录中..." : "登录"}
             </Button>
           </Field>
         </FieldGroup>

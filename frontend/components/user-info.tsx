@@ -1,30 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { getAccessToken } from "@/lib/auth";
 import { type UserPublic, usersReadUserMe } from "@/lib/client";
 
 export function useCurrentUser(): UserPublic | undefined {
-  const [user, setUser] = useState<UserPublic>();
+  const { data } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: async () => {
+      const { data } = await usersReadUserMe({
+        throwOnError: true,
+      });
 
-  useEffect(() => {
-    void usersReadUserMe({
-      auth: getAccessToken()!,
-      throwOnError: true,
-    }).then(({ data }) => setUser(data));
-  }, []);
+      return data;
+    },
+    retry: false,
+    staleTime: Infinity,
+  });
 
-  return user;
+  return data;
 }
 
-export function UserProfile({ user }: { user: UserPublic }) {
+export function UserProfile({ user }: { user?: UserPublic }) {
+  const username = user?.username ?? "账户";
+
   return (
     <>
       <Avatar className="size-8">
-        <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
+        <AvatarFallback>{username.charAt(0).toUpperCase()}</AvatarFallback>
       </Avatar>
-      <span className="min-w-0 flex-1 truncate">{user.username}</span>
+      <span className="min-w-0 flex-1 truncate">{username}</span>
     </>
   );
 }

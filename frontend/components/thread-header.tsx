@@ -1,5 +1,6 @@
 "use client";
 
+import { AppHeader } from "@/components/app-header";
 import { ThreadListItemMore } from "@/components/thread-list";
 import { useAuiState } from "@assistant-ui/react";
 
@@ -26,15 +27,17 @@ export function ThreadHeader() {
   const isPersisted = useMainThreadPersisted();
 
   return (
-    <header className="relative flex h-14 items-center justify-center border-b">
-      <h1 className="max-w-96 truncate text-sm font-medium">{title}</h1>
-      <ThreadListItemMore
-        disabled={!isPersisted}
-        sharedFocusGroup={false}
-        side="bottom"
-        align="end"
-        triggerClassName="absolute end-3"
-      />
-    </header>
+    <AppHeader
+      title={title}
+      actions={
+        <ThreadListItemMore
+          disabled={!isPersisted}
+          sharedFocusGroup={false}
+          side="bottom"
+          align="end"
+          triggerClassName="shrink-0"
+        />
+      }
+    />
   );
 }

@@ -11,7 +11,6 @@ import {
   filesCreateFileUpload,
   filesDeleteUnreferencedFile,
 } from "@/lib/client";
-import { getAccessToken } from "@/lib/auth";
 
 const TEXT_CONTENT_TYPES = ["application/json", "text/csv", "text/plain"];
 
@@ -99,11 +98,8 @@ export function createFileAttachmentTransport() {
 
       let uploadId = "";
 
-      const auth = getAccessToken() ?? undefined;
-
       try {
         const { data: upload } = await filesCreateFileUpload({
-          auth,
           body: {
             filename: file.name,
             contentType,
@@ -134,7 +130,6 @@ export function createFileAttachmentTransport() {
         }
 
         await filesCompleteFileUpload({
-          auth,
           path: { file_id: upload.id },
           throwOnError: true,
         });
@@ -144,7 +139,6 @@ export function createFileAttachmentTransport() {
         try {
           if (uploadId) {
             await filesDeleteUnreferencedFile({
-              auth,
               path: { file_id: uploadId },
               throwOnError: true,
             });
@@ -192,7 +186,6 @@ export function createFileAttachmentTransport() {
 
     async remove(attachment) {
       await filesDeleteUnreferencedFile({
-        auth: getAccessToken() ?? undefined,
         path: { file_id: attachment.id },
         throwOnError: true,
       });
