@@ -33,11 +33,11 @@ export function ArtifactList() {
         </CollapsibleTrigger>
       </CardHeader>
       <CollapsibleContent>
-        <CardContent className="max-h-64 overflow-y-auto">
+        <CardContent className="max-h-64 overflow-y-auto pt-2">
           {artifacts.length === 0 ? (
             <CardDescription className="text-sm">暂无产物</CardDescription>
           ) : (
-            <ul className="space-y-3 text-sm">
+            <ul className="flex flex-col gap-3 text-sm">
               {artifacts.map((artifact, index) => (
                 <ArtifactItem key={`${artifact.url}-${index}`} artifact={artifact} />
               ))}

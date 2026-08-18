@@ -41,11 +41,11 @@ export function TodoList() {
         </CollapsibleTrigger>
       </CardHeader>
       <CollapsibleContent>
-        <CardContent className="max-h-64 overflow-y-auto">
+        <CardContent className="max-h-64 overflow-y-auto pt-2">
           {todos.length === 0 ? (
             <CardDescription className="text-sm">暂无代办</CardDescription>
           ) : (
-            <ul className="space-y-3 text-sm">
+            <ul className="flex flex-col gap-3 text-sm">
               {todos.map((todo, index) => (
                 <TodoItem key={`${todo.content}-${index}`} todo={todo} />
               ))}
