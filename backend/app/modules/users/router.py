@@ -124,11 +124,18 @@ def read_user_by_id(
 
 @admin_router.patch("/{user_id}", response_model=UserPublic)
 def update_user(
-    *, session: SessionDep, user_id: uuid.UUID, user_in: UserUpdate
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    user_id: uuid.UUID,
+    user_in: UserUpdate,
 ) -> UserPublic:
     """更新用户。"""
     user = service.update_user_by_id(
-        session=session, user_id=user_id, user_update=user_in
+        session=session,
+        current_user=current_user,
+        user_id=user_id,
+        user_update=user_in,
     )
 
     return UserPublic.model_validate(user)

@@ -10,6 +10,7 @@ from app.modules.users.exceptions import (
     IncorrectPasswordError,
     InsufficientPrivilegesError,
     PasswordUnchangedError,
+    SelfAdminStatusChangeForbiddenError,
     SelfDeletionForbiddenError,
     UserAlreadyExistsError,
     UserNotFoundError,
@@ -114,12 +115,21 @@ def get_user_for_request(
 
 
 def update_user_by_id(
-    *, session: Session, user_id: uuid.UUID, user_update: UserUpdate
+    *,
+    session: Session,
+    current_user: User,
+    user_id: uuid.UUID,
+    user_update: UserUpdate,
 ) -> User:
     user = session.get(User, user_id)
 
     if not user:
         raise UserNotFoundError
+
+    if user == current_user and (
+        user_update.is_active is False or user_update.is_superuser is False
+    ):
+        raise SelfAdminStatusChangeForbiddenError
 
     if user_update.username:
         existing_user = get_user_by_username(
