@@ -1051,7 +1051,7 @@ export type UsersReadUsersData = {
          */
         limit?: number;
     };
-    url: '/api/v1/users/';
+    url: '/api/v1/users';
 };
 
 export type UsersReadUsersErrors = {
@@ -1076,7 +1076,7 @@ export type UsersCreateUserData = {
     body: UserCreate;
     path?: never;
     query?: never;
-    url: '/api/v1/users/';
+    url: '/api/v1/users';
 };
 
 export type UsersCreateUserErrors = {

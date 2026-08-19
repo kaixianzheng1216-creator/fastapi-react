@@ -159,7 +159,7 @@ export const usersUpdateUser = <ThrowOnError extends boolean = false>(options: O
  */
 export const usersReadUsers = <ThrowOnError extends boolean = false>(options?: Options<UsersReadUsersData, ThrowOnError>): RequestResult<UsersReadUsersResponses, UsersReadUsersErrors, ThrowOnError> => (options?.client ?? client).get<UsersReadUsersResponses, UsersReadUsersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/users/',
+    url: '/api/v1/users',
     ...options
 });
 
@@ -170,7 +170,7 @@ export const usersReadUsers = <ThrowOnError extends boolean = false>(options?: O
  */
 export const usersCreateUser = <ThrowOnError extends boolean = false>(options: Options<UsersCreateUserData, ThrowOnError>): RequestResult<UsersCreateUserResponses, UsersCreateUserErrors, ThrowOnError> => (options.client ?? client).post<UsersCreateUserResponses, UsersCreateUserErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/users/',
+    url: '/api/v1/users',
     ...options,
     headers: {
         'Content-Type': 'application/json',

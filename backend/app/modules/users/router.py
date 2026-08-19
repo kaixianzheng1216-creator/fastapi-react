@@ -90,7 +90,7 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> None:
 
 
 @admin_router.post(
-    "/",
+    "",
     response_model=UserPublic,
     status_code=status.HTTP_201_CREATED,
 )
@@ -101,7 +101,7 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> UserPublic:
     return UserPublic.model_validate(user)
 
 
-@admin_router.get("/", response_model=UsersPublic)
+@admin_router.get("", response_model=UsersPublic)
 def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> UsersPublic:
     """获取用户列表。"""
     users, count = service.list_users(session=session, skip=skip, limit=limit)
