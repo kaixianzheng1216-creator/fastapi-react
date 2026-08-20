@@ -3,12 +3,13 @@
 import { GalleryVerticalEnd } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import { CURRENT_USER_QUERY_KEY } from "@/components/user-info";
 import {
   Field,
   FieldDescription,
@@ -34,6 +35,7 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
@@ -52,6 +54,7 @@ export function LoginForm({
     },
     onSuccess: (data) => {
       saveAccessToken(data.access_token);
+      queryClient.removeQueries({ queryKey: CURRENT_USER_QUERY_KEY });
       router.replace("/");
     },
   });

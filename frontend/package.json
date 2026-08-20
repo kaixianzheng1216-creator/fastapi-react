@@ -16,6 +16,7 @@
     "@assistant-ui/react-markdown": "0.14.6",
     "@hookform/resolvers": "^5.2.2",
     "@tanstack/react-query": "5.101.4",
+    "@tanstack/react-table": "^9.1.2",
     "assistant-stream": "0.3.26",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
