@@ -48,7 +48,7 @@ export function SidebarAccountMenu({
           </SidebarMenuButton>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent side="top" align="start">
+        <DropdownMenuContent side="top" align="start" className="w-56">
           <DropdownMenuGroup>
             {children}
             <AppearanceMenu />
