@@ -62,6 +62,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
+  getPaginationHref,
+  getPaginationPages,
+  PAGINATION_ELLIPSIS,
+} from "@/lib/pagination";
+import {
   skillsDeleteSkill,
   skillsReadSkills,
   type SkillSummaryPublic,
@@ -70,9 +75,6 @@ import { SkillCreateDialog } from "@/components/skill-create-dialog";
 
 const PAGE_SIZE = 12;
 const SKILLS_QUERY_KEY = ["skills"] as const;
-const ELLIPSIS = "ellipsis" as const;
-
-type PaginationPage = number | typeof ELLIPSIS;
 
 export function SkillManager() {
   const router = useRouter();
@@ -189,7 +191,7 @@ export function SkillManager() {
       />
 
       <div className="min-h-0 flex-1 overflow-y-scroll">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 p-4 md:p-8">
+        <div className="mx-auto flex min-h-full max-w-6xl flex-col gap-6 p-4 md:p-8">
           <form onSubmit={searchSkills}>
             <FieldGroup>
               <Field orientation="responsive">
@@ -226,7 +228,7 @@ export function SkillManager() {
 
           {loadErrorMessage && (
             <Alert variant="destructive">
-              <AlertCircleIcon />
+              <AlertCircleIcon aria-hidden="true" />
               <AlertTitle>无法读取技能</AlertTitle>
               <AlertDescription>
                 <p>{loadErrorMessage}</p>
@@ -247,7 +249,7 @@ export function SkillManager() {
             <Empty>
               <EmptyHeader>
                 <EmptyMedia variant="icon">
-                  <SparklesIcon />
+                  <SparklesIcon aria-hidden="true" />
                 </EmptyMedia>
                 <EmptyTitle>
                   {searchQuery ? "没有匹配的技能" : "还没有技能"}
@@ -281,7 +283,7 @@ export function SkillManager() {
                     <Link
                       href={`/skills/${skill.name}`}
                       aria-label={`查看技能 ${skill.name}`}
-                      className="absolute inset-0"
+                      className="absolute inset-0 rounded-xl outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                     />
                     <CardHeader>
                       <CardTitle className="truncate">{skill.name}</CardTitle>
@@ -320,7 +322,7 @@ export function SkillManager() {
                 ))}
               </div>
 
-              <Pagination className="mt-4" aria-label="技能分页">
+              <Pagination className="mt-auto" aria-label="技能分页">
                 <PaginationContent>
                   <PaginationItem>
                     <PaginationPrevious
@@ -328,16 +330,14 @@ export function SkillManager() {
                         Math.max(1, currentPage - 1),
                         searchQuery,
                       )}
-                      aria-label="转到上一页"
                       aria-disabled={currentPage === 1}
                       tabIndex={currentPage === 1 ? -1 : undefined}
-                      className="aria-disabled:pointer-events-none aria-disabled:opacity-50"
                     />
                   </PaginationItem>
 
                   {paginationPages.map((page, index) => (
                     <PaginationItem key={`${page}-${index}`}>
-                      {page === ELLIPSIS ? (
+                      {page === PAGINATION_ELLIPSIS ? (
                         <PaginationEllipsis />
                       ) : (
                         <PaginationLink
@@ -356,10 +356,8 @@ export function SkillManager() {
                         Math.min(totalPages, currentPage + 1),
                         searchQuery,
                       )}
-                      aria-label="转到下一页"
                       aria-disabled={currentPage === totalPages}
                       tabIndex={currentPage === totalPages ? -1 : undefined}
-                      className="aria-disabled:pointer-events-none aria-disabled:opacity-50"
                     />
                   </PaginationItem>
                 </PaginationContent>
@@ -394,7 +392,7 @@ export function SkillManager() {
 
           {deleteErrorMessage && (
             <Alert variant="destructive">
-              <AlertCircleIcon />
+              <AlertCircleIcon aria-hidden="true" />
               <AlertTitle>删除失败</AlertTitle>
               <AlertDescription>{deleteErrorMessage}</AlertDescription>
             </Alert>
@@ -423,58 +421,11 @@ export function SkillManager() {
 function getSkillsHref(page: number, search?: string): string {
   const parameters = new URLSearchParams();
 
-  if (page > 1) {
-    parameters.set("page", String(page));
-  }
-
   if (search) {
     parameters.set("search", search);
   }
 
-  const query = parameters.toString();
-
-  return query ? `/skills?${query}` : "/skills";
-}
-
-function getPaginationPages(
-  currentPage: number,
-  totalPages: number,
-): PaginationPage[] {
-  if (totalPages <= 7) {
-    const pages: number[] = [];
-
-    for (let page = 1; page <= totalPages; page += 1) {
-      pages.push(page);
-    }
-
-    return pages;
-  }
-
-  if (currentPage <= 4) {
-    return [1, 2, 3, 4, 5, ELLIPSIS, totalPages];
-  }
-
-  if (currentPage >= totalPages - 3) {
-    return [
-      1,
-      ELLIPSIS,
-      totalPages - 4,
-      totalPages - 3,
-      totalPages - 2,
-      totalPages - 1,
-      totalPages,
-    ];
-  }
-
-  return [
-    1,
-    ELLIPSIS,
-    currentPage - 1,
-    currentPage,
-    currentPage + 1,
-    ELLIPSIS,
-    totalPages,
-  ];
+  return getPaginationHref("/skills", page, parameters);
 }
 
 function SkillGridSkeleton() {
@@ -488,7 +439,7 @@ function SkillGridSkeleton() {
         <Card key={index}>
           <CardHeader>
             <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10" />
           </CardHeader>
         </Card>
       ))}
