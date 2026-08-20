@@ -1,12 +1,15 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { type UserPublic, usersReadUserMe } from "@/lib/client";
 
-export function useCurrentUser(): UserPublic | undefined {
-  const { data } = useQuery({
-    queryKey: ["current-user"],
+export const CURRENT_USER_QUERY_KEY = ["current-user"] as const;
+
+export function useCurrentUserQuery() {
+  return useQuery({
+    queryKey: CURRENT_USER_QUERY_KEY,
     queryFn: async () => {
       const { data } = await usersReadUserMe({
         throwOnError: true,
@@ -17,8 +20,10 @@ export function useCurrentUser(): UserPublic | undefined {
     retry: false,
     staleTime: Infinity,
   });
+}
 
-  return data;
+export function useCurrentUser(): UserPublic | undefined {
+  return useCurrentUserQuery().data;
 }
 
 export function UserProfile({ user }: { user?: UserPublic }) {

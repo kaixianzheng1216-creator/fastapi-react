@@ -13,7 +13,7 @@ export default function AuthenticatedLayout({
   return (
     <AuthenticatedGuard>
       <MyRuntimeProvider>
-        <SidebarProvider className="h-svh min-h-0 overflow-hidden">
+        <SidebarProvider className="h-svh overflow-hidden">
           <ThreadListSidebar />
           <SidebarInset className="min-h-0">{children}</SidebarInset>
         </SidebarProvider>

@@ -17,7 +17,6 @@ import {
 import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCurrentUserQuery } from "@/components/user-info";
@@ -53,7 +52,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const { data: user, error, isPending } = useCurrentUserQuery();
 
   if (isPending) {
-    return <Skeleton className="h-svh w-full" />;
+    return <Skeleton className="h-svh" />;
   }
 
   if (error || !user) {
@@ -75,14 +74,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <SidebarProvider className="h-svh min-h-0 overflow-hidden">
+    <SidebarProvider className="h-svh overflow-hidden">
       <AdminSidebar user={user} />
-      <SidebarInset className="min-h-0">
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-3">
-          <SidebarTrigger className="size-9" />
-        </header>
-        {children}
-      </SidebarInset>
+      <SidebarInset className="min-h-0">{children}</SidebarInset>
     </SidebarProvider>
   );
 }
