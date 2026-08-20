@@ -33,6 +33,7 @@ export function ThreadHeader({
 }) {
   const title = useMainThreadTitle("新对话");
   const isInitialized = useMainThreadInitialized();
+  const hasStarted = useAuiState((state) => state.thread.messages.length > 0);
 
   return (
     <AppHeader
@@ -49,6 +50,8 @@ export function ThreadHeader({
           <Button
             variant="ghost"
             size="icon"
+            className="hidden 2xl:inline-flex"
+            disabled={!hasStarted}
             aria-label={sidebarOpen ? "收起会话侧栏" : "展开会话侧栏"}
             onClick={() => onSidebarOpenChange(!sidebarOpen)}
           >
