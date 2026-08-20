@@ -148,7 +148,7 @@ export const ThreadListSearch: FC<{
             <CommandGroup heading="快捷创建">
               <CommandItem
                 onSelect={() => {
-                  aui.threads().switchToNewThread();
+                  aui.threads.switchToNewThread();
                   router.replace("/");
                   setOpen(false);
                 }}
@@ -326,7 +326,7 @@ export const ThreadListSearchResults: FC<{
           className="group"
           value={`${conversation.title} ${conversation.id}`}
           onSelect={() => {
-            void aui.threads().switchToThread(conversation.id);
+            void aui.threads.switchToThread(conversation.id);
             router.replace("/");
             onSelect();
           }}
@@ -364,7 +364,7 @@ export const ThreadListNew = forwardRef<
       onClick={(event) => {
         onClick?.(event);
         if (!event.defaultPrevented) {
-          aui.threads().switchToNewThread();
+          aui.threads.switchToNewThread();
           router.replace("/");
         }
       }}
@@ -462,7 +462,7 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
     const title = newTitle.trim();
     if (!title) return;
 
-    await aui.threadListItem().rename(title);
+    await aui.threadListItem.rename(title);
     setRenameOpen(false);
   };
 

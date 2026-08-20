@@ -474,7 +474,7 @@ const RegenerateButton: FC = () => {
   const regenerate = () => {
     if (assistantMessage.parentId === null) return;
 
-    const thread = aui.thread();
+    const thread = aui.thread;
     const userMessage = thread
       .message({ id: assistantMessage.parentId })
       .getState();

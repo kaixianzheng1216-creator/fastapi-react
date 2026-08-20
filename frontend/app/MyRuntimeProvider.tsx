@@ -5,6 +5,7 @@ import {
   type AssistantTransportConnectionMetadata,
   type CompleteAttachment,
   type FileMessagePart,
+  type LanguageModelConfig,
   type ThreadUserMessagePart,
   unstable_createMessageConverter as createMessageConverter,
   useAui,
@@ -189,11 +190,13 @@ function useConversationRuntime() {
     adapters: { attachments: fileTransport.attachmentAdapter },
     prepareSendCommandsRequest: async (body) => {
       const isFirstMessage = !body.threadId;
-      const { remoteId } = await aui.threadListItem().initialize();
+      const { remoteId } = await aui.threadListItem.initialize();
 
       if (isFirstMessage) {
-        aui.threadListItem().generateTitle();
+        aui.threadListItem.generateTitle();
       }
+
+      const modelConfig = body.config as LanguageModelConfig | undefined;
 
       const request = {
         ...fileTransport.prepareRequest({
@@ -208,8 +211,8 @@ function useConversationRuntime() {
 
       return {
         ...request,
-        model: body.config?.modelName,
-        thinkingEnabled: body.config?.reasoningEffort === "enabled",
+        model: modelConfig?.modelName,
+        thinkingEnabled: modelConfig?.reasoningEffort === "enabled",
       };
     },
     capabilities: { edit: true },
