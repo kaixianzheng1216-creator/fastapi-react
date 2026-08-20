@@ -38,10 +38,12 @@ import {
   MessageCircleIcon,
   MoreHorizontalIcon,
   PencilIcon,
+  PuzzleIcon,
   SearchIcon,
   SquarePenIcon,
   TrashIcon,
 } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   forwardRef,
@@ -80,10 +82,22 @@ const formatConversationTime = (updatedAt: string): string => {
 };
 
 export const ThreadList: FC = () => {
+  const pathname = usePathname();
+
   return (
     <ThreadListRoot>
       <ThreadListSearch />
       <ThreadListNew />
+      <SidebarItemButton
+        asChild
+        isActive={pathname.startsWith("/skills")}
+        aria-label="技能"
+      >
+        <Link href="/skills">
+          <PuzzleIcon />
+          <span>技能</span>
+        </Link>
+      </SidebarItemButton>
       <ThreadListItems />
     </ThreadListRoot>
   );
