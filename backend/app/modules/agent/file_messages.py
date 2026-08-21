@@ -4,9 +4,12 @@ from uuid import UUID
 from langchain_core.messages import BaseMessage
 from sqlmodel import Session
 
+from app.modules.agent.exceptions import AttachmentTextTooLargeError
 from app.modules.conversations.message_files import refresh_message_file_urls
 from app.modules.files import service as file_service
 from app.modules.files.exceptions import FileContentTypeMismatchError
+
+MAX_MESSAGE_ATTACHMENT_TEXT_SIZE = 256 * 1024
 
 
 def prepare_message_file_inputs(
@@ -19,6 +22,7 @@ def prepare_message_file_inputs(
         return message
 
     prepared_content: list[str | dict[str, Any]] = []
+    attachment_text_size = 0
 
     for part in message.content:
         if not isinstance(part, dict):
@@ -48,6 +52,11 @@ def prepare_message_file_inputs(
             )
 
             text_content = file_service.get_extracted_text(stored_file)
+            attachment_text_size += len(text_content.encode("utf-8"))
+
+            if attachment_text_size > MAX_MESSAGE_ATTACHMENT_TEXT_SIZE:
+                raise AttachmentTextTooLargeError
+
             prepared_content.append(
                 {
                     "type": "text",

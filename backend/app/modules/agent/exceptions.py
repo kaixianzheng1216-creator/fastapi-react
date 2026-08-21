@@ -26,3 +26,8 @@ class ThinkingNotSupportedError(ApplicationError):
 class ImageInputNotSupportedError(ApplicationError):
     status_code = status.HTTP_400_BAD_REQUEST
     detail = "当前模型不支持图片，请切换支持图片识别的模型"
+
+
+class AttachmentTextTooLargeError(ApplicationError):
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = "单条消息的附件文本合计不能超过 256 KB"

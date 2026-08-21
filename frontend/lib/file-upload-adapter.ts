@@ -12,9 +12,15 @@ import {
   filesDeleteUnreferencedFile,
 } from "@/lib/client";
 
-const TEXT_CONTENT_TYPES = ["application/json", "text/csv", "text/plain"];
+const TEXT_CONTENT_TYPES = [
+  "application/json",
+  "text/csv",
+  "text/markdown",
+  "text/plain",
+];
 
 const DOCUMENT_CONTENT_TYPES = [
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "text/html",
