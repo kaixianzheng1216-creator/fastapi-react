@@ -1,6 +1,11 @@
 "use client";
 
-import { MessageSquareIcon, ShieldCheckIcon, UserIcon } from "lucide-react";
+import {
+  BookOpenIcon,
+  MessageSquareIcon,
+  ShieldCheckIcon,
+  UserIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -52,6 +57,18 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
                   <Link href="/admin/users">
                     <UserIcon />
                     <span>用户</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname.startsWith("/admin/knowledge-bases")}
+                  tooltip="知识库"
+                >
+                  <Link href="/admin/knowledge-bases">
+                    <BookOpenIcon />
+                    <span>知识库</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

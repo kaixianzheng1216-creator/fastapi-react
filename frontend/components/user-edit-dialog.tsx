@@ -35,7 +35,6 @@ const userSchema = z.object({
     .min(3, "用户名至少 3 个字符")
     .max(255, "用户名最多 255 个字符"),
   fullName: z.string().trim().max(255, "姓名最多 255 个字符"),
-  isActive: z.boolean(),
   isSuperuser: z.boolean(),
 });
 
@@ -43,12 +42,14 @@ type UserValues = z.infer<typeof userSchema>;
 
 type UserEditDialogProps = {
   user: UserPublic;
+  canChangeRole: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdated: () => void;
 };
 
 export function UserEditDialog({
   user,
+  canChangeRole,
   onOpenChange,
   onUpdated,
 }: UserEditDialogProps) {
@@ -57,7 +58,6 @@ export function UserEditDialog({
     defaultValues: {
       username: user.username,
       fullName: user.full_name ?? "",
-      isActive: user.is_active ?? true,
       isSuperuser: user.is_superuser ?? false,
     },
   });
@@ -69,7 +69,6 @@ export function UserEditDialog({
         body: {
           username: values.username,
           full_name: values.fullName || null,
-          is_active: values.isActive,
           is_superuser: values.isSuperuser,
         },
         throwOnError: true,
@@ -131,40 +130,25 @@ export function UserEditDialog({
             </Field>
 
             <Controller
-              name="isActive"
-              control={form.control}
-              render={({ field }) => (
-                <Field orientation="horizontal">
-                  <FieldContent>
-                    <FieldLabel htmlFor="edit-user-active">
-                      启用账户
-                    </FieldLabel>
-                    <FieldDescription>允许该用户登录系统。</FieldDescription>
-                  </FieldContent>
-                  <Switch
-                    id="edit-user-active"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </Field>
-              )}
-            />
-
-            <Controller
               name="isSuperuser"
               control={form.control}
               render={({ field }) => (
-                <Field orientation="horizontal">
+                <Field orientation="horizontal" data-disabled={!canChangeRole}>
                   <FieldContent>
                     <FieldLabel htmlFor="edit-user-superuser">
                       管理员
                     </FieldLabel>
-                    <FieldDescription>允许访问管理后台。</FieldDescription>
+                    <FieldDescription>
+                      {canChangeRole
+                        ? "允许访问管理后台。"
+                        : "不能取消自己的管理员身份。"}
+                    </FieldDescription>
                   </FieldContent>
                   <Switch
                     id="edit-user-superuser"
                     checked={field.value}
                     onCheckedChange={field.onChange}
+                    disabled={!canChangeRole}
                   />
                 </Field>
               )}
