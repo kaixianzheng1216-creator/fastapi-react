@@ -34,7 +34,7 @@ const FILE_UPLOAD_ACCEPT = FILE_UPLOAD_CONTENT_TYPES.join(",");
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
 const MAX_TEXT_FILE_SIZE = 256 * 1024;
-const MAX_MESSAGE_ATTACHMENTS = 20;
+const MAX_MESSAGE_ATTACHMENTS = 9;
 const FILE_REFERENCE_PREFIX = "file:";
 
 function createAttachmentContent(
