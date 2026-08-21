@@ -75,7 +75,7 @@ def list_knowledge_bases(
 
 def get_knowledge_base(
     *, session: Session, knowledge_base_id: uuid.UUID
-) -> type[KnowledgeBase]:
+) -> KnowledgeBase:
     knowledge_base = session.get(KnowledgeBase, knowledge_base_id)
 
     if knowledge_base is None:
@@ -89,7 +89,7 @@ def update_knowledge_base(
     session: Session,
     knowledge_base_id: uuid.UUID,
     knowledge_base_update: KnowledgeBaseUpdate,
-) -> type[KnowledgeBase]:
+) -> KnowledgeBase:
     knowledge_base = get_knowledge_base(
         session=session, knowledge_base_id=knowledge_base_id
     )
