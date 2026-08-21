@@ -6,8 +6,8 @@ import {
   AlertCircleIcon,
   MoreHorizontalIcon,
   PlusIcon,
+  PuzzleIcon,
   SearchIcon,
-  SparklesIcon,
   TrashIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -249,7 +249,7 @@ export function SkillManager() {
             <Empty>
               <EmptyHeader>
                 <EmptyMedia variant="icon">
-                  <SparklesIcon aria-hidden="true" />
+                  <PuzzleIcon aria-hidden="true" />
                 </EmptyMedia>
                 <EmptyTitle>
                   {searchQuery ? "没有匹配的技能" : "还没有技能"}
