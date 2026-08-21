@@ -262,11 +262,13 @@ const defaultComponents = memoizeMarkdownComponents({
 
 export function MarkdownContent({
   children,
+  className,
 }: {
   children: string;
+  className?: string;
 }) {
   return (
-    <div className="prose dark:prose-invert">
+    <div className={cn("prose dark:prose-invert", className)}>
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{children}</ReactMarkdown>
     </div>
   );

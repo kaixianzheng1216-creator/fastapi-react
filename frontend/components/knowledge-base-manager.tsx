@@ -24,6 +24,7 @@ import {
   TrashIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { type FormEvent, useMemo, useState } from "react";
 
 import { AppHeader } from "@/components/app-header";
@@ -198,7 +199,12 @@ export function KnowledgeBaseManager() {
           header: "名称",
           cell: ({ row }) => (
             <div className="max-w-md">
-              <div className="font-medium">{row.original.name}</div>
+              <Link
+                href={`/admin/knowledge-bases/${row.original.id}`}
+                className="font-medium hover:underline"
+              >
+                {row.original.name}
+              </Link>
               <div className="text-muted-foreground truncate">
                 {row.original.description || "暂无描述"}
               </div>

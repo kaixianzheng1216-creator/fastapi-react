@@ -11,36 +11,16 @@ import {
   filesCreateFileUpload,
   filesDeleteUnreferencedFile,
 } from "@/lib/client";
+import {
+  CHAT_CONTENT_TYPES,
+  MAX_FILE_COUNT,
+  MAX_FILE_SIZE,
+  TEXT_CONTENT_TYPES,
+} from "@/lib/file-types";
 
-const TEXT_CONTENT_TYPES = [
-  "application/json",
-  "text/csv",
-  "text/markdown",
-  "text/plain",
-];
+const FILE_UPLOAD_ACCEPT = CHAT_CONTENT_TYPES.join(",");
 
-const DOCUMENT_CONTENT_TYPES = [
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "text/html",
-];
-
-const FILE_UPLOAD_CONTENT_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "application/pdf",
-  ...DOCUMENT_CONTENT_TYPES,
-  ...TEXT_CONTENT_TYPES,
-];
-
-const FILE_UPLOAD_ACCEPT = FILE_UPLOAD_CONTENT_TYPES.join(",");
-
-const MAX_FILE_SIZE = 100 * 1024 * 1024;
 const MAX_TEXT_FILE_SIZE = 256 * 1024;
-const MAX_MESSAGE_ATTACHMENTS = 9;
 const FILE_REFERENCE_PREFIX = "file:";
 
 function createAttachmentContent(
@@ -74,7 +54,7 @@ export function createFileAttachmentTransport() {
     async *add({ file }) {
       const contentType = file.type;
 
-      if (!contentType || !FILE_UPLOAD_CONTENT_TYPES.includes(contentType)) {
+      if (!contentType || !CHAT_CONTENT_TYPES.includes(contentType)) {
         throw new Error("不支持该文件类型");
       }
 
@@ -91,9 +71,9 @@ export function createFileAttachmentTransport() {
 
       if (
         composerAttachmentIds.size + pendingUploadCount >=
-        MAX_MESSAGE_ATTACHMENTS
+        MAX_FILE_COUNT
       ) {
-        throw new Error(`单条消息最多添加 ${MAX_MESSAGE_ATTACHMENTS} 个附件`);
+        throw new Error(`单条消息最多添加 ${MAX_FILE_COUNT} 个附件`);
       }
 
       const attachmentType = contentType.startsWith("image/")

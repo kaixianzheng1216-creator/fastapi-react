@@ -4,6 +4,7 @@ import tempfile
 import uuid
 from collections.abc import Sequence
 from typing import IO, Any
+from urllib.parse import quote
 
 from qcloud_cos import CosConfig, CosS3Client  # type: ignore[import-untyped]
 from qcloud_cos.cos_exception import (  # type: ignore[import-untyped]
@@ -54,13 +55,22 @@ def create_upload_url(*, object_key: str) -> str:
     )
 
 
-def create_download_url(object_key: str) -> str:
+def create_download_url(object_key: str, filename: str | None = None) -> str:
+    params = {}
+
+    if filename:
+        encoded_filename = quote(filename)
+        params["response-content-disposition"] = (
+            f"attachment; filename*=UTF-8''{encoded_filename}"
+        )
+
     return str(
         cos_client.get_presigned_url(
             Bucket=settings.COS_BUCKET,
             Key=object_key,
             Method="GET",
             Expired=DOWNLOAD_URL_LIFETIME_SECONDS,
+            Params=params,
         )
     )
 
@@ -91,6 +101,27 @@ def read_object_content(*, object_key: str, size: int) -> bytes:
         return b"".join(body.get_stream())
     finally:
         body.get_raw_stream().close()
+
+
+def read_object_bytes(object_key: str) -> bytes:
+    response = _get_object(object_key=object_key)
+    body = response["Body"]
+
+    try:
+        return b"".join(body.get_stream())
+    finally:
+        body.get_raw_stream().close()
+
+
+def write_object_content(*, object_key: str, content: bytes) -> None:
+    try:
+        cos_client.put_object(
+            Bucket=settings.COS_BUCKET,
+            Key=object_key,
+            Body=content,
+        )
+    except (CosClientError, CosServiceError) as error:
+        raise FileStorageUnavailableError from error
 
 
 def download_to_temporary_file(object_key: str) -> IO[bytes]:

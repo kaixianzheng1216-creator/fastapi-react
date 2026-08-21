@@ -7,6 +7,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, col, select
 
 from app.modules.files import document_parser, object_storage
+from app.modules.files.constants import (
+    ALLOWED_CONTENT_TYPES,
+    DOCUMENT_CONTENT_TYPES,
+    DOCUMENT_FORMAT_BY_CONTENT_TYPE,
+    KNOWLEDGE_CONTENT_TYPES,
+    TEXT_CONTENT_TYPES,
+)
 from app.modules.files.exceptions import (
     DocumentContentTooLargeError,
     DocumentParsingError,
@@ -26,33 +33,7 @@ from app.modules.users.models import User
 
 MAX_TEXT_FILE_SIZE = 256 * 1024
 
-TEXT_CONTENT_TYPES = {
-    "application/json",
-    "text/csv",
-    "text/markdown",
-    "text/plain",
-}
-
-DOCUMENT_FORMAT_BY_CONTENT_TYPE = {
-    "application/pdf": "pdf",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
-    "text/html": "html",
-}
-
-DOCUMENT_CONTENT_TYPES = set(DOCUMENT_FORMAT_BY_CONTENT_TYPE)
-
-TEXT_EXTRACTABLE_CONTENT_TYPES = TEXT_CONTENT_TYPES | DOCUMENT_CONTENT_TYPES
-
-ALLOWED_CONTENT_TYPES = {
-    "image/gif",
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    *DOCUMENT_CONTENT_TYPES,
-    *TEXT_CONTENT_TYPES,
-}
+TEXT_EXTRACTABLE_CONTENT_TYPES = KNOWLEDGE_CONTENT_TYPES
 
 FILE_HEADER_READ_BYTES = 8192
 
