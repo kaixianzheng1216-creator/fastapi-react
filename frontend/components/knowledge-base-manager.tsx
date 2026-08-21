@@ -14,6 +14,7 @@ import {
 } from "@tanstack/react-table";
 import {
   AlertCircleIcon,
+  BookOpenIcon,
   MoreHorizontalIcon,
   PencilIcon,
   PlusIcon,
@@ -21,14 +22,12 @@ import {
   PowerOffIcon,
   SearchIcon,
   TrashIcon,
-  UsersIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useMemo, useState } from "react";
 
-import { UserCreateDialog } from "@/components/user-create-dialog";
-import { UserEditDialog } from "@/components/user-edit-dialog";
 import { AppHeader } from "@/components/app-header";
+import { KnowledgeBaseDialog } from "@/components/knowledge-base-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,8 +66,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
@@ -82,71 +81,71 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui/toggle-group";
-import {
-  CURRENT_USER_QUERY_KEY,
-  useCurrentUser,
-} from "@/components/user-info";
 import { getApiErrorMessage } from "@/lib/api-error";
+import {
+  type KnowledgeBasePublic,
+  knowledgeBasesDeleteKnowledgeBase,
+  knowledgeBasesReadKnowledgeBases,
+  knowledgeBasesUpdateKnowledgeBase,
+} from "@/lib/client";
 import {
   getPaginationHref,
   getPaginationPages,
   PAGINATION_ELLIPSIS,
 } from "@/lib/pagination";
-import {
-  type UserPublic,
-  usersDeleteUser,
-  usersReadUsers,
-  usersUpdateUser,
-} from "@/lib/client";
 
 const PAGE_SIZE = 20;
 
-const USERS_QUERY_KEY = ["admin-users"] as const;
+const KNOWLEDGE_BASES_QUERY_KEY = ["admin-knowledge-bases"] as const;
 
-const EMPTY_USERS: UserPublic[] = [];
+const EMPTY_KNOWLEDGE_BASES: KnowledgeBasePublic[] = [];
 
-type RoleFilter = "all" | "admin" | "user";
 type StatusFilter = "all" | "enabled" | "disabled";
 
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
   dateStyle: "medium",
 });
 
-const usersTableFeatures = tableFeatures({ rowPaginationFeature });
+const knowledgeBaseTableFeatures = tableFeatures({ rowPaginationFeature });
 
-const userColumnHelper = createColumnHelper<
-  typeof usersTableFeatures,
-  UserPublic
+const knowledgeBaseColumnHelper = createColumnHelper<
+  typeof knowledgeBaseTableFeatures,
+  KnowledgeBasePublic
 >();
 
-export function UserManager() {
+export function KnowledgeBaseManager() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const currentUser = useCurrentUser();
 
   const pageParameter = Number(searchParams.get("page"));
   const currentPage =
     Number.isInteger(pageParameter) && pageParameter > 0 ? pageParameter : 1;
   const pageIndex = currentPage - 1;
   const search = searchParams.get("search")?.trim() ?? "";
-  const role = getRoleFilter(searchParams.get("role"));
   const status = getStatusFilter(searchParams.get("status"));
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [userToEdit, setUserToEdit] = useState<UserPublic>();
-  const [userToDelete, setUserToDelete] = useState<UserPublic>();
+  const [knowledgeBaseToEdit, setKnowledgeBaseToEdit] =
+    useState<KnowledgeBasePublic>();
+  const [knowledgeBaseToDelete, setKnowledgeBaseToDelete] =
+    useState<KnowledgeBasePublic>();
 
-  const usersQuery = useQuery({
-    queryKey: [...USERS_QUERY_KEY, pageIndex, search, role, status],
+  const knowledgeBasesQuery = useQuery({
+    queryKey: [
+      ...KNOWLEDGE_BASES_QUERY_KEY,
+      pageIndex,
+      search,
+      status,
+    ],
     queryFn: async ({ signal }) => {
-      const { data } = await usersReadUsers({
+      const { data } = await knowledgeBasesReadKnowledgeBases({
         query: {
           skip: pageIndex * PAGE_SIZE,
           limit: PAGE_SIZE,
           search: search || undefined,
-          is_superuser: role === "all" ? undefined : role === "admin",
-          is_active: status === "all" ? undefined : status === "enabled",
+          is_enabled:
+            status === "all" ? undefined : status === "enabled",
         },
         signal,
         throwOnError: true,
@@ -159,83 +158,67 @@ export function UserManager() {
   });
 
   const updateStatus = useMutation({
-    mutationFn: async (user: UserPublic): Promise<void> => {
-      await usersUpdateUser({
-        path: { user_id: user.id },
-        body: { is_active: !user.is_active },
+    mutationFn: async (knowledgeBase: KnowledgeBasePublic): Promise<void> => {
+      await knowledgeBasesUpdateKnowledgeBase({
+        path: { knowledge_base_id: knowledgeBase.id },
+        body: { is_enabled: !knowledgeBase.is_enabled },
         throwOnError: true,
       });
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
+      await refreshKnowledgeBases();
     },
   });
 
-  const deleteUser = useMutation({
-    mutationFn: async (userId: string): Promise<void> => {
-      await usersDeleteUser({
-        path: { user_id: userId },
+  const deleteKnowledgeBase = useMutation({
+    mutationFn: async (knowledgeBaseId: string): Promise<void> => {
+      await knowledgeBasesDeleteKnowledgeBase({
+        path: { knowledge_base_id: knowledgeBaseId },
         throwOnError: true,
       });
     },
     onSuccess: async () => {
-      if (usersQuery.data?.data.length === 1 && currentPage > 1) {
+      if (knowledgeBasesQuery.data?.data.length === 1 && currentPage > 1) {
         router.replace(
-          getUsersHref(currentPage - 1, search, role, status),
+          getKnowledgeBasesHref(currentPage - 1, search, status),
         );
       }
-
-      setUserToDelete(undefined);
-
-      await queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
+      setKnowledgeBaseToDelete(undefined);
+      await refreshKnowledgeBases();
     },
   });
 
-  const changeUserStatus = updateStatus.mutate;
-  const resetDelete = deleteUser.reset;
+  const changeKnowledgeBaseStatus = updateStatus.mutate;
+  const resetDelete = deleteKnowledgeBase.reset;
 
   const columns = useMemo(
     () =>
-      userColumnHelper.columns([
-        userColumnHelper.accessor("username", {
-          header: "用户名",
+      knowledgeBaseColumnHelper.columns([
+        knowledgeBaseColumnHelper.accessor("name", {
+          header: "名称",
           cell: ({ row }) => (
             <div className="max-w-md">
-              <div className="truncate font-medium">{row.original.username}</div>
+              <div className="font-medium">{row.original.name}</div>
               <div className="text-muted-foreground truncate">
-                {row.original.full_name || "未填写姓名"}
+                {row.original.description || "暂无描述"}
               </div>
             </div>
           ),
         }),
-        userColumnHelper.display({
-          id: "role",
-          header: "角色",
-          cell: ({ row }) => (
-            <Badge
-              variant={row.original.is_superuser ? "default" : "secondary"}
-            >
-              {row.original.is_superuser ? "管理员" : "普通用户"}
-            </Badge>
-          ),
-        }),
-        userColumnHelper.display({
+        knowledgeBaseColumnHelper.display({
           id: "status",
           header: "状态",
           cell: ({ row }) => (
-            <Badge variant={row.original.is_active ? "outline" : "secondary"}>
-              {row.original.is_active ? "已启用" : "已停用"}
+            <Badge variant={row.original.is_enabled ? "outline" : "secondary"}>
+              {row.original.is_enabled ? "已启用" : "已停用"}
             </Badge>
           ),
         }),
-        userColumnHelper.accessor("created_at", {
+        knowledgeBaseColumnHelper.accessor("created_at", {
           header: "创建时间",
-          cell: ({ row }) =>
-            row.original.created_at
-              ? dateFormatter.format(new Date(row.original.created_at))
-              : "—",
+          cell: ({ row }) => dateFormatter.format(new Date(row.original.created_at)),
         }),
-        userColumnHelper.display({
+        knowledgeBaseColumnHelper.display({
           id: "actions",
           header: "操作",
           cell: ({ row }) => (
@@ -244,135 +227,105 @@ export function UserManager() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={`${row.original.username} 的更多操作`}
+                  aria-label={`${row.original.name} 的更多操作`}
                 >
                   <MoreHorizontalIcon aria-hidden="true" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuGroup>
-                  <DropdownMenuItem onSelect={() => setUserToEdit(row.original)}>
+                  <DropdownMenuItem
+                    onSelect={() => setKnowledgeBaseToEdit(row.original)}
+                  >
                     <PencilIcon aria-hidden="true" />
                     编辑
                   </DropdownMenuItem>
-                  {row.original.id !== currentUser?.id && (
-                    <>
-                      <DropdownMenuItem
-                        disabled={updateStatus.isPending}
-                        onSelect={() => changeUserStatus(row.original)}
-                      >
-                        {row.original.is_active ? (
-                          <PowerOffIcon aria-hidden="true" />
-                        ) : (
-                          <PowerIcon aria-hidden="true" />
-                        )}
-                        {row.original.is_active ? "停用" : "启用"}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onSelect={() => {
-                          resetDelete();
-                          setUserToDelete(row.original);
-                        }}
-                      >
-                        <TrashIcon aria-hidden="true" />
-                        删除
-                      </DropdownMenuItem>
-                    </>
-                  )}
+                  <DropdownMenuItem
+                    disabled={updateStatus.isPending}
+                    onSelect={() => changeKnowledgeBaseStatus(row.original)}
+                  >
+                    {row.original.is_enabled ? (
+                      <PowerOffIcon aria-hidden="true" />
+                    ) : (
+                      <PowerIcon aria-hidden="true" />
+                    )}
+                    {row.original.is_enabled ? "停用" : "启用"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={() => {
+                      resetDelete();
+                      setKnowledgeBaseToDelete(row.original);
+                    }}
+                  >
+                    <TrashIcon aria-hidden="true" />
+                    删除
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           ),
         }),
       ]),
-    [
-      changeUserStatus,
-      currentUser?.id,
-      resetDelete,
-      updateStatus.isPending,
-    ],
+    [changeKnowledgeBaseStatus, resetDelete, updateStatus.isPending],
   );
 
   const table = useTable({
-    features: usersTableFeatures,
-    data: usersQuery.data?.data ?? EMPTY_USERS,
+    features: knowledgeBaseTableFeatures,
+    data: knowledgeBasesQuery.data?.data ?? EMPTY_KNOWLEDGE_BASES,
     columns,
     manualPagination: true,
-    rowCount: usersQuery.data?.count ?? 0,
-    state: {
-      pagination: {
-        pageIndex,
-        pageSize: PAGE_SIZE,
-      },
-    },
+    rowCount: knowledgeBasesQuery.data?.count ?? 0,
+    state: { pagination: { pageIndex, pageSize: PAGE_SIZE } },
   });
 
   const pageCount = table.getPageCount();
   const rows = table.getRowModel().rows;
   const paginationPages = getPaginationPages(currentPage, pageCount);
-  const loadError = usersQuery.error
-    ? getApiErrorMessage(usersQuery.error, "读取用户列表失败")
+  const loadError = knowledgeBasesQuery.error
+    ? getApiErrorMessage(knowledgeBasesQuery.error, "读取知识库列表失败")
     : "";
   const statusError = updateStatus.error
-    ? getApiErrorMessage(updateStatus.error, "更新用户状态失败")
+    ? getApiErrorMessage(updateStatus.error, "更新知识库状态失败")
     : "";
-  const deleteError = deleteUser.error
-    ? getApiErrorMessage(deleteUser.error, "删除用户失败")
+  const deleteError = deleteKnowledgeBase.error
+    ? getApiErrorMessage(deleteKnowledgeBase.error, "删除知识库失败")
     : "";
 
-  async function refreshUsers(): Promise<void> {
-    await queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
-  }
-
-  async function refreshUpdatedUser(userId: string): Promise<void> {
-    await refreshUsers();
-
-    if (userId === currentUser?.id) {
-      await queryClient.invalidateQueries({ queryKey: CURRENT_USER_QUERY_KEY });
-    }
-  }
-
-  function closeDeleteDialog(open: boolean): void {
-    if (!open && !deleteUser.isPending) {
-      setUserToDelete(undefined);
-    }
+  async function refreshKnowledgeBases(): Promise<void> {
+    await queryClient.invalidateQueries({ queryKey: KNOWLEDGE_BASES_QUERY_KEY });
   }
 
   function submitSearch(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const nextSearch = String(formData.get("search") ?? "").trim();
-    router.push(getUsersHref(1, nextSearch, role, status));
-  }
-
-  function changeRole(nextRole: string): void {
-    if (nextRole) {
-      router.push(
-        getUsersHref(1, search, nextRole as RoleFilter, status),
-      );
-    }
+    router.push(getKnowledgeBasesHref(1, nextSearch, status));
   }
 
   function changeStatus(nextStatus: string): void {
     if (nextStatus) {
       router.push(
-        getUsersHref(1, search, role, nextStatus as StatusFilter),
+        getKnowledgeBasesHref(1, search, nextStatus as StatusFilter),
       );
+    }
+  }
+
+  function closeDeleteDialog(open: boolean): void {
+    if (!open && !deleteKnowledgeBase.isPending) {
+      setKnowledgeBaseToDelete(undefined);
     }
   }
 
   return (
     <>
       <AppHeader
-        title={"用户"}
-        left={
-          <SidebarTrigger className="size-9" aria-label="切换管理菜单" />
-        }
+        title="知识库"
+        left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
         actions={
           <Button onClick={() => setCreateOpen(true)}>
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
-            创建用户
+            创建知识库
           </Button>
         }
       />
@@ -389,8 +342,8 @@ export function UserManager() {
                 name="search"
                 className="w-full sm:w-64"
                 defaultValue={search}
-                placeholder="搜索用户名或姓名…"
-                aria-label="搜索用户名或姓名"
+                placeholder="搜索知识库名称…"
+                aria-label="搜索知识库名称"
               />
               <Button type="submit" variant="outline">
                 <SearchIcon data-icon="inline-start" aria-hidden="true" />
@@ -398,36 +351,19 @@ export function UserManager() {
               </Button>
             </form>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground text-sm">角色</span>
-                <ToggleGroup
-                  type="single"
-                  variant="outline"
-                  value={role}
-                  onValueChange={changeRole}
-                  aria-label="用户角色筛选"
-                >
-                  <ToggleGroupItem value="all">全部</ToggleGroupItem>
-                  <ToggleGroupItem value="admin">管理员</ToggleGroupItem>
-                  <ToggleGroupItem value="user">普通用户</ToggleGroupItem>
-                </ToggleGroup>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground text-sm">状态</span>
-                <ToggleGroup
-                  type="single"
-                  variant="outline"
-                  value={status}
-                  onValueChange={changeStatus}
-                  aria-label="用户状态筛选"
-                >
-                  <ToggleGroupItem value="all">全部</ToggleGroupItem>
-                  <ToggleGroupItem value="enabled">已启用</ToggleGroupItem>
-                  <ToggleGroupItem value="disabled">已停用</ToggleGroupItem>
-                </ToggleGroup>
-              </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground text-sm">状态</span>
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                value={status}
+                onValueChange={changeStatus}
+                aria-label="知识库状态筛选"
+              >
+                <ToggleGroupItem value="all">全部</ToggleGroupItem>
+                <ToggleGroupItem value="enabled">已启用</ToggleGroupItem>
+                <ToggleGroupItem value="disabled">已停用</ToggleGroupItem>
+              </ToggleGroup>
             </div>
           </div>
 
@@ -438,7 +374,7 @@ export function UserManager() {
             </Alert>
           )}
 
-          {usersQuery.isPending ? (
+          {knowledgeBasesQuery.isPending ? (
             <Skeleton className="h-64" />
           ) : loadError ? (
             <Empty>
@@ -446,14 +382,14 @@ export function UserManager() {
                 <EmptyMedia variant="icon">
                   <AlertCircleIcon aria-hidden="true" />
                 </EmptyMedia>
-                <EmptyTitle>无法读取用户</EmptyTitle>
+                <EmptyTitle>无法读取知识库</EmptyTitle>
                 <EmptyDescription>{loadError}</EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => usersQuery.refetch()}
+                  onClick={() => knowledgeBasesQuery.refetch()}
                 >
                   重试
                 </Button>
@@ -463,13 +399,13 @@ export function UserManager() {
             <Empty>
               <EmptyHeader>
                 <EmptyMedia variant="icon">
-                  <UsersIcon aria-hidden="true" />
+                  <BookOpenIcon aria-hidden="true" />
                 </EmptyMedia>
-                <EmptyTitle>暂无用户</EmptyTitle>
+                <EmptyTitle>暂无知识库</EmptyTitle>
                 <EmptyDescription>
-                  {search || role !== "all" || status !== "all"
-                    ? "没有符合当前条件的用户。"
-                    : "创建用户后会显示在这里。"}
+                  {search || status !== "all"
+                    ? "没有符合当前条件的知识库。"
+                    : "创建知识库后会显示在这里。"}
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
@@ -503,14 +439,13 @@ export function UserManager() {
           )}
 
           {pageCount > 0 && (
-            <Pagination className="mt-auto" aria-label="用户分页">
+            <Pagination className="mt-auto" aria-label="知识库分页">
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
-                    href={getUsersHref(
+                    href={getKnowledgeBasesHref(
                       Math.max(1, currentPage - 1),
                       search,
-                      role,
                       status,
                     )}
                     aria-disabled={!table.getCanPreviousPage()}
@@ -524,7 +459,7 @@ export function UserManager() {
                       <PaginationEllipsis />
                     ) : (
                       <PaginationLink
-                        href={getUsersHref(page, search, role, status)}
+                        href={getKnowledgeBasesHref(page, search, status)}
                         isActive={page === currentPage}
                       >
                         {page}
@@ -535,10 +470,9 @@ export function UserManager() {
 
                 <PaginationItem>
                   <PaginationNext
-                    href={getUsersHref(
+                    href={getKnowledgeBasesHref(
                       Math.min(pageCount, currentPage + 1),
                       search,
-                      role,
                       status,
                     )}
                     aria-disabled={!table.getCanNextPage()}
@@ -551,31 +485,34 @@ export function UserManager() {
         </section>
       </div>
 
-      <UserCreateDialog
+      <KnowledgeBaseDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onCreated={refreshUsers}
+        onSaved={refreshKnowledgeBases}
       />
 
-      {userToEdit && (
-        <UserEditDialog
-          user={userToEdit}
-          canChangeRole={userToEdit.id !== currentUser?.id}
+      {knowledgeBaseToEdit && (
+        <KnowledgeBaseDialog
+          open
+          knowledgeBase={knowledgeBaseToEdit}
           onOpenChange={(open) => {
             if (!open) {
-              setUserToEdit(undefined);
+              setKnowledgeBaseToEdit(undefined);
             }
           }}
-          onUpdated={() => refreshUpdatedUser(userToEdit.id)}
+          onSaved={refreshKnowledgeBases}
         />
       )}
 
-      <AlertDialog open={!!userToDelete} onOpenChange={closeDeleteDialog}>
+      <AlertDialog
+        open={!!knowledgeBaseToDelete}
+        onOpenChange={closeDeleteDialog}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>删除用户</AlertDialogTitle>
+            <AlertDialogTitle>删除知识库</AlertDialogTitle>
             <AlertDialogDescription>
-              确定删除“{userToDelete?.username}”吗？此操作无法撤销。
+              确定删除“{knowledgeBaseToDelete?.name}”吗？此操作无法撤销。
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -587,20 +524,22 @@ export function UserManager() {
           )}
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteUser.isPending}>
+            <AlertDialogCancel disabled={deleteKnowledgeBase.isPending}>
               取消
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              disabled={deleteUser.isPending}
+              disabled={deleteKnowledgeBase.isPending}
               onClick={(event) => {
                 event.preventDefault();
-                if (userToDelete) {
-                  deleteUser.mutate(userToDelete.id);
+                if (knowledgeBaseToDelete) {
+                  deleteKnowledgeBase.mutate(knowledgeBaseToDelete.id);
                 }
               }}
             >
-              {deleteUser.isPending && <Spinner data-icon="inline-start" />}
+              {deleteKnowledgeBase.isPending && (
+                <Spinner data-icon="inline-start" />
+              )}
               删除
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -608,14 +547,6 @@ export function UserManager() {
       </AlertDialog>
     </>
   );
-}
-
-function getRoleFilter(value: string | null): RoleFilter {
-  if (value === "admin" || value === "user") {
-    return value;
-  }
-
-  return "all";
 }
 
 function getStatusFilter(value: string | null): StatusFilter {
@@ -626,25 +557,19 @@ function getStatusFilter(value: string | null): StatusFilter {
   return "all";
 }
 
-function getUsersHref(
+function getKnowledgeBasesHref(
   page: number,
   search: string,
-  role: RoleFilter,
   status: StatusFilter,
 ): string {
   const parameters = new URLSearchParams();
-
   if (search) {
     parameters.set("search", search);
-  }
-
-  if (role !== "all") {
-    parameters.set("role", role);
   }
 
   if (status !== "all") {
     parameters.set("status", status);
   }
 
-  return getPaginationHref("/admin/users", page, parameters);
+  return getPaginationHref("/admin/knowledge-bases", page, parameters);
 }

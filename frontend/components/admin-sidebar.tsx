@@ -36,7 +36,7 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg">
               <Link href="/admin/users">
-                <ShieldCheckIcon />
+                <ShieldCheckIcon aria-hidden="true" />
                 <span>管理后台</span>
               </Link>
             </SidebarMenuButton>
@@ -55,7 +55,7 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
                   tooltip="用户"
                 >
                   <Link href="/admin/users">
-                    <UserIcon />
+                    <UserIcon aria-hidden="true" />
                     <span>用户</span>
                   </Link>
                 </SidebarMenuButton>
@@ -67,7 +67,7 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
                   tooltip="知识库"
                 >
                   <Link href="/admin/knowledge-bases">
-                    <BookOpenIcon />
+                    <BookOpenIcon aria-hidden="true" />
                     <span>知识库</span>
                   </Link>
                 </SidebarMenuButton>
@@ -83,7 +83,7 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
           <SidebarAccountMenu user={user}>
             <DropdownMenuItem asChild>
               <Link href="/">
-                <MessageSquareIcon />
+                <MessageSquareIcon aria-hidden="true" />
                 返回聊天
               </Link>
             </DropdownMenuItem>
