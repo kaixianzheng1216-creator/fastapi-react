@@ -455,6 +455,82 @@ export type ItemsPublic = {
 export type JsonValue = unknown;
 
 /**
+ * KnowledgeBaseCreate
+ */
+export type KnowledgeBaseCreate = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description?: string | null;
+};
+
+/**
+ * KnowledgeBasePublic
+ */
+export type KnowledgeBasePublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string | null;
+    /**
+     * Is Enabled
+     */
+    is_enabled: boolean;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * KnowledgeBaseUpdate
+ */
+export type KnowledgeBaseUpdate = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Is Enabled
+     */
+    is_enabled?: boolean | null;
+};
+
+/**
+ * KnowledgeBasesPublic
+ */
+export type KnowledgeBasesPublic = {
+    /**
+     * Data
+     */
+    data: Array<KnowledgeBasePublic>;
+    /**
+     * Count
+     */
+    count: number;
+};
+
+/**
  * Message
  */
 export type MessageInput = {
@@ -1050,6 +1126,18 @@ export type UsersReadUsersData = {
          * Limit
          */
         limit?: number;
+        /**
+         * Search
+         */
+        search?: string | null;
+        /**
+         * Is Superuser
+         */
+        is_superuser?: boolean | null;
+        /**
+         * Is Active
+         */
+        is_active?: boolean | null;
     };
     url: '/api/v1/users';
 };
@@ -1245,6 +1333,163 @@ export type ItemsUpdateItemResponses = {
 };
 
 export type ItemsUpdateItemResponse = ItemsUpdateItemResponses[keyof ItemsUpdateItemResponses];
+
+export type KnowledgeBasesReadKnowledgeBasesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Search
+         */
+        search?: string | null;
+        /**
+         * Is Enabled
+         */
+        is_enabled?: boolean | null;
+    };
+    url: '/api/v1/admin/knowledge-bases';
+};
+
+export type KnowledgeBasesReadKnowledgeBasesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeBasesReadKnowledgeBasesError = KnowledgeBasesReadKnowledgeBasesErrors[keyof KnowledgeBasesReadKnowledgeBasesErrors];
+
+export type KnowledgeBasesReadKnowledgeBasesResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeBasesPublic;
+};
+
+export type KnowledgeBasesReadKnowledgeBasesResponse = KnowledgeBasesReadKnowledgeBasesResponses[keyof KnowledgeBasesReadKnowledgeBasesResponses];
+
+export type KnowledgeBasesCreateKnowledgeBaseData = {
+    body: KnowledgeBaseCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/knowledge-bases';
+};
+
+export type KnowledgeBasesCreateKnowledgeBaseErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeBasesCreateKnowledgeBaseError = KnowledgeBasesCreateKnowledgeBaseErrors[keyof KnowledgeBasesCreateKnowledgeBaseErrors];
+
+export type KnowledgeBasesCreateKnowledgeBaseResponses = {
+    /**
+     * Successful Response
+     */
+    201: KnowledgeBasePublic;
+};
+
+export type KnowledgeBasesCreateKnowledgeBaseResponse = KnowledgeBasesCreateKnowledgeBaseResponses[keyof KnowledgeBasesCreateKnowledgeBaseResponses];
+
+export type KnowledgeBasesDeleteKnowledgeBaseData = {
+    body?: never;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}';
+};
+
+export type KnowledgeBasesDeleteKnowledgeBaseErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeBasesDeleteKnowledgeBaseError = KnowledgeBasesDeleteKnowledgeBaseErrors[keyof KnowledgeBasesDeleteKnowledgeBaseErrors];
+
+export type KnowledgeBasesDeleteKnowledgeBaseResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type KnowledgeBasesDeleteKnowledgeBaseResponse = KnowledgeBasesDeleteKnowledgeBaseResponses[keyof KnowledgeBasesDeleteKnowledgeBaseResponses];
+
+export type KnowledgeBasesReadKnowledgeBaseData = {
+    body?: never;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}';
+};
+
+export type KnowledgeBasesReadKnowledgeBaseErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeBasesReadKnowledgeBaseError = KnowledgeBasesReadKnowledgeBaseErrors[keyof KnowledgeBasesReadKnowledgeBaseErrors];
+
+export type KnowledgeBasesReadKnowledgeBaseResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeBasePublic;
+};
+
+export type KnowledgeBasesReadKnowledgeBaseResponse = KnowledgeBasesReadKnowledgeBaseResponses[keyof KnowledgeBasesReadKnowledgeBaseResponses];
+
+export type KnowledgeBasesUpdateKnowledgeBaseData = {
+    body: KnowledgeBaseUpdate;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}';
+};
+
+export type KnowledgeBasesUpdateKnowledgeBaseErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeBasesUpdateKnowledgeBaseError = KnowledgeBasesUpdateKnowledgeBaseErrors[keyof KnowledgeBasesUpdateKnowledgeBaseErrors];
+
+export type KnowledgeBasesUpdateKnowledgeBaseResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeBasePublic;
+};
+
+export type KnowledgeBasesUpdateKnowledgeBaseResponse = KnowledgeBasesUpdateKnowledgeBaseResponses[keyof KnowledgeBasesUpdateKnowledgeBaseResponses];
 
 export type AgentReadConversationsData = {
     body?: never;

@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AgentArchiveConversationData, AgentArchiveConversationErrors, AgentArchiveConversationResponses, AgentChatData, AgentChatErrors, AgentChatResponses, AgentCreateConversationData, AgentCreateConversationResponses, AgentDeleteConversationData, AgentDeleteConversationErrors, AgentDeleteConversationResponses, AgentGenerateConversationTitleData, AgentGenerateConversationTitleErrors, AgentGenerateConversationTitleResponses, AgentReadConversationData, AgentReadConversationErrors, AgentReadConversationResponses, AgentReadConversationsData, AgentReadConversationsErrors, AgentReadConversationsResponses, AgentReadModelsData, AgentReadModelsResponses, AgentRenameConversationData, AgentRenameConversationErrors, AgentRenameConversationResponses, AgentUnarchiveConversationData, AgentUnarchiveConversationErrors, AgentUnarchiveConversationResponses, FilesCompleteFileUploadData, FilesCompleteFileUploadErrors, FilesCompleteFileUploadResponses, FilesCreateFileUploadData, FilesCreateFileUploadErrors, FilesCreateFileUploadResponses, FilesDeleteUnreferencedFileData, FilesDeleteUnreferencedFileErrors, FilesDeleteUnreferencedFileResponses, FilesGetFileDownloadUrlData, FilesGetFileDownloadUrlErrors, FilesGetFileDownloadUrlResponses, ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginTestTokenData, LoginTestTokenResponses, SkillsCreateMdSkillData, SkillsCreateMdSkillErrors, SkillsCreateMdSkillResponses, SkillsCreateZipSkillData, SkillsCreateZipSkillErrors, SkillsCreateZipSkillResponses, SkillsDeleteSkillData, SkillsDeleteSkillErrors, SkillsDeleteSkillResponses, SkillsReadSkillData, SkillsReadSkillErrors, SkillsReadSkillFileData, SkillsReadSkillFileErrors, SkillsReadSkillFileResponses, SkillsReadSkillResponses, SkillsReadSkillsData, SkillsReadSkillsErrors, SkillsReadSkillsResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
+import type { AgentArchiveConversationData, AgentArchiveConversationErrors, AgentArchiveConversationResponses, AgentChatData, AgentChatErrors, AgentChatResponses, AgentCreateConversationData, AgentCreateConversationResponses, AgentDeleteConversationData, AgentDeleteConversationErrors, AgentDeleteConversationResponses, AgentGenerateConversationTitleData, AgentGenerateConversationTitleErrors, AgentGenerateConversationTitleResponses, AgentReadConversationData, AgentReadConversationErrors, AgentReadConversationResponses, AgentReadConversationsData, AgentReadConversationsErrors, AgentReadConversationsResponses, AgentReadModelsData, AgentReadModelsResponses, AgentRenameConversationData, AgentRenameConversationErrors, AgentRenameConversationResponses, AgentUnarchiveConversationData, AgentUnarchiveConversationErrors, AgentUnarchiveConversationResponses, FilesCompleteFileUploadData, FilesCompleteFileUploadErrors, FilesCompleteFileUploadResponses, FilesCreateFileUploadData, FilesCreateFileUploadErrors, FilesCreateFileUploadResponses, FilesDeleteUnreferencedFileData, FilesDeleteUnreferencedFileErrors, FilesDeleteUnreferencedFileResponses, FilesGetFileDownloadUrlData, FilesGetFileDownloadUrlErrors, FilesGetFileDownloadUrlResponses, ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, KnowledgeBasesCreateKnowledgeBaseData, KnowledgeBasesCreateKnowledgeBaseErrors, KnowledgeBasesCreateKnowledgeBaseResponses, KnowledgeBasesDeleteKnowledgeBaseData, KnowledgeBasesDeleteKnowledgeBaseErrors, KnowledgeBasesDeleteKnowledgeBaseResponses, KnowledgeBasesReadKnowledgeBaseData, KnowledgeBasesReadKnowledgeBaseErrors, KnowledgeBasesReadKnowledgeBaseResponses, KnowledgeBasesReadKnowledgeBasesData, KnowledgeBasesReadKnowledgeBasesErrors, KnowledgeBasesReadKnowledgeBasesResponses, KnowledgeBasesUpdateKnowledgeBaseData, KnowledgeBasesUpdateKnowledgeBaseErrors, KnowledgeBasesUpdateKnowledgeBaseResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginTestTokenData, LoginTestTokenResponses, SkillsCreateMdSkillData, SkillsCreateMdSkillErrors, SkillsCreateMdSkillResponses, SkillsCreateZipSkillData, SkillsCreateZipSkillErrors, SkillsCreateZipSkillResponses, SkillsDeleteSkillData, SkillsDeleteSkillErrors, SkillsDeleteSkillResponses, SkillsReadSkillData, SkillsReadSkillErrors, SkillsReadSkillFileData, SkillsReadSkillFileErrors, SkillsReadSkillFileResponses, SkillsReadSkillResponses, SkillsReadSkillsData, SkillsReadSkillsErrors, SkillsReadSkillsResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -234,6 +234,59 @@ export const itemsReadItem = <ThrowOnError extends boolean = false>(options: Opt
 export const itemsUpdateItem = <ThrowOnError extends boolean = false>(options: Options<ItemsUpdateItemData, ThrowOnError>): RequestResult<ItemsUpdateItemResponses, ItemsUpdateItemErrors, ThrowOnError> => (options.client ?? client).put<ItemsUpdateItemResponses, ItemsUpdateItemErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/items/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Read Knowledge Bases
+ */
+export const knowledgeBasesReadKnowledgeBases = <ThrowOnError extends boolean = false>(options?: Options<KnowledgeBasesReadKnowledgeBasesData, ThrowOnError>): RequestResult<KnowledgeBasesReadKnowledgeBasesResponses, KnowledgeBasesReadKnowledgeBasesErrors, ThrowOnError> => (options?.client ?? client).get<KnowledgeBasesReadKnowledgeBasesResponses, KnowledgeBasesReadKnowledgeBasesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/knowledge-bases',
+    ...options
+});
+
+/**
+ * Create Knowledge Base
+ */
+export const knowledgeBasesCreateKnowledgeBase = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesCreateKnowledgeBaseData, ThrowOnError>): RequestResult<KnowledgeBasesCreateKnowledgeBaseResponses, KnowledgeBasesCreateKnowledgeBaseErrors, ThrowOnError> => (options.client ?? client).post<KnowledgeBasesCreateKnowledgeBaseResponses, KnowledgeBasesCreateKnowledgeBaseErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/knowledge-bases',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete Knowledge Base
+ */
+export const knowledgeBasesDeleteKnowledgeBase = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesDeleteKnowledgeBaseData, ThrowOnError>): RequestResult<KnowledgeBasesDeleteKnowledgeBaseResponses, KnowledgeBasesDeleteKnowledgeBaseErrors, ThrowOnError> => (options.client ?? client).delete<KnowledgeBasesDeleteKnowledgeBaseResponses, KnowledgeBasesDeleteKnowledgeBaseErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}',
+    ...options
+});
+
+/**
+ * Read Knowledge Base
+ */
+export const knowledgeBasesReadKnowledgeBase = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesReadKnowledgeBaseData, ThrowOnError>): RequestResult<KnowledgeBasesReadKnowledgeBaseResponses, KnowledgeBasesReadKnowledgeBaseErrors, ThrowOnError> => (options.client ?? client).get<KnowledgeBasesReadKnowledgeBaseResponses, KnowledgeBasesReadKnowledgeBaseErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}',
+    ...options
+});
+
+/**
+ * Update Knowledge Base
+ */
+export const knowledgeBasesUpdateKnowledgeBase = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesUpdateKnowledgeBaseData, ThrowOnError>): RequestResult<KnowledgeBasesUpdateKnowledgeBaseResponses, KnowledgeBasesUpdateKnowledgeBaseErrors, ThrowOnError> => (options.client ?? client).patch<KnowledgeBasesUpdateKnowledgeBaseResponses, KnowledgeBasesUpdateKnowledgeBaseErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}',
     ...options,
     headers: {
         'Content-Type': 'application/json',

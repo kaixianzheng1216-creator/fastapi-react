@@ -2,6 +2,8 @@ import uuid
 from collections.abc import Sequence
 from typing import Any
 
+from sqlalchemy import or_
+from sqlalchemy.sql.elements import ColumnElement
 from sqlmodel import Session, col, func, select
 
 from app.core.security import get_password_hash, verify_password
@@ -86,11 +88,40 @@ def delete_current_user(*, session: Session, current_user: User) -> None:
 
 
 def list_users(
-    *, session: Session, skip: int, limit: int
+    *,
+    session: Session,
+    skip: int,
+    limit: int,
+    search: str | None = None,
+    is_superuser: bool | None = None,
+    is_active: bool | None = None,
 ) -> tuple[Sequence[User], int]:
-    count = session.exec(select(func.count()).select_from(User)).one()
+    filters: list[ColumnElement[bool]] = []
+
+    if search and (query := search.strip()):
+        filters.append(
+            or_(
+                col(User.username).icontains(query, autoescape=True),
+                col(User.full_name).icontains(query, autoescape=True),
+            )
+        )
+
+    if is_superuser is not None:
+        filters.append(col(User.is_superuser) == is_superuser)
+
+    if is_active is not None:
+        filters.append(col(User.is_active) == is_active)
+
+    count = session.exec(
+        select(func.count()).select_from(User).where(*filters)
+    ).one()
+
     statement = (
-        select(User).order_by(col(User.created_at).desc()).offset(skip).limit(limit)
+        select(User)
+        .where(*filters)
+        .order_by(col(User.created_at).desc())
+        .offset(skip)
+        .limit(limit)
     )
     users = session.exec(statement).all()
 

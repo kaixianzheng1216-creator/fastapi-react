@@ -1,6 +1,7 @@
 import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.dependencies import SessionDep
 from app.common.schemas import Message
@@ -102,9 +103,24 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> UserPublic:
 
 
 @admin_router.get("", response_model=UsersPublic)
-def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> UsersPublic:
+def read_users(
+    session: SessionDep,
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 100,
+    search: Annotated[str | None, Query(max_length=255)] = None,
+    is_superuser: bool | None = None,
+    is_active: bool | None = None,
+) -> UsersPublic:
     """获取用户列表。"""
-    users, count = service.list_users(session=session, skip=skip, limit=limit)
+    users, count = service.list_users(
+        session=session,
+        skip=skip,
+        limit=limit,
+        search=search,
+        is_superuser=is_superuser,
+        is_active=is_active,
+    )
+
     public_users = [UserPublic.model_validate(user) for user in users]
 
     return UsersPublic(data=public_users, count=count)
