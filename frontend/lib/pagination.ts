@@ -6,13 +6,14 @@ export function getPaginationHref(
   pathname: string,
   page: number,
   parameters: URLSearchParams = new URLSearchParams(),
+  pageParameter = "page",
 ): string {
   const nextParameters = new URLSearchParams(parameters);
 
   if (page > 1) {
-    nextParameters.set("page", String(page));
+    nextParameters.set(pageParameter, String(page));
   } else {
-    nextParameters.delete("page");
+    nextParameters.delete(pageParameter);
   }
 
   const query = nextParameters.toString();

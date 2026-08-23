@@ -421,7 +421,11 @@ export type ItemPublic = {
     /**
      * Created At
      */
-    created_at?: string | null;
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
 };
 
 /**
@@ -528,6 +532,204 @@ export type KnowledgeBasesPublic = {
      * Count
      */
     count: number;
+};
+
+/**
+ * KnowledgeDocumentArtifactPublic
+ */
+export type KnowledgeDocumentArtifactPublic = {
+    /**
+     * Size
+     */
+    size: number;
+    /**
+     * Downloadurl
+     */
+    downloadUrl: string;
+};
+
+/**
+ * KnowledgeDocumentChunkPublic
+ */
+export type KnowledgeDocumentChunkPublic = {
+    /**
+     * Chunk Index
+     */
+    chunk_index: number;
+    /**
+     * Content
+     */
+    content: string;
+    /**
+     * Section Path
+     */
+    section_path: Array<string>;
+    /**
+     * Page Numbers
+     */
+    page_numbers: Array<number>;
+};
+
+/**
+ * KnowledgeDocumentChunksPublic
+ */
+export type KnowledgeDocumentChunksPublic = {
+    /**
+     * Data
+     */
+    data: Array<KnowledgeDocumentChunkPublic>;
+    /**
+     * Count
+     */
+    count: number;
+};
+
+/**
+ * KnowledgeDocumentPreviewPublic
+ */
+export type KnowledgeDocumentPreviewPublic = {
+    /**
+     * Filename
+     */
+    filename: string;
+    /**
+     * Content
+     */
+    content: string;
+};
+
+/**
+ * KnowledgeDocumentPublic
+ */
+export type KnowledgeDocumentPublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Knowledge Base Id
+     */
+    knowledge_base_id: string;
+    /**
+     * Filename
+     */
+    filename: string;
+    /**
+     * Content Type
+     */
+    content_type: string;
+    /**
+     * Size
+     */
+    size: number;
+    /**
+     * Uploaded
+     */
+    uploaded: boolean;
+    /**
+     * Status
+     */
+    status: 'pending' | 'processing' | 'ready' | 'failed' | 'timed_out';
+    /**
+     * Error Message
+     */
+    error_message: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * KnowledgeDocumentUploadPublic
+ */
+export type KnowledgeDocumentUploadPublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Uploadurl
+     */
+    uploadUrl: string;
+    /**
+     * Uploadheaders
+     */
+    uploadHeaders: {
+        [key: string]: string;
+    };
+};
+
+/**
+ * KnowledgeDocumentsPublic
+ */
+export type KnowledgeDocumentsPublic = {
+    /**
+     * Data
+     */
+    data: Array<KnowledgeDocumentPublic>;
+    /**
+     * Count
+     */
+    count: number;
+};
+
+/**
+ * KnowledgeSearchRequest
+ */
+export type KnowledgeSearchRequest = {
+    /**
+     * Query
+     */
+    query: string;
+};
+
+/**
+ * KnowledgeSearchResultPublic
+ */
+export type KnowledgeSearchResultPublic = {
+    /**
+     * Document Id
+     */
+    document_id: string;
+    /**
+     * Knowledge Base Name
+     */
+    knowledge_base_name: string;
+    /**
+     * Filename
+     */
+    filename: string;
+    /**
+     * Content
+     */
+    content: string;
+    /**
+     * Section Path
+     */
+    section_path: Array<string>;
+    /**
+     * Page Numbers
+     */
+    page_numbers: Array<number>;
+    /**
+     * Score
+     */
+    score: number;
+};
+
+/**
+ * KnowledgeSearchResultsPublic
+ */
+export type KnowledgeSearchResultsPublic = {
+    /**
+     * Data
+     */
+    data: Array<KnowledgeSearchResultPublic>;
 };
 
 /**
@@ -755,7 +957,11 @@ export type UserPublic = {
     /**
      * Created At
      */
-    created_at?: string | null;
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
 };
 
 /**
@@ -1490,6 +1696,354 @@ export type KnowledgeBasesUpdateKnowledgeBaseResponses = {
 };
 
 export type KnowledgeBasesUpdateKnowledgeBaseResponse = KnowledgeBasesUpdateKnowledgeBaseResponses[keyof KnowledgeBasesUpdateKnowledgeBaseResponses];
+
+export type KnowledgeBasesCreateDocumentUploadData = {
+    body: FileUploadRequest;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}/documents/uploads';
+};
+
+export type KnowledgeBasesCreateDocumentUploadErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeBasesCreateDocumentUploadError = KnowledgeBasesCreateDocumentUploadErrors[keyof KnowledgeBasesCreateDocumentUploadErrors];
+
+export type KnowledgeBasesCreateDocumentUploadResponses = {
+    /**
+     * Successful Response
+     */
+    201: KnowledgeDocumentUploadPublic;
+};
+
+export type KnowledgeBasesCreateDocumentUploadResponse = KnowledgeBasesCreateDocumentUploadResponses[keyof KnowledgeBasesCreateDocumentUploadResponses];
+
+export type KnowledgeBasesReadDocumentsData = {
+    body?: never;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+    };
+    query?: {
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}/documents';
+};
+
+export type KnowledgeBasesReadDocumentsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeBasesReadDocumentsError = KnowledgeBasesReadDocumentsErrors[keyof KnowledgeBasesReadDocumentsErrors];
+
+export type KnowledgeBasesReadDocumentsResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeDocumentsPublic;
+};
+
+export type KnowledgeBasesReadDocumentsResponse = KnowledgeBasesReadDocumentsResponses[keyof KnowledgeBasesReadDocumentsResponses];
+
+export type KnowledgeBasesSearchKnowledgeBaseData = {
+    body: KnowledgeSearchRequest;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}/search';
+};
+
+export type KnowledgeBasesSearchKnowledgeBaseErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeBasesSearchKnowledgeBaseError = KnowledgeBasesSearchKnowledgeBaseErrors[keyof KnowledgeBasesSearchKnowledgeBaseErrors];
+
+export type KnowledgeBasesSearchKnowledgeBaseResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeSearchResultsPublic;
+};
+
+export type KnowledgeBasesSearchKnowledgeBaseResponse = KnowledgeBasesSearchKnowledgeBaseResponses[keyof KnowledgeBasesSearchKnowledgeBaseResponses];
+
+export type KnowledgeDocumentsCompleteDocumentUploadData = {
+    body?: never;
+    path: {
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/knowledge-documents/{document_id}/complete';
+};
+
+export type KnowledgeDocumentsCompleteDocumentUploadErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeDocumentsCompleteDocumentUploadError = KnowledgeDocumentsCompleteDocumentUploadErrors[keyof KnowledgeDocumentsCompleteDocumentUploadErrors];
+
+export type KnowledgeDocumentsCompleteDocumentUploadResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeDocumentPublic;
+};
+
+export type KnowledgeDocumentsCompleteDocumentUploadResponse = KnowledgeDocumentsCompleteDocumentUploadResponses[keyof KnowledgeDocumentsCompleteDocumentUploadResponses];
+
+export type KnowledgeDocumentsDeleteDocumentData = {
+    body?: never;
+    path: {
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/knowledge-documents/{document_id}';
+};
+
+export type KnowledgeDocumentsDeleteDocumentErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeDocumentsDeleteDocumentError = KnowledgeDocumentsDeleteDocumentErrors[keyof KnowledgeDocumentsDeleteDocumentErrors];
+
+export type KnowledgeDocumentsDeleteDocumentResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type KnowledgeDocumentsDeleteDocumentResponse = KnowledgeDocumentsDeleteDocumentResponses[keyof KnowledgeDocumentsDeleteDocumentResponses];
+
+export type KnowledgeDocumentsReadDocumentData = {
+    body?: never;
+    path: {
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/knowledge-documents/{document_id}';
+};
+
+export type KnowledgeDocumentsReadDocumentErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeDocumentsReadDocumentError = KnowledgeDocumentsReadDocumentErrors[keyof KnowledgeDocumentsReadDocumentErrors];
+
+export type KnowledgeDocumentsReadDocumentResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeDocumentPublic;
+};
+
+export type KnowledgeDocumentsReadDocumentResponse = KnowledgeDocumentsReadDocumentResponses[keyof KnowledgeDocumentsReadDocumentResponses];
+
+export type KnowledgeDocumentsReadDocumentPreviewData = {
+    body?: never;
+    path: {
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/knowledge-documents/{document_id}/preview';
+};
+
+export type KnowledgeDocumentsReadDocumentPreviewErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeDocumentsReadDocumentPreviewError = KnowledgeDocumentsReadDocumentPreviewErrors[keyof KnowledgeDocumentsReadDocumentPreviewErrors];
+
+export type KnowledgeDocumentsReadDocumentPreviewResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeDocumentPreviewPublic;
+};
+
+export type KnowledgeDocumentsReadDocumentPreviewResponse = KnowledgeDocumentsReadDocumentPreviewResponses[keyof KnowledgeDocumentsReadDocumentPreviewResponses];
+
+export type KnowledgeDocumentsReadDoclingDocumentData = {
+    body?: never;
+    path: {
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/knowledge-documents/{document_id}/docling-document';
+};
+
+export type KnowledgeDocumentsReadDoclingDocumentErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeDocumentsReadDoclingDocumentError = KnowledgeDocumentsReadDoclingDocumentErrors[keyof KnowledgeDocumentsReadDoclingDocumentErrors];
+
+export type KnowledgeDocumentsReadDoclingDocumentResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeDocumentArtifactPublic;
+};
+
+export type KnowledgeDocumentsReadDoclingDocumentResponse = KnowledgeDocumentsReadDoclingDocumentResponses[keyof KnowledgeDocumentsReadDoclingDocumentResponses];
+
+export type KnowledgeDocumentsReadDocumentChunksData = {
+    body?: never;
+    path: {
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: {
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/admin/knowledge-documents/{document_id}/chunks';
+};
+
+export type KnowledgeDocumentsReadDocumentChunksErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeDocumentsReadDocumentChunksError = KnowledgeDocumentsReadDocumentChunksErrors[keyof KnowledgeDocumentsReadDocumentChunksErrors];
+
+export type KnowledgeDocumentsReadDocumentChunksResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeDocumentChunksPublic;
+};
+
+export type KnowledgeDocumentsReadDocumentChunksResponse = KnowledgeDocumentsReadDocumentChunksResponses[keyof KnowledgeDocumentsReadDocumentChunksResponses];
+
+export type KnowledgeDocumentsDownloadOriginalDocumentData = {
+    body?: never;
+    path: {
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/knowledge-documents/{document_id}/download';
+};
+
+export type KnowledgeDocumentsDownloadOriginalDocumentErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeDocumentsDownloadOriginalDocumentError = KnowledgeDocumentsDownloadOriginalDocumentErrors[keyof KnowledgeDocumentsDownloadOriginalDocumentErrors];
+
+export type KnowledgeDocumentsDownloadOriginalDocumentResponses = {
+    /**
+     * Successful Response
+     */
+    200: FileCompletePublic;
+};
+
+export type KnowledgeDocumentsDownloadOriginalDocumentResponse = KnowledgeDocumentsDownloadOriginalDocumentResponses[keyof KnowledgeDocumentsDownloadOriginalDocumentResponses];
+
+export type KnowledgeDocumentsRetryDocumentData = {
+    body?: never;
+    path: {
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/knowledge-documents/{document_id}/retry';
+};
+
+export type KnowledgeDocumentsRetryDocumentErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeDocumentsRetryDocumentError = KnowledgeDocumentsRetryDocumentErrors[keyof KnowledgeDocumentsRetryDocumentErrors];
+
+export type KnowledgeDocumentsRetryDocumentResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type KnowledgeDocumentsRetryDocumentResponse = KnowledgeDocumentsRetryDocumentResponses[keyof KnowledgeDocumentsRetryDocumentResponses];
 
 export type AgentReadConversationsData = {
     body?: never;

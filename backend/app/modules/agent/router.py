@@ -46,6 +46,7 @@ async def chat(
     current_user: CurrentUser,
     chat_request: AgentChatRequest,
 ) -> StreamingResponse:
+    """发起聊天。"""
     conversation_service.touch_conversation(
         session=session,
         current_user=current_user,
