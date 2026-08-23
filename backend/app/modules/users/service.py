@@ -7,7 +7,7 @@ from sqlalchemy.sql.elements import ColumnElement
 from sqlmodel import Session, col, func, select
 
 from app.core.security import get_password_hash, verify_password
-from app.modules.files import service as file_service
+from app.db.timestamps import utc_now
 from app.modules.users.exceptions import (
     IncorrectPasswordError,
     InsufficientPrivilegesError,
@@ -84,7 +84,7 @@ def delete_current_user(*, session: Session, current_user: User) -> None:
     if current_user.is_superuser:
         raise SelfDeletionForbiddenError
 
-    _delete_user(session=session, user=current_user)
+    _soft_delete_user(session=session, user=current_user)
 
 
 def list_users(
@@ -96,7 +96,7 @@ def list_users(
     is_superuser: bool | None = None,
     is_active: bool | None = None,
 ) -> tuple[Sequence[User], int]:
-    filters: list[ColumnElement[bool]] = []
+    filters: list[ColumnElement[bool]] = [col(User.deleted_at).is_(None)]
 
     if search and (query := search.strip()):
         filters.append(
@@ -112,9 +112,7 @@ def list_users(
     if is_active is not None:
         filters.append(col(User.is_active) == is_active)
 
-    count = session.exec(
-        select(func.count()).select_from(User).where(*filters)
-    ).one()
+    count = session.exec(select(func.count()).select_from(User).where(*filters)).one()
 
     statement = (
         select(User)
@@ -131,18 +129,13 @@ def list_users(
 def get_user_for_request(
     *, session: Session, user_id: uuid.UUID, current_user: User
 ) -> User:
-    user = session.get(User, user_id)
-
-    if user == current_user:
+    if user_id == current_user.id:
         return current_user
 
     if not current_user.is_superuser:
         raise InsufficientPrivilegesError
 
-    if user is None:
-        raise UserNotFoundError
-
-    return user
+    return _get_user(session=session, user_id=user_id)
 
 
 def update_user_by_id(
@@ -152,10 +145,7 @@ def update_user_by_id(
     user_id: uuid.UUID,
     user_update: UserUpdate,
 ) -> User:
-    user = session.get(User, user_id)
-
-    if not user:
-        raise UserNotFoundError
+    user = _get_user(session=session, user_id=user_id)
 
     if user == current_user and (
         user_update.is_active is False or user_update.is_superuser is False
@@ -189,25 +179,29 @@ def update_user(*, session: Session, user: User, user_update: UserUpdate) -> Use
 def delete_user_by_id(
     *, session: Session, current_user: User, user_id: uuid.UUID
 ) -> None:
-    user = session.get(User, user_id)
-
-    if not user:
-        raise UserNotFoundError
+    user = _get_user(session=session, user_id=user_id)
 
     if user == current_user:
         raise SelfDeletionForbiddenError
 
-    _delete_user(session=session, user=user)
+    _soft_delete_user(session=session, user=user)
 
 
-def _delete_user(*, session: Session, user: User) -> None:
-    session.delete(user)
-    session.flush()
+def _get_user(*, session: Session, user_id: uuid.UUID) -> User:
+    user = session.exec(
+        select(User).where(
+            col(User.id) == user_id,
+            col(User.deleted_at).is_(None),
+        )
+    ).one_or_none()
+
+    if user is None:
+        raise UserNotFoundError
+
+    return user
+
+
+def _soft_delete_user(*, session: Session, user: User) -> None:
+    user.deleted_at = utc_now()
+    session.add(user)
     session.commit()
-
-    object_keys = file_service.list_owner_object_keys(
-        session=session,
-        owner_id=user.id,
-    )
-
-    file_service.cleanup_objects(object_keys)

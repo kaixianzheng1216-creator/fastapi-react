@@ -1,12 +1,18 @@
 import asyncio
-import json
 import uuid
 
-import magic  # type: ignore[import-untyped]
-from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, col, select
 
-from app.modules.files import document_parser, object_storage
+from app.modules.conversations.models import ConversationFile
+from app.modules.files import document_parser, object_storage, validation
+from app.modules.files.constants import (
+    ALLOWED_CONTENT_TYPES,
+    DOCUMENT_CONTENT_TYPES,
+    DOCUMENT_FORMAT_BY_CONTENT_TYPE,
+    FILE_HEADER_READ_BYTES,
+    KNOWLEDGE_CONTENT_TYPES,
+    TEXT_CONTENT_TYPES,
+)
 from app.modules.files.exceptions import (
     DocumentContentTooLargeError,
     DocumentParsingError,
@@ -22,43 +28,12 @@ from app.modules.files.exceptions import (
 )
 from app.modules.files.models import StoredFile
 from app.modules.files.schemas import FileUploadRequest
+from app.modules.knowledge.models import KnowledgeDocument
 from app.modules.users.models import User
 
 MAX_TEXT_FILE_SIZE = 256 * 1024
 
-TEXT_CONTENT_TYPES = {
-    "application/json",
-    "text/csv",
-    "text/markdown",
-    "text/plain",
-}
-
-DOCUMENT_FORMAT_BY_CONTENT_TYPE = {
-    "application/pdf": "pdf",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
-    "text/html": "html",
-}
-
-DOCUMENT_CONTENT_TYPES = set(DOCUMENT_FORMAT_BY_CONTENT_TYPE)
-
-TEXT_EXTRACTABLE_CONTENT_TYPES = TEXT_CONTENT_TYPES | DOCUMENT_CONTENT_TYPES
-
-ALLOWED_CONTENT_TYPES = {
-    "image/gif",
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    *DOCUMENT_CONTENT_TYPES,
-    *TEXT_CONTENT_TYPES,
-}
-
-FILE_HEADER_READ_BYTES = 8192
-
 FILE_REFERENCE_PREFIX = "file:"
-
-FOREIGN_KEY_VIOLATION_SQLSTATE = "23503"
 
 
 def create_file_upload(
@@ -108,7 +83,6 @@ async def complete_file_upload(
     current_user: User,
     file_id: uuid.UUID,
 ) -> tuple[StoredFile, str]:
-    # 校验并确认上传完成的文件。
     stored_file = _get_file_for_owner(
         session=session,
         owner_id=current_user.id,
@@ -131,37 +105,22 @@ async def complete_file_upload(
     try:
         if content_type in TEXT_CONTENT_TYPES:
             file_content = await asyncio.to_thread(
-                object_storage.read_object_content,
+                object_storage.read_object_bytes,
                 object_key=stored_file.object_key,
                 size=stored_file.size,
             )
 
-            try:
-                extracted_text = file_content.decode("utf-8-sig")
-            except UnicodeDecodeError:
-                raise TextFileEncodingError from None
-
-            if "\x00" in extracted_text:
-                raise FileContentTypeMismatchError
-
-            if content_type == "application/json":
-                try:
-                    json.loads(extracted_text)
-                except json.JSONDecodeError:
-                    raise FileContentTypeMismatchError from None
-
-            stored_file.extracted_text = extracted_text
+            stored_file.extracted_text = validation.validate_text_content(
+                file_content,
+                content_type,
+            )
         else:
             file_header = await asyncio.to_thread(
-                object_storage.read_object_content,
+                object_storage.read_object_bytes,
                 object_key=stored_file.object_key,
-                size=FILE_HEADER_READ_BYTES,
+                size=min(FILE_HEADER_READ_BYTES, stored_file.size),
             )
-
-            detected_content_type = str(magic.from_buffer(file_header, mime=True))
-
-            if detected_content_type != content_type:
-                raise FileContentTypeMismatchError
+            validation.validate_content_type_header(file_header, content_type)
 
             if content_type in DOCUMENT_CONTENT_TYPES:
                 temporary_file = await asyncio.to_thread(
@@ -231,7 +190,7 @@ def resolve_file_reference(
 
 def get_extracted_text(stored_file: StoredFile) -> str:
     # 获取可作为模型上下文的已提取文本。
-    if stored_file.content_type not in TEXT_EXTRACTABLE_CONTENT_TYPES:
+    if stored_file.content_type not in KNOWLEDGE_CONTENT_TYPES:
         raise FileTypeNotAllowedError
 
     if stored_file.extracted_text is None:
@@ -246,7 +205,6 @@ def remove_unreferenced_file(
     current_user: User,
     file_id: uuid.UUID,
 ) -> None:
-    # 删除当前用户尚未发送到聊天的文件。
     stored_file = _get_file_for_owner(
         session=session,
         owner_id=current_user.id,
@@ -254,17 +212,18 @@ def remove_unreferenced_file(
     )
     object_key = stored_file.object_key
 
+    conversation_reference = session.get(ConversationFile, stored_file.id)
+
+    knowledge_reference = session.exec(
+        select(KnowledgeDocument.id).where(
+            col(KnowledgeDocument.stored_file_id) == stored_file.id
+        )
+    ).first()
+
+    if conversation_reference is not None or knowledge_reference is not None:
+        raise SentFileDeletionForbiddenError
+
     session.delete(stored_file)
-
-    try:
-        session.flush()
-    except IntegrityError as error:
-        session.rollback()
-
-        if getattr(error.orig, "sqlstate", None) == FOREIGN_KEY_VIOLATION_SQLSTATE:
-            raise SentFileDeletionForbiddenError from error
-        raise
-
     session.commit()
     cleanup_objects([object_key])
 
@@ -291,15 +250,6 @@ def delete_file_records(*, session: Session, file_ids: list[uuid.UUID]) -> list[
         session.delete(stored_file)
 
     return object_keys
-
-
-def list_owner_object_keys(*, session: Session, owner_id: uuid.UUID) -> list[str]:
-    # 查询用户所有文件的对象存储路径。
-    statement = select(StoredFile.object_key).where(
-        col(StoredFile.owner_id) == owner_id
-    )
-
-    return list(session.exec(statement).all())
 
 
 def _get_file_for_owner(
@@ -350,6 +300,6 @@ async def _delete_invalid_upload(session: Session, stored_file: StoredFile) -> N
 def cleanup_objects(object_keys: list[str]) -> None:
     for object_key in object_keys:
         try:
-            object_storage.delete_objects([object_key])
+            object_storage.delete_object(object_key)
         except FileStorageUnavailableError:
             continue

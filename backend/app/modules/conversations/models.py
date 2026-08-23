@@ -1,50 +1,19 @@
 import uuid
-from datetime import UTC, datetime
 
-from sqlalchemy import DateTime, Index
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field
 
-
-def get_datetime_utc() -> datetime:
-    return datetime.now(UTC)
+from app.db.timestamps import TimestampMixin
 
 
-class Conversation(SQLModel, table=True):
-    __table_args__ = (
-        Index("ix_conversation_owner_updated_at", "owner_id", "updated_at"),
-    )
-
+class Conversation(TimestampMixin, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id",
-        nullable=False,
-        ondelete="CASCADE",
-    )
+    owner_id: uuid.UUID
     title: str | None = Field(default=None, max_length=100)
-    archived: bool = Field(default=False, nullable=False)
-    created_at: datetime = Field(
-        default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),  # type: ignore
-        nullable=False,
-    )
-    updated_at: datetime = Field(
-        default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),  # type: ignore
-        nullable=False,
-    )
+    archived: bool = False
 
 
-class ConversationFile(SQLModel, table=True):
+class ConversationFile(TimestampMixin, table=True):
     __tablename__ = "conversation_file"
-    __table_args__ = (Index("ix_conversation_file_conversation", "conversation_id"),)
 
-    stored_file_id: uuid.UUID = Field(
-        foreign_key="stored_file.id",
-        primary_key=True,
-    )
-
-    conversation_id: uuid.UUID = Field(
-        foreign_key="conversation.id",
-        nullable=False,
-        ondelete="CASCADE",
-    )
+    stored_file_id: uuid.UUID = Field(primary_key=True)
+    conversation_id: uuid.UUID

@@ -163,5 +163,7 @@ def delete_user(
 ) -> None:
     """删除用户。"""
     service.delete_user_by_id(
-        session=session, current_user=current_user, user_id=user_id
+        session=session,
+        current_user=current_user,
+        user_id=user_id,
     )

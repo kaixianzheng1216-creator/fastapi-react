@@ -18,7 +18,8 @@ class ItemUpdate(SQLModel):
 class ItemPublic(ItemBase):
     id: uuid.UUID
     owner_id: uuid.UUID
-    created_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
 
 
 class ItemsPublic(SQLModel):

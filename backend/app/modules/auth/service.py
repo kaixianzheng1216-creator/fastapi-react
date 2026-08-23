@@ -12,7 +12,8 @@ DUMMY_HASH = "$argon2id$v=19$m=65536,t=3,p=4$MjQyZWE1MzBjYjJlZTI0Yw$YTU4NGM5ZTZm
 
 def login(*, session: Session, username: str, password: str) -> str:
     user = users_service.get_user_by_username(session=session, username=username)
-    if not user:
+
+    if not user or user.deleted_at is not None:
         security.verify_password(password, DUMMY_HASH)
         raise InvalidCredentialsError
 

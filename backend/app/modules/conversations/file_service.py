@@ -36,13 +36,20 @@ def attach_file(
     return stored_file
 
 
-def list_file_ids(
+def delete_file_links(
     *,
     session: Session,
     conversation_id: uuid.UUID,
 ) -> list[uuid.UUID]:
-    statement = select(ConversationFile.stored_file_id).where(
-        col(ConversationFile.conversation_id) == conversation_id
-    )
+    links = session.exec(
+        select(ConversationFile).where(
+            col(ConversationFile.conversation_id) == conversation_id
+        )
+    ).all()
 
-    return list(session.exec(statement).all())
+    file_ids = [link.stored_file_id for link in links]
+
+    for link in links:
+        session.delete(link)
+
+    return file_ids

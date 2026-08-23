@@ -31,6 +31,8 @@ dependencies = [
     "python-magic-bin==0.4.14; sys_platform == 'win32'",
     "pyyaml>=6.0.3,<7.0.0",
     "python-frontmatter>=1.3.0,<2.0.0",
+    "qdrant-client>=1.15,<1.17",
+    "docling-core[chunking]>=2.50,<3",
 ]
 
 [dependency-groups]

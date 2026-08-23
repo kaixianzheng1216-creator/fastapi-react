@@ -1,3 +1,5 @@
+import uuid
+
 from sqlmodel import SQLModel
 
 
@@ -7,4 +9,4 @@ class Token(SQLModel):
 
 
 class TokenPayload(SQLModel):
-    sub: str
+    sub: uuid.UUID

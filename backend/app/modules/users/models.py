@@ -1,37 +1,23 @@
-from __future__ import annotations
-
 import uuid
-from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from datetime import datetime
 
 from sqlalchemy import DateTime
-from sqlalchemy.orm import relationship
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, SQLModel
 
-if TYPE_CHECKING:
-    from app.modules.items.models import Item
-
-
-def get_datetime_utc() -> datetime:
-    return datetime.now(UTC)
+from app.db.timestamps import TimestampMixin
 
 
 class UserBase(SQLModel):
-    username: str = Field(unique=True, index=True, min_length=3, max_length=255)
+    username: str = Field(min_length=3, max_length=255, unique=True)
     is_active: bool = True
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
 
 
-class User(UserBase, table=True):
+class User(UserBase, TimestampMixin, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
-    created_at: datetime | None = Field(
-        default_factory=get_datetime_utc,
+    deleted_at: datetime | None = Field(
+        default=None,
         sa_type=DateTime(timezone=True),  # type: ignore
-    )
-    items: list[Item] = Relationship(
-        sa_relationship=relationship(
-            "Item", back_populates="owner", cascade="all, delete-orphan"
-        )
     )

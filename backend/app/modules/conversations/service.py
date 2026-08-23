@@ -12,13 +12,14 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from sqlalchemy.sql.elements import ColumnElement
 from sqlmodel import Session, col, func, select
 
+from app.db.timestamps import utc_now
 from app.modules.conversations.exceptions import (
     ConversationNotFoundError,
     ConversationTitleGenerationError,
 )
-from app.modules.conversations.file_service import list_file_ids
+from app.modules.conversations.file_service import delete_file_links
 from app.modules.conversations.message_files import refresh_message_file_urls
-from app.modules.conversations.models import Conversation, get_datetime_utc
+from app.modules.conversations.models import Conversation
 from app.modules.conversations.schemas import (
     ConversationDetailPublic,
     ConversationPublic,
@@ -83,7 +84,6 @@ async def generate_conversation_title(
         raise ConversationTitleGenerationError from None
 
     conversation.title = response.text[:MAX_CONVERSATION_TITLE_LENGTH]
-    conversation.updated_at = get_datetime_utc()
     session.commit()
     session.refresh(conversation)
 
@@ -174,7 +174,6 @@ def rename_conversation(
         conversation_id=conversation_id,
     )
     conversation.title = title
-    conversation.updated_at = get_datetime_utc()
     session.commit()
     session.refresh(conversation)
 
@@ -193,7 +192,6 @@ def archive_conversation(
         conversation_id=conversation_id,
     )
     conversation.archived = True
-    conversation.updated_at = get_datetime_utc()
     session.commit()
     session.refresh(conversation)
 
@@ -212,7 +210,6 @@ def unarchive_conversation(
         conversation_id=conversation_id,
     )
     conversation.archived = False
-    conversation.updated_at = get_datetime_utc()
     session.commit()
     session.refresh(conversation)
 
@@ -231,28 +228,24 @@ async def delete_conversation(
         current_user=current_user,
         conversation_id=conversation_id,
     )
-    file_ids = list_file_ids(
+
+    file_ids = delete_file_links(
         session=session,
         conversation_id=conversation.id,
     )
-    conversation_id_value = conversation.id
-    thread_id = f"{current_user.id}:{conversation_id_value}"
-    session.delete(conversation)
-    session.flush()
-
     object_keys = delete_file_records(session=session, file_ids=file_ids)
-    session.flush()
+    session.delete(conversation)
 
     session.commit()
 
     await asyncio.to_thread(cleanup_objects, object_keys)
 
     try:
-        await checkpointer.adelete_thread(thread_id)
+        await checkpointer.adelete_thread(f"{current_user.id}:{conversation_id}")
     except Exception:
         logger.exception(
             CONVERSATION_CLEANUP_ERROR_LOG,
-            extra={"conversation_id": str(conversation_id_value)},
+            extra={"conversation_id": str(conversation_id)},
         )
 
 
@@ -268,7 +261,7 @@ def touch_conversation(
         conversation_id=conversation_id,
     )
 
-    conversation.updated_at = get_datetime_utc()
+    conversation.updated_at = utc_now()
 
     session.add(conversation)
 
