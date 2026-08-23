@@ -12,4 +12,4 @@ class ItemBase(SQLModel):
 
 class Item(ItemBase, TimestampMixin, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID
+    owner_id: uuid.UUID = Field(foreign_key="user.id")

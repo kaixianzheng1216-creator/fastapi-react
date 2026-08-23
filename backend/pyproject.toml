@@ -27,8 +27,6 @@ dependencies = [
     "cos-python-sdk-v5>=1.9.44,<2.0.0",
     "openai>=2.46.0,<3.0.0",
     "httpx>=0.28.1,<1.0.0",
-    "python-magic>=0.4.27,<1.0.0; sys_platform != 'win32'",
-    "python-magic-bin==0.4.14; sys_platform == 'win32'",
     "pyyaml>=6.0.3,<7.0.0",
     "python-frontmatter>=1.3.0,<2.0.0",
     "qdrant-client>=1.15,<1.17",

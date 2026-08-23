@@ -233,7 +233,9 @@ async def delete_conversation(
         session=session,
         conversation_id=conversation.id,
     )
+    session.flush()
     object_keys = delete_file_records(session=session, file_ids=file_ids)
+    session.flush()
     session.delete(conversation)
 
     session.commit()

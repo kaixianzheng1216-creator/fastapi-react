@@ -1,22 +1,21 @@
 import asyncio
 import uuid
 
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, col, select
 
 from app.modules.conversations.models import ConversationFile
-from app.modules.files import document_parser, object_storage, validation
+from app.modules.files import document_parser, object_storage
 from app.modules.files.constants import (
     ALLOWED_CONTENT_TYPES,
     DOCUMENT_CONTENT_TYPES,
     DOCUMENT_FORMAT_BY_CONTENT_TYPE,
-    FILE_HEADER_READ_BYTES,
     KNOWLEDGE_CONTENT_TYPES,
     TEXT_CONTENT_TYPES,
 )
 from app.modules.files.exceptions import (
     DocumentContentTooLargeError,
     DocumentParsingError,
-    FileContentTypeMismatchError,
     FileNotFoundError,
     FileSizeMismatchError,
     FileStorageUnavailableError,
@@ -34,6 +33,7 @@ from app.modules.users.models import User
 MAX_TEXT_FILE_SIZE = 256 * 1024
 
 FILE_REFERENCE_PREFIX = "file:"
+FOREIGN_KEY_VIOLATION_SQLSTATE = "23503"
 
 
 def create_file_upload(
@@ -110,36 +110,27 @@ async def complete_file_upload(
                 size=stored_file.size,
             )
 
-            stored_file.extracted_text = validation.validate_text_content(
-                file_content,
-                content_type,
+            try:
+                stored_file.extracted_text = file_content.decode("utf-8-sig")
+            except UnicodeDecodeError:
+                raise TextFileEncodingError from None
+        elif content_type in DOCUMENT_CONTENT_TYPES:
+            temporary_file = await asyncio.to_thread(
+                object_storage.download_to_temporary_file,
+                stored_file.object_key,
             )
-        else:
-            file_header = await asyncio.to_thread(
-                object_storage.read_object_bytes,
-                object_key=stored_file.object_key,
-                size=min(FILE_HEADER_READ_BYTES, stored_file.size),
-            )
-            validation.validate_content_type_header(file_header, content_type)
 
-            if content_type in DOCUMENT_CONTENT_TYPES:
-                temporary_file = await asyncio.to_thread(
-                    object_storage.download_to_temporary_file,
-                    stored_file.object_key,
+            try:
+                stored_file.extracted_text = await document_parser.extract_markdown(
+                    file=temporary_file,
+                    filename=stored_file.filename,
+                    document_format=DOCUMENT_FORMAT_BY_CONTENT_TYPE[content_type],
                 )
-
-                try:
-                    stored_file.extracted_text = await document_parser.extract_markdown(
-                        file=temporary_file,
-                        filename=stored_file.filename,
-                        document_format=DOCUMENT_FORMAT_BY_CONTENT_TYPE[content_type],
-                    )
-                finally:
-                    temporary_file.close()
+            finally:
+                temporary_file.close()
     except (
         DocumentContentTooLargeError,
         DocumentParsingError,
-        FileContentTypeMismatchError,
         TextFileEncodingError,
     ):
         await _delete_invalid_upload(session, stored_file)
@@ -224,7 +215,16 @@ def remove_unreferenced_file(
         raise SentFileDeletionForbiddenError
 
     session.delete(stored_file)
-    session.commit()
+
+    try:
+        session.commit()
+    except IntegrityError as error:
+        session.rollback()
+
+        if getattr(error.orig, "sqlstate", None) == FOREIGN_KEY_VIOLATION_SQLSTATE:
+            raise SentFileDeletionForbiddenError from error
+        raise
+
     cleanup_objects([object_key])
 
 

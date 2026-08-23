@@ -23,11 +23,6 @@ class FileSizeMismatchError(ApplicationError):
     detail = "文件大小与上传请求不一致"
 
 
-class FileContentTypeMismatchError(ApplicationError):
-    status_code = status.HTTP_400_BAD_REQUEST
-    detail = "文件类型与上传请求不一致"
-
-
 class FileTypeNotAllowedError(ApplicationError):
     status_code = status.HTTP_400_BAD_REQUEST
     detail = "不支持该文件类型"

@@ -1,5 +1,3 @@
-FILE_HEADER_READ_BYTES = 8192
-
 TEXT_CONTENT_TYPES = {
     "application/json",
     "text/csv",

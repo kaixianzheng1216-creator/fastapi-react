@@ -7,7 +7,7 @@ from sqlmodel import Session
 from app.modules.agent.exceptions import AttachmentTextTooLargeError
 from app.modules.conversations.message_files import refresh_message_file_urls
 from app.modules.files import service as file_service
-from app.modules.files.exceptions import FileContentTypeMismatchError
+from app.modules.files.exceptions import FileNotFoundError
 
 MAX_MESSAGE_ATTACHMENT_TEXT_SIZE = 256 * 1024
 
@@ -38,12 +38,12 @@ def prepare_message_file_inputs(
             metadata = part.get("metadata")
 
             if not isinstance(metadata, dict):
-                raise FileContentTypeMismatchError
+                raise FileNotFoundError
 
             file_id = metadata.get("file_id")
 
             if not isinstance(file_id, str):
-                raise FileContentTypeMismatchError
+                raise FileNotFoundError
 
             stored_file = file_service.resolve_file_reference(
                 session=session,

@@ -38,6 +38,7 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("owner_id", sa.Uuid(), nullable=False),
+        sa.ForeignKeyConstraint(["owner_id"], ["user.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
@@ -48,6 +49,7 @@ def upgrade() -> None:
         sa.Column("archived", sa.Boolean(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["owner_id"], ["user.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
@@ -62,6 +64,7 @@ def upgrade() -> None:
         sa.Column("extracted_text", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["owner_id"], ["user.id"]),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("object_key"),
     )
@@ -71,6 +74,8 @@ def upgrade() -> None:
         sa.Column("conversation_id", sa.Uuid(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["conversation_id"], ["conversation.id"]),
+        sa.ForeignKeyConstraint(["stored_file_id"], ["stored_file.id"]),
         sa.PrimaryKeyConstraint("stored_file_id"),
     )
     op.create_table(
@@ -98,6 +103,8 @@ def upgrade() -> None:
         ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["knowledge_base_id"], ["knowledge_base.id"]),
+        sa.ForeignKeyConstraint(["stored_file_id"], ["stored_file.id"]),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("stored_file_id"),
     )
