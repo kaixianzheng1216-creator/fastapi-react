@@ -20,6 +20,9 @@ services:
     restart: always
     environment:
       - DOCLING_SERVE_MAX_FILE_SIZE=104857600
+      - DOCLING_SERVE_MAX_NUM_PAGES=1000
+      - DOCLING_SERVE_MAX_SYNC_WAIT=1800
+      - DOCLING_SERVE_MAX_DOCUMENT_TIMEOUT=1800
     healthcheck:
       test:
         - CMD
@@ -42,12 +45,28 @@ services:
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY?Variable not set}
       MOONSHOT_API_KEY: ${MOONSHOT_API_KEY?Variable not set}
       FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY?Variable not set}
+      CLOUDFLARE_ACCOUNT_ID: ${CLOUDFLARE_ACCOUNT_ID?Variable not set}
+      CLOUDFLARE_API_KEY: ${CLOUDFLARE_API_TOKEN?Variable not set}
+      CLOUDFLARE_AI_BASE_URL: https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID?Variable not set}/ai/v1
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/readiness')"]
       interval: 5s
       timeout: 5s
       start_period: 90s
       retries: 10
+
+  qdrant:
+    image: qdrant/qdrant:v1.15.5
+    restart: always
+    volumes:
+      - qdrant-data:/qdrant/storage
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - bash -c ':> /dev/tcp/127.0.0.1/6333'
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
   prestart:
     image: backend
@@ -75,11 +94,14 @@ services:
         condition: service_healthy
       prestart:
         condition: service_completed_successfully
+      qdrant:
+        condition: service_healthy
     env_file:
       - .env
     environment:
       - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
       - POSTGRES_SERVER=db
+      - QDRANT_URL=http://qdrant:6333
       - LANGFUSE_TRACING_ENVIRONMENT=${ENVIRONMENT}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/utils/health-check/')"]
@@ -89,6 +111,35 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    volumes:
+      - knowledge-model-cache:/root/.cache/huggingface
+
+  knowledge-worker:
+    image: backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      docling:
+        condition: service_healthy
+      litellm:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      prestart:
+        condition: service_completed_successfully
+    command: python -m app.modules.knowledge.worker
+    env_file:
+      - .env
+    environment:
+      - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
+      - POSTGRES_SERVER=db
+      - QDRANT_URL=http://qdrant:6333
+    volumes:
+      - knowledge-model-cache:/root/.cache/huggingface
 
   frontend:
     image: frontend
@@ -107,3 +158,5 @@ services:
 
 volumes:
   app-db-data:
+  qdrant-data:
+  knowledge-model-cache:
