@@ -96,11 +96,6 @@ def upgrade() -> None:
         sa.Column("stored_file_id", sa.Uuid(), nullable=False),
         sa.Column("status", sa.String(length=20), nullable=False),
         sa.Column("error_message", sa.Text(), nullable=True),
-        sa.Column(
-            "processing_started_at",
-            sa.DateTime(timezone=True),
-            nullable=True,
-        ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["knowledge_base_id"], ["knowledge_base.id"]),
