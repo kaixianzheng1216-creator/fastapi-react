@@ -1,0 +1,11 @@
+import { KnowledgeBaseDetail } from "@/components/knowledge-base-detail";
+
+export default async function KnowledgeBaseDetailPage({
+  params,
+}: {
+  params: Promise<{ knowledgeBaseId: string }>;
+}) {
+  const { knowledgeBaseId } = await params;
+
+  return <KnowledgeBaseDetail knowledgeBaseId={knowledgeBaseId} />;
+}

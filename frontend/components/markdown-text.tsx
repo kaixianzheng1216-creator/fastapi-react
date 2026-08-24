@@ -8,7 +8,6 @@ import {
   unstable_memoizeMarkdownComponents as memoizeMarkdownComponents,
   useIsMarkdownCodeBlock,
 } from "@assistant-ui/react-markdown";
-import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { type FC, memo, useState } from "react";
 import { CheckIcon, CopyIcon } from "lucide-react";
@@ -259,15 +258,3 @@ const defaultComponents = memoizeMarkdownComponents({
   },
   CodeHeader,
 });
-
-export function MarkdownContent({
-  children,
-}: {
-  children: string;
-}) {
-  return (
-    <div className="prose dark:prose-invert">
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{children}</ReactMarkdown>
-    </div>
-  );
-}

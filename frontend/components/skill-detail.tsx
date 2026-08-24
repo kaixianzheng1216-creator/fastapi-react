@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
-import { MarkdownContent } from "@/components/markdown-text";
+import { MarkdownContent } from "@/components/markdown-content";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   skillsReadSkill,
