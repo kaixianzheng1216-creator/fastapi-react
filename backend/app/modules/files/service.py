@@ -7,10 +7,10 @@ from sqlmodel import Session, col, select
 from app.modules.conversations.models import ConversationFile
 from app.modules.files import document_parser, object_storage
 from app.modules.files.constants import (
-    ALLOWED_CONTENT_TYPES,
+    CHAT_CONTENT_TYPES,
+    DOCLING_CONTENT_TYPES,
     DOCUMENT_CONTENT_TYPES,
     DOCUMENT_FORMAT_BY_CONTENT_TYPE,
-    KNOWLEDGE_CONTENT_TYPES,
     TEXT_CONTENT_TYPES,
 )
 from app.modules.files.exceptions import (
@@ -42,10 +42,9 @@ def create_file_upload(
     current_user: User,
     upload_request: FileUploadRequest,
 ) -> tuple[StoredFile, str]:
-    # 创建待上传记录并返回对象存储直传地址。
     content_type = upload_request.content_type
 
-    if content_type not in ALLOWED_CONTENT_TYPES:
+    if content_type not in CHAT_CONTENT_TYPES:
         raise FileTypeNotAllowedError
     if content_type in TEXT_CONTENT_TYPES and upload_request.size > MAX_TEXT_FILE_SIZE:
         raise TextFileTooLargeError
@@ -114,7 +113,7 @@ async def complete_file_upload(
                 stored_file.extracted_text = file_content.decode("utf-8-sig")
             except UnicodeDecodeError:
                 raise TextFileEncodingError from None
-        elif content_type in DOCUMENT_CONTENT_TYPES:
+        elif content_type in DOCLING_CONTENT_TYPES:
             temporary_file = await asyncio.to_thread(
                 object_storage.download_to_temporary_file,
                 stored_file.object_key,
@@ -149,7 +148,6 @@ def get_uploaded_file(
     current_user: User,
     file_id: uuid.UUID,
 ) -> StoredFile:
-    # 获取当前用户已完成上传的文件。
     return _get_uploaded_file_for_owner(
         session=session,
         owner_id=current_user.id,
@@ -163,7 +161,6 @@ def resolve_file_reference(
     user_id: uuid.UUID,
     reference: str,
 ) -> StoredFile:
-    # 将聊天文件引用解析为当前用户的已上传文件。
     if not reference.startswith(FILE_REFERENCE_PREFIX):
         raise FileNotFoundError
 
@@ -180,8 +177,7 @@ def resolve_file_reference(
 
 
 def get_extracted_text(stored_file: StoredFile) -> str:
-    # 获取可作为模型上下文的已提取文本。
-    if stored_file.content_type not in KNOWLEDGE_CONTENT_TYPES:
+    if stored_file.content_type not in DOCUMENT_CONTENT_TYPES:
         raise FileTypeNotAllowedError
 
     if stored_file.extracted_text is None:
@@ -229,14 +225,12 @@ def remove_unreferenced_file(
 
 
 def delete_files(*, session: Session, file_ids: list[uuid.UUID]) -> None:
-    # 批量删除文件记录及其对象存储内容。
     object_keys = delete_file_records(session=session, file_ids=file_ids)
     session.commit()
     cleanup_objects(object_keys)
 
 
 def delete_file_records(*, session: Session, file_ids: list[uuid.UUID]) -> list[str]:
-    # 删除文件记录并返回对应的对象存储路径。
     object_keys: list[str] = []
 
     for file_id in file_ids:
@@ -258,7 +252,6 @@ def _get_file_for_owner(
     owner_id: uuid.UUID,
     file_id: uuid.UUID,
 ) -> StoredFile:
-    # 按用户归属查询文件。
     statement = select(StoredFile).where(
         col(StoredFile.id) == file_id,
         col(StoredFile.owner_id) == owner_id,
@@ -275,7 +268,6 @@ def _get_file_for_owner(
 def _get_uploaded_file_for_owner(
     *, session: Session, owner_id: uuid.UUID, file_id: uuid.UUID
 ) -> StoredFile:
-    # 按用户归属查询已完成上传的文件。
     stored_file = _get_file_for_owner(
         session=session,
         owner_id=owner_id,
