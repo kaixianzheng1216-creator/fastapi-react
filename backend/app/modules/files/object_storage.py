@@ -12,10 +12,7 @@ from qcloud_cos.cos_exception import (  # type: ignore[import-untyped]
 )
 
 from app.core.config import settings
-from app.modules.files.exceptions import (
-    FileStorageUnavailableError,
-    FileUploadIncompleteError,
-)
+from app.modules.files.exceptions import FileStorageUnavailableError
 
 FILE_OBJECT_PREFIX = "files"
 UPLOAD_URL_LIFETIME_SECONDS = 15 * 60
@@ -85,7 +82,7 @@ def head_object(object_key: str) -> dict[str, Any]:
         return response
     except CosServiceError as error:
         if error.get_status_code() == 404:
-            raise FileUploadIncompleteError from None
+            raise FileNotFoundError(object_key) from None
 
         raise FileStorageUnavailableError from error
     except CosClientError as error:
@@ -162,7 +159,7 @@ def _get_object(*, object_key: str, size: int | None = None) -> Any:
         )
     except CosServiceError as error:
         if error.get_status_code() == 404:
-            raise FileUploadIncompleteError from None
+            raise FileNotFoundError(object_key) from None
 
         raise FileStorageUnavailableError from error
     except CosClientError as error:

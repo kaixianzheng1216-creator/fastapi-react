@@ -1,4 +1,5 @@
 import asyncio
+import builtins
 import uuid
 
 from sqlalchemy.exc import IntegrityError
@@ -93,9 +94,12 @@ async def complete_file_upload(
     if stored_file.uploaded:
         return stored_file, object_storage.create_download_url(stored_file.object_key)
 
-    object_metadata = await asyncio.to_thread(
-        object_storage.head_object, stored_file.object_key
-    )
+    try:
+        object_metadata = await asyncio.to_thread(
+            object_storage.head_object, stored_file.object_key
+        )
+    except builtins.FileNotFoundError:
+        raise FileUploadIncompleteError from None
 
     if int(object_metadata["Content-Length"]) != stored_file.size:
         await _delete_invalid_upload(session, stored_file)
@@ -127,6 +131,8 @@ async def complete_file_upload(
                 )
             finally:
                 temporary_file.close()
+    except builtins.FileNotFoundError:
+        raise FileUploadIncompleteError from None
     except (
         DocumentContentTooLargeError,
         DocumentParsingError,

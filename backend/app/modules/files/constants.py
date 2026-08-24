@@ -10,10 +10,13 @@ DOCUMENT_FORMAT_BY_CONTENT_TYPE = {
     "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    "text/csv": "csv",
     "text/html": "html",
+    "text/markdown": "md",
+    "text/plain": "md",
 }
 
-DOCLING_CONTENT_TYPES = set(DOCUMENT_FORMAT_BY_CONTENT_TYPE)
+DOCLING_CONTENT_TYPES = set(DOCUMENT_FORMAT_BY_CONTENT_TYPE) - TEXT_CONTENT_TYPES
 
 DOCUMENT_CONTENT_TYPES = TEXT_CONTENT_TYPES | DOCLING_CONTENT_TYPES
 

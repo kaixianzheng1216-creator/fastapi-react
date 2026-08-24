@@ -5,7 +5,7 @@ export const TEXT_CONTENT_TYPES: readonly string[] = [
   "text/plain",
 ];
 
-export const DOCUMENT_CONTENT_TYPES: readonly string[] = [
+const DOCLING_CONTENT_TYPES: readonly string[] = [
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -13,8 +13,8 @@ export const DOCUMENT_CONTENT_TYPES: readonly string[] = [
   "text/html",
 ];
 
-export const KNOWLEDGE_CONTENT_TYPES: readonly string[] = [
-  ...DOCUMENT_CONTENT_TYPES,
+export const DOCUMENT_CONTENT_TYPES: readonly string[] = [
+  ...DOCLING_CONTENT_TYPES,
   ...TEXT_CONTENT_TYPES,
 ];
 
@@ -23,7 +23,7 @@ export const CHAT_CONTENT_TYPES: readonly string[] = [
   "image/png",
   "image/gif",
   "image/webp",
-  ...KNOWLEDGE_CONTENT_TYPES,
+  ...DOCUMENT_CONTENT_TYPES,
 ];
 
 export const MAX_FILE_SIZE = 100 * 1024 * 1024;
