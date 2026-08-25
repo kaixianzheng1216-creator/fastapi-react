@@ -171,7 +171,7 @@ async def create_webpage_document(
 
     session.rollback()
 
-    markdown = await firecrawl.scrape(url)
+    markdown, title = await firecrawl.scrape(url)
 
     content = markdown.encode("utf-8")
 
@@ -183,7 +183,7 @@ async def create_webpage_document(
         current_user=current_user,
         knowledge_base_id=knowledge_base_id,
         source_url=url,
-        filename=_create_webpage_filename(url),
+        filename=_create_webpage_filename(url, title),
         content=content,
     )
 
@@ -205,7 +205,13 @@ def list_documents(
     )
 
 
-def _create_webpage_filename(url: str) -> str:
+def _create_webpage_filename(url: str, title: str | None) -> str:
+    if title:
+        normalized_title = " ".join(title.split())
+
+        if normalized_title:
+            return f"{normalized_title[:252]}.md"
+
     parsed_url = urlsplit(url)
 
     assert parsed_url.hostname is not None

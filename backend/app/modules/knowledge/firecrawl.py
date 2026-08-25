@@ -11,8 +11,13 @@ SCRAPE_URL = "https://api.firecrawl.dev/v2/scrape"
 SCRAPE_TIMEOUT_SECONDS = 60
 
 
+class _ScrapeMetadata(BaseModel):
+    title: str | None = None
+
+
 class _ScrapeData(BaseModel):
     markdown: str
+    metadata: _ScrapeMetadata
 
 
 class _ScrapeResponse(BaseModel):
@@ -20,8 +25,8 @@ class _ScrapeResponse(BaseModel):
     data: _ScrapeData | None = None
 
 
-async def scrape(url: str) -> str:
-    """抓取单个网页并返回 Markdown。"""
+async def scrape(url: str) -> tuple[str, str | None]:
+    """抓取单个网页并返回 Markdown 和标题。"""
     try:
         async with httpx.AsyncClient(timeout=SCRAPE_TIMEOUT_SECONDS) as client:
             response = await client.post(
@@ -48,4 +53,4 @@ async def scrape(url: str) -> str:
     if not result.success or result.data is None or not result.data.markdown.strip():
         raise WebpageScrapeError
 
-    return result.data.markdown
+    return result.data.markdown, result.data.metadata.title
