@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AppHeader } from "@/components/app-header";
-import { MarkdownContent } from "@/components/markdown-content";
+import { AppHeader } from "@/components/layout/app-header";
+import { MarkdownContent } from "@/components/shared/markdown-content";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   skillsReadSkill,

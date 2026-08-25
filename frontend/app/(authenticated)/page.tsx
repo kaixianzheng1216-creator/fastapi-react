@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 
-import { ConversationSidebar } from "@/components/conversation-sidebar";
-import { Thread } from "@/components/thread";
-import { ThreadHeader } from "@/components/thread-header";
+import { ConversationSidebar } from "@/app/(authenticated)/_components/conversation-sidebar";
+import { Thread } from "@/app/(authenticated)/_components/thread";
+import { ThreadHeader } from "@/app/(authenticated)/_components/thread-header";
 import { AuiProvider, Suggestions, useAui } from "@assistant-ui/react";
 
 function ThreadWithSuggestions({

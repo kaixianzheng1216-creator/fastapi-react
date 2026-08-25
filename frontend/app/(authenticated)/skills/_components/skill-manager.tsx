@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { SearchToolbar } from "@/components/search-toolbar";
+import { SearchToolbar } from "@/components/shared/search-toolbar";
 import {
   Card,
   CardAction,
@@ -46,8 +46,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { AppHeader } from "@/components/app-header";
-import { ThreadListPopover } from "@/components/thread-list-popover";
+import { AppHeader } from "@/components/layout/app-header";
+import { ThreadListPopover } from "@/app/(authenticated)/_components/thread-list-popover";
 import {
   Pagination,
   PaginationContent,
@@ -70,7 +70,7 @@ import {
   skillsReadSkills,
   type SkillSummaryPublic,
 } from "@/lib/client";
-import { SkillCreateDialog } from "@/components/skill-create-dialog";
+import { SkillCreateDialog } from "@/app/(authenticated)/skills/_components/skill-create-dialog";
 
 const PAGE_SIZE = 12;
 const SKILLS_QUERY_KEY = ["skills"] as const;

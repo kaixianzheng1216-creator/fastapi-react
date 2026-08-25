@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { QueryProvider } from "@/app/query-provider";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/app/theme-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {

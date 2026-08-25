@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 
-import { AppearanceMenu } from "@/components/appearance-menu";
+import { AppearanceMenu } from "@/app/_components/appearance-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
-import { UserProfile } from "@/components/user-info";
+import { UserProfile } from "@/app/_components/user-info";
 import { CURRENT_USER_QUERY_KEY } from "@/hooks/use-current-user";
 import { clearAccessToken } from "@/lib/auth";
 import type { UserPublic } from "@/lib/client";

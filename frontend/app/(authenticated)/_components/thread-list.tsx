@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SidebarItemButton } from "@/components/sidebar-item-button";
+import { SidebarItemButton } from "@/app/(authenticated)/_components/sidebar-item-button";
 import { searchConversations } from "@/lib/conversation-thread-list-adapter";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";

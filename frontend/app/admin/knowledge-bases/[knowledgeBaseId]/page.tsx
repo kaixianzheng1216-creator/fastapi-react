@@ -1,4 +1,4 @@
-import { KnowledgeBaseDetail } from "@/components/knowledge-base-detail";
+import { KnowledgeBaseDetail } from "@/app/admin/knowledge-bases/_components/knowledge-base-detail";
 
 export default async function KnowledgeBaseDetailPage({
   params,

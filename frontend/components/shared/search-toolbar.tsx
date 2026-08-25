@@ -37,6 +37,7 @@ export function SearchToolbar({
       <label htmlFor={id} className="sr-only">
         {label}
       </label>
+
       <Input
         id={id}
         name="search"

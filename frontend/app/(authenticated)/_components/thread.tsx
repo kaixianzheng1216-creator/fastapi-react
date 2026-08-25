@@ -4,19 +4,19 @@ import {
   ComposerAddAttachment,
   ComposerAttachments,
   UserMessageAttachments,
-} from "@/components/attachment";
-import { ComposerModelSelector } from "@/components/composer-model-selector";
-import { ThreadFollowupSuggestions } from "@/components/follow-up-suggestions";
-import { MarkdownText } from "@/components/markdown-text";
+} from "@/app/(authenticated)/_components/attachment";
+import { ComposerModelSelector } from "@/app/(authenticated)/_components/composer-model-selector";
+import { ThreadFollowupSuggestions } from "@/app/(authenticated)/_components/follow-up-suggestions";
+import { MarkdownText } from "@/app/(authenticated)/_components/markdown-text";
 import {
   Reasoning,
   ReasoningContent,
   ReasoningRoot,
   ReasoningText,
   ReasoningTrigger,
-} from "@/components/reasoning";
-import { ToolFallback } from "@/components/tool-fallback";
-import { TooltipIconButton } from "@/components/tooltip-icon-button";
+} from "@/app/(authenticated)/_components/reasoning";
+import { ToolFallback } from "@/app/(authenticated)/_components/tool-fallback";
+import { TooltipIconButton } from "@/app/(authenticated)/_components/tooltip-icon-button";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {

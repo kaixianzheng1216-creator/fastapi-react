@@ -1,8 +1,8 @@
 "use client";
 
-import { AppHeader } from "@/components/app-header";
-import { ThreadListItemMore } from "@/components/thread-list";
-import { ThreadListPopover } from "@/components/thread-list-popover";
+import { AppHeader } from "@/components/layout/app-header";
+import { ThreadListItemMore } from "@/app/(authenticated)/_components/thread-list";
+import { ThreadListPopover } from "@/app/(authenticated)/_components/thread-list-popover";
 import { Button } from "@/components/ui/button";
 import { useAuiState } from "@assistant-ui/react";
 import { Columns2Icon } from "lucide-react";

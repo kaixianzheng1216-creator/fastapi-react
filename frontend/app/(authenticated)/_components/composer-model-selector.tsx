@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ModelSelector } from "@/components/model-selector";
+import { ModelSelector } from "@/app/(authenticated)/_components/model-selector";
 import { agentReadModels } from "@/lib/client";
 
 const THINKING_OPTIONS = [

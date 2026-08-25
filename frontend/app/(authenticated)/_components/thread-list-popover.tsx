@@ -2,14 +2,14 @@
 
 import { SquarePenIcon } from "lucide-react";
 import { useState } from "react";
-import { ThreadList, ThreadListNew } from "@/components/thread-list";
+import { ThreadList, ThreadListNew } from "@/app/(authenticated)/_components/thread-list";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { UserProfile } from "@/components/user-info";
+import { UserProfile } from "@/app/_components/user-info";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
 export function ThreadListPopover() {

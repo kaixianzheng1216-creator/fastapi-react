@@ -25,10 +25,10 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useMemo, useState } from "react";
 
-import { UserCreateDialog } from "@/components/user-create-dialog";
-import { UserEditDialog } from "@/components/user-edit-dialog";
-import { AppHeader } from "@/components/app-header";
-import { SearchToolbar } from "@/components/search-toolbar";
+import { UserCreateDialog } from "@/app/admin/users/_components/user-create-dialog";
+import { UserEditDialog } from "@/app/admin/users/_components/user-edit-dialog";
+import { AppHeader } from "@/components/layout/app-header";
+import { SearchToolbar } from "@/components/shared/search-toolbar";
 import {
   AlertDialog,
   AlertDialogAction,

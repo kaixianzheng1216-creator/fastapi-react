@@ -16,8 +16,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
-import { AppHeader } from "@/components/app-header";
-import { PagePagination } from "@/components/page-pagination";
+import { AppHeader } from "@/components/layout/app-header";
+import { PagePagination } from "@/app/admin/knowledge-bases/_components/page-pagination";
 import {
   AlertDialog,
   AlertDialogAction,

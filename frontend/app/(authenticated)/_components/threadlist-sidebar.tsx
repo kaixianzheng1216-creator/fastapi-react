@@ -10,9 +10,9 @@ import {
   ThreadListNew,
   ThreadListRoot,
   ThreadListSearch,
-} from "@/components/thread-list";
-import { SidebarItemButton } from "@/components/sidebar-item-button";
-import { SidebarAccountMenu } from "@/components/sidebar-account-menu";
+} from "@/app/(authenticated)/_components/thread-list";
+import { SidebarItemButton } from "@/app/(authenticated)/_components/sidebar-item-button";
+import { SidebarAccountMenu } from "@/app/_components/sidebar-account-menu";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import {
   Sidebar,

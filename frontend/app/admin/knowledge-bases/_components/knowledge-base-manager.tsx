@@ -15,10 +15,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
-import { AppHeader } from "@/components/app-header";
-import { KnowledgeBaseDialog } from "@/components/knowledge-base-dialog";
-import { PagePagination } from "@/components/page-pagination";
-import { SearchToolbar } from "@/components/search-toolbar";
+import { AppHeader } from "@/components/layout/app-header";
+import { KnowledgeBaseDialog } from "@/app/admin/knowledge-bases/_components/knowledge-base-dialog";
+import { PagePagination } from "@/app/admin/knowledge-bases/_components/page-pagination";
+import { SearchToolbar } from "@/components/shared/search-toolbar";
 import {
   AlertDialog,
   AlertDialogAction,

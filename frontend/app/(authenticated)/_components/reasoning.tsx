@@ -15,7 +15,7 @@ import {
   useScrollLock,
   type ReasoningMessagePartComponent,
 } from "@assistant-ui/react";
-import { MarkdownText } from "@/components/markdown-text";
+import { MarkdownText } from "@/app/(authenticated)/_components/markdown-text";
 import {
   Collapsible,
   CollapsibleContent,

@@ -1,7 +1,7 @@
 "use client";
 
-import { ArtifactList } from "@/components/artifact-list";
-import { TodoList } from "@/components/todo-list";
+import { ArtifactList } from "@/app/(authenticated)/_components/artifact-list";
+import { TodoList } from "@/app/(authenticated)/_components/todo-list";
 import { Card } from "@/components/ui/card";
 import {
   Sheet,

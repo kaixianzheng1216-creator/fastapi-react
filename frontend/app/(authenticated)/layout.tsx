@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
 import { MyRuntimeProvider } from "@/app/MyRuntimeProvider";
-import { AuthenticatedGuard } from "@/components/authenticated-guard";
-import { ThreadListSidebar } from "@/components/threadlist-sidebar";
+import { AuthenticatedGuard } from "@/app/_components/authenticated-guard";
+import { ThreadListSidebar } from "@/app/(authenticated)/_components/threadlist-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function AuthenticatedLayout({

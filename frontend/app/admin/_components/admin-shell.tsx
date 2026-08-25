@@ -4,7 +4,7 @@ import { AlertCircleIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { AdminSidebar } from "@/components/admin-sidebar";
+import { AdminSidebar } from "@/app/admin/_components/admin-sidebar";
 import { Button } from "@/components/ui/button";
 import {
   Empty,

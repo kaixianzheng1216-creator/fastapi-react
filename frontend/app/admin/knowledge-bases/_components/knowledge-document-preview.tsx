@@ -12,9 +12,9 @@ import {
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { AppHeader } from "@/components/app-header";
-import { MarkdownContent } from "@/components/markdown-content";
-import { PagePagination } from "@/components/page-pagination";
+import { AppHeader } from "@/components/layout/app-header";
+import { MarkdownContent } from "@/components/shared/markdown-content";
+import { PagePagination } from "@/app/admin/knowledge-bases/_components/page-pagination";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {

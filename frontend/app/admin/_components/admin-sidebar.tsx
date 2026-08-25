@@ -9,7 +9,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { SidebarAccountMenu } from "@/components/sidebar-account-menu";
+import { SidebarAccountMenu } from "@/app/_components/sidebar-account-menu";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import {
   Sidebar,
