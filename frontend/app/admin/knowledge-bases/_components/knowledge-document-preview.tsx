@@ -188,8 +188,8 @@ export function KnowledgeDocumentPreview({
         }
       />
 
-      <div className="flex min-h-0 flex-1 p-4 md:p-6">
-        <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-col gap-6">
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
           {downloadDocument.error && (
             <Alert variant="destructive">
               <AlertCircleIcon aria-hidden="true" />
@@ -211,7 +211,6 @@ export function KnowledgeDocumentPreview({
           <Tabs
             value={activeView}
             onValueChange={changeView}
-            className="min-h-0 flex-1"
           >
             <TabsList>
               <TabsTrigger value="markdown">
@@ -230,7 +229,7 @@ export function KnowledgeDocumentPreview({
 
             <TabsContent
               value="markdown"
-              className="min-h-0 overflow-y-auto pt-4"
+              className="pt-4"
             >
               {previewQuery.isPending ? (
                 <div className="flex flex-col gap-4">
@@ -255,14 +254,14 @@ export function KnowledgeDocumentPreview({
 
             <TabsContent
               value="json"
-              className="flex min-h-0 flex-col gap-4 pt-4"
+              className="flex flex-col gap-4 pt-4"
             >
               <DoclingDocumentView documentId={documentId} />
             </TabsContent>
 
             <TabsContent
               value="chunks"
-              className="min-h-0 overflow-y-auto pt-4"
+              className="pt-4"
             >
               <DocumentChunksView
                 documentId={documentId}
@@ -346,7 +345,7 @@ function DoclingDocumentView({ documentId }: { documentId: string }) {
           </EmptyHeader>
         </Empty>
       ) : (
-        <pre className="min-h-0 flex-1 overflow-auto rounded-md border p-4 text-sm">
+        <pre className="overflow-auto rounded-md border p-4 text-sm">
           <code>{doclingDocumentQuery.data.content}</code>
         </pre>
       )}
