@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AgentArchiveConversationData, AgentArchiveConversationErrors, AgentArchiveConversationResponses, AgentChatData, AgentChatErrors, AgentChatResponses, AgentCreateConversationData, AgentCreateConversationResponses, AgentDeleteConversationData, AgentDeleteConversationErrors, AgentDeleteConversationResponses, AgentGenerateConversationTitleData, AgentGenerateConversationTitleErrors, AgentGenerateConversationTitleResponses, AgentReadConversationData, AgentReadConversationErrors, AgentReadConversationResponses, AgentReadConversationsData, AgentReadConversationsErrors, AgentReadConversationsResponses, AgentReadModelsData, AgentReadModelsResponses, AgentRenameConversationData, AgentRenameConversationErrors, AgentRenameConversationResponses, AgentUnarchiveConversationData, AgentUnarchiveConversationErrors, AgentUnarchiveConversationResponses, FilesCompleteFileUploadData, FilesCompleteFileUploadErrors, FilesCompleteFileUploadResponses, FilesCreateFileUploadData, FilesCreateFileUploadErrors, FilesCreateFileUploadResponses, FilesDeleteUnreferencedFileData, FilesDeleteUnreferencedFileErrors, FilesDeleteUnreferencedFileResponses, FilesGetFileDownloadUrlData, FilesGetFileDownloadUrlErrors, FilesGetFileDownloadUrlResponses, ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, KnowledgeBasesCreateDocumentUploadData, KnowledgeBasesCreateDocumentUploadErrors, KnowledgeBasesCreateDocumentUploadResponses, KnowledgeBasesCreateKnowledgeBaseData, KnowledgeBasesCreateKnowledgeBaseErrors, KnowledgeBasesCreateKnowledgeBaseResponses, KnowledgeBasesDeleteKnowledgeBaseData, KnowledgeBasesDeleteKnowledgeBaseErrors, KnowledgeBasesDeleteKnowledgeBaseResponses, KnowledgeBasesReadDocumentsData, KnowledgeBasesReadDocumentsErrors, KnowledgeBasesReadDocumentsResponses, KnowledgeBasesReadKnowledgeBaseData, KnowledgeBasesReadKnowledgeBaseErrors, KnowledgeBasesReadKnowledgeBaseResponses, KnowledgeBasesReadKnowledgeBasesData, KnowledgeBasesReadKnowledgeBasesErrors, KnowledgeBasesReadKnowledgeBasesResponses, KnowledgeBasesSearchKnowledgeBaseData, KnowledgeBasesSearchKnowledgeBaseErrors, KnowledgeBasesSearchKnowledgeBaseResponses, KnowledgeBasesUpdateKnowledgeBaseData, KnowledgeBasesUpdateKnowledgeBaseErrors, KnowledgeBasesUpdateKnowledgeBaseResponses, KnowledgeDocumentsCompleteDocumentUploadData, KnowledgeDocumentsCompleteDocumentUploadErrors, KnowledgeDocumentsCompleteDocumentUploadResponses, KnowledgeDocumentsDeleteDocumentData, KnowledgeDocumentsDeleteDocumentErrors, KnowledgeDocumentsDeleteDocumentResponses, KnowledgeDocumentsDownloadOriginalDocumentData, KnowledgeDocumentsDownloadOriginalDocumentErrors, KnowledgeDocumentsDownloadOriginalDocumentResponses, KnowledgeDocumentsReadDoclingDocumentData, KnowledgeDocumentsReadDoclingDocumentErrors, KnowledgeDocumentsReadDoclingDocumentResponses, KnowledgeDocumentsReadDocumentChunksData, KnowledgeDocumentsReadDocumentChunksErrors, KnowledgeDocumentsReadDocumentChunksResponses, KnowledgeDocumentsReadDocumentData, KnowledgeDocumentsReadDocumentErrors, KnowledgeDocumentsReadDocumentPreviewData, KnowledgeDocumentsReadDocumentPreviewErrors, KnowledgeDocumentsReadDocumentPreviewResponses, KnowledgeDocumentsReadDocumentResponses, KnowledgeDocumentsRetryDocumentData, KnowledgeDocumentsRetryDocumentErrors, KnowledgeDocumentsRetryDocumentResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginTestTokenData, LoginTestTokenResponses, SkillsCreateMdSkillData, SkillsCreateMdSkillErrors, SkillsCreateMdSkillResponses, SkillsCreateZipSkillData, SkillsCreateZipSkillErrors, SkillsCreateZipSkillResponses, SkillsDeleteSkillData, SkillsDeleteSkillErrors, SkillsDeleteSkillResponses, SkillsReadSkillData, SkillsReadSkillErrors, SkillsReadSkillFileData, SkillsReadSkillFileErrors, SkillsReadSkillFileResponses, SkillsReadSkillResponses, SkillsReadSkillsData, SkillsReadSkillsErrors, SkillsReadSkillsResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
+import type { AgentArchiveConversationData, AgentArchiveConversationErrors, AgentArchiveConversationResponses, AgentChatData, AgentChatErrors, AgentChatResponses, AgentCreateConversationData, AgentCreateConversationResponses, AgentDeleteConversationData, AgentDeleteConversationErrors, AgentDeleteConversationResponses, AgentGenerateConversationTitleData, AgentGenerateConversationTitleErrors, AgentGenerateConversationTitleResponses, AgentReadConversationData, AgentReadConversationErrors, AgentReadConversationResponses, AgentReadConversationsData, AgentReadConversationsErrors, AgentReadConversationsResponses, AgentReadModelsData, AgentReadModelsResponses, AgentRenameConversationData, AgentRenameConversationErrors, AgentRenameConversationResponses, AgentUnarchiveConversationData, AgentUnarchiveConversationErrors, AgentUnarchiveConversationResponses, FilesCompleteFileUploadData, FilesCompleteFileUploadErrors, FilesCompleteFileUploadResponses, FilesCreateFileUploadData, FilesCreateFileUploadErrors, FilesCreateFileUploadResponses, FilesDeleteUnreferencedFileData, FilesDeleteUnreferencedFileErrors, FilesDeleteUnreferencedFileResponses, FilesGetFileDownloadUrlData, FilesGetFileDownloadUrlErrors, FilesGetFileDownloadUrlResponses, ItemsCreateItemData, ItemsCreateItemErrors, ItemsCreateItemResponses, ItemsDeleteItemData, ItemsDeleteItemErrors, ItemsDeleteItemResponses, ItemsReadItemData, ItemsReadItemErrors, ItemsReadItemResponses, ItemsReadItemsData, ItemsReadItemsErrors, ItemsReadItemsResponses, ItemsUpdateItemData, ItemsUpdateItemErrors, ItemsUpdateItemResponses, KnowledgeBasesCreateDocumentUploadData, KnowledgeBasesCreateDocumentUploadErrors, KnowledgeBasesCreateDocumentUploadResponses, KnowledgeBasesCreateKnowledgeBaseData, KnowledgeBasesCreateKnowledgeBaseErrors, KnowledgeBasesCreateKnowledgeBaseResponses, KnowledgeBasesCreateWebpageDocumentData, KnowledgeBasesCreateWebpageDocumentErrors, KnowledgeBasesCreateWebpageDocumentResponses, KnowledgeBasesDeleteKnowledgeBaseData, KnowledgeBasesDeleteKnowledgeBaseErrors, KnowledgeBasesDeleteKnowledgeBaseResponses, KnowledgeBasesReadDocumentsData, KnowledgeBasesReadDocumentsErrors, KnowledgeBasesReadDocumentsResponses, KnowledgeBasesReadKnowledgeBaseData, KnowledgeBasesReadKnowledgeBaseErrors, KnowledgeBasesReadKnowledgeBaseResponses, KnowledgeBasesReadKnowledgeBasesData, KnowledgeBasesReadKnowledgeBasesErrors, KnowledgeBasesReadKnowledgeBasesResponses, KnowledgeBasesSearchKnowledgeBaseData, KnowledgeBasesSearchKnowledgeBaseErrors, KnowledgeBasesSearchKnowledgeBaseResponses, KnowledgeBasesUpdateKnowledgeBaseData, KnowledgeBasesUpdateKnowledgeBaseErrors, KnowledgeBasesUpdateKnowledgeBaseResponses, KnowledgeDocumentsCompleteDocumentUploadData, KnowledgeDocumentsCompleteDocumentUploadErrors, KnowledgeDocumentsCompleteDocumentUploadResponses, KnowledgeDocumentsDeleteDocumentData, KnowledgeDocumentsDeleteDocumentErrors, KnowledgeDocumentsDeleteDocumentResponses, KnowledgeDocumentsDownloadOriginalDocumentData, KnowledgeDocumentsDownloadOriginalDocumentErrors, KnowledgeDocumentsDownloadOriginalDocumentResponses, KnowledgeDocumentsReadDoclingDocumentData, KnowledgeDocumentsReadDoclingDocumentErrors, KnowledgeDocumentsReadDoclingDocumentResponses, KnowledgeDocumentsReadDocumentChunksData, KnowledgeDocumentsReadDocumentChunksErrors, KnowledgeDocumentsReadDocumentChunksResponses, KnowledgeDocumentsReadDocumentData, KnowledgeDocumentsReadDocumentErrors, KnowledgeDocumentsReadDocumentPreviewData, KnowledgeDocumentsReadDocumentPreviewErrors, KnowledgeDocumentsReadDocumentPreviewResponses, KnowledgeDocumentsReadDocumentResponses, KnowledgeDocumentsRetryDocumentData, KnowledgeDocumentsRetryDocumentErrors, KnowledgeDocumentsRetryDocumentResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginTestTokenData, LoginTestTokenResponses, SkillsCreateMdSkillData, SkillsCreateMdSkillErrors, SkillsCreateMdSkillResponses, SkillsCreateZipSkillData, SkillsCreateZipSkillErrors, SkillsCreateZipSkillResponses, SkillsDeleteSkillData, SkillsDeleteSkillErrors, SkillsDeleteSkillResponses, SkillsReadSkillData, SkillsReadSkillErrors, SkillsReadSkillFileData, SkillsReadSkillFileErrors, SkillsReadSkillFileResponses, SkillsReadSkillResponses, SkillsReadSkillsData, SkillsReadSkillsErrors, SkillsReadSkillsResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -49,6 +49,8 @@ export const usersRegisterUser = <ThrowOnError extends boolean = false>(options:
 
 /**
  * Health Check
+ *
+ * 检查系统健康状态。
  */
 export const utilsHealthCheck = <ThrowOnError extends boolean = false>(options?: Options<UtilsHealthCheckData, ThrowOnError>): RequestResult<UtilsHealthCheckResponses, unknown, ThrowOnError> => (options?.client ?? client).get<UtilsHealthCheckResponses, unknown, ThrowOnError>({ url: '/api/v1/utils/health-check/', ...options });
 
@@ -243,6 +245,8 @@ export const itemsUpdateItem = <ThrowOnError extends boolean = false>(options: O
 
 /**
  * Read Knowledge Bases
+ *
+ * 获取知识库列表。
  */
 export const knowledgeBasesReadKnowledgeBases = <ThrowOnError extends boolean = false>(options?: Options<KnowledgeBasesReadKnowledgeBasesData, ThrowOnError>): RequestResult<KnowledgeBasesReadKnowledgeBasesResponses, KnowledgeBasesReadKnowledgeBasesErrors, ThrowOnError> => (options?.client ?? client).get<KnowledgeBasesReadKnowledgeBasesResponses, KnowledgeBasesReadKnowledgeBasesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -252,6 +256,8 @@ export const knowledgeBasesReadKnowledgeBases = <ThrowOnError extends boolean = 
 
 /**
  * Create Knowledge Base
+ *
+ * 创建知识库。
  */
 export const knowledgeBasesCreateKnowledgeBase = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesCreateKnowledgeBaseData, ThrowOnError>): RequestResult<KnowledgeBasesCreateKnowledgeBaseResponses, KnowledgeBasesCreateKnowledgeBaseErrors, ThrowOnError> => (options.client ?? client).post<KnowledgeBasesCreateKnowledgeBaseResponses, KnowledgeBasesCreateKnowledgeBaseErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -265,6 +271,8 @@ export const knowledgeBasesCreateKnowledgeBase = <ThrowOnError extends boolean =
 
 /**
  * Delete Knowledge Base
+ *
+ * 删除知识库。
  */
 export const knowledgeBasesDeleteKnowledgeBase = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesDeleteKnowledgeBaseData, ThrowOnError>): RequestResult<KnowledgeBasesDeleteKnowledgeBaseResponses, KnowledgeBasesDeleteKnowledgeBaseErrors, ThrowOnError> => (options.client ?? client).delete<KnowledgeBasesDeleteKnowledgeBaseResponses, KnowledgeBasesDeleteKnowledgeBaseErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -274,6 +282,8 @@ export const knowledgeBasesDeleteKnowledgeBase = <ThrowOnError extends boolean =
 
 /**
  * Read Knowledge Base
+ *
+ * 根据 ID 获取指定知识库。
  */
 export const knowledgeBasesReadKnowledgeBase = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesReadKnowledgeBaseData, ThrowOnError>): RequestResult<KnowledgeBasesReadKnowledgeBaseResponses, KnowledgeBasesReadKnowledgeBaseErrors, ThrowOnError> => (options.client ?? client).get<KnowledgeBasesReadKnowledgeBaseResponses, KnowledgeBasesReadKnowledgeBaseErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -283,6 +293,8 @@ export const knowledgeBasesReadKnowledgeBase = <ThrowOnError extends boolean = f
 
 /**
  * Update Knowledge Base
+ *
+ * 更新知识库。
  */
 export const knowledgeBasesUpdateKnowledgeBase = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesUpdateKnowledgeBaseData, ThrowOnError>): RequestResult<KnowledgeBasesUpdateKnowledgeBaseResponses, KnowledgeBasesUpdateKnowledgeBaseErrors, ThrowOnError> => (options.client ?? client).patch<KnowledgeBasesUpdateKnowledgeBaseResponses, KnowledgeBasesUpdateKnowledgeBaseErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -296,6 +308,8 @@ export const knowledgeBasesUpdateKnowledgeBase = <ThrowOnError extends boolean =
 
 /**
  * Create Document Upload
+ *
+ * 创建知识库文档上传凭证。
  */
 export const knowledgeBasesCreateDocumentUpload = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesCreateDocumentUploadData, ThrowOnError>): RequestResult<KnowledgeBasesCreateDocumentUploadResponses, KnowledgeBasesCreateDocumentUploadErrors, ThrowOnError> => (options.client ?? client).post<KnowledgeBasesCreateDocumentUploadResponses, KnowledgeBasesCreateDocumentUploadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -308,7 +322,24 @@ export const knowledgeBasesCreateDocumentUpload = <ThrowOnError extends boolean 
 });
 
 /**
+ * Create Webpage Document
+ *
+ * 抓取网页并创建知识库文档。
+ */
+export const knowledgeBasesCreateWebpageDocument = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesCreateWebpageDocumentData, ThrowOnError>): RequestResult<KnowledgeBasesCreateWebpageDocumentResponses, KnowledgeBasesCreateWebpageDocumentErrors, ThrowOnError> => (options.client ?? client).post<KnowledgeBasesCreateWebpageDocumentResponses, KnowledgeBasesCreateWebpageDocumentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}/documents/webpages',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Read Documents
+ *
+ * 获取知识库文档列表。
  */
 export const knowledgeBasesReadDocuments = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesReadDocumentsData, ThrowOnError>): RequestResult<KnowledgeBasesReadDocumentsResponses, KnowledgeBasesReadDocumentsErrors, ThrowOnError> => (options.client ?? client).get<KnowledgeBasesReadDocumentsResponses, KnowledgeBasesReadDocumentsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -318,6 +349,8 @@ export const knowledgeBasesReadDocuments = <ThrowOnError extends boolean = false
 
 /**
  * Search Knowledge Base
+ *
+ * 检索知识库。
  */
 export const knowledgeBasesSearchKnowledgeBase = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesSearchKnowledgeBaseData, ThrowOnError>): RequestResult<KnowledgeBasesSearchKnowledgeBaseResponses, KnowledgeBasesSearchKnowledgeBaseErrors, ThrowOnError> => (options.client ?? client).post<KnowledgeBasesSearchKnowledgeBaseResponses, KnowledgeBasesSearchKnowledgeBaseErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -331,6 +364,8 @@ export const knowledgeBasesSearchKnowledgeBase = <ThrowOnError extends boolean =
 
 /**
  * Complete Document Upload
+ *
+ * 确认知识库文档上传。
  */
 export const knowledgeDocumentsCompleteDocumentUpload = <ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentsCompleteDocumentUploadData, ThrowOnError>): RequestResult<KnowledgeDocumentsCompleteDocumentUploadResponses, KnowledgeDocumentsCompleteDocumentUploadErrors, ThrowOnError> => (options.client ?? client).post<KnowledgeDocumentsCompleteDocumentUploadResponses, KnowledgeDocumentsCompleteDocumentUploadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -340,6 +375,8 @@ export const knowledgeDocumentsCompleteDocumentUpload = <ThrowOnError extends bo
 
 /**
  * Delete Document
+ *
+ * 删除知识库文档。
  */
 export const knowledgeDocumentsDeleteDocument = <ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentsDeleteDocumentData, ThrowOnError>): RequestResult<KnowledgeDocumentsDeleteDocumentResponses, KnowledgeDocumentsDeleteDocumentErrors, ThrowOnError> => (options.client ?? client).delete<KnowledgeDocumentsDeleteDocumentResponses, KnowledgeDocumentsDeleteDocumentErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -349,6 +386,8 @@ export const knowledgeDocumentsDeleteDocument = <ThrowOnError extends boolean = 
 
 /**
  * Read Document
+ *
+ * 根据 ID 获取指定知识库文档。
  */
 export const knowledgeDocumentsReadDocument = <ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentsReadDocumentData, ThrowOnError>): RequestResult<KnowledgeDocumentsReadDocumentResponses, KnowledgeDocumentsReadDocumentErrors, ThrowOnError> => (options.client ?? client).get<KnowledgeDocumentsReadDocumentResponses, KnowledgeDocumentsReadDocumentErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -358,6 +397,8 @@ export const knowledgeDocumentsReadDocument = <ThrowOnError extends boolean = fa
 
 /**
  * Read Document Preview
+ *
+ * 获取知识库文档 Markdown 预览。
  */
 export const knowledgeDocumentsReadDocumentPreview = <ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentsReadDocumentPreviewData, ThrowOnError>): RequestResult<KnowledgeDocumentsReadDocumentPreviewResponses, KnowledgeDocumentsReadDocumentPreviewErrors, ThrowOnError> => (options.client ?? client).get<KnowledgeDocumentsReadDocumentPreviewResponses, KnowledgeDocumentsReadDocumentPreviewErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -367,6 +408,8 @@ export const knowledgeDocumentsReadDocumentPreview = <ThrowOnError extends boole
 
 /**
  * Read Docling Document
+ *
+ * 获取知识库文档 Docling JSON 下载地址。
  */
 export const knowledgeDocumentsReadDoclingDocument = <ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentsReadDoclingDocumentData, ThrowOnError>): RequestResult<KnowledgeDocumentsReadDoclingDocumentResponses, KnowledgeDocumentsReadDoclingDocumentErrors, ThrowOnError> => (options.client ?? client).get<KnowledgeDocumentsReadDoclingDocumentResponses, KnowledgeDocumentsReadDoclingDocumentErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -376,6 +419,8 @@ export const knowledgeDocumentsReadDoclingDocument = <ThrowOnError extends boole
 
 /**
  * Read Document Chunks
+ *
+ * 获取知识库文档切片列表。
  */
 export const knowledgeDocumentsReadDocumentChunks = <ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentsReadDocumentChunksData, ThrowOnError>): RequestResult<KnowledgeDocumentsReadDocumentChunksResponses, KnowledgeDocumentsReadDocumentChunksErrors, ThrowOnError> => (options.client ?? client).get<KnowledgeDocumentsReadDocumentChunksResponses, KnowledgeDocumentsReadDocumentChunksErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -385,6 +430,8 @@ export const knowledgeDocumentsReadDocumentChunks = <ThrowOnError extends boolea
 
 /**
  * Download Original Document
+ *
+ * 获取知识库文档原文件下载地址。
  */
 export const knowledgeDocumentsDownloadOriginalDocument = <ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentsDownloadOriginalDocumentData, ThrowOnError>): RequestResult<KnowledgeDocumentsDownloadOriginalDocumentResponses, KnowledgeDocumentsDownloadOriginalDocumentErrors, ThrowOnError> => (options.client ?? client).get<KnowledgeDocumentsDownloadOriginalDocumentResponses, KnowledgeDocumentsDownloadOriginalDocumentErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -394,6 +441,8 @@ export const knowledgeDocumentsDownloadOriginalDocument = <ThrowOnError extends 
 
 /**
  * Retry Document
+ *
+ * 重试知识库文档处理。
  */
 export const knowledgeDocumentsRetryDocument = <ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentsRetryDocumentData, ThrowOnError>): RequestResult<KnowledgeDocumentsRetryDocumentResponses, KnowledgeDocumentsRetryDocumentErrors, ThrowOnError> => (options.client ?? client).post<KnowledgeDocumentsRetryDocumentResponses, KnowledgeDocumentsRetryDocumentErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -633,6 +682,8 @@ export const agentReadModels = <ThrowOnError extends boolean = false>(options?: 
 
 /**
  * Chat
+ *
+ * 发起聊天。
  */
 export const agentChat = <ThrowOnError extends boolean = false>(options: Options<AgentChatData, ThrowOnError>): RequestResult<AgentChatResponses, AgentChatErrors, ThrowOnError> => (options.client ?? client).post<AgentChatResponses, AgentChatErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

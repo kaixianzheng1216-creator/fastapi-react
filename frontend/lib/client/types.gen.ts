@@ -627,9 +627,10 @@ export type KnowledgeDocumentPublic = {
      */
     uploaded: boolean;
     /**
-     * Status
+     * Source Url
      */
-    status: 'pending' | 'processing' | 'ready' | 'failed' | 'timed_out';
+    source_url: string | null;
+    status: KnowledgeDocumentStatus;
     /**
      * Error Message
      */
@@ -643,6 +644,11 @@ export type KnowledgeDocumentPublic = {
      */
     updated_at: string;
 };
+
+/**
+ * KnowledgeDocumentStatus
+ */
+export type KnowledgeDocumentStatus = 'pending' | 'processing' | 'ready' | 'failed' | 'timed_out';
 
 /**
  * KnowledgeDocumentUploadPublic
@@ -730,6 +736,16 @@ export type KnowledgeSearchResultsPublic = {
      * Data
      */
     data: Array<KnowledgeSearchResultPublic>;
+};
+
+/**
+ * KnowledgeWebpageCreate
+ */
+export type KnowledgeWebpageCreate = {
+    /**
+     * Url
+     */
+    url: string;
 };
 
 /**
@@ -1726,6 +1742,36 @@ export type KnowledgeBasesCreateDocumentUploadResponses = {
 };
 
 export type KnowledgeBasesCreateDocumentUploadResponse = KnowledgeBasesCreateDocumentUploadResponses[keyof KnowledgeBasesCreateDocumentUploadResponses];
+
+export type KnowledgeBasesCreateWebpageDocumentData = {
+    body: KnowledgeWebpageCreate;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}/documents/webpages';
+};
+
+export type KnowledgeBasesCreateWebpageDocumentErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeBasesCreateWebpageDocumentError = KnowledgeBasesCreateWebpageDocumentErrors[keyof KnowledgeBasesCreateWebpageDocumentErrors];
+
+export type KnowledgeBasesCreateWebpageDocumentResponses = {
+    /**
+     * Successful Response
+     */
+    201: KnowledgeDocumentPublic;
+};
+
+export type KnowledgeBasesCreateWebpageDocumentResponse = KnowledgeBasesCreateWebpageDocumentResponses[keyof KnowledgeBasesCreateWebpageDocumentResponses];
 
 export type KnowledgeBasesReadDocumentsData = {
     body?: never;
