@@ -1,16 +1,19 @@
 import uuid
 from collections.abc import Sequence
+from pathlib import PurePosixPath
+from urllib.parse import unquote, urlsplit
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.elements import ColumnElement
 from sqlmodel import Session, col, func, select
 
 from app.modules.files.models import StoredFile
-from app.modules.files.schemas import FileUploadRequest
-from app.modules.knowledge import documents
+from app.modules.files.schemas import MAX_FILE_SIZE, FileUploadRequest
+from app.modules.knowledge import documents, firecrawl
 from app.modules.knowledge.exceptions import (
     KnowledgeBaseAlreadyExistsError,
     KnowledgeBaseNotFoundError,
+    WebpageTooLargeError,
 )
 from app.modules.knowledge.models import (
     KnowledgeBase,
@@ -19,6 +22,7 @@ from app.modules.knowledge.models import (
 from app.modules.knowledge.schemas import (
     KnowledgeBaseCreate,
     KnowledgeBaseUpdate,
+    KnowledgeDocumentPublic,
     KnowledgeDocumentUploadPublic,
 )
 from app.modules.users.models import User
@@ -155,6 +159,35 @@ def create_document_upload(
     )
 
 
+async def create_webpage_document(
+    *,
+    session: Session,
+    current_user: User,
+    knowledge_base_id: uuid.UUID,
+    url: str,
+) -> KnowledgeDocumentPublic:
+    """抓取网页并创建知识库文档。"""
+    get_knowledge_base(session=session, knowledge_base_id=knowledge_base_id)
+
+    session.rollback()
+
+    markdown = await firecrawl.scrape(url)
+
+    content = markdown.encode("utf-8")
+
+    if len(content) > MAX_FILE_SIZE:
+        raise WebpageTooLargeError
+
+    return await documents.create_webpage(
+        session=session,
+        current_user=current_user,
+        knowledge_base_id=knowledge_base_id,
+        source_url=url,
+        filename=_create_webpage_filename(url),
+        content=content,
+    )
+
+
 def list_documents(
     *,
     session: Session,
@@ -170,6 +203,16 @@ def list_documents(
         skip=skip,
         limit=limit,
     )
+
+
+def _create_webpage_filename(url: str) -> str:
+    parsed_url = urlsplit(url)
+
+    path_name = PurePosixPath(unquote(parsed_url.path)).stem
+
+    base_name = path_name or parsed_url.hostname
+
+    return f"{base_name[:252]}.md"
 
 
 def _commit(session: Session) -> None:

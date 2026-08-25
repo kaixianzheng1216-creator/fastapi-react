@@ -21,6 +21,7 @@ from app.modules.knowledge.schemas import (
     KnowledgeDocumentUploadPublic,
     KnowledgeSearchRequest,
     KnowledgeSearchResultsPublic,
+    KnowledgeWebpageCreate,
 )
 
 router = APIRouter(
@@ -129,6 +130,27 @@ def create_document_upload(
         current_user=current_user,
         knowledge_base_id=knowledge_base_id,
         upload_request=body,
+    )
+
+
+@router.post(
+    "/{knowledge_base_id}/documents/webpages",
+    response_model=KnowledgeDocumentPublic,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_webpage_document(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    knowledge_base_id: uuid.UUID,
+    body: KnowledgeWebpageCreate,
+) -> KnowledgeDocumentPublic:
+    """抓取网页并创建知识库文档。"""
+    return await service.create_webpage_document(
+        session=session,
+        current_user=current_user,
+        knowledge_base_id=knowledge_base_id,
+        url=str(body.url),
     )
 
 

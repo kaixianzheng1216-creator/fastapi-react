@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import StringConstraints, field_validator
+from pydantic import HttpUrl, StringConstraints, field_validator
 from sqlmodel import Field, SQLModel
 
 from app.modules.knowledge.models import KnowledgeDocumentStatus
@@ -60,6 +60,10 @@ class KnowledgeDocumentUploadPublic(SQLModel):
     upload_headers: dict[str, str] = Field(serialization_alias="uploadHeaders")
 
 
+class KnowledgeWebpageCreate(SQLModel):
+    url: HttpUrl
+
+
 class KnowledgeDocumentPublic(SQLModel):
     id: uuid.UUID
     knowledge_base_id: uuid.UUID
@@ -67,6 +71,7 @@ class KnowledgeDocumentPublic(SQLModel):
     content_type: str
     size: int
     uploaded: bool
+    source_url: str | None
     status: KnowledgeDocumentStatus
     error_message: str | None
     created_at: datetime

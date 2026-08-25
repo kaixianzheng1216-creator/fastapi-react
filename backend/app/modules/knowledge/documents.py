@@ -92,6 +92,64 @@ def create_upload(
     )
 
 
+async def create_webpage(
+    *,
+    session: Session,
+    current_user: User,
+    knowledge_base_id: uuid.UUID,
+    source_url: str,
+    filename: str,
+    content: bytes,
+) -> KnowledgeDocumentPublic:
+    """将网页 Markdown 保存为待处理文档。"""
+    document_id = uuid.uuid4()
+
+    file_id = uuid.uuid4()
+
+    object_key = object_storage.create_object_key(
+        owner_id=current_user.id,
+        file_id=file_id,
+    )
+
+    await asyncio.to_thread(
+        object_storage.write_object_content,
+        object_key=object_key,
+        content=content,
+    )
+
+    stored_file = StoredFile(
+        id=file_id,
+        owner_id=current_user.id,
+        object_key=object_key,
+        filename=filename,
+        content_type="text/markdown",
+        size=len(content),
+        uploaded=True,
+    )
+
+    document = KnowledgeDocument(
+        id=document_id,
+        knowledge_base_id=knowledge_base_id,
+        stored_file_id=file_id,
+        source_url=source_url,
+    )
+
+    try:
+        session.add(stored_file)
+
+        session.add(document)
+
+        session.commit()
+    except Exception:
+        session.rollback()
+
+        await asyncio.to_thread(cleanup_objects, [object_key])
+
+        raise
+
+    return to_public(document, stored_file)
+
+
 async def complete_upload(
     *, session: Session, document_id: uuid.UUID
 ) -> KnowledgeDocumentPublic:
@@ -309,6 +367,7 @@ def to_public(
         content_type=stored_file.content_type,
         size=stored_file.size,
         uploaded=stored_file.uploaded,
+        source_url=document.source_url,
         status=document.status,
         error_message=document.error_message,
         created_at=document.created_at,

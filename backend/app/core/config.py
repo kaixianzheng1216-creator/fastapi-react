@@ -87,6 +87,7 @@ class Settings(BaseSettings):
     COS_REGION: str
     COS_BUCKET: str
     DOCLING_BASE_URL: AnyHttpUrl
+    FIRECRAWL_API_KEY: SecretStr
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":

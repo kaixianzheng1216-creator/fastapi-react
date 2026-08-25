@@ -31,3 +31,18 @@ class KnowledgeDocumentArtifactUnavailableError(ApplicationError):
 class KnowledgeSearchUnavailableError(ApplicationError):
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     detail = "知识库检索暂时不可用"
+
+
+class WebpageScrapeError(ApplicationError):
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    detail = "无法抓取该网页"
+
+
+class WebpageScrapeUnavailableError(ApplicationError):
+    status_code = status.HTTP_502_BAD_GATEWAY
+    detail = "网页抓取服务暂时不可用"
+
+
+class WebpageTooLargeError(ApplicationError):
+    status_code = status.HTTP_413_CONTENT_TOO_LARGE
+    detail = "网页内容超过大小限制"

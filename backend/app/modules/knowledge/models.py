@@ -30,6 +30,7 @@ class KnowledgeDocument(TimestampMixin, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     knowledge_base_id: uuid.UUID = Field(foreign_key="knowledge_base.id")
     stored_file_id: uuid.UUID = Field(foreign_key="stored_file.id", unique=True)
+    source_url: str | None = Field(default=None, max_length=2083)
     status: KnowledgeDocumentStatus = Field(
         default=KnowledgeDocumentStatus.PENDING,
         sa_type=String(20),  # type: ignore
