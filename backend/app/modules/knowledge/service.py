@@ -208,6 +208,8 @@ def list_documents(
 def _create_webpage_filename(url: str) -> str:
     parsed_url = urlsplit(url)
 
+    assert parsed_url.hostname is not None
+
     path_name = PurePosixPath(unquote(parsed_url.path)).stem
 
     base_name = path_name or parsed_url.hostname

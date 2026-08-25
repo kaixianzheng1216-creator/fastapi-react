@@ -5,7 +5,9 @@ import {
   AlertCircleIcon,
   ArrowLeftIcon,
   DownloadIcon,
+  ExternalLinkIcon,
   FileTextIcon,
+  GlobeIcon,
   MoreHorizontalIcon,
   RefreshCwIcon,
   SearchIcon,
@@ -71,16 +73,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   type KnowledgeDocumentPublic,
   knowledgeBasesCreateDocumentUpload,
+  knowledgeBasesCreateWebpageDocument,
   knowledgeBasesReadDocuments,
   knowledgeBasesReadKnowledgeBase,
   knowledgeBasesSearchKnowledgeBase,
@@ -204,9 +202,7 @@ export function KnowledgeBaseDetail({
         }
 
         if (file.size > MAX_FILE_SIZE) {
-          throw new Error(
-            `${file.name} 超过 ${formatFileSize(MAX_FILE_SIZE)}`,
-          );
+          throw new Error(`${file.name} 超过 ${formatFileSize(MAX_FILE_SIZE)}`);
         }
 
         return { file, contentType };
@@ -231,6 +227,18 @@ export function KnowledgeBaseDetail({
     onMutate: clearActionError,
     onError: showActionError,
     onSettled: refreshDocuments,
+  });
+
+  const createWebpage = useMutation({
+    mutationFn: (url: string) =>
+      knowledgeBasesCreateWebpageDocument({
+        path: { knowledge_base_id: knowledgeBaseId },
+        body: { url },
+        throwOnError: true,
+      }),
+    onMutate: clearActionError,
+    onError: showActionError,
+    onSuccess: refreshDocuments,
   });
 
   const completeDocument = useMutation({
@@ -315,6 +323,18 @@ export function KnowledgeBaseDetail({
     }
   }
 
+  function submitWebpage(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const url = String(formData.get("url") ?? "");
+
+    createWebpage.mutate(url, {
+      onSuccess: () => form.reset(),
+    });
+  }
+
   function changeView(view: string): void {
     const parameters = new URLSearchParams(searchParams);
 
@@ -360,10 +380,7 @@ export function KnowledgeBaseDetail({
               </EmptyMedia>
               <EmptyTitle>无法读取知识库</EmptyTitle>
               <EmptyDescription>
-                {getApiErrorMessage(
-                  knowledgeBaseQuery.error,
-                  "读取知识库失败",
-                )}
+                {getApiErrorMessage(knowledgeBaseQuery.error, "读取知识库失败")}
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
@@ -382,278 +399,341 @@ export function KnowledgeBaseDetail({
             className="mx-auto min-h-full max-w-6xl gap-6"
             onValueChange={changeView}
           >
-          <TabsList>
-            <TabsTrigger value="documents">文档</TabsTrigger>
-            <TabsTrigger value="search">搜索</TabsTrigger>
-          </TabsList>
+            <TabsList>
+              <TabsTrigger value="documents">文档</TabsTrigger>
+              <TabsTrigger value="search">搜索</TabsTrigger>
+            </TabsList>
 
-          <TabsContent
-            value="documents"
-            className="flex flex-col gap-6"
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle>上传文档</CardTitle>
-                <CardDescription className="flex flex-col gap-1">
-                  <span>支持 PDF、Office、HTML、Markdown、TXT、CSV 和 JSON</span>
-                  <span>
-                    一次最多上传 {MAX_FILE_COUNT} 个文档，单个文件最大{" "}
-                    {formatFileSize(MAX_FILE_SIZE)}
-                  </span>
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={submitUpload}>
-                  <FieldGroup>
-                    <Field data-invalid={hasTooManyFiles}>
-                      <FieldLabel
-                        htmlFor="knowledge-document"
-                        className="sr-only"
-                      >
-                        文档
-                      </FieldLabel>
-                      <Input
-                        id="knowledge-document"
-                        name="document"
-                        type="file"
-                        accept={DOCUMENT_ACCEPT}
-                        aria-invalid={hasTooManyFiles}
-                        disabled={uploadDocument.isPending}
-                        multiple
-                        onChange={(event) => {
-                          setSelectedFiles(
-                            Array.from(event.currentTarget.files ?? []),
-                          );
-                        }}
-                        required
-                      />
-                      {selectedFiles.length > 0 && (
-                        <FieldDescription
-                          className="break-words"
-                          title={selectedFileNames}
-                        >
-                          已选择：{selectedFileNames}
-                        </FieldDescription>
-                      )}
-                      {hasTooManyFiles && (
-                        <FieldError>
-                          一次最多选择 {MAX_FILE_COUNT} 个文档，请重新选择
-                        </FieldError>
-                      )}
-                    </Field>
-                    <Button
-                      type="submit"
-                      className="self-end"
-                      disabled={
-                        uploadDocument.isPending ||
-                        selectedFiles.length === 0 ||
-                        hasTooManyFiles
-                      }
-                    >
-                      {uploadDocument.isPending ? (
-                        <Spinner data-icon="inline-start" />
-                      ) : (
-                        <UploadIcon data-icon="inline-start" aria-hidden="true" />
-                      )}
-                      {uploadDocument.isPending
-                        ? "上传中…"
-                        : selectedFiles.length > 0
-                          ? `上传 ${selectedFiles.length} 个文档`
-                          : "上传文档"}
-                    </Button>
-                  </FieldGroup>
-                </form>
-              </CardContent>
-            </Card>
+            <TabsContent value="documents" className="flex flex-col gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>添加文档</CardTitle>
+                  <CardDescription>
+                    上传本地文件，或输入公开网页地址。
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Tabs defaultValue="files">
+                    <TabsList>
+                      <TabsTrigger value="files">上传文件</TabsTrigger>
+                      <TabsTrigger value="webpage">添加网页</TabsTrigger>
+                    </TabsList>
 
-            {actionError && (
-              <Alert variant="destructive">
-                <AlertCircleIcon aria-hidden="true" />
-                <AlertTitle>
-                  {getApiErrorMessage(actionError, "文档操作失败")}
-                </AlertTitle>
-              </Alert>
-            )}
-
-            {documentsQuery.isPending ? (
-              <Skeleton className="h-64" />
-            ) : documentsQuery.error ? (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <AlertCircleIcon aria-hidden="true" />
-                  </EmptyMedia>
-                  <EmptyTitle>无法读取文档列表</EmptyTitle>
-                  <EmptyDescription>
-                    {getApiErrorMessage(
-                      documentsQuery.error,
-                      "读取文档列表失败",
-                    )}
-                  </EmptyDescription>
-                </EmptyHeader>
-                <EmptyContent>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => documentsQuery.refetch()}
-                  >
-                    重试
-                  </Button>
-                </EmptyContent>
-              </Empty>
-            ) : documents.length === 0 ? (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <FileTextIcon aria-hidden="true" />
-                  </EmptyMedia>
-                  <EmptyTitle>暂无文档</EmptyTitle>
-                  <EmptyDescription>上传文档后会在这里显示处理状态。</EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>文件名</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead>大小</TableHead>
-                    <TableHead>上传时间</TableHead>
-                    <TableHead>操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {documents.map((document) => (
-                    <TableRow key={document.id}>
-                      <TableCell>
-                        <div className="max-w-md">
-                          <div className="truncate font-medium">
-                            {document.status === "ready" ? (
-                              <Link
-                                href={`/admin/knowledge-bases/${knowledgeBaseId}/documents/${document.id}`}
-                                className="hover:underline"
+                    <TabsContent value="files">
+                      <form onSubmit={submitUpload}>
+                        <FieldGroup>
+                          <Field data-invalid={hasTooManyFiles}>
+                            <FieldLabel htmlFor="knowledge-document">
+                              文档
+                            </FieldLabel>
+                            <FieldDescription>
+                              支持 PDF、Office、HTML、Markdown、TXT、CSV 和
+                              JSON； 一次最多上传 {MAX_FILE_COUNT} 个，单个最大{" "}
+                              {formatFileSize(MAX_FILE_SIZE)}。
+                            </FieldDescription>
+                            <Input
+                              id="knowledge-document"
+                              name="document"
+                              type="file"
+                              accept={DOCUMENT_ACCEPT}
+                              aria-invalid={hasTooManyFiles}
+                              disabled={uploadDocument.isPending}
+                              multiple
+                              onChange={(event) => {
+                                setSelectedFiles(
+                                  Array.from(event.currentTarget.files ?? []),
+                                );
+                              }}
+                              required
+                            />
+                            {selectedFiles.length > 0 && (
+                              <FieldDescription
+                                className="break-words"
+                                title={selectedFileNames}
                               >
-                                {document.filename}
-                              </Link>
+                                已选择：{selectedFileNames}
+                              </FieldDescription>
+                            )}
+                            {hasTooManyFiles && (
+                              <FieldError>
+                                一次最多选择 {MAX_FILE_COUNT} 个文档，请重新选择
+                              </FieldError>
+                            )}
+                          </Field>
+                          <Button
+                            type="submit"
+                            className="self-end"
+                            disabled={
+                              uploadDocument.isPending ||
+                              selectedFiles.length === 0 ||
+                              hasTooManyFiles
+                            }
+                          >
+                            {uploadDocument.isPending ? (
+                              <Spinner data-icon="inline-start" />
                             ) : (
-                              document.filename
+                              <UploadIcon
+                                data-icon="inline-start"
+                                aria-hidden="true"
+                              />
+                            )}
+                            {uploadDocument.isPending
+                              ? "上传中…"
+                              : selectedFiles.length > 0
+                                ? `上传 ${selectedFiles.length} 个文档`
+                                : "上传文档"}
+                          </Button>
+                        </FieldGroup>
+                      </form>
+                    </TabsContent>
+
+                    <TabsContent value="webpage">
+                      <form onSubmit={submitWebpage}>
+                        <FieldGroup>
+                          <Field>
+                            <FieldLabel htmlFor="knowledge-webpage-url">
+                              网页地址
+                            </FieldLabel>
+                            <FieldDescription>
+                              输入公开网页地址，系统将抓取网页正文并添加到知识库。
+                            </FieldDescription>
+                            <Input
+                              id="knowledge-webpage-url"
+                              name="url"
+                              type="url"
+                              placeholder="https://example.com/article"
+                              disabled={createWebpage.isPending}
+                              required
+                            />
+                          </Field>
+                          <Button
+                            type="submit"
+                            className="self-end"
+                            disabled={createWebpage.isPending}
+                          >
+                            {createWebpage.isPending ? (
+                              <Spinner data-icon="inline-start" />
+                            ) : (
+                              <GlobeIcon
+                                data-icon="inline-start"
+                                aria-hidden="true"
+                              />
+                            )}
+                            {createWebpage.isPending ? "抓取中…" : "添加网页"}
+                          </Button>
+                        </FieldGroup>
+                      </form>
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
+
+              {actionError && (
+                <Alert variant="destructive">
+                  <AlertCircleIcon aria-hidden="true" />
+                  <AlertTitle>
+                    {getApiErrorMessage(actionError, "文档操作失败")}
+                  </AlertTitle>
+                </Alert>
+              )}
+
+              {documentsQuery.isPending ? (
+                <Skeleton className="h-64" />
+              ) : documentsQuery.error ? (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <AlertCircleIcon aria-hidden="true" />
+                    </EmptyMedia>
+                    <EmptyTitle>无法读取文档列表</EmptyTitle>
+                    <EmptyDescription>
+                      {getApiErrorMessage(
+                        documentsQuery.error,
+                        "读取文档列表失败",
+                      )}
+                    </EmptyDescription>
+                  </EmptyHeader>
+                  <EmptyContent>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => documentsQuery.refetch()}
+                    >
+                      重试
+                    </Button>
+                  </EmptyContent>
+                </Empty>
+              ) : documents.length === 0 ? (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <FileTextIcon aria-hidden="true" />
+                    </EmptyMedia>
+                    <EmptyTitle>暂无文档</EmptyTitle>
+                    <EmptyDescription>
+                      上传文档后会在这里显示处理状态。
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>文件名</TableHead>
+                      <TableHead>状态</TableHead>
+                      <TableHead>大小</TableHead>
+                      <TableHead>上传时间</TableHead>
+                      <TableHead>操作</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {documents.map((document) => (
+                      <TableRow key={document.id}>
+                        <TableCell>
+                          <div className="max-w-md">
+                            <div className="truncate font-medium">
+                              {document.status === "ready" ? (
+                                <Link
+                                  href={`/admin/knowledge-bases/${knowledgeBaseId}/documents/${document.id}`}
+                                  className="hover:underline"
+                                >
+                                  {document.filename}
+                                </Link>
+                              ) : (
+                                document.filename
+                              )}
+                            </div>
+                            {document.error_message && (
+                              <div className="text-destructive break-words text-sm">
+                                {document.error_message}
+                              </div>
                             )}
                           </div>
-                          {document.error_message && (
-                            <div className="text-destructive break-words text-sm">
-                              {document.error_message}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            document.status === "ready" ? "outline" : "secondary"
-                          }
-                        >
-                          {document.status === "pending" && !document.uploaded
-                            ? "等待确认上传"
-                            : statusLabels[document.status]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{formatFileSize(document.size)}</TableCell>
-                      <TableCell>
-                        {dateFormatter.format(new Date(document.created_at))}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label={`${document.filename} 的更多操作`}
-                            >
-                              <MoreHorizontalIcon aria-hidden="true" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuGroup>
-                              {document.status === "pending" &&
-                                !document.uploaded && (
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              document.status === "ready"
+                                ? "outline"
+                                : "secondary"
+                            }
+                          >
+                            {document.status === "pending" && !document.uploaded
+                              ? "等待确认上传"
+                              : statusLabels[document.status]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{formatFileSize(document.size)}</TableCell>
+                        <TableCell>
+                          {dateFormatter.format(new Date(document.created_at))}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={`${document.filename} 的更多操作`}
+                              >
+                                <MoreHorizontalIcon aria-hidden="true" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuGroup>
+                                {document.status === "pending" &&
+                                  !document.uploaded && (
+                                    <DropdownMenuItem
+                                      disabled={
+                                        uploadDocument.isPending ||
+                                        completeDocument.isPending
+                                      }
+                                      onSelect={() =>
+                                        completeDocument.mutate(document.id)
+                                      }
+                                    >
+                                      <UploadIcon aria-hidden="true" />
+                                      确认上传
+                                    </DropdownMenuItem>
+                                  )}
+                                {document.uploaded && (
                                   <DropdownMenuItem
-                                    disabled={
-                                      uploadDocument.isPending ||
-                                      completeDocument.isPending
-                                    }
+                                    disabled={downloadOriginal.isPending}
                                     onSelect={() =>
-                                      completeDocument.mutate(document.id)
+                                      downloadOriginal.mutate(document.id)
                                     }
                                   >
-                                    <UploadIcon aria-hidden="true" />
-                                    确认上传
+                                    <DownloadIcon aria-hidden="true" />
+                                    下载原文件
                                   </DropdownMenuItem>
                                 )}
-                              {document.uploaded && (
+                                {document.source_url && (
+                                  <DropdownMenuItem asChild>
+                                    <a
+                                      href={document.source_url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                    >
+                                      <ExternalLinkIcon aria-hidden="true" />
+                                      访问原网页
+                                    </a>
+                                  </DropdownMenuItem>
+                                )}
+                                {document.status === "ready" && (
+                                  <DropdownMenuItem
+                                    disabled={downloadMarkdown.isPending}
+                                    onSelect={() =>
+                                      downloadMarkdown.mutate(document.id)
+                                    }
+                                  >
+                                    <FileTextIcon aria-hidden="true" />
+                                    下载 Markdown
+                                  </DropdownMenuItem>
+                                )}
+                                {(document.status === "failed" ||
+                                  document.status === "timed_out") && (
+                                  <DropdownMenuItem
+                                    disabled={retryDocument.isPending}
+                                    onSelect={() =>
+                                      retryDocument.mutate(document.id)
+                                    }
+                                  >
+                                    <RefreshCwIcon aria-hidden="true" />
+                                    重试
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem
-                                  disabled={downloadOriginal.isPending}
-                                  onSelect={() =>
-                                    downloadOriginal.mutate(document.id)
-                                  }
+                                  variant="destructive"
+                                  onSelect={() => {
+                                    clearActionError();
+                                    deleteDocument.reset();
+                                    setDocumentToDelete(document);
+                                  }}
                                 >
-                                  <DownloadIcon aria-hidden="true" />
-                                  下载原文件
+                                  <TrashIcon aria-hidden="true" />
+                                  删除
                                 </DropdownMenuItem>
-                              )}
-                              {document.status === "ready" && (
-                                <DropdownMenuItem
-                                  disabled={downloadMarkdown.isPending}
-                                  onSelect={() =>
-                                    downloadMarkdown.mutate(document.id)
-                                  }
-                                >
-                                  <FileTextIcon aria-hidden="true" />
-                                  下载 Markdown
-                                </DropdownMenuItem>
-                              )}
-                              {(document.status === "failed" ||
-                                document.status === "timed_out") && (
-                                <DropdownMenuItem
-                                  disabled={retryDocument.isPending}
-                                  onSelect={() => retryDocument.mutate(document.id)}
-                                >
-                                  <RefreshCwIcon aria-hidden="true" />
-                                  重试
-                                </DropdownMenuItem>
-                              )}
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onSelect={() => {
-                                  clearActionError();
-                                  deleteDocument.reset();
-                                  setDocumentToDelete(document);
-                                }}
-                              >
-                                <TrashIcon aria-hidden="true" />
-                                删除
-                              </DropdownMenuItem>
-                            </DropdownMenuGroup>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+                              </DropdownMenuGroup>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
 
-            <PagePagination
-              className="mt-auto"
-              ariaLabel="知识库文档分页"
-              currentPage={currentPage}
-              pageCount={pageCount}
-              getPageHref={(page) => getDocumentsHref(knowledgeBaseId, page)}
-            />
-          </TabsContent>
+              <PagePagination
+                className="mt-auto"
+                ariaLabel="知识库文档分页"
+                currentPage={currentPage}
+                pageCount={pageCount}
+                getPageHref={(page) => getDocumentsHref(knowledgeBaseId, page)}
+              />
+            </TabsContent>
 
-          <TabsContent value="search" className="flex flex-col gap-6">
-            <KnowledgeSearch knowledgeBaseId={knowledgeBaseId} />
-          </TabsContent>
+            <TabsContent value="search" className="flex flex-col gap-6">
+              <KnowledgeSearch knowledgeBaseId={knowledgeBaseId} />
+            </TabsContent>
           </Tabs>
         )}
       </div>
@@ -661,14 +741,16 @@ export function KnowledgeBaseDetail({
       <AlertDialog
         open={documentToDelete !== undefined}
         onOpenChange={(open) => {
-          if (!open && !deleteDocument.isPending) setDocumentToDelete(undefined);
+          if (!open && !deleteDocument.isPending)
+            setDocumentToDelete(undefined);
         }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>删除文档</AlertDialogTitle>
             <AlertDialogDescription>
-              确定删除“{documentToDelete?.filename}”吗？原文件、解析产物和检索索引都会删除。
+              确定删除“{documentToDelete?.filename}
+              ”吗？原文件、解析产物和检索索引都会删除。
             </AlertDialogDescription>
           </AlertDialogHeader>
 
