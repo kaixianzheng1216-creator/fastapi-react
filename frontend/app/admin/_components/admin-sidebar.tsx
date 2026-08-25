@@ -6,10 +6,10 @@ import {
   FileTextIcon,
   GlobeIcon,
   MessageSquareIcon,
-  ShieldCheckIcon,
   TagIcon,
   UserIcon,
   UsersIcon,
+  WaypointsIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -56,8 +56,15 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg">
               <Link href="/admin/users">
-                <ShieldCheckIcon aria-hidden="true" />
-                <span>管理后台</span>
+                <span className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                  <WaypointsIcon aria-hidden="true" className="size-4" />
+                </span>
+                <span className="grid flex-1 text-left leading-tight">
+                  <span className="truncate font-semibold">数据中台</span>
+                  <span className="truncate text-[10px] font-medium tracking-[0.16em] text-muted-foreground">
+                    DATA HUB
+                  </span>
+                </span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
