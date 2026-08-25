@@ -2,14 +2,24 @@
 
 import {
   BookOpenIcon,
+  ChevronRightIcon,
+  FileTextIcon,
+  GlobeIcon,
   MessageSquareIcon,
   ShieldCheckIcon,
+  TagIcon,
   UserIcon,
+  UsersIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { SidebarAccountMenu } from "@/app/_components/sidebar-account-menu";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import {
   Sidebar,
@@ -21,10 +31,20 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import type { UserPublic } from "@/lib/client";
+
+const businessModules = [
+  { name: "品牌营销", icon: TagIcon },
+  { name: "内容运营", icon: FileTextIcon },
+  { name: "达人投放", icon: UsersIcon },
+  { name: "海外营销", icon: GlobeIcon },
+];
 
 export function AdminSidebar({ user }: { user: UserPublic }) {
   const pathname = usePathname();
@@ -72,6 +92,31 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {businessModules.map((module) => (
+                <Collapsible key={module.name} asChild>
+                  <SidebarMenuItem className="group/collapsible">
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton tooltip={module.name}>
+                        <module.icon aria-hidden="true" />
+                        <span>{module.name}</span>
+                        <ChevronRightIcon
+                          aria-hidden="true"
+                          className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90"
+                        />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton asChild aria-disabled="true">
+                            <span>暂未配置</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
