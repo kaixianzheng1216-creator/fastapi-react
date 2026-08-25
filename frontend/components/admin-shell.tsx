@@ -18,7 +18,7 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { useCurrentUserQuery } from "@/components/user-info";
 
 function AdminShellState({
@@ -52,7 +52,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const { data: user, error, isPending } = useCurrentUserQuery();
 
   if (isPending) {
-    return <Skeleton className="h-svh" />;
+    return (
+      <div className="flex h-svh items-center justify-center">
+        <Spinner aria-label="正在加载页面" />
+      </div>
+    );
   }
 
   if (error || !user) {

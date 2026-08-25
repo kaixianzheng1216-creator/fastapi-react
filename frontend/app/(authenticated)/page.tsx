@@ -7,7 +7,15 @@ import { Thread } from "@/components/thread";
 import { ThreadHeader } from "@/components/thread-header";
 import { AuiProvider, Suggestions, useAui } from "@assistant-ui/react";
 
-function ThreadWithSuggestions({ sidebarOpen }: { sidebarOpen: boolean }) {
+function ThreadWithSuggestions({
+  sidebarOpen,
+  mobileSidebarOpen,
+  onMobileSidebarOpenChange,
+}: {
+  sidebarOpen: boolean;
+  mobileSidebarOpen: boolean;
+  onMobileSidebarOpenChange: (open: boolean) => void;
+}) {
   const aui = useAui({
     suggestions: Suggestions([
       {
@@ -30,7 +38,11 @@ function ThreadWithSuggestions({ sidebarOpen }: { sidebarOpen: boolean }) {
         <div className="min-h-0 min-w-0">
           <Thread />
         </div>
-        <ConversationSidebar open={sidebarOpen} />
+        <ConversationSidebar
+          open={sidebarOpen}
+          mobileOpen={mobileSidebarOpen}
+          onMobileOpenChange={onMobileSidebarOpenChange}
+        />
       </div>
     </AuiProvider>
   );
@@ -38,15 +50,21 @@ function ThreadWithSuggestions({ sidebarOpen }: { sidebarOpen: boolean }) {
 
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
     <>
       <ThreadHeader
         sidebarOpen={sidebarOpen}
         onSidebarOpenChange={setSidebarOpen}
+        onMobileSidebarOpen={() => setMobileSidebarOpen(true)}
       />
       <div className="min-h-0 flex-1">
-        <ThreadWithSuggestions sidebarOpen={sidebarOpen} />
+        <ThreadWithSuggestions
+          sidebarOpen={sidebarOpen}
+          mobileSidebarOpen={mobileSidebarOpen}
+          onMobileSidebarOpenChange={setMobileSidebarOpen}
+        />
       </div>
     </>
   );

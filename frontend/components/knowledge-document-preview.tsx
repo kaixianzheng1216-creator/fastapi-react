@@ -163,22 +163,24 @@ export function KnowledgeDocumentPreview({
                 <Button
                   variant="outline"
                   size="sm"
+                  aria-label="下载原文件"
                   disabled={downloadDocument.isPending}
                   onClick={() => downloadDocument.mutate("original")}
                 >
                   <DownloadIcon data-icon="inline-start" aria-hidden="true" />
-                  下载原文件
+                  <span className="hidden sm:inline">下载原文件</span>
                 </Button>
               )}
               {documentQuery.data.status === "ready" && (
                 <Button
                   variant="outline"
                   size="sm"
+                  aria-label="下载 Markdown"
                   disabled={downloadDocument.isPending}
                   onClick={() => downloadDocument.mutate("markdown")}
                 >
                   <FileTextIcon data-icon="inline-start" aria-hidden="true" />
-                  下载 Markdown
+                  <span className="hidden sm:inline">下载 Markdown</span>
                 </Button>
               )}
             </div>
@@ -186,7 +188,7 @@ export function KnowledgeDocumentPreview({
         }
       />
 
-      <main className="flex min-h-0 flex-1 p-6">
+      <div className="flex min-h-0 flex-1 p-4 md:p-6">
         <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-col gap-6">
           {downloadDocument.error && (
             <Alert variant="destructive">
@@ -270,7 +272,7 @@ export function KnowledgeDocumentPreview({
             </TabsContent>
           </Tabs>
         </div>
-      </main>
+      </div>
     </>
   );
 }
@@ -303,7 +305,7 @@ function DoclingDocumentView({ documentId }: { documentId: string }) {
   });
 
   if (doclingDocumentQuery.isPending) {
-    return <Skeleton className="min-h-0 flex-1" />;
+    return <Skeleton className="h-64" />;
   }
 
   if (doclingDocumentQuery.error) {

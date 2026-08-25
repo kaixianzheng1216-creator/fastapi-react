@@ -7,7 +7,6 @@ import {
   MoreHorizontalIcon,
   PlusIcon,
   PuzzleIcon,
-  SearchIcon,
   TrashIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -24,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { SearchToolbar } from "@/components/search-toolbar";
 import {
   Card,
   CardAction,
@@ -46,8 +46,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { AppHeader } from "@/components/app-header";
 import {
   Pagination,
@@ -183,48 +181,37 @@ export function SkillManager() {
       <AppHeader
         title="技能"
         actions={
-          <Button onClick={() => setCreateOpen(true)}>
-            <PlusIcon data-icon="inline-start" />
-            创建技能
+          <Button
+            aria-label="创建技能"
+            onClick={() => setCreateOpen(true)}
+          >
+            <PlusIcon data-icon="inline-start" aria-hidden="true" />
+            <span className="hidden sm:inline">创建技能</span>
           </Button>
         }
       />
 
-      <div className="min-h-0 flex-1 overflow-y-scroll">
-        <div className="mx-auto flex min-h-full max-w-6xl flex-col gap-6 p-4 md:p-8">
-          <form onSubmit={searchSkills}>
-            <FieldGroup>
-              <Field orientation="responsive">
-                <FieldLabel htmlFor="skill-search" className="sr-only">
-                  搜索技能
-                </FieldLabel>
-                <Input
-                  id="skill-search"
-                  type="search"
-                  value={searchDraft}
-                  onChange={(event) => {
-                    const value = event.target.value;
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="mx-auto flex min-h-full max-w-6xl flex-col gap-6">
+          <SearchToolbar
+            id="skill-search"
+            label="搜索技能"
+            placeholder="搜索名称或描述…"
+            onSubmit={searchSkills}
+            value={searchDraft}
+            onChange={(event) => {
+              const value = event.target.value;
 
-                    if (value) {
-                      setSearchDraft(value);
+              if (value) {
+                setSearchDraft(value);
 
-                      return;
-                    }
+                return;
+              }
 
-                    clearSearch();
-                  }}
-                  maxLength={100}
-                  autoComplete="off"
-                  placeholder="搜索名称或描述…"
-                  className="flex-1"
-                />
-                <Button type="submit">
-                  <SearchIcon data-icon="inline-start" />
-                  搜索
-                </Button>
-              </Field>
-            </FieldGroup>
-          </form>
+              clearSearch();
+            }}
+            maxLength={100}
+          />
 
           {loadErrorMessage && (
             <Alert variant="destructive">

@@ -19,7 +19,6 @@ import {
   PlusIcon,
   PowerIcon,
   PowerOffIcon,
-  SearchIcon,
   TrashIcon,
   UsersIcon,
 } from "lucide-react";
@@ -29,6 +28,7 @@ import { type FormEvent, useMemo, useState } from "react";
 import { UserCreateDialog } from "@/components/user-create-dialog";
 import { UserEditDialog } from "@/components/user-edit-dialog";
 import { AppHeader } from "@/components/app-header";
+import { SearchToolbar } from "@/components/search-toolbar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,7 +57,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Input } from "@/components/ui/input";
+import { FieldLegend, FieldSet } from "@/components/ui/field";
 import {
   Pagination,
   PaginationContent,
@@ -370,37 +370,33 @@ export function UserManager() {
           <SidebarTrigger className="size-9" aria-label="切换管理菜单" />
         }
         actions={
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button
+            aria-label="创建用户"
+            onClick={() => setCreateOpen(true)}
+          >
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
-            创建用户
+            <span className="hidden sm:inline">创建用户</span>
           </Button>
         }
       />
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-6">
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
         <section className="mx-auto flex min-h-full max-w-6xl flex-col gap-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <form
-              className="flex w-full items-center gap-2 sm:w-auto"
+            <SearchToolbar
+              id="user-search"
+              label="搜索用户名或姓名"
+              placeholder="搜索用户名或姓名…"
               onSubmit={submitSearch}
-            >
-              <Input
-                key={search}
-                name="search"
-                className="w-full sm:w-64"
-                defaultValue={search}
-                placeholder="搜索用户名或姓名…"
-                aria-label="搜索用户名或姓名"
-              />
-              <Button type="submit" variant="outline">
-                <SearchIcon data-icon="inline-start" aria-hidden="true" />
-                搜索
-              </Button>
-            </form>
+              key={search}
+              defaultValue={search}
+            />
 
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground text-sm">角色</span>
+              <FieldSet className="w-auto flex-row items-center gap-3">
+                <FieldLegend variant="label" className="mb-0">
+                  角色
+                </FieldLegend>
                 <ToggleGroup
                   type="single"
                   variant="outline"
@@ -412,10 +408,12 @@ export function UserManager() {
                   <ToggleGroupItem value="admin">管理员</ToggleGroupItem>
                   <ToggleGroupItem value="user">普通用户</ToggleGroupItem>
                 </ToggleGroup>
-              </div>
+              </FieldSet>
 
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground text-sm">状态</span>
+              <FieldSet className="w-auto flex-row items-center gap-3">
+                <FieldLegend variant="label" className="mb-0">
+                  状态
+                </FieldLegend>
                 <ToggleGroup
                   type="single"
                   variant="outline"
@@ -427,7 +425,7 @@ export function UserManager() {
                   <ToggleGroupItem value="enabled">已启用</ToggleGroupItem>
                   <ToggleGroupItem value="disabled">已停用</ToggleGroupItem>
                 </ToggleGroup>
-              </div>
+              </FieldSet>
             </div>
           </div>
 

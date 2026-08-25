@@ -186,13 +186,12 @@ const AttachmentUI: FC = () => {
       >
         <AttachmentPreviewDialog>
           <TooltipTrigger asChild>
-            <div
+            <button
+              type="button"
               className={cn(
                 "aui-attachment-tile bg-muted relative size-14 cursor-pointer overflow-hidden rounded-[calc(var(--composer-radius)-var(--composer-padding))] border transition-opacity hover:opacity-75",
                 isError && "border-destructive",
               )}
-              role="button"
-              tabIndex={0}
               onClick={() => {
                 if (downloadUrl) {
                   window.open(downloadUrl, "_blank", "noopener,noreferrer");
@@ -219,7 +218,7 @@ const AttachmentUI: FC = () => {
                   <AlertCircleIcon className="text-destructive size-5" />
                 </div>
               )}
-            </div>
+            </button>
           </TooltipTrigger>
         </AttachmentPreviewDialog>
         {isComposer && <AttachmentRemove />}

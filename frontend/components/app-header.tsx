@@ -10,10 +10,14 @@ type AppHeaderProps = {
 
 export function AppHeader({ title, left, actions }: AppHeaderProps) {
   return (
-    <header className="grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center border-b px-3">
-      <div className="justify-self-start">{left ?? <ThreadListPopover />}</div>
-      <h1 className="max-w-96 truncate text-sm font-medium">{title}</h1>
-      <div className="justify-self-end">{actions}</div>
+    <header className="grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-b px-3">
+      <div className="min-w-0 justify-self-start">
+        {left ?? <ThreadListPopover />}
+      </div>
+      <h1 className="max-w-[40vw] truncate text-sm font-medium sm:max-w-96">
+        {title}
+      </h1>
+      <div className="min-w-0 justify-self-end">{actions}</div>
     </header>
   );
 }

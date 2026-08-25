@@ -12,6 +12,7 @@ import {
   ImageIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { MarkdownContent } from "@/components/markdown-content";
 import { getApiErrorMessage } from "@/lib/api-error";
@@ -48,10 +49,16 @@ type FilePreview =
   | { kind: "download"; url: string; contentType: string };
 
 export function SkillDetail({ skillName }: SkillDetailProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeView =
+    searchParams.get("view") === "files" ? "files" : "overview";
+
   const {
     data: detail,
     error,
     isPending: detailLoading,
+    refetch,
   } = useQuery({
     queryKey: ["skills", "detail", skillName],
     queryFn: async ({ signal }) => {
@@ -72,20 +79,36 @@ export function SkillDetail({ skillName }: SkillDetailProps) {
 
   const description = detail?.frontmatter.description;
 
+  function changeView(view: string): void {
+    const parameters = new URLSearchParams(searchParams);
+
+    if (view === "files") {
+      parameters.set("view", "files");
+    } else {
+      parameters.delete("view");
+    }
+
+    const path = `/skills/${encodeURIComponent(skillName)}`;
+    const query = parameters.toString();
+
+    router.replace(query ? `${path}?${query}` : path, { scroll: false });
+  }
+
   return (
     <>
-      <AppHeader title={skillName} />
+      <AppHeader
+        title={skillName}
+        left={
+          <Button variant="ghost" size="icon-sm" asChild>
+            <Link href="/skills" aria-label="返回技能列表">
+              <ArrowLeftIcon aria-hidden="true" />
+            </Link>
+          </Button>
+        }
+      />
 
-      <div className="min-h-0 flex-1 overflow-y-scroll">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 p-4 md:p-8">
-          <Link
-            href="/skills"
-            className="flex items-center gap-2 self-start text-sm"
-          >
-            <ArrowLeftIcon className="size-4" />
-            返回技能
-          </Link>
-
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="mx-auto flex min-h-full max-w-6xl flex-col gap-6">
           {detailLoading && <SkillDetailSkeleton />}
 
           {detailError && (
@@ -94,8 +117,12 @@ export function SkillDetail({ skillName }: SkillDetailProps) {
               <AlertTitle>无法读取技能</AlertTitle>
               <AlertDescription>
                 <p>{detailError}</p>
-                <Button asChild variant="outline" size="sm">
-                  <Link href="/skills">返回技能列表</Link>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => refetch()}
+                >
+                  重试
                 </Button>
               </AlertDescription>
             </Alert>
@@ -103,17 +130,18 @@ export function SkillDetail({ skillName }: SkillDetailProps) {
 
           {detail && (
             <>
-              <section className="flex flex-col gap-2">
-                <h2 className="text-2xl font-semibold">{skillName}</h2>
-                {typeof description === "string" && (
-                  <p className="break-words text-muted-foreground">
-                    {description}
-                  </p>
-                )}
-              </section>
+              {typeof description === "string" && (
+                <p className="break-words text-muted-foreground">
+                  {description}
+                </p>
+              )}
 
-              <Tabs defaultValue="overview" className="gap-6">
-                <TabsList variant="line">
+              <Tabs
+                value={activeView}
+                onValueChange={changeView}
+                className="gap-6"
+              >
+                <TabsList>
                   <TabsTrigger value="overview">概述</TabsTrigger>
                   <TabsTrigger value="files">文件</TabsTrigger>
                 </TabsList>

@@ -36,14 +36,14 @@ export function TodoList() {
     <Collapsible defaultOpen>
       <CardHeader>
         <CollapsibleTrigger className="group flex w-full items-center justify-between">
-          <CardTitle className="font-normal">代办</CardTitle>
+          <CardTitle className="font-normal">待办</CardTitle>
           <ChevronDownIcon className="size-4 -rotate-90 transition-transform group-data-[state=open]:rotate-0" />
         </CollapsibleTrigger>
       </CardHeader>
       <CollapsibleContent>
         <CardContent className="max-h-64 overflow-y-auto pt-2">
           {todos.length === 0 ? (
-            <CardDescription className="text-sm">暂无代办</CardDescription>
+            <CardDescription className="text-sm">暂无待办</CardDescription>
           ) : (
             <ul className="flex flex-col gap-3 text-sm">
               {todos.map((todo, index) => (

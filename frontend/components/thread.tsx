@@ -231,10 +231,9 @@ const Composer: FC = () => {
         >
           <ComposerAttachments />
           <ComposerPrimitive.Input
-            placeholder="请输入消息..."
+            placeholder="请输入消息…"
             className="aui-composer-input caret-primary placeholder:text-muted-foreground/80 max-h-32 min-h-10 w-full resize-none bg-transparent px-2.5 py-1 text-base outline-none"
             rows={1}
-            autoFocus
             enterKeyHint="send"
             aria-label="消息输入框"
           />

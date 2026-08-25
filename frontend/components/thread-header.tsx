@@ -27,9 +27,11 @@ function useMainThreadInitialized(): boolean {
 export function ThreadHeader({
   sidebarOpen,
   onSidebarOpenChange,
+  onMobileSidebarOpen,
 }: {
   sidebarOpen: boolean;
   onSidebarOpenChange: (open: boolean) => void;
+  onMobileSidebarOpen: () => void;
 }) {
   const title = useMainThreadTitle("新对话");
   const isInitialized = useMainThreadInitialized();
@@ -50,12 +52,22 @@ export function ThreadHeader({
           <Button
             variant="ghost"
             size="icon"
+            className="2xl:hidden"
+            disabled={!hasStarted}
+            aria-label="打开会话概览"
+            onClick={onMobileSidebarOpen}
+          >
+            <Columns2Icon aria-hidden="true" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             className="hidden 2xl:inline-flex"
             disabled={!hasStarted}
             aria-label={sidebarOpen ? "收起会话侧栏" : "展开会话侧栏"}
             onClick={() => onSidebarOpenChange(!sidebarOpen)}
           >
-            <Columns2Icon />
+            <Columns2Icon aria-hidden="true" />
           </Button>
         </div>
       }

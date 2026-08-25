@@ -139,6 +139,8 @@ export function KnowledgeBaseDetail({
   const currentPage =
     Number.isInteger(pageParameter) && pageParameter > 0 ? pageParameter : 1;
   const pageIndex = currentPage - 1;
+  const activeView =
+    searchParams.get("view") === "search" ? "search" : "documents";
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [documentToDelete, setDocumentToDelete] =
@@ -216,12 +218,14 @@ export function KnowledgeBaseDetail({
         ),
       );
 
-      const failedUpload = uploadResults.find(
-        (result) => result.status === "rejected",
+      const failedFileNames = uploadResults.flatMap((result, index) =>
+        result.status === "rejected" ? [validatedFiles[index].file.name] : [],
       );
 
-      if (failedUpload) {
-        throw failedUpload.reason;
+      if (failedFileNames.length > 0) {
+        throw new Error(
+          `${failedFileNames.join("、")} 上传失败，请重新选择失败文件后重试`,
+        );
       }
     },
     onMutate: clearActionError,
@@ -302,7 +306,7 @@ export function KnowledgeBaseDetail({
 
     if (selectedFiles.length > 0) {
       uploadDocument.mutate(selectedFiles, {
-        onSuccess: () => {
+        onSettled: () => {
           form.reset();
 
           setSelectedFiles([]);
@@ -311,30 +315,27 @@ export function KnowledgeBaseDetail({
     }
   }
 
-  if (knowledgeBaseQuery.isPending) {
-    return <Skeleton className="m-6 h-64" />;
-  }
+  function changeView(view: string): void {
+    const parameters = new URLSearchParams(searchParams);
 
-  if (knowledgeBaseQuery.error || !knowledgeBaseQuery.data) {
-    return (
-      <Empty>
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <AlertCircleIcon aria-hidden="true" />
-          </EmptyMedia>
-          <EmptyTitle>无法读取知识库</EmptyTitle>
-          <EmptyDescription>
-            {getApiErrorMessage(knowledgeBaseQuery.error, "读取知识库失败")}
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
-    );
+    if (view === "search") {
+      parameters.set("view", "search");
+      parameters.delete("page");
+      setSelectedFiles([]);
+    } else {
+      parameters.delete("view");
+    }
+
+    const path = `/admin/knowledge-bases/${knowledgeBaseId}`;
+    const query = parameters.toString();
+
+    router.replace(query ? `${path}?${query}` : path, { scroll: false });
   }
 
   return (
     <>
       <AppHeader
-        title={knowledgeBaseQuery.data.name}
+        title={knowledgeBaseQuery.data?.name ?? "知识库详情"}
         left={
           <Button variant="ghost" size="icon-sm" asChild>
             <Link href="/admin/knowledge-bases" aria-label="返回知识库列表">
@@ -344,16 +345,43 @@ export function KnowledgeBaseDetail({
         }
       />
 
-      <main className="min-h-0 flex-1 overflow-y-auto p-6">
-        <Tabs
-          defaultValue="documents"
-          className="mx-auto min-h-full max-w-6xl gap-6"
-          onValueChange={(value) => {
-            if (value !== "documents") {
-              setSelectedFiles([]);
-            }
-          }}
-        >
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+        {knowledgeBaseQuery.isPending ? (
+          <Skeleton
+            role="status"
+            aria-label="正在加载知识库详情"
+            className="mx-auto h-64 max-w-6xl"
+          />
+        ) : knowledgeBaseQuery.error || !knowledgeBaseQuery.data ? (
+          <Empty className="mx-auto min-h-full max-w-6xl">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <AlertCircleIcon aria-hidden="true" />
+              </EmptyMedia>
+              <EmptyTitle>无法读取知识库</EmptyTitle>
+              <EmptyDescription>
+                {getApiErrorMessage(
+                  knowledgeBaseQuery.error,
+                  "读取知识库失败",
+                )}
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => knowledgeBaseQuery.refetch()}
+              >
+                重试
+              </Button>
+            </EmptyContent>
+          </Empty>
+        ) : (
+          <Tabs
+            value={activeView}
+            className="mx-auto min-h-full max-w-6xl gap-6"
+            onValueChange={changeView}
+          >
           <TabsList>
             <TabsTrigger value="documents">文档</TabsTrigger>
             <TabsTrigger value="search">搜索</TabsTrigger>
@@ -512,7 +540,7 @@ export function KnowledgeBaseDetail({
                             )}
                           </div>
                           {document.error_message && (
-                            <div className="text-destructive truncate text-sm">
+                            <div className="text-destructive break-words text-sm">
                               {document.error_message}
                             </div>
                           )}
@@ -626,8 +654,9 @@ export function KnowledgeBaseDetail({
           <TabsContent value="search" className="flex flex-col gap-6">
             <KnowledgeSearch knowledgeBaseId={knowledgeBaseId} />
           </TabsContent>
-        </Tabs>
-      </main>
+          </Tabs>
+        )}
+      </div>
 
       <AlertDialog
         open={documentToDelete !== undefined}

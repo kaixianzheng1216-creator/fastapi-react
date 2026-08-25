@@ -9,7 +9,6 @@ import {
   PlusIcon,
   PowerIcon,
   PowerOffIcon,
-  SearchIcon,
   TrashIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -19,6 +18,7 @@ import { type FormEvent, useState } from "react";
 import { AppHeader } from "@/components/app-header";
 import { KnowledgeBaseDialog } from "@/components/knowledge-base-dialog";
 import { PagePagination } from "@/components/page-pagination";
+import { SearchToolbar } from "@/components/search-toolbar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,13 +47,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import {
-  Field,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { FieldLegend, FieldSet } from "@/components/ui/field";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
@@ -207,38 +201,27 @@ export function KnowledgeBaseManager() {
         title="知识库"
         left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
         actions={
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button
+            aria-label="创建知识库"
+            onClick={() => setCreateOpen(true)}
+          >
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
-            创建知识库
+            <span className="hidden sm:inline">创建知识库</span>
           </Button>
         }
       />
 
-      <main className="min-h-0 flex-1 overflow-y-auto p-6">
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
         <section className="mx-auto flex min-h-full max-w-6xl flex-col gap-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <form
-              className="w-full sm:w-auto"
+            <SearchToolbar
+              id="knowledge-base-search"
+              label="搜索知识库名称"
+              placeholder="搜索知识库名称…"
               onSubmit={submitSearch}
-            >
-              <Field orientation="horizontal">
-                <FieldLabel htmlFor="knowledge-base-search" className="sr-only">
-                  搜索知识库名称
-                </FieldLabel>
-                <Input
-                  key={search}
-                  id="knowledge-base-search"
-                  name="search"
-                  className="w-full sm:w-64"
-                  defaultValue={search}
-                  placeholder="搜索知识库名称…"
-                />
-                <Button type="submit" variant="outline">
-                  <SearchIcon data-icon="inline-start" aria-hidden="true" />
-                  搜索
-                </Button>
-              </Field>
-            </form>
+              key={search}
+              defaultValue={search}
+            />
 
             <FieldSet className="w-auto flex-row items-center gap-3">
               <FieldLegend variant="label" className="mb-0">
@@ -402,7 +385,7 @@ export function KnowledgeBaseManager() {
             }
           />
         </section>
-      </main>
+      </div>
 
       <KnowledgeBaseDialog
         open={createOpen}

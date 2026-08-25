@@ -128,7 +128,7 @@ export const ThreadListSearch: FC<{
           onClick={() => setOpen(true)}
         >
           <SearchIcon />
-          搜索...
+          搜索对话…
         </Button>
       )}
       <CommandDialog
@@ -388,7 +388,7 @@ const ThreadListSkeleton: FC = () => {
         <div
           key={i}
           role="status"
-          aria-label="Loading threads"
+          aria-label="正在加载对话"
           data-slot="aui_thread-list-skeleton-wrapper"
           className="flex h-8 items-center px-2.5"
         >

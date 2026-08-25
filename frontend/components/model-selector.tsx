@@ -38,9 +38,9 @@ export type ModelSelectorEffortOption = {
 };
 
 export const DEFAULT_EFFORT_OPTIONS: readonly ModelSelectorEffortOption[] = [
-  { id: "low", name: "Low" },
-  { id: "medium", name: "Med" },
-  { id: "high", name: "High" },
+  { id: "low", name: "低" },
+  { id: "medium", name: "中" },
+  { id: "high", name: "高" },
 ];
 
 export type ModelOption = {
@@ -330,7 +330,7 @@ function ModelIcon({
 }
 
 function ModelSelectorValue({
-  placeholder = "Select model",
+  placeholder = "选择模型",
   showEffort = true,
   className,
 }: ModelSelectorValueProps) {
@@ -382,7 +382,7 @@ export type ModelSelectorContentProps = ComponentPropsWithoutRef<
 function ModelSelectorFocusAnchor() {
   return (
     <div className="sr-only">
-      <CommandInput readOnly aria-label="Model" />
+      <CommandInput readOnly aria-label="模型" />
     </div>
   );
 }
@@ -433,7 +433,7 @@ export type ModelSelectorSearchProps = ComponentPropsWithoutRef<
 >;
 
 function ModelSelectorSearch({
-  placeholder = "Search models...",
+  placeholder = "搜索模型…",
   ...props
 }: ModelSelectorSearchProps) {
   return (
@@ -486,7 +486,7 @@ export type ModelSelectorEmptyProps = ComponentPropsWithoutRef<
 function ModelSelectorEmpty({ children, ...props }: ModelSelectorEmptyProps) {
   return (
     <CommandEmpty data-slot="model-selector-empty" {...props}>
-      {children ?? "No models found."}
+      {children ?? "未找到模型"}
     </CommandEmpty>
   );
 }
@@ -610,7 +610,7 @@ function ModelSelectorEffort({
         value={effort ?? ""}
         onValueChange={setEffort}
         orientation="horizontal"
-        aria-label={typeof label === "string" ? label : "Reasoning effort"}
+        aria-label={typeof label === "string" ? label : "推理强度"}
         className="flex items-center gap-0.5"
       >
         {efforts.map((option) => (
