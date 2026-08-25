@@ -20,6 +20,7 @@ class KnowledgeSettings(BaseSettings):
     EMBEDDING_TOKENIZER: str
     EMBEDDING_DIMENSIONS: Annotated[int, Field(gt=0)]
     EMBEDDING_CHUNK_MAX_TOKENS: Annotated[int, Field(gt=0)]
+    EMBEDDING_BATCH_MAX_TOKENS: Annotated[int, Field(gt=0)]
     EMBEDDING_BATCH_SIZE: Annotated[int, Field(gt=0, le=100)]
 
 
