@@ -141,6 +141,7 @@ export function KnowledgeBaseDetail({
     searchParams.get("view") === "search" ? "search" : "documents";
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [webpageUrl, setWebpageUrl] = useState("");
   const [documentToDelete, setDocumentToDelete] =
     useState<KnowledgeDocumentPublic>();
   const [actionError, setActionError] = useState<Error>();
@@ -191,7 +192,7 @@ export function KnowledgeBaseDetail({
   const uploadDocument = useMutation({
     mutationFn: async (files: File[]): Promise<void> => {
       if (files.length > MAX_FILE_COUNT) {
-        throw new Error(`一次最多上传 ${MAX_FILE_COUNT} 个文档`);
+        throw new Error(`一次最多上传 ${MAX_FILE_COUNT} 个文件`);
       }
 
       const validatedFiles = files.map((file) => {
@@ -326,12 +327,8 @@ export function KnowledgeBaseDetail({
   function submitWebpage(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
 
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const url = String(formData.get("url") ?? "");
-
-    createWebpage.mutate(url, {
-      onSuccess: () => form.reset(),
+    createWebpage.mutate(webpageUrl, {
+      onSuccess: () => setWebpageUrl(""),
     });
   }
 
@@ -424,11 +421,12 @@ export function KnowledgeBaseDetail({
                         <FieldGroup>
                           <Field data-invalid={hasTooManyFiles}>
                             <FieldLabel htmlFor="knowledge-document">
-                              文档
+                              文件
                             </FieldLabel>
                             <FieldDescription>
                               支持 PDF、Office、HTML、Markdown、TXT、CSV 和
-                              JSON； 一次最多上传 {MAX_FILE_COUNT} 个，单个最大{" "}
+                              JSON。一次最多上传 {MAX_FILE_COUNT}{" "}
+                              个文件，单个文件最大{" "}
                               {formatFileSize(MAX_FILE_SIZE)}。
                             </FieldDescription>
                             <Input
@@ -456,7 +454,7 @@ export function KnowledgeBaseDetail({
                             )}
                             {hasTooManyFiles && (
                               <FieldError>
-                                一次最多选择 {MAX_FILE_COUNT} 个文档，请重新选择
+                                一次最多选择 {MAX_FILE_COUNT} 个文件，请重新选择
                               </FieldError>
                             )}
                           </Field>
@@ -480,8 +478,8 @@ export function KnowledgeBaseDetail({
                             {uploadDocument.isPending
                               ? "上传中…"
                               : selectedFiles.length > 0
-                                ? `上传 ${selectedFiles.length} 个文档`
-                                : "上传文档"}
+                                ? `上传 ${selectedFiles.length} 个文件`
+                                : "上传文件"}
                           </Button>
                         </FieldGroup>
                       </form>
@@ -495,21 +493,27 @@ export function KnowledgeBaseDetail({
                               网页地址
                             </FieldLabel>
                             <FieldDescription>
-                              输入公开网页地址，系统将抓取网页正文并添加到知识库。
+                              输入公开网页地址，系统会抓取正文并创建文档。
                             </FieldDescription>
                             <Input
                               id="knowledge-webpage-url"
                               name="url"
                               type="url"
                               placeholder="https://example.com/article"
+                              value={webpageUrl}
                               disabled={createWebpage.isPending}
+                              onChange={(event) =>
+                                setWebpageUrl(event.currentTarget.value)
+                              }
                               required
                             />
                           </Field>
                           <Button
                             type="submit"
                             className="self-end"
-                            disabled={createWebpage.isPending}
+                            disabled={
+                              createWebpage.isPending || !webpageUrl.trim()
+                            }
                           >
                             {createWebpage.isPending ? (
                               <Spinner data-icon="inline-start" />
@@ -571,7 +575,7 @@ export function KnowledgeBaseDetail({
                     </EmptyMedia>
                     <EmptyTitle>暂无文档</EmptyTitle>
                     <EmptyDescription>
-                      上传文档后会在这里显示处理状态。
+                      添加文件或网页后，会在这里显示处理状态。
                     </EmptyDescription>
                   </EmptyHeader>
                 </Empty>
@@ -579,10 +583,10 @@ export function KnowledgeBaseDetail({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>文件名</TableHead>
+                      <TableHead>文档名称</TableHead>
                       <TableHead>状态</TableHead>
                       <TableHead>大小</TableHead>
-                      <TableHead>上传时间</TableHead>
+                      <TableHead>添加时间</TableHead>
                       <TableHead>操作</TableHead>
                     </TableRow>
                   </TableHeader>
