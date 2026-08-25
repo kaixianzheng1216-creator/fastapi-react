@@ -47,6 +47,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { AppHeader } from "@/components/app-header";
+import { ThreadListPopover } from "@/components/thread-list-popover";
 import {
   Pagination,
   PaginationContent,
@@ -180,6 +181,7 @@ export function SkillManager() {
     <>
       <AppHeader
         title="技能"
+        left={<ThreadListPopover />}
         actions={
           <Button
             aria-label="创建技能"

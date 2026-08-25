@@ -2,6 +2,7 @@
 
 import { AppHeader } from "@/components/app-header";
 import { ThreadListItemMore } from "@/components/thread-list";
+import { ThreadListPopover } from "@/components/thread-list-popover";
 import { Button } from "@/components/ui/button";
 import { useAuiState } from "@assistant-ui/react";
 import { Columns2Icon } from "lucide-react";
@@ -40,6 +41,7 @@ export function ThreadHeader({
   return (
     <AppHeader
       title={title}
+      left={<ThreadListPopover />}
       actions={
         <div className="flex items-center">
           <ThreadListItemMore

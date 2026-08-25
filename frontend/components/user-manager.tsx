@@ -85,7 +85,7 @@ import {
 import {
   CURRENT_USER_QUERY_KEY,
   useCurrentUser,
-} from "@/components/user-info";
+} from "@/hooks/use-current-user";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   getPaginationHref,

@@ -9,7 +9,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { CURRENT_USER_QUERY_KEY } from "@/components/user-info";
 import {
   Field,
   FieldDescription,
@@ -19,6 +18,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { CURRENT_USER_QUERY_KEY } from "@/hooks/use-current-user";
 import { loginLoginAccessToken } from "@/lib/client";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { saveAccessToken } from "@/lib/auth";

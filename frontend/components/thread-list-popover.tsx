@@ -9,7 +9,8 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { useCurrentUser, UserProfile } from "@/components/user-info";
+import { UserProfile } from "@/components/user-info";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 export function ThreadListPopover() {
   const [previewOpen, setPreviewOpen] = useState(false);

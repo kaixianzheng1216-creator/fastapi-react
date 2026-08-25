@@ -19,7 +19,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
-import { useCurrentUserQuery } from "@/components/user-info";
+import { useCurrentUserQuery } from "@/hooks/use-current-user";
 
 function AdminShellState({
   title,

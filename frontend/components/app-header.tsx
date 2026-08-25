@@ -1,7 +1,5 @@
 import type { ReactNode } from "react";
 
-import { ThreadListPopover } from "@/components/thread-list-popover";
-
 type AppHeaderProps = {
   title: string;
   left?: ReactNode;
@@ -12,7 +10,7 @@ export function AppHeader({ title, left, actions }: AppHeaderProps) {
   return (
     <header className="grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-b px-3">
       <div className="min-w-0 justify-self-start">
-        {left ?? <ThreadListPopover />}
+        {left}
       </div>
       <h1 className="max-w-[40vw] truncate text-sm font-medium sm:max-w-96">
         {title}

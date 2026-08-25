@@ -24,7 +24,7 @@ import {
   SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { useCurrentUser } from "@/components/user-info";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 export function ThreadListSidebar({
   ...props

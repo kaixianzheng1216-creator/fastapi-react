@@ -15,10 +15,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
-import {
-  CURRENT_USER_QUERY_KEY,
-  UserProfile,
-} from "@/components/user-info";
+import { UserProfile } from "@/components/user-info";
+import { CURRENT_USER_QUERY_KEY } from "@/hooks/use-current-user";
 import { clearAccessToken } from "@/lib/auth";
 import type { UserPublic } from "@/lib/client";
 
