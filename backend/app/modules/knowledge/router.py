@@ -309,12 +309,16 @@ def search_knowledge_base(
     session: SessionDep,
     knowledge_base_id: uuid.UUID,
     body: KnowledgeSearchRequest,
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 6,
 ) -> KnowledgeSearchResultsPublic:
     """检索知识库。"""
-    search_results = retrieval.search_knowledge_base(
+    search_results, count = retrieval.search_knowledge_base(
         session=session,
         knowledge_base_id=knowledge_base_id,
         query=body.query,
+        skip=skip,
+        limit=limit,
     )
 
-    return KnowledgeSearchResultsPublic(data=search_results)
+    return KnowledgeSearchResultsPublic(data=search_results, count=count)

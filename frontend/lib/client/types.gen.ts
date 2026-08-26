@@ -703,6 +703,10 @@ export type KnowledgeSearchResultPublic = {
      */
     document_id: string;
     /**
+     * Chunk Index
+     */
+    chunk_index: number;
+    /**
      * Knowledge Base Name
      */
     knowledge_base_name: string;
@@ -736,6 +740,10 @@ export type KnowledgeSearchResultsPublic = {
      * Data
      */
     data: Array<KnowledgeSearchResultPublic>;
+    /**
+     * Count
+     */
+    count: number;
 };
 
 /**
@@ -1942,7 +1950,16 @@ export type KnowledgeBasesSearchKnowledgeBaseData = {
          */
         knowledge_base_id: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
     url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}/search';
 };
 

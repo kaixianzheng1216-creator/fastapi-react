@@ -214,34 +214,42 @@ def search(
     knowledge_base_id: uuid.UUID,
     knowledge_base_name: str,
     document_ids: Sequence[uuid.UUID],
-    limit: int = 6,
-) -> list[KnowledgeSearchResultPublic]:
+    skip: int,
+    limit: int,
+) -> tuple[list[KnowledgeSearchResultPublic], int]:
     """在指定知识库的可用文档中检索相关切片。"""
     if not document_ids:
-        return []
+        return [], 0
 
     client = _get_client()
 
+    search_filter = models.Filter(
+        must=[
+            models.FieldCondition(
+                key="knowledge_base_id",
+                match=models.MatchValue(value=str(knowledge_base_id)),
+            ),
+            models.FieldCondition(
+                key="document_id",
+                match=models.MatchAny(any=[str(value) for value in document_ids]),
+            ),
+        ]
+    )
+
     try:
+        total = client.count(
+            collection_name=COLLECTION_NAME,
+            count_filter=search_filter,
+            exact=True,
+        ).count
+
         response = client.query_points(
             collection_name=COLLECTION_NAME,
             query=vector,
             using=VECTOR_NAME,
-            query_filter=models.Filter(
-                must=[
-                    models.FieldCondition(
-                        key="knowledge_base_id",
-                        match=models.MatchValue(value=str(knowledge_base_id)),
-                    ),
-                    models.FieldCondition(
-                        key="document_id",
-                        match=models.MatchAny(
-                            any=[str(value) for value in document_ids]
-                        ),
-                    ),
-                ]
-            ),
+            query_filter=search_filter,
             limit=limit,
+            offset=skip,
             with_payload=True,
         )
     except ApiException as error:
@@ -258,6 +266,7 @@ def search(
         results.append(
             KnowledgeSearchResultPublic(
                 document_id=uuid.UUID(str(payload["document_id"])),
+                chunk_index=int(payload["chunk_index"]),
                 knowledge_base_name=knowledge_base_name,
                 filename=str(payload["filename"]),
                 content=str(payload["content"]),
@@ -267,7 +276,7 @@ def search(
             )
         )
 
-    return results
+    return results, total
 
 
 def delete_document(document_id: uuid.UUID) -> None:

@@ -14,8 +14,13 @@ logger = logging.getLogger(__name__)
 
 
 def search_knowledge_base(
-    *, session: Session, knowledge_base_id: uuid.UUID, query: str
-) -> list[KnowledgeSearchResultPublic]:
+    *,
+    session: Session,
+    knowledge_base_id: uuid.UUID,
+    query: str,
+    skip: int,
+    limit: int,
+) -> tuple[list[KnowledgeSearchResultPublic], int]:
     knowledge_base = get_knowledge_base(
         session=session,
         knowledge_base_id=knowledge_base_id,
@@ -29,16 +34,18 @@ def search_knowledge_base(
     ).all()
 
     if not ready_document_ids:
-        return []
+        return [], 0
 
     try:
         query_vector = embedding.embed_texts([query])[0]
 
-        search_results = vector_store.search(
+        search_results, count = vector_store.search(
             vector=query_vector,
             knowledge_base_id=knowledge_base_id,
             knowledge_base_name=knowledge_base.name,
             document_ids=ready_document_ids,
+            skip=skip,
+            limit=limit,
         )
     except (
         embedding.EmbeddingServiceError,
@@ -48,4 +55,4 @@ def search_knowledge_base(
 
         raise KnowledgeSearchUnavailableError from error
 
-    return search_results
+    return search_results, count

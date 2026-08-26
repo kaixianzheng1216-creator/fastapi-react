@@ -1,6 +1,11 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   createColumnHelper,
   rowPaginationFeature,
@@ -105,6 +110,7 @@ import {
 import { getPaginationHref, parsePage } from "@/lib/pagination";
 
 const PAGE_SIZE = 20;
+const SEARCH_PAGE_SIZE = 6;
 const DOCUMENT_POLL_INTERVAL_MS = 3000;
 const DOCUMENTS_QUERY_KEY = ["knowledge-documents"] as const;
 const DOCUMENT_ACCEPT = DOCUMENT_CONTENT_TYPES.join(",");
@@ -867,19 +873,37 @@ export function KnowledgeBaseDetail({
 }
 
 function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
-  const searchKnowledge = useMutation({
-    mutationFn: async (query: string) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("q")?.trim() ?? "";
+  const currentPage = parsePage(searchParams.get("searchPage"));
+  const pageIndex = currentPage - 1;
+
+  const searchKnowledge = useQuery({
+    queryKey: ["knowledge-search", knowledgeBaseId, searchQuery, pageIndex],
+    queryFn: async ({ signal }) => {
       const { data } = await knowledgeBasesSearchKnowledgeBase({
         path: { knowledge_base_id: knowledgeBaseId },
-        body: { query },
+        query: {
+          skip: pageIndex * SEARCH_PAGE_SIZE,
+          limit: SEARCH_PAGE_SIZE,
+        },
+        body: { query: searchQuery },
+        signal,
         throwOnError: true,
       });
 
       return data;
     },
+    enabled: Boolean(searchQuery),
+    placeholderData: keepPreviousData,
+    retry: false,
   });
 
   const searchResults = searchKnowledge.data?.data;
+  const pageCount = Math.ceil(
+    (searchKnowledge.data?.count ?? 0) / SEARCH_PAGE_SIZE,
+  );
 
   function submitSearch(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -887,7 +911,13 @@ function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
     const query = String(formData.get("query") ?? "").trim();
 
     if (query) {
-      searchKnowledge.mutate(query);
+      if (query === searchQuery && currentPage === 1) {
+        void searchKnowledge.refetch();
+      } else {
+        router.push(getKnowledgeSearchHref(knowledgeBaseId, query, 1), {
+          scroll: false,
+        });
+      }
     }
   }
 
@@ -906,8 +936,10 @@ function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
               <Field>
                 <FieldLabel htmlFor="knowledge-search-query">问题</FieldLabel>
                 <Input
+                  key={searchQuery}
                   id="knowledge-search-query"
                   name="query"
+                  defaultValue={searchQuery}
                   autoComplete="off"
                   placeholder="输入想了解的问题…"
                   maxLength={1000}
@@ -917,9 +949,9 @@ function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
               <Button
                 type="submit"
                 className="self-end"
-                disabled={searchKnowledge.isPending}
+                disabled={searchKnowledge.isFetching}
               >
-                {searchKnowledge.isPending ? (
+                {searchKnowledge.isFetching ? (
                   <Spinner data-icon="inline-start" />
                 ) : (
                   <SearchIcon data-icon="inline-start" aria-hidden="true" />
@@ -931,16 +963,16 @@ function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
         </CardContent>
       </Card>
 
-      {searchKnowledge.error && (
+      {searchKnowledge.error ? (
         <Alert variant="destructive">
           <AlertCircleIcon aria-hidden="true" />
           <AlertTitle>
             {getApiErrorMessage(searchKnowledge.error, "搜索失败")}
           </AlertTitle>
         </Alert>
-      )}
+      ) : null}
 
-      {searchResults?.length === 0 && (
+      {searchResults?.length === 0 ? (
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -952,10 +984,10 @@ function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
-      )}
+      ) : null}
 
-      {searchResults?.map((result, index) => (
-        <Card key={`${result.document_id}-${index}`}>
+      {searchResults?.map((result) => (
+        <Card key={`${result.document_id}-${result.chunk_index}`}>
           <CardHeader>
             <CardTitle>
               {result.knowledge_base_name} · {result.filename}
@@ -970,6 +1002,17 @@ function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
           </CardContent>
         </Card>
       ))}
+
+      {searchResults ? (
+        <PagePagination
+          ariaLabel="搜索结果分页"
+          currentPage={currentPage}
+          pageCount={pageCount}
+          getPageHref={(page) =>
+            getKnowledgeSearchHref(knowledgeBaseId, searchQuery, page)
+          }
+        />
+      ) : null}
     </>
   );
 }
@@ -1032,4 +1075,19 @@ function formatSource(sectionPath: string[], pageNumbers: number[]): string {
 
 function getDocumentsHref(knowledgeBaseId: string, page: number): string {
   return getPaginationHref(`/admin/knowledge-bases/${knowledgeBaseId}`, page);
+}
+
+function getKnowledgeSearchHref(
+  knowledgeBaseId: string,
+  query: string,
+  page: number,
+): string {
+  const parameters = new URLSearchParams({ view: "search", q: query });
+
+  return getPaginationHref(
+    `/admin/knowledge-bases/${knowledgeBaseId}`,
+    page,
+    parameters,
+    "searchPage",
+  );
 }

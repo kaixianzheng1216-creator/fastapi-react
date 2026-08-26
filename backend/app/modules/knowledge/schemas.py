@@ -114,6 +114,7 @@ class KnowledgeSearchRequest(SQLModel):
 
 class KnowledgeSearchResultPublic(SQLModel):
     document_id: uuid.UUID
+    chunk_index: int
     knowledge_base_name: str
     filename: str
     content: str
@@ -124,3 +125,4 @@ class KnowledgeSearchResultPublic(SQLModel):
 
 class KnowledgeSearchResultsPublic(SQLModel):
     data: list[KnowledgeSearchResultPublic]
+    count: int
