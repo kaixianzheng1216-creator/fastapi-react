@@ -123,6 +123,7 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton
                           isActive={moduleIsActive}
+                          className="data-[active=true]:bg-transparent"
                           tooltip={module.name}
                         >
                           <module.icon aria-hidden="true" />
@@ -141,7 +142,6 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
                                 <SidebarMenuSubButton
                                   asChild
                                   isActive={pathname.startsWith(item.href)}
-                                  className="hover:bg-transparent active:bg-transparent data-[active=true]:bg-transparent data-[active=true]:font-medium"
                                 >
                                   <Link href={item.href}>{item.name}</Link>
                                 </SidebarMenuSubButton>
