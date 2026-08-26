@@ -14,6 +14,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/app-header";
 import { MarkdownContent } from "@/components/shared/markdown-content";
+import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -399,6 +400,10 @@ function DocumentChunksView({
         </AlertTitle>
       </Alert>
     );
+  }
+
+  if (chunksQuery.data.count > 0 && chunksQuery.data.data.length === 0) {
+    return <PageOutOfRange href={getPageHref(1)} />;
   }
 
   if (chunksQuery.data.count === 0) {

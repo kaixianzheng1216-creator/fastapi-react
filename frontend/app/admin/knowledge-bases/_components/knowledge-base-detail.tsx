@@ -30,6 +30,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useMemo, useState } from "react";
 
 import { AppHeader } from "@/components/layout/app-header";
+import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
 import {
   AlertDialog,
@@ -492,6 +493,8 @@ export function KnowledgeBaseDetail({
 
   const pageCount = table.getPageCount();
   const rows = table.getRowModel().rows;
+  const pageOutOfRange =
+    (documentsQuery.data?.count ?? 0) > 0 && rows.length === 0;
 
   function clearActionError(): void {
     setActionError(undefined);
@@ -767,17 +770,23 @@ export function KnowledgeBaseDetail({
                   </EmptyContent>
                 </Empty>
               ) : rows.length === 0 ? (
-                <Empty>
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                      <FileTextIcon aria-hidden="true" />
-                    </EmptyMedia>
-                    <EmptyTitle>暂无文档</EmptyTitle>
-                    <EmptyDescription>
-                      添加文件或网页后，会在这里显示处理状态。
-                    </EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
+                pageOutOfRange ? (
+                  <PageOutOfRange
+                    href={getDocumentsHref(knowledgeBaseId, 1)}
+                  />
+                ) : (
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon">
+                        <FileTextIcon aria-hidden="true" />
+                      </EmptyMedia>
+                      <EmptyTitle>暂无文档</EmptyTitle>
+                      <EmptyDescription>
+                        添加文件或网页后，会在这里显示处理状态。
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
+                )
               ) : (
                 <Table>
                   <TableHeader>
@@ -904,6 +913,8 @@ function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
   const pageCount = Math.ceil(
     (searchKnowledge.data?.count ?? 0) / SEARCH_PAGE_SIZE,
   );
+  const pageOutOfRange =
+    (searchKnowledge.data?.count ?? 0) > 0 && searchResults?.length === 0;
 
   function submitSearch(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -973,17 +984,23 @@ function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
       ) : null}
 
       {searchResults?.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <SearchIcon aria-hidden="true" />
-            </EmptyMedia>
-            <EmptyTitle>未找到相关内容</EmptyTitle>
-            <EmptyDescription>
-              可以换个问法，或确认相关文档已处理完成。
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        pageOutOfRange ? (
+          <PageOutOfRange
+            href={getKnowledgeSearchHref(knowledgeBaseId, searchQuery, 1)}
+          />
+        ) : (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <SearchIcon aria-hidden="true" />
+              </EmptyMedia>
+              <EmptyTitle>未找到相关内容</EmptyTitle>
+              <EmptyDescription>
+                可以换个问法，或确认相关文档已处理完成。
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        )
       ) : null}
 
       {searchResults?.map((result) => (

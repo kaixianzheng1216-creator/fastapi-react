@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
 import { SearchToolbar } from "@/components/shared/search-toolbar";
 import {
@@ -107,6 +108,7 @@ export function SkillManager() {
     ? getApiErrorMessage(loadError, "读取技能列表失败")
     : "";
   const totalPages = Math.ceil(count / PAGE_SIZE);
+  const pageOutOfRange = count > 0 && skills.length === 0;
 
   const [createOpen, setCreateOpen] = useState(false);
   const [skillToDelete, setSkillToDelete] = useState<SkillSummaryPublic>();
@@ -220,33 +222,37 @@ export function SkillManager() {
           {isLoading && <SkillGridSkeleton />}
 
           {!isLoading && !loadErrorMessage && skills.length === 0 && (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PuzzleIcon aria-hidden="true" />
-                </EmptyMedia>
-                <EmptyTitle>
-                  {searchQuery ? "没有匹配的技能" : "还没有技能"}
-                </EmptyTitle>
-                <EmptyDescription>
-                  {searchQuery
-                    ? "尝试其他关键词，或者清除搜索条件。"
-                    : "创建新技能，或从 ZIP 压缩包导入。"}
-                </EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
-                {searchQuery ? (
-                  <Button variant="outline" onClick={clearSearch}>
-                    清除搜索
-                  </Button>
-                ) : (
-                  <Button onClick={() => setCreateOpen(true)}>
-                    <PlusIcon data-icon="inline-start" />
-                    创建技能
-                  </Button>
-                )}
-              </EmptyContent>
-            </Empty>
+            pageOutOfRange ? (
+              <PageOutOfRange href={getSkillsHref(1, searchQuery)} />
+            ) : (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <PuzzleIcon aria-hidden="true" />
+                  </EmptyMedia>
+                  <EmptyTitle>
+                    {searchQuery ? "没有匹配的技能" : "还没有技能"}
+                  </EmptyTitle>
+                  <EmptyDescription>
+                    {searchQuery
+                      ? "尝试其他关键词，或者清除搜索条件。"
+                      : "创建新技能，或从 ZIP 压缩包导入。"}
+                  </EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  {searchQuery ? (
+                    <Button variant="outline" onClick={clearSearch}>
+                      清除搜索
+                    </Button>
+                  ) : (
+                    <Button onClick={() => setCreateOpen(true)}>
+                      <PlusIcon data-icon="inline-start" />
+                      创建技能
+                    </Button>
+                  )}
+                </EmptyContent>
+              </Empty>
+            )
           )}
 
           {!isLoading && !loadErrorMessage && skills.length > 0 && (

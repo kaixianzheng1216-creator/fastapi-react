@@ -23,6 +23,7 @@ import { type FormEvent, useMemo, useState } from "react";
 
 import { AppHeader } from "@/components/layout/app-header";
 import { KnowledgeBaseDialog } from "@/app/admin/knowledge-bases/_components/knowledge-base-dialog";
+import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { SearchToolbar } from "@/components/shared/search-toolbar";
 import { PagePagination } from "@/components/shared/page-pagination";
 import {
@@ -276,6 +277,8 @@ export function KnowledgeBaseManager() {
 
   const pageCount = table.getPageCount();
   const rows = table.getRowModel().rows;
+  const pageOutOfRange =
+    (knowledgeBasesQuery.data?.count ?? 0) > 0 && rows.length === 0;
   const loadError = knowledgeBasesQuery.error
     ? getApiErrorMessage(knowledgeBasesQuery.error, "读取知识库列表失败")
     : "";
@@ -386,19 +389,25 @@ export function KnowledgeBaseManager() {
               </EmptyContent>
             </Empty>
           ) : rows.length === 0 ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <BookOpenIcon aria-hidden="true" />
-                </EmptyMedia>
-                <EmptyTitle>暂无知识库</EmptyTitle>
-                <EmptyDescription>
-                  {search || status !== "all"
-                    ? "没有符合当前条件的知识库。"
-                    : "创建知识库后会显示在这里。"}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            pageOutOfRange ? (
+              <PageOutOfRange
+                href={getKnowledgeBasesHref(1, search, status)}
+              />
+            ) : (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <BookOpenIcon aria-hidden="true" />
+                  </EmptyMedia>
+                  <EmptyTitle>暂无知识库</EmptyTitle>
+                  <EmptyDescription>
+                    {search || status !== "all"
+                      ? "没有符合当前条件的知识库。"
+                      : "创建知识库后会显示在这里。"}
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            )
           ) : (
             <Table>
               <TableHeader>

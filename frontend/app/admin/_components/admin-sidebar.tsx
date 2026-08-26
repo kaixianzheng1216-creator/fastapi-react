@@ -50,7 +50,16 @@ const businessModules = [
       },
     ],
   },
-  { name: "内容运营", icon: FileTextIcon, items: [] },
+  {
+    name: "内容运营",
+    icon: FileTextIcon,
+    items: [
+      {
+        name: "平台榜单",
+        href: "/admin/content-operations/rankings",
+      },
+    ],
+  },
   { name: "达人投放", icon: UsersIcon, items: [] },
   { name: "海外营销", icon: GlobeIcon, items: [] },
 ];

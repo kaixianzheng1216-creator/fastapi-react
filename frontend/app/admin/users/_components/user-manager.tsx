@@ -28,6 +28,7 @@ import { type FormEvent, useMemo, useState } from "react";
 import { UserCreateDialog } from "@/app/admin/users/_components/user-create-dialog";
 import { UserEditDialog } from "@/app/admin/users/_components/user-edit-dialog";
 import { AppHeader } from "@/components/layout/app-header";
+import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
 import { SearchToolbar } from "@/components/shared/search-toolbar";
 import {
@@ -297,6 +298,7 @@ export function UserManager() {
 
   const pageCount = table.getPageCount();
   const rows = table.getRowModel().rows;
+  const pageOutOfRange = (usersQuery.data?.count ?? 0) > 0 && rows.length === 0;
   const loadError = usersQuery.error
     ? getApiErrorMessage(usersQuery.error, "读取用户列表失败")
     : "";
@@ -444,19 +446,25 @@ export function UserManager() {
               </EmptyContent>
             </Empty>
           ) : rows.length === 0 ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <UsersIcon aria-hidden="true" />
-                </EmptyMedia>
-                <EmptyTitle>暂无用户</EmptyTitle>
-                <EmptyDescription>
-                  {search || role !== "all" || status !== "all"
-                    ? "没有符合当前条件的用户。"
-                    : "创建用户后会显示在这里。"}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            pageOutOfRange ? (
+              <PageOutOfRange
+                href={getUsersHref(1, search, role, status)}
+              />
+            ) : (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <UsersIcon aria-hidden="true" />
+                  </EmptyMedia>
+                  <EmptyTitle>暂无用户</EmptyTitle>
+                  <EmptyDescription>
+                    {search || role !== "all" || status !== "all"
+                      ? "没有符合当前条件的用户。"
+                      : "创建用户后会显示在这里。"}
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            )
           ) : (
             <Table>
               <TableHeader>

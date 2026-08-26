@@ -7,10 +7,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import {
-  getPaginationPages,
-  PAGINATION_ELLIPSIS,
-} from "@/lib/pagination";
+import { getPaginationPages, PAGINATION_ELLIPSIS } from "@/lib/pagination";
 
 type PagePaginationProps = {
   ariaLabel: string;
@@ -27,7 +24,7 @@ export function PagePagination({
   getPageHref,
   className,
 }: PagePaginationProps) {
-  if (pageCount === 0) {
+  if (pageCount <= 1 || currentPage > pageCount) {
     return null;
   }
 

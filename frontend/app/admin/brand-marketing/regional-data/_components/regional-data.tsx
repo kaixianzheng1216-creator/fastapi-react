@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   createColumnHelper,
   rowPaginationFeature,
@@ -22,15 +17,14 @@ import {
   ChevronsUpDownIcon,
   ChevronUpIcon,
   MinusIcon,
-  RefreshCwIcon,
   TablePropertiesIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
 import { AppHeader } from "@/components/layout/app-header";
+import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
-import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,7 +46,6 @@ import {
 } from "@/components/ui/select";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -64,9 +57,9 @@ import {
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   brandMarketingReadRegionalData,
-  brandMarketingRefreshRegionalData,
   type ProvinceAnnualDataPublic,
   type RegionalIndicatorCode,
+  type RegionalIndicatorPublic,
   type RegionalSortOrder,
 } from "@/lib/client";
 import { getPaginationHref, parsePage } from "@/lib/pagination";
@@ -77,33 +70,9 @@ const DEFAULT_SORT_ORDER: RegionalSortOrder = "desc";
 const REGIONAL_DATA_QUERY_KEY = ["brand-marketing-regional-data"] as const;
 
 const EMPTY_REGIONS: ProvinceAnnualDataPublic[] = [];
+const EMPTY_INDICATORS: RegionalIndicatorPublic[] = [];
 
-const REGIONAL_INDICATORS = [
-  {
-    code: "resident_population",
-    yoyCode: "resident_population_yoy",
-    name: "年末常住人口",
-    unit: "万人",
-  },
-  {
-    code: "disposable_income",
-    yoyCode: "disposable_income_yoy",
-    name: "全体居民人均可支配收入",
-    unit: "元",
-  },
-  {
-    code: "consumption_expenditure",
-    yoyCode: "consumption_expenditure_yoy",
-    name: "全体居民人均消费支出",
-    unit: "元",
-  },
-  {
-    code: "retail_sales",
-    yoyCode: "retail_sales_yoy",
-    name: "社会消费品零售总额",
-    unit: "亿元",
-  },
-] as const;
+type RegionalIndicatorYoyCode = `${RegionalIndicatorCode}_yoy`;
 
 const numberFormatter = new Intl.NumberFormat("zh-CN", {
   maximumFractionDigits: 2,
@@ -124,14 +93,17 @@ const regionalColumnHelper = createColumnHelper<
   ProvinceAnnualDataPublic
 >();
 
-function createRegionalColumns(previousYear: number | undefined) {
+function createRegionalColumns(
+  indicators: RegionalIndicatorPublic[],
+  previousYear: number | undefined,
+) {
   return regionalColumnHelper.columns([
     regionalColumnHelper.accessor("province_name", {
       header: "地区",
       enableSorting: false,
       cell: ({ row }) => row.original.province_name,
     }),
-    ...REGIONAL_INDICATORS.map((indicator) =>
+    ...indicators.map((indicator) =>
       regionalColumnHelper.accessor(indicator.code, {
         sortDescFirst: true,
         header: ({ column }) => {
@@ -160,11 +132,13 @@ function createRegionalColumns(previousYear: number | undefined) {
           );
         },
         cell: ({ row }) => {
-          const changeRate = row.original[indicator.yoyCode];
+          const changeRate = row.original[getYoyCode(indicator.code)];
 
           return (
             <div className="flex items-center justify-end gap-2">
-              <span>{numberFormatter.format(row.original[indicator.code])}</span>
+              <span>
+                {numberFormatter.format(row.original[indicator.code])}
+              </span>
               {previousYear === undefined ? null : (
                 <ChangeBadge value={changeRate} />
               )}
@@ -179,7 +153,6 @@ function createRegionalColumns(previousYear: number | undefined) {
 export function RegionalData() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const queryClient = useQueryClient();
 
   const currentPage = parsePage(searchParams.get("page"));
   const pageIndex = currentPage - 1;
@@ -193,13 +166,7 @@ export function RegionalData() {
   );
 
   const regionalDataQuery = useQuery({
-    queryKey: [
-      ...REGIONAL_DATA_QUERY_KEY,
-      year,
-      pageIndex,
-      sortBy,
-      sortOrder,
-    ],
+    queryKey: [...REGIONAL_DATA_QUERY_KEY, year, pageIndex, sortBy, sortOrder],
     queryFn: async ({ signal }) => {
       const { data } = await brandMarketingReadRegionalData({
         query: {
@@ -219,28 +186,20 @@ export function RegionalData() {
     retry: false,
   });
 
-  const refreshData = useMutation({
-    mutationFn: async (): Promise<void> => {
-      await brandMarketingRefreshRegionalData({ throwOnError: true });
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: REGIONAL_DATA_QUERY_KEY });
-    },
-  });
-
   const regionalData = regionalDataQuery.data;
   const loadError = regionalDataQuery.error
     ? getApiErrorMessage(regionalDataQuery.error, "读取区域数据失败")
     : "";
-  const refreshError = refreshData.error
-    ? getApiErrorMessage(refreshData.error, "刷新区域数据失败")
-    : "";
-  const selectedYear = year ?? regionalData?.year;
+  const selectedYear = year ?? regionalData?.year ?? undefined;
   const previousYear =
     selectedYear === undefined ? undefined : selectedYear - 1;
   const columns = useMemo(
-    () => createRegionalColumns(previousYear),
-    [previousYear],
+    () =>
+      createRegionalColumns(
+        regionalData?.indicators ?? EMPTY_INDICATORS,
+        previousYear,
+      ),
+    [regionalData?.indicators, previousYear],
   );
 
   const table = useTable({
@@ -277,29 +236,13 @@ export function RegionalData() {
 
   const rows = table.getRowModel().rows;
   const pageCount = table.getPageCount();
+  const pageOutOfRange = (regionalData?.count ?? 0) > 0 && rows.length === 0;
 
   return (
     <>
       <AppHeader
         title="区域数据"
         left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
-        actions={
-          <Button
-            variant="outline"
-            disabled={refreshData.isPending}
-            onClick={() => refreshData.mutate()}
-          >
-            {refreshData.isPending ? (
-              <Spinner
-                data-icon="inline-start"
-                aria-label="正在刷新区域数据"
-              />
-            ) : (
-              <RefreshCwIcon data-icon="inline-start" aria-hidden="true" />
-            )}
-            刷新数据
-          </Button>
-        }
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
@@ -316,19 +259,18 @@ export function RegionalData() {
               </p>
             </div>
 
-            {regionalData ? (
+            {regionalData?.years.length ? (
               <Field orientation="horizontal" className="w-auto">
                 <FieldLabel htmlFor="regional-data-year">年份</FieldLabel>
                 <Select
-                  value={String(year ?? regionalData.year)}
+                  value={
+                    selectedYear === undefined
+                      ? undefined
+                      : String(selectedYear)
+                  }
                   onValueChange={(value) =>
                     router.push(
-                      getRegionalDataHref(
-                        1,
-                        Number(value),
-                        sortBy,
-                        sortOrder,
-                      ),
+                      getRegionalDataHref(1, Number(value), sortBy, sortOrder),
                     )
                   }
                 >
@@ -352,13 +294,6 @@ export function RegionalData() {
             ) : null}
           </div>
 
-          {refreshError ? (
-            <Alert variant="destructive">
-              <AlertCircleIcon aria-hidden="true" />
-              <AlertTitle>{refreshError}</AlertTitle>
-            </Alert>
-          ) : null}
-
           {regionalDataQuery.isPending ? (
             <Skeleton className="h-96" />
           ) : loadError ? (
@@ -381,15 +316,23 @@ export function RegionalData() {
               </EmptyContent>
             </Empty>
           ) : rows.length === 0 ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <TablePropertiesIcon aria-hidden="true" />
-                </EmptyMedia>
-                <EmptyTitle>暂无区域数据</EmptyTitle>
-                <EmptyDescription>当前年份还没有可展示的数据。</EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            pageOutOfRange ? (
+              <PageOutOfRange
+                href={getRegionalDataHref(1, year, sortBy, sortOrder)}
+              />
+            ) : (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <TablePropertiesIcon aria-hidden="true" />
+                  </EmptyMedia>
+                  <EmptyTitle>暂无区域数据</EmptyTitle>
+                  <EmptyDescription>
+                    当前年份还没有可展示的数据。
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            )
           ) : (
             <Table className="tabular-nums">
               <TableHeader>
@@ -470,11 +413,7 @@ function ChangeBadge({ value }: { value: number | null }) {
   }
 
   const ChangeIcon =
-    value > 0
-      ? ArrowUpRightIcon
-      : value < 0
-        ? ArrowDownRightIcon
-        : MinusIcon;
+    value > 0 ? ArrowUpRightIcon : value < 0 ? ArrowDownRightIcon : MinusIcon;
   const direction = value > 0 ? "上升" : value < 0 ? "下降" : "持平";
 
   return (
@@ -490,26 +429,19 @@ function ChangeBadge({ value }: { value: number | null }) {
 }
 
 function getYear(value: string | null): number | undefined {
-  const year = Number(value);
-  return Number.isInteger(year) && year >= 1900 && year <= 2100
-    ? year
-    : undefined;
+  return value === null ? undefined : Number(value);
 }
 
 function getSortBy(value: string | null): RegionalIndicatorCode {
-  if (
-    value === "disposable_income" ||
-    value === "consumption_expenditure" ||
-    value === "retail_sales"
-  ) {
-    return value;
-  }
+  return (value ?? DEFAULT_SORT_BY) as RegionalIndicatorCode;
+}
 
-  return DEFAULT_SORT_BY;
+function getYoyCode(code: RegionalIndicatorCode): RegionalIndicatorYoyCode {
+  return `${code}_yoy`;
 }
 
 function getSortOrder(value: string | null): RegionalSortOrder {
-  return value === "asc" ? "asc" : DEFAULT_SORT_ORDER;
+  return (value ?? DEFAULT_SORT_ORDER) as RegionalSortOrder;
 }
 
 function getRegionalDataHref(
