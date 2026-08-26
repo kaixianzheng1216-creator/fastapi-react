@@ -312,9 +312,6 @@ export function RegionalData() {
                     </SelectGroup>
                   </SelectContent>
                 </Select>
-                {regionalDataQuery.isFetching ? (
-                  <Spinner aria-label="正在更新区域数据" />
-                ) : null}
               </Field>
             ) : null}
           </div>
