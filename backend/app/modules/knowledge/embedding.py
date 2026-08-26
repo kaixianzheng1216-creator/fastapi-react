@@ -26,24 +26,32 @@ def get_tokenizer() -> HuggingFaceTokenizer:
 
 
 def _iter_text_batches(texts: Sequence[str]) -> Iterator[list[str]]:
-    """按条数和 Token 总量分批。"""
+    """按条数和模型补齐后的 Token 数量分批。"""
     tokenizer = get_tokenizer()
+    huggingface_tokenizer = tokenizer.get_tokenizer()
     text_batch: list[str] = []
-    batch_tokens = 0
+    longest_text_tokens = 0
 
     for text in texts:
-        text_tokens = tokenizer.count_tokens(text)
+        text_tokens = len(huggingface_tokenizer.encode(text, add_special_tokens=True))
+        padded_tokens = (len(text_batch) + 1) * max(
+            longest_text_tokens,
+            text_tokens,
+        )
 
         if text_batch and (
             len(text_batch) >= settings.EMBEDDING_BATCH_SIZE
-            or batch_tokens + text_tokens > settings.EMBEDDING_BATCH_MAX_TOKENS
+            or padded_tokens > settings.EMBEDDING_BATCH_MAX_TOKENS
         ):
             yield text_batch
             text_batch = []
-            batch_tokens = 0
+            longest_text_tokens = 0
+
+        if text_tokens > settings.EMBEDDING_BATCH_MAX_TOKENS:
+            raise EmbeddingServiceError("Embedding 文本超过单次请求限制")
 
         text_batch.append(text)
-        batch_tokens += text_tokens
+        longest_text_tokens = max(longest_text_tokens, text_tokens)
 
     if text_batch:
         yield text_batch
