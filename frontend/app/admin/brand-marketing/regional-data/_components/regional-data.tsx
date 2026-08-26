@@ -16,9 +16,9 @@ import {
 } from "@tanstack/react-table";
 import {
   AlertCircleIcon,
-  ArrowDownIcon,
-  ArrowUpDownIcon,
-  ArrowUpIcon,
+  ChevronDownIcon,
+  ChevronsUpDownIcon,
+  ChevronUpIcon,
   RefreshCwIcon,
   TablePropertiesIcon,
 } from "lucide-react";
@@ -124,10 +124,10 @@ const regionalColumns = regionalColumnHelper.columns([
         const sortDirection = column.getIsSorted();
         const SortIcon =
           sortDirection === "asc"
-            ? ArrowUpIcon
+            ? ChevronUpIcon
             : sortDirection === "desc"
-              ? ArrowDownIcon
-              : ArrowUpDownIcon;
+              ? ChevronDownIcon
+              : ChevronsUpDownIcon;
 
         return (
           <Button
@@ -368,6 +368,11 @@ export function RegionalData() {
                       return (
                         <TableHead
                           key={header.id}
+                          className={
+                            header.column.id === "province_name"
+                              ? "w-44 min-w-44 max-w-44"
+                              : undefined
+                          }
                           aria-sort={
                             sortDirection === "asc"
                               ? "ascending"
@@ -394,7 +399,7 @@ export function RegionalData() {
                         key={cell.id}
                         className={
                           cell.column.id === "province_name"
-                            ? undefined
+                            ? "w-44 min-w-44 max-w-44"
                             : "text-right"
                         }
                       >
