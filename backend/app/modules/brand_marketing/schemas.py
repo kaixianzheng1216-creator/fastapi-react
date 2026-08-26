@@ -14,6 +14,7 @@ class ProvinceAnnualDataPublic(SQLModel):
     resident_population: float
     disposable_income: float
     consumption_expenditure: float
+    retail_sales: float
 
 
 class RegionalDataPublic(SQLModel):

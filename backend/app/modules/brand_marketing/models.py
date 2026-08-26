@@ -9,6 +9,7 @@ class RegionalIndicatorCode(StrEnum):
     RESIDENT_POPULATION = "resident_population"
     DISPOSABLE_INCOME = "disposable_income"
     CONSUMPTION_EXPENDITURE = "consumption_expenditure"
+    RETAIL_SALES = "retail_sales"
 
 
 class ProvinceAnnualIndicator(SQLModel, table=True):

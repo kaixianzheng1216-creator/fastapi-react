@@ -2,7 +2,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from openpyxl import load_workbook
-from sqlmodel import Session
+from sqlmodel import Session, delete
 
 from app.modules.brand_marketing.models import (
     ProvinceAnnualIndicator,
@@ -14,6 +14,7 @@ INDICATOR_FILES = {
     RegionalIndicatorCode.RESIDENT_POPULATION: "年末常住人口 (万人).xlsx",
     RegionalIndicatorCode.DISPOSABLE_INCOME: "全体居民人均可支配收入 (元).xlsx",
     RegionalIndicatorCode.CONSUMPTION_EXPENDITURE: "全体居民人均消费支出 (元).xlsx",
+    RegionalIndicatorCode.RETAIL_SALES: "社会消费品零售总额 (亿元).xlsx",
 }
 PROVINCE_CODES = {
     "北京市": "110000",
@@ -57,6 +58,7 @@ def import_regional_data(session: Session) -> None:
     for indicator_code, filename in INDICATOR_FILES.items():
         records.extend(_read_workbook(indicator_code, filename))
 
+    session.exec(delete(ProvinceAnnualIndicator))
     session.add_all(records)
     session.commit()
 
@@ -85,15 +87,11 @@ def _read_workbook(
 
     for row in sheet.iter_rows(
         min_row=5,
+        max_row=4 + len(PROVINCE_CODES),
         max_col=len(years) + 1,
         values_only=True,
     ):
         province_name = row[0]
-
-        if isinstance(province_name, str) and province_name.startswith(
-            ("注：", "数据来源：")
-        ):
-            continue
 
         if not isinstance(province_name, str):
             raise ValueError(f"{filename} 包含无效地区")

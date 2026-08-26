@@ -1,12 +1,18 @@
 from sqlalchemy import text
 from sqlmodel import Session
 
+from app.modules.brand_marketing.importer import import_regional_data
 from app.modules.brand_marketing.models import RegionalIndicatorCode
 from app.modules.brand_marketing.schemas import (
     ProvinceAnnualDataPublic,
     RegionalDataPublic,
     RegionalSortOrder,
 )
+
+
+def refresh_regional_data(*, session: Session) -> None:
+    """重新导入国家统计局分省年度数据。"""
+    import_regional_data(session)
 
 
 def get_regional_data(
@@ -41,9 +47,10 @@ def get_regional_data(
 
     selected_year = year if year is not None else years[0]
 
-    rows = connection.execute(
-        text(
-            f"""
+    rows = (
+        connection.execute(
+            text(
+                f"""
             SELECT
                 province_code,
                 province_name,
@@ -56,6 +63,9 @@ def get_regional_data(
                 MAX(value) FILTER (
                     WHERE indicator_code = :consumption_expenditure
                 ) AS consumption_expenditure,
+                MAX(value) FILTER (
+                    WHERE indicator_code = :retail_sales
+                ) AS retail_sales,
                 COUNT(*) OVER () AS total_count
             FROM dwd_province_annual_indicator
             WHERE year = :year
@@ -63,16 +73,20 @@ def get_regional_data(
             ORDER BY {sort_by.value} {sort_order.value}, province_code
             LIMIT :limit OFFSET :skip
             """
-        ),
-        {
-            "year": selected_year,
-            "limit": limit,
-            "skip": skip,
-            "resident_population": RegionalIndicatorCode.RESIDENT_POPULATION.value,
-            "disposable_income": RegionalIndicatorCode.DISPOSABLE_INCOME.value,
-            "consumption_expenditure": RegionalIndicatorCode.CONSUMPTION_EXPENDITURE.value,
-        },
-    ).mappings().all()
+            ),
+            {
+                "year": selected_year,
+                "limit": limit,
+                "skip": skip,
+                "resident_population": RegionalIndicatorCode.RESIDENT_POPULATION.value,
+                "disposable_income": RegionalIndicatorCode.DISPOSABLE_INCOME.value,
+                "consumption_expenditure": RegionalIndicatorCode.CONSUMPTION_EXPENDITURE.value,
+                "retail_sales": RegionalIndicatorCode.RETAIL_SALES.value,
+            },
+        )
+        .mappings()
+        .all()
+    )
 
     data: list[ProvinceAnnualDataPublic] = []
 

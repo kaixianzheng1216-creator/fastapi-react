@@ -1,6 +1,11 @@
 "use client";
 
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   createColumnHelper,
   rowPaginationFeature,
@@ -14,6 +19,7 @@ import {
   ArrowDownIcon,
   ArrowUpDownIcon,
   ArrowUpIcon,
+  RefreshCwIcon,
   TablePropertiesIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -21,6 +27,7 @@ import { useMemo } from "react";
 
 import { AppHeader } from "@/components/layout/app-header";
 import { PagePagination } from "@/components/shared/page-pagination";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -53,6 +60,7 @@ import {
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   brandMarketingReadRegionalData,
+  brandMarketingRefreshRegionalData,
   type ProvinceAnnualDataPublic,
   type RegionalIndicatorCode,
   type RegionalSortOrder,
@@ -62,6 +70,7 @@ import { getPaginationHref, parsePage } from "@/lib/pagination";
 const PAGE_SIZE = 20;
 const DEFAULT_SORT_BY: RegionalIndicatorCode = "resident_population";
 const DEFAULT_SORT_ORDER: RegionalSortOrder = "desc";
+const REGIONAL_DATA_QUERY_KEY = ["brand-marketing-regional-data"] as const;
 
 const EMPTY_REGIONS: ProvinceAnnualDataPublic[] = [];
 
@@ -80,6 +89,11 @@ const REGIONAL_INDICATORS = [
     code: "consumption_expenditure",
     name: "全体居民人均消费支出",
     unit: "元",
+  },
+  {
+    code: "retail_sales",
+    name: "社会消费品零售总额",
+    unit: "亿元",
   },
 ] as const;
 
@@ -139,6 +153,7 @@ const regionalColumns = regionalColumnHelper.columns([
 export function RegionalData() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
   const currentPage = parsePage(searchParams.get("page"));
   const pageIndex = currentPage - 1;
@@ -153,7 +168,7 @@ export function RegionalData() {
 
   const regionalDataQuery = useQuery({
     queryKey: [
-      "brand-marketing-regional-data",
+      ...REGIONAL_DATA_QUERY_KEY,
       year,
       pageIndex,
       sortBy,
@@ -178,9 +193,21 @@ export function RegionalData() {
     retry: false,
   });
 
+  const refreshData = useMutation({
+    mutationFn: async (): Promise<void> => {
+      await brandMarketingRefreshRegionalData({ throwOnError: true });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: REGIONAL_DATA_QUERY_KEY });
+    },
+  });
+
   const regionalData = regionalDataQuery.data;
   const loadError = regionalDataQuery.error
     ? getApiErrorMessage(regionalDataQuery.error, "读取区域数据失败")
+    : "";
+  const refreshError = refreshData.error
+    ? getApiErrorMessage(refreshData.error, "刷新区域数据失败")
     : "";
 
   const table = useTable({
@@ -223,6 +250,23 @@ export function RegionalData() {
       <AppHeader
         title="区域数据"
         left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
+        actions={
+          <Button
+            variant="outline"
+            disabled={refreshData.isPending}
+            onClick={() => refreshData.mutate()}
+          >
+            {refreshData.isPending ? (
+              <Spinner
+                data-icon="inline-start"
+                aria-label="正在刷新区域数据"
+              />
+            ) : (
+              <RefreshCwIcon data-icon="inline-start" aria-hidden="true" />
+            )}
+            刷新数据
+          </Button>
+        }
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
@@ -274,6 +318,13 @@ export function RegionalData() {
               </Field>
             ) : null}
           </div>
+
+          {refreshError ? (
+            <Alert variant="destructive">
+              <AlertCircleIcon aria-hidden="true" />
+              <AlertTitle>{refreshError}</AlertTitle>
+            </Alert>
+          ) : null}
 
           {regionalDataQuery.isPending ? (
             <Skeleton className="h-96" />
@@ -381,7 +432,8 @@ function getYear(value: string | null): number | undefined {
 function getSortBy(value: string | null): RegionalIndicatorCode {
   if (
     value === "disposable_income" ||
-    value === "consumption_expenditure"
+    value === "consumption_expenditure" ||
+    value === "retail_sales"
   ) {
     return value;
   }

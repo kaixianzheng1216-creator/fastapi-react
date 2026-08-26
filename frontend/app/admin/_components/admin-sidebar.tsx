@@ -141,6 +141,7 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
                                 <SidebarMenuSubButton
                                   asChild
                                   isActive={pathname.startsWith(item.href)}
+                                  className="data-[active=true]:bg-transparent data-[active=true]:font-medium"
                                 >
                                   <Link href={item.href}>{item.name}</Link>
                                 </SidebarMenuSubButton>

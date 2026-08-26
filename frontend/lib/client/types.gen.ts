@@ -796,6 +796,10 @@ export type ProvinceAnnualDataPublic = {
      * Consumption Expenditure
      */
     consumption_expenditure: number;
+    /**
+     * Retail Sales
+     */
+    retail_sales: number;
 };
 
 /**
@@ -827,7 +831,7 @@ export type RegionalDataPublic = {
 /**
  * RegionalIndicatorCode
  */
-export type RegionalIndicatorCode = 'resident_population' | 'disposable_income' | 'consumption_expenditure';
+export type RegionalIndicatorCode = 'resident_population' | 'disposable_income' | 'consumption_expenditure' | 'retail_sales';
 
 /**
  * RegionalSortOrder
@@ -1468,6 +1472,22 @@ export type UsersCreateUserResponses = {
 };
 
 export type UsersCreateUserResponse = UsersCreateUserResponses[keyof UsersCreateUserResponses];
+
+export type BrandMarketingRefreshRegionalDataData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/brand-marketing/regional-data/refresh';
+};
+
+export type BrandMarketingRefreshRegionalDataResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type BrandMarketingRefreshRegionalDataResponse = BrandMarketingRefreshRegionalDataResponses[keyof BrandMarketingRefreshRegionalDataResponses];
 
 export type BrandMarketingReadRegionalDataData = {
     body?: never;
