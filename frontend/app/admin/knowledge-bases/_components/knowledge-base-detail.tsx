@@ -202,6 +202,7 @@ export function KnowledgeBaseDetail({
       )
         ? DOCUMENT_POLL_INTERVAL_MS
         : false,
+    placeholderData: keepPreviousData,
     retry: false,
   });
 

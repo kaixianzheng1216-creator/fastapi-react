@@ -1,7 +1,12 @@
 "use client";
 
 import { type SubmitEvent, useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   AlertCircleIcon,
   MoreHorizontalIcon,
@@ -95,6 +100,7 @@ export function SkillManager() {
 
       return data;
     },
+    placeholderData: keepPreviousData,
     retry: false,
   });
 

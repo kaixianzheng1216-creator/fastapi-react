@@ -1,6 +1,11 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   createColumnHelper,
   rowPaginationFeature,
@@ -135,6 +140,7 @@ export function KnowledgeBaseManager() {
 
       return data;
     },
+    placeholderData: keepPreviousData,
     retry: false,
   });
 

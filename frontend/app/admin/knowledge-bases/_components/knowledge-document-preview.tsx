@@ -1,6 +1,10 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+} from "@tanstack/react-query";
 import {
   AlertCircleIcon,
   ArrowLeftIcon,
@@ -378,6 +382,7 @@ function DocumentChunksView({
 
       return data;
     },
+    placeholderData: keepPreviousData,
     retry: false,
   });
 
