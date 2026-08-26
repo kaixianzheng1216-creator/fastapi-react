@@ -40,10 +40,19 @@ import {
 import type { UserPublic } from "@/lib/client";
 
 const businessModules = [
-  { name: "品牌营销", icon: TagIcon },
-  { name: "内容运营", icon: FileTextIcon },
-  { name: "达人投放", icon: UsersIcon },
-  { name: "海外营销", icon: GlobeIcon },
+  {
+    name: "品牌营销",
+    icon: TagIcon,
+    items: [
+      {
+        name: "区域数据",
+        href: "/admin/brand-marketing/regional-data",
+      },
+    ],
+  },
+  { name: "内容运营", icon: FileTextIcon, items: [] },
+  { name: "达人投放", icon: UsersIcon, items: [] },
+  { name: "海外营销", icon: GlobeIcon, items: [] },
 ];
 
 export function AdminSidebar({ user }: { user: UserPublic }) {
@@ -99,31 +108,57 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {businessModules.map((module) => (
-                <Collapsible key={module.name} asChild>
-                  <SidebarMenuItem className="group/collapsible">
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton tooltip={module.name}>
-                        <module.icon aria-hidden="true" />
-                        <span>{module.name}</span>
-                        <ChevronRightIcon
-                          aria-hidden="true"
-                          className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90"
-                        />
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        <SidebarMenuSubItem>
-                          <SidebarMenuSubButton asChild aria-disabled="true">
-                            <span>暂未配置</span>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </SidebarMenuItem>
-                </Collapsible>
-              ))}
+              {businessModules.map((module) => {
+                const moduleIsActive = module.items.some((item) =>
+                  pathname.startsWith(item.href),
+                );
+
+                return (
+                  <Collapsible
+                    key={module.name}
+                    asChild
+                    defaultOpen={moduleIsActive}
+                  >
+                    <SidebarMenuItem className="group/collapsible">
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton
+                          isActive={moduleIsActive}
+                          tooltip={module.name}
+                        >
+                          <module.icon aria-hidden="true" />
+                          <span>{module.name}</span>
+                          <ChevronRightIcon
+                            aria-hidden="true"
+                            className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90"
+                          />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {module.items.length > 0 ? (
+                            module.items.map((item) => (
+                              <SidebarMenuSubItem key={item.href}>
+                                <SidebarMenuSubButton
+                                  asChild
+                                  isActive={pathname.startsWith(item.href)}
+                                >
+                                  <Link href={item.href}>{item.name}</Link>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            ))
+                          ) : (
+                            <SidebarMenuSubItem>
+                              <SidebarMenuSubButton aria-disabled="true">
+                                <span>暂未配置</span>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          )}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
