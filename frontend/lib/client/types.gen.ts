@@ -773,6 +773,68 @@ export type MessageOutput = {
 };
 
 /**
+ * ProvinceAnnualDataPublic
+ */
+export type ProvinceAnnualDataPublic = {
+    /**
+     * Province Code
+     */
+    province_code: string;
+    /**
+     * Province Name
+     */
+    province_name: string;
+    /**
+     * Resident Population
+     */
+    resident_population: number;
+    /**
+     * Disposable Income
+     */
+    disposable_income: number;
+    /**
+     * Consumption Expenditure
+     */
+    consumption_expenditure: number;
+};
+
+/**
+ * RegionalDataPublic
+ */
+export type RegionalDataPublic = {
+    /**
+     * Year
+     */
+    year: number;
+    /**
+     * Years
+     */
+    years: Array<number>;
+    /**
+     * Data
+     */
+    data: Array<ProvinceAnnualDataPublic>;
+    /**
+     * Count
+     */
+    count: number;
+    /**
+     * Source
+     */
+    source: string;
+};
+
+/**
+ * RegionalIndicatorCode
+ */
+export type RegionalIndicatorCode = 'resident_population' | 'disposable_income' | 'consumption_expenditure';
+
+/**
+ * RegionalSortOrder
+ */
+export type RegionalSortOrder = 'asc' | 'desc';
+
+/**
  * SkillFileNodePublic
  */
 export type SkillFileNodePublic = {
@@ -1406,6 +1468,46 @@ export type UsersCreateUserResponses = {
 };
 
 export type UsersCreateUserResponse = UsersCreateUserResponses[keyof UsersCreateUserResponses];
+
+export type BrandMarketingReadRegionalDataData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Year
+         */
+        year?: number | null;
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+        sort_by?: RegionalIndicatorCode;
+        sort_order?: RegionalSortOrder;
+    };
+    url: '/api/v1/admin/brand-marketing/regional-data';
+};
+
+export type BrandMarketingReadRegionalDataErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type BrandMarketingReadRegionalDataError = BrandMarketingReadRegionalDataErrors[keyof BrandMarketingReadRegionalDataErrors];
+
+export type BrandMarketingReadRegionalDataResponses = {
+    /**
+     * Successful Response
+     */
+    200: RegionalDataPublic;
+};
+
+export type BrandMarketingReadRegionalDataResponse = BrandMarketingReadRegionalDataResponses[keyof BrandMarketingReadRegionalDataResponses];
 
 export type ItemsReadItemsData = {
     body?: never;

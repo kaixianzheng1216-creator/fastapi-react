@@ -1,5 +1,8 @@
 from sqlmodel import SQLModel
 
+from app.modules.brand_marketing.models import (  # noqa: F401
+    ProvinceAnnualIndicator,
+)
 from app.modules.conversations.models import (  # noqa: F401
     Conversation,
     ConversationFile,

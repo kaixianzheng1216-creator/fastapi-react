@@ -18,6 +18,7 @@ COPY backend/scripts /app/backend/scripts
 COPY backend/alembic.ini /app/backend/alembic.ini
 COPY backend/alembic /app/backend/alembic
 COPY backend/app /app/backend/app
+COPY data /app/data
 
 WORKDIR /app/backend
 

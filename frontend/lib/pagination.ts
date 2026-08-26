@@ -2,6 +2,11 @@ export const PAGINATION_ELLIPSIS = "ellipsis" as const;
 
 type PaginationPage = number | typeof PAGINATION_ELLIPSIS;
 
+export function parsePage(value: string | null): number {
+  const page = Number(value);
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
 export function getPaginationHref(
   pathname: string,
   page: number,
