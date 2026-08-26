@@ -14,7 +14,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/app-header";
 import { MarkdownContent } from "@/components/shared/markdown-content";
-import { PagePagination } from "@/app/admin/knowledge-bases/_components/page-pagination";
+import { PagePagination } from "@/components/shared/page-pagination";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
