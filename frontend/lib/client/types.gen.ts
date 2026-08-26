@@ -797,17 +797,33 @@ export type ProvinceAnnualDataPublic = {
      */
     resident_population: number;
     /**
+     * Resident Population Yoy
+     */
+    resident_population_yoy: number | null;
+    /**
      * Disposable Income
      */
     disposable_income: number;
+    /**
+     * Disposable Income Yoy
+     */
+    disposable_income_yoy: number | null;
     /**
      * Consumption Expenditure
      */
     consumption_expenditure: number;
     /**
+     * Consumption Expenditure Yoy
+     */
+    consumption_expenditure_yoy: number | null;
+    /**
      * Retail Sales
      */
     retail_sales: number;
+    /**
+     * Retail Sales Yoy
+     */
+    retail_sales_yoy: number | null;
 };
 
 /**

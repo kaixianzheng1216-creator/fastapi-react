@@ -16,10 +16,13 @@ import {
 } from "@tanstack/react-table";
 import {
   AlertCircleIcon,
+  ArrowDownRightIcon,
+  ArrowUpRightIcon,
   ChevronDownIcon,
   ChevronsUpDownIcon,
   ChevronUpIcon,
   RefreshCwIcon,
+  MinusIcon,
   TablePropertiesIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -28,6 +31,7 @@ import { useMemo } from "react";
 import { AppHeader } from "@/components/layout/app-header";
 import { PagePagination } from "@/components/shared/page-pagination";
 import { Alert, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -77,21 +81,25 @@ const EMPTY_REGIONS: ProvinceAnnualDataPublic[] = [];
 const REGIONAL_INDICATORS = [
   {
     code: "resident_population",
+    yoyCode: "resident_population_yoy",
     name: "年末常住人口",
     unit: "万人",
   },
   {
     code: "disposable_income",
+    yoyCode: "disposable_income_yoy",
     name: "全体居民人均可支配收入",
     unit: "元",
   },
   {
     code: "consumption_expenditure",
+    yoyCode: "consumption_expenditure_yoy",
     name: "全体居民人均消费支出",
     unit: "元",
   },
   {
     code: "retail_sales",
+    yoyCode: "retail_sales_yoy",
     name: "社会消费品零售总额",
     unit: "亿元",
   },
@@ -99,6 +107,11 @@ const REGIONAL_INDICATORS = [
 
 const numberFormatter = new Intl.NumberFormat("zh-CN", {
   maximumFractionDigits: 2,
+});
+
+const percentFormatter = new Intl.NumberFormat("zh-CN", {
+  style: "percent",
+  maximumFractionDigits: 1,
 });
 
 const regionalTableFeatures = tableFeatures({
@@ -111,44 +124,57 @@ const regionalColumnHelper = createColumnHelper<
   ProvinceAnnualDataPublic
 >();
 
-const regionalColumns = regionalColumnHelper.columns([
-  regionalColumnHelper.accessor("province_name", {
-    header: "地区",
-    enableSorting: false,
-    cell: ({ row }) => row.original.province_name,
-  }),
-  ...REGIONAL_INDICATORS.map((indicator) =>
-    regionalColumnHelper.accessor(indicator.code, {
-      sortDescFirst: true,
-      header: ({ column }) => {
-        const sortDirection = column.getIsSorted();
-        const SortIcon =
-          sortDirection === "asc"
-            ? ChevronUpIcon
-            : sortDirection === "desc"
-              ? ChevronDownIcon
-              : ChevronsUpDownIcon;
-
-        return (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="w-full justify-end"
-            onClick={column.getToggleSortingHandler()}
-            aria-label={`按${indicator.name}${
-              sortDirection === "desc" ? "升序" : "降序"
-            }排列`}
-          >
-            {indicator.name} ({indicator.unit})
-            <SortIcon data-icon="inline-end" aria-hidden="true" />
-          </Button>
-        );
-      },
-      cell: ({ row }) => numberFormatter.format(row.original[indicator.code]),
+function createRegionalColumns(previousYear: number | undefined) {
+  return regionalColumnHelper.columns([
+    regionalColumnHelper.accessor("province_name", {
+      header: "地区",
+      enableSorting: false,
+      cell: ({ row }) => row.original.province_name,
     }),
-  ),
-]);
+    ...REGIONAL_INDICATORS.map((indicator) =>
+      regionalColumnHelper.accessor(indicator.code, {
+        sortDescFirst: true,
+        header: ({ column }) => {
+          const sortDirection = column.getIsSorted();
+          const SortIcon =
+            sortDirection === "asc"
+              ? ChevronUpIcon
+              : sortDirection === "desc"
+                ? ChevronDownIcon
+                : ChevronsUpDownIcon;
+
+          return (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="w-full justify-end"
+              onClick={column.getToggleSortingHandler()}
+              aria-label={`按${indicator.name}${
+                sortDirection === "desc" ? "升序" : "降序"
+              }排列`}
+            >
+              {indicator.name} ({indicator.unit})
+              <SortIcon data-icon="inline-end" aria-hidden="true" />
+            </Button>
+          );
+        },
+        cell: ({ row }) => {
+          const changeRate = row.original[indicator.yoyCode];
+
+          return (
+            <div className="flex items-center justify-end gap-2">
+              <span>{numberFormatter.format(row.original[indicator.code])}</span>
+              {previousYear === undefined ? null : (
+                <ChangeBadge value={changeRate} />
+              )}
+            </div>
+          );
+        },
+      }),
+    ),
+  ]);
+}
 
 export function RegionalData() {
   const router = useRouter();
@@ -209,11 +235,18 @@ export function RegionalData() {
   const refreshError = refreshData.error
     ? getApiErrorMessage(refreshData.error, "刷新区域数据失败")
     : "";
+  const selectedYear = year ?? regionalData?.year;
+  const previousYear =
+    selectedYear === undefined ? undefined : selectedYear - 1;
+  const columns = useMemo(
+    () => createRegionalColumns(previousYear),
+    [previousYear],
+  );
 
   const table = useTable({
     features: regionalTableFeatures,
     data: regionalData?.data ?? EMPTY_REGIONS,
-    columns: regionalColumns,
+    columns,
     getRowId: (region) => region.province_code,
     enableSortingRemoval: false,
     manualPagination: true,
@@ -276,6 +309,9 @@ export function RegionalData() {
               <h2 className="font-semibold">分省年度数据</h2>
               <p className="text-sm text-muted-foreground">
                 各省级地区人口、收入和消费指标
+                {previousYear === undefined
+                  ? ""
+                  : ` · 同比基准：${previousYear}年`}
                 {regionalData ? ` · 数据来源：${regionalData.source}` : ""}
               </p>
             </div>
@@ -421,6 +457,35 @@ export function RegionalData() {
         </section>
       </div>
     </>
+  );
+}
+
+function ChangeBadge({ value }: { value: number | null }) {
+  if (value === null) {
+    return (
+      <Badge variant="outline" aria-label="无同比数据">
+        —
+      </Badge>
+    );
+  }
+
+  const ChangeIcon =
+    value > 0
+      ? ArrowUpRightIcon
+      : value < 0
+        ? ArrowDownRightIcon
+        : MinusIcon;
+  const direction = value > 0 ? "上升" : value < 0 ? "下降" : "持平";
+
+  return (
+    <Badge
+      variant="outline"
+      className="min-w-16 justify-start tabular-nums"
+      aria-label={`同比${direction}${percentFormatter.format(Math.abs(value))}`}
+    >
+      <ChangeIcon aria-hidden="true" />
+      {percentFormatter.format(Math.abs(value))}
+    </Badge>
   );
 }
 
