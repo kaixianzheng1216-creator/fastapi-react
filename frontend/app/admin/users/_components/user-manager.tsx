@@ -28,6 +28,7 @@ import { type FormEvent, useMemo, useState } from "react";
 import { UserCreateDialog } from "@/app/admin/users/_components/user-create-dialog";
 import { UserEditDialog } from "@/app/admin/users/_components/user-edit-dialog";
 import { AppHeader } from "@/components/layout/app-header";
+import { PagePagination } from "@/components/shared/page-pagination";
 import { SearchToolbar } from "@/components/shared/search-toolbar";
 import {
   AlertDialog,
@@ -58,15 +59,6 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { FieldLegend, FieldSet } from "@/components/ui/field";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
@@ -87,11 +79,7 @@ import {
   useCurrentUser,
 } from "@/hooks/use-current-user";
 import { getApiErrorMessage } from "@/lib/api-error";
-import {
-  getPaginationHref,
-  getPaginationPages,
-  PAGINATION_ELLIPSIS,
-} from "@/lib/pagination";
+import { getPaginationHref, parsePage } from "@/lib/pagination";
 import {
   type UserPublic,
   usersDeleteUser,
@@ -125,9 +113,7 @@ export function UserManager() {
   const queryClient = useQueryClient();
   const currentUser = useCurrentUser();
 
-  const pageParameter = Number(searchParams.get("page"));
-  const currentPage =
-    Number.isInteger(pageParameter) && pageParameter > 0 ? pageParameter : 1;
+  const currentPage = parsePage(searchParams.get("page"));
   const pageIndex = currentPage - 1;
   const search = searchParams.get("search")?.trim() ?? "";
   const role = getRoleFilter(searchParams.get("role"));
@@ -298,6 +284,7 @@ export function UserManager() {
     features: usersTableFeatures,
     data: usersQuery.data?.data ?? EMPTY_USERS,
     columns,
+    getRowId: (user) => user.id,
     manualPagination: true,
     rowCount: usersQuery.data?.count ?? 0,
     state: {
@@ -310,7 +297,6 @@ export function UserManager() {
 
   const pageCount = table.getPageCount();
   const rows = table.getRowModel().rows;
-  const paginationPages = getPaginationPages(currentPage, pageCount);
   const loadError = usersQuery.error
     ? getApiErrorMessage(usersQuery.error, "读取用户列表失败")
     : "";
@@ -500,52 +486,13 @@ export function UserManager() {
             </Table>
           )}
 
-          {pageCount > 0 && (
-            <Pagination className="mt-auto" aria-label="用户分页">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href={getUsersHref(
-                      Math.max(1, currentPage - 1),
-                      search,
-                      role,
-                      status,
-                    )}
-                    aria-disabled={!table.getCanPreviousPage()}
-                    tabIndex={table.getCanPreviousPage() ? undefined : -1}
-                  />
-                </PaginationItem>
-
-                {paginationPages.map((page, index) => (
-                  <PaginationItem key={`${page}-${index}`}>
-                    {page === PAGINATION_ELLIPSIS ? (
-                      <PaginationEllipsis />
-                    ) : (
-                      <PaginationLink
-                        href={getUsersHref(page, search, role, status)}
-                        isActive={page === currentPage}
-                      >
-                        {page}
-                      </PaginationLink>
-                    )}
-                  </PaginationItem>
-                ))}
-
-                <PaginationItem>
-                  <PaginationNext
-                    href={getUsersHref(
-                      Math.min(pageCount, currentPage + 1),
-                      search,
-                      role,
-                      status,
-                    )}
-                    aria-disabled={!table.getCanNextPage()}
-                    tabIndex={table.getCanNextPage() ? undefined : -1}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
+          <PagePagination
+            className="mt-auto"
+            ariaLabel="用户分页"
+            currentPage={currentPage}
+            pageCount={pageCount}
+            getPageHref={(page) => getUsersHref(page, search, role, status)}
+          />
         </section>
       </div>
 

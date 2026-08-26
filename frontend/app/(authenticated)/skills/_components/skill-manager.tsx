@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { PagePagination } from "@/components/shared/page-pagination";
 import { SearchToolbar } from "@/components/shared/search-toolbar";
 import {
   Card,
@@ -48,23 +49,10 @@ import {
 } from "@/components/ui/empty";
 import { AppHeader } from "@/components/layout/app-header";
 import { ThreadListPopover } from "@/app/(authenticated)/_components/thread-list-popover";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { getApiErrorMessage } from "@/lib/api-error";
-import {
-  getPaginationHref,
-  getPaginationPages,
-  PAGINATION_ELLIPSIS,
-} from "@/lib/pagination";
+import { getPaginationHref, parsePage } from "@/lib/pagination";
 import {
   skillsDeleteSkill,
   skillsReadSkills,
@@ -80,9 +68,7 @@ export function SkillManager() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
-  const pageParameter = Number(searchParams.get("page"));
-  const currentPage =
-    Number.isInteger(pageParameter) && pageParameter > 0 ? pageParameter : 1;
+  const currentPage = parsePage(searchParams.get("page"));
   const searchQuery = searchParams.get("search")?.trim() || undefined;
   const offset = (currentPage - 1) * PAGE_SIZE;
 
@@ -121,7 +107,6 @@ export function SkillManager() {
     ? getApiErrorMessage(loadError, "读取技能列表失败")
     : "";
   const totalPages = Math.ceil(count / PAGE_SIZE);
-  const paginationPages = getPaginationPages(currentPage, totalPages);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [skillToDelete, setSkillToDelete] = useState<SkillSummaryPublic>();
@@ -311,46 +296,13 @@ export function SkillManager() {
                 ))}
               </div>
 
-              <Pagination className="mt-auto" aria-label="技能分页">
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      href={getSkillsHref(
-                        Math.max(1, currentPage - 1),
-                        searchQuery,
-                      )}
-                      aria-disabled={currentPage === 1}
-                      tabIndex={currentPage === 1 ? -1 : undefined}
-                    />
-                  </PaginationItem>
-
-                  {paginationPages.map((page, index) => (
-                    <PaginationItem key={`${page}-${index}`}>
-                      {page === PAGINATION_ELLIPSIS ? (
-                        <PaginationEllipsis />
-                      ) : (
-                        <PaginationLink
-                          href={getSkillsHref(page, searchQuery)}
-                          isActive={page === currentPage}
-                        >
-                          {page}
-                        </PaginationLink>
-                      )}
-                    </PaginationItem>
-                  ))}
-
-                  <PaginationItem>
-                    <PaginationNext
-                      href={getSkillsHref(
-                        Math.min(totalPages, currentPage + 1),
-                        searchQuery,
-                      )}
-                      aria-disabled={currentPage === totalPages}
-                      tabIndex={currentPage === totalPages ? -1 : undefined}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+              <PagePagination
+                className="mt-auto"
+                ariaLabel="技能分页"
+                currentPage={currentPage}
+                pageCount={totalPages}
+                getPageHref={(page) => getSkillsHref(page, searchQuery)}
+              />
             </>
           )}
         </div>
