@@ -2,6 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  createColumnHelper,
+  rowPaginationFeature,
+  tableFeatures,
+  useTable,
+} from "@tanstack/react-table";
+import {
   AlertCircleIcon,
   BookOpenIcon,
   MoreHorizontalIcon,
@@ -13,12 +19,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
 
 import { AppHeader } from "@/components/layout/app-header";
 import { KnowledgeBaseDialog } from "@/app/admin/knowledge-bases/_components/knowledge-base-dialog";
-import { PagePagination } from "@/app/admin/knowledge-bases/_components/page-pagination";
 import { SearchToolbar } from "@/components/shared/search-toolbar";
+import { PagePagination } from "@/components/shared/page-pagination";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -70,11 +76,12 @@ import {
   knowledgeBasesReadKnowledgeBases,
   knowledgeBasesUpdateKnowledgeBase,
 } from "@/lib/client";
-import { getPaginationHref } from "@/lib/pagination";
+import { getPaginationHref, parsePage } from "@/lib/pagination";
 
 const PAGE_SIZE = 20;
 
 const KNOWLEDGE_BASES_QUERY_KEY = ["admin-knowledge-bases"] as const;
+const EMPTY_KNOWLEDGE_BASES: KnowledgeBasePublic[] = [];
 
 type StatusFilter = "all" | "enabled" | "disabled";
 
@@ -82,14 +89,19 @@ const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
   dateStyle: "medium",
 });
 
+const knowledgeBaseTableFeatures = tableFeatures({ rowPaginationFeature });
+
+const knowledgeBaseColumnHelper = createColumnHelper<
+  typeof knowledgeBaseTableFeatures,
+  KnowledgeBasePublic
+>();
+
 export function KnowledgeBaseManager() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
-  const pageParameter = Number(searchParams.get("page"));
-  const currentPage =
-    Number.isInteger(pageParameter) && pageParameter > 0 ? pageParameter : 1;
+  const currentPage = parsePage(searchParams.get("page"));
   const pageIndex = currentPage - 1;
   const search = searchParams.get("search")?.trim() ?? "";
   const status = getStatusFilter(searchParams.get("status"));
@@ -156,10 +168,114 @@ export function KnowledgeBaseManager() {
     },
   });
 
-  const knowledgeBases = knowledgeBasesQuery.data?.data ?? [];
-  const pageCount = Math.ceil(
-    (knowledgeBasesQuery.data?.count ?? 0) / PAGE_SIZE,
+  const changeKnowledgeBaseStatus = updateStatus.mutate;
+  const resetDelete = deleteKnowledgeBase.reset;
+  const knowledgeBases = knowledgeBasesQuery.data?.data ?? EMPTY_KNOWLEDGE_BASES;
+
+  const columns = useMemo(
+    () =>
+      knowledgeBaseColumnHelper.columns([
+        knowledgeBaseColumnHelper.accessor("name", {
+          header: "名称",
+          cell: ({ row }) => (
+            <div className="max-w-md">
+              <Link
+                href={`/admin/knowledge-bases/${row.original.id}`}
+                className="font-medium hover:underline"
+              >
+                {row.original.name}
+              </Link>
+              <div className="text-muted-foreground truncate">
+                {row.original.description || "暂无描述"}
+              </div>
+            </div>
+          ),
+        }),
+        knowledgeBaseColumnHelper.display({
+          id: "status",
+          header: "状态",
+          cell: ({ row }) => (
+            <Badge
+              variant={row.original.is_enabled ? "outline" : "secondary"}
+            >
+              {row.original.is_enabled ? "已启用" : "已停用"}
+            </Badge>
+          ),
+        }),
+        knowledgeBaseColumnHelper.accessor("created_at", {
+          header: "创建时间",
+          cell: ({ row }) =>
+            dateFormatter.format(new Date(row.original.created_at)),
+        }),
+        knowledgeBaseColumnHelper.display({
+          id: "actions",
+          header: "操作",
+          cell: ({ row }) => (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`${row.original.name} 的更多操作`}
+                >
+                  <MoreHorizontalIcon aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onSelect={() => setKnowledgeBaseToEdit(row.original)}
+                  >
+                    <PencilIcon aria-hidden="true" />
+                    编辑
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={updateStatus.isPending}
+                    onSelect={() => changeKnowledgeBaseStatus(row.original)}
+                  >
+                    {row.original.is_enabled ? (
+                      <PowerOffIcon aria-hidden="true" />
+                    ) : (
+                      <PowerIcon aria-hidden="true" />
+                    )}
+                    {row.original.is_enabled ? "停用" : "启用"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={() => {
+                      resetDelete();
+                      setKnowledgeBaseToDelete(row.original);
+                    }}
+                  >
+                    <TrashIcon aria-hidden="true" />
+                    删除
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ),
+        }),
+      ]),
+    [changeKnowledgeBaseStatus, resetDelete, updateStatus.isPending],
   );
+
+  const table = useTable({
+    features: knowledgeBaseTableFeatures,
+    data: knowledgeBases,
+    columns,
+    getRowId: (knowledgeBase) => knowledgeBase.id,
+    manualPagination: true,
+    rowCount: knowledgeBasesQuery.data?.count ?? 0,
+    state: {
+      pagination: {
+        pageIndex,
+        pageSize: PAGE_SIZE,
+      },
+    },
+  });
+
+  const pageCount = table.getPageCount();
+  const rows = table.getRowModel().rows;
   const loadError = knowledgeBasesQuery.error
     ? getApiErrorMessage(knowledgeBasesQuery.error, "读取知识库列表失败")
     : "";
@@ -269,7 +385,7 @@ export function KnowledgeBaseManager() {
                 </Button>
               </EmptyContent>
             </Empty>
-          ) : knowledgeBases.length === 0 ? (
+          ) : rows.length === 0 ? (
             <Empty>
               <EmptyHeader>
                 <EmptyMedia variant="icon">
@@ -286,89 +402,26 @@ export function KnowledgeBaseManager() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>名称</TableHead>
-                  <TableHead>状态</TableHead>
-                  <TableHead>创建时间</TableHead>
-                  <TableHead>操作</TableHead>
-                </TableRow>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder ? null : (
+                          <table.FlexRender header={header} />
+                        )}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
               </TableHeader>
               <TableBody>
-                {knowledgeBases.map((knowledgeBase) => (
-                  <TableRow key={knowledgeBase.id}>
-                    <TableCell>
-                      <div className="max-w-md">
-                        <Link
-                          href={`/admin/knowledge-bases/${knowledgeBase.id}`}
-                          className="font-medium hover:underline"
-                        >
-                          {knowledgeBase.name}
-                        </Link>
-                        <div className="text-muted-foreground truncate">
-                          {knowledgeBase.description || "暂无描述"}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          knowledgeBase.is_enabled ? "outline" : "secondary"
-                        }
-                      >
-                        {knowledgeBase.is_enabled ? "已启用" : "已停用"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {dateFormatter.format(
-                        new Date(knowledgeBase.created_at),
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label={`${knowledgeBase.name} 的更多操作`}
-                          >
-                            <MoreHorizontalIcon aria-hidden="true" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuGroup>
-                            <DropdownMenuItem
-                              onSelect={() =>
-                                setKnowledgeBaseToEdit(knowledgeBase)
-                              }
-                            >
-                              <PencilIcon aria-hidden="true" />
-                              编辑
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              disabled={updateStatus.isPending}
-                              onSelect={() => updateStatus.mutate(knowledgeBase)}
-                            >
-                              {knowledgeBase.is_enabled ? (
-                                <PowerOffIcon aria-hidden="true" />
-                              ) : (
-                                <PowerIcon aria-hidden="true" />
-                              )}
-                              {knowledgeBase.is_enabled ? "停用" : "启用"}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onSelect={() => {
-                                deleteKnowledgeBase.reset();
-                                setKnowledgeBaseToDelete(knowledgeBase);
-                              }}
-                            >
-                              <TrashIcon aria-hidden="true" />
-                              删除
-                            </DropdownMenuItem>
-                          </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+                {rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getAllCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        <table.FlexRender cell={cell} />
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))}
               </TableBody>

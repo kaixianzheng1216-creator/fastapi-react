@@ -2,6 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  createColumnHelper,
+  rowPaginationFeature,
+  tableFeatures,
+  useTable,
+} from "@tanstack/react-table";
+import {
   AlertCircleIcon,
   ArrowLeftIcon,
   DownloadIcon,
@@ -16,10 +22,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
 
 import { AppHeader } from "@/components/layout/app-header";
-import { PagePagination } from "@/app/admin/knowledge-bases/_components/page-pagination";
+import { PagePagination } from "@/components/shared/page-pagination";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -96,12 +102,13 @@ import {
   MAX_FILE_COUNT,
   MAX_FILE_SIZE,
 } from "@/lib/file-types";
-import { getPaginationHref } from "@/lib/pagination";
+import { getPaginationHref, parsePage } from "@/lib/pagination";
 
 const PAGE_SIZE = 20;
 const DOCUMENT_POLL_INTERVAL_MS = 3000;
 const DOCUMENTS_QUERY_KEY = ["knowledge-documents"] as const;
 const DOCUMENT_ACCEPT = DOCUMENT_CONTENT_TYPES.join(",");
+const EMPTY_DOCUMENTS: KnowledgeDocumentPublic[] = [];
 
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
   dateStyle: "medium",
@@ -123,6 +130,13 @@ const statusLabels: Record<KnowledgeDocumentPublic["status"], string> = {
   timed_out: "已超时",
 };
 
+const documentTableFeatures = tableFeatures({ rowPaginationFeature });
+
+const documentColumnHelper = createColumnHelper<
+  typeof documentTableFeatures,
+  KnowledgeDocumentPublic
+>();
+
 type KnowledgeBaseDetailProps = {
   knowledgeBaseId: string;
 };
@@ -133,9 +147,7 @@ export function KnowledgeBaseDetail({
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const pageParameter = Number(searchParams.get("page"));
-  const currentPage =
-    Number.isInteger(pageParameter) && pageParameter > 0 ? pageParameter : 1;
+  const currentPage = parsePage(searchParams.get("page"));
   const pageIndex = currentPage - 1;
   const activeView =
     searchParams.get("view") === "search" ? "search" : "documents";
@@ -186,8 +198,7 @@ export function KnowledgeBaseDetail({
     retry: false,
   });
 
-  const documents = documentsQuery.data?.data ?? [];
-  const pageCount = Math.ceil((documentsQuery.data?.count ?? 0) / PAGE_SIZE);
+  const documents = documentsQuery.data?.data ?? EMPTY_DOCUMENTS;
 
   const uploadDocument = useMutation({
     mutationFn: async (files: File[]): Promise<void> => {
@@ -293,6 +304,188 @@ export function KnowledgeBaseDetail({
       await refreshDocuments();
     },
   });
+
+  const confirmDocumentUpload = completeDocument.mutate;
+  const retryFailedDocument = retryDocument.mutate;
+  const downloadOriginalDocument = downloadOriginal.mutate;
+  const downloadDocumentMarkdown = downloadMarkdown.mutate;
+  const resetDelete = deleteDocument.reset;
+
+  const columns = useMemo(
+    () =>
+      documentColumnHelper.columns([
+        documentColumnHelper.accessor("filename", {
+          header: "文档名称",
+          cell: ({ row }) => (
+            <div className="max-w-md">
+              <div className="truncate font-medium">
+                {row.original.status === "ready" ? (
+                  <Link
+                    href={`/admin/knowledge-bases/${knowledgeBaseId}/documents/${row.original.id}`}
+                    className="hover:underline"
+                  >
+                    {row.original.filename}
+                  </Link>
+                ) : (
+                  row.original.filename
+                )}
+              </div>
+              {row.original.error_message ? (
+                <div className="text-destructive break-words text-sm">
+                  {row.original.error_message}
+                </div>
+              ) : null}
+            </div>
+          ),
+        }),
+        documentColumnHelper.display({
+          id: "status",
+          header: "状态",
+          cell: ({ row }) => (
+            <Badge
+              variant={row.original.status === "ready" ? "outline" : "secondary"}
+            >
+              {row.original.status === "pending" && !row.original.uploaded
+                ? "等待确认上传"
+                : statusLabels[row.original.status]}
+            </Badge>
+          ),
+        }),
+        documentColumnHelper.accessor("size", {
+          header: "大小",
+          cell: ({ row }) => formatFileSize(row.original.size),
+        }),
+        documentColumnHelper.accessor("created_at", {
+          header: "添加时间",
+          cell: ({ row }) =>
+            dateFormatter.format(new Date(row.original.created_at)),
+        }),
+        documentColumnHelper.display({
+          id: "actions",
+          header: "操作",
+          cell: ({ row }) => {
+            const document = row.original;
+
+            return (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`${document.filename} 的更多操作`}
+                  >
+                    <MoreHorizontalIcon aria-hidden="true" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuGroup>
+                    {document.status === "pending" && !document.uploaded ? (
+                      <DropdownMenuItem
+                        disabled={
+                          uploadDocument.isPending || completeDocument.isPending
+                        }
+                        onSelect={() => confirmDocumentUpload(document.id)}
+                      >
+                        <UploadIcon aria-hidden="true" />
+                        确认上传
+                      </DropdownMenuItem>
+                    ) : null}
+                    {document.uploaded ? (
+                      <DropdownMenuItem
+                        disabled={downloadOriginal.isPending}
+                        onSelect={() => downloadOriginalDocument(document.id)}
+                      >
+                        <DownloadIcon aria-hidden="true" />
+                        下载原文件
+                      </DropdownMenuItem>
+                    ) : null}
+                    {document.source_url ? (
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={document.source_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <ExternalLinkIcon aria-hidden="true" />
+                          访问原网页
+                        </a>
+                      </DropdownMenuItem>
+                    ) : null}
+                    {document.status === "ready" ? (
+                      <DropdownMenuItem
+                        disabled={downloadMarkdown.isPending}
+                        onSelect={() => downloadDocumentMarkdown(document.id)}
+                      >
+                        <FileTextIcon aria-hidden="true" />
+                        下载 Markdown
+                      </DropdownMenuItem>
+                    ) : null}
+                    {document.status === "failed" ||
+                    document.status === "timed_out" ? (
+                      <DropdownMenuItem
+                        disabled={retryDocument.isPending}
+                        onSelect={() => retryFailedDocument(document.id)}
+                      >
+                        <RefreshCwIcon aria-hidden="true" />
+                        重试
+                      </DropdownMenuItem>
+                    ) : null}
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onSelect={() => {
+                        setActionError(undefined);
+                        resetDelete();
+                        setDocumentToDelete(document);
+                      }}
+                    >
+                      <TrashIcon aria-hidden="true" />
+                      删除
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          },
+        }),
+      ]),
+    [
+      knowledgeBaseId,
+
+      uploadDocument.isPending,
+
+      completeDocument.isPending,
+      confirmDocumentUpload,
+
+      downloadOriginal.isPending,
+      downloadOriginalDocument,
+
+      downloadMarkdown.isPending,
+      downloadDocumentMarkdown,
+
+      retryDocument.isPending,
+      retryFailedDocument,
+
+      resetDelete,
+    ],
+  );
+
+  const table = useTable({
+    features: documentTableFeatures,
+    data: documents,
+    columns,
+    getRowId: (document) => document.id,
+    manualPagination: true,
+    rowCount: documentsQuery.data?.count ?? 0,
+    state: {
+      pagination: {
+        pageIndex,
+        pageSize: PAGE_SIZE,
+      },
+    },
+  });
+
+  const pageCount = table.getPageCount();
+  const rows = table.getRowModel().rows;
 
   function clearActionError(): void {
     setActionError(undefined);
@@ -567,7 +760,7 @@ export function KnowledgeBaseDetail({
                     </Button>
                   </EmptyContent>
                 </Empty>
-              ) : documents.length === 0 ? (
+              ) : rows.length === 0 ? (
                 <Empty>
                   <EmptyHeader>
                     <EmptyMedia variant="icon">
@@ -582,144 +775,26 @@ export function KnowledgeBaseDetail({
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>文档名称</TableHead>
-                      <TableHead>状态</TableHead>
-                      <TableHead>大小</TableHead>
-                      <TableHead>添加时间</TableHead>
-                      <TableHead>操作</TableHead>
-                    </TableRow>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                          <TableHead key={header.id}>
+                            {header.isPlaceholder ? null : (
+                              <table.FlexRender header={header} />
+                            )}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    ))}
                   </TableHeader>
                   <TableBody>
-                    {documents.map((document) => (
-                      <TableRow key={document.id}>
-                        <TableCell>
-                          <div className="max-w-md">
-                            <div className="truncate font-medium">
-                              {document.status === "ready" ? (
-                                <Link
-                                  href={`/admin/knowledge-bases/${knowledgeBaseId}/documents/${document.id}`}
-                                  className="hover:underline"
-                                >
-                                  {document.filename}
-                                </Link>
-                              ) : (
-                                document.filename
-                              )}
-                            </div>
-                            {document.error_message && (
-                              <div className="text-destructive break-words text-sm">
-                                {document.error_message}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              document.status === "ready"
-                                ? "outline"
-                                : "secondary"
-                            }
-                          >
-                            {document.status === "pending" && !document.uploaded
-                              ? "等待确认上传"
-                              : statusLabels[document.status]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{formatFileSize(document.size)}</TableCell>
-                        <TableCell>
-                          {dateFormatter.format(new Date(document.created_at))}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                aria-label={`${document.filename} 的更多操作`}
-                              >
-                                <MoreHorizontalIcon aria-hidden="true" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuGroup>
-                                {document.status === "pending" &&
-                                  !document.uploaded && (
-                                    <DropdownMenuItem
-                                      disabled={
-                                        uploadDocument.isPending ||
-                                        completeDocument.isPending
-                                      }
-                                      onSelect={() =>
-                                        completeDocument.mutate(document.id)
-                                      }
-                                    >
-                                      <UploadIcon aria-hidden="true" />
-                                      确认上传
-                                    </DropdownMenuItem>
-                                  )}
-                                {document.uploaded && (
-                                  <DropdownMenuItem
-                                    disabled={downloadOriginal.isPending}
-                                    onSelect={() =>
-                                      downloadOriginal.mutate(document.id)
-                                    }
-                                  >
-                                    <DownloadIcon aria-hidden="true" />
-                                    下载原文件
-                                  </DropdownMenuItem>
-                                )}
-                                {document.source_url && (
-                                  <DropdownMenuItem asChild>
-                                    <a
-                                      href={document.source_url}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                    >
-                                      <ExternalLinkIcon aria-hidden="true" />
-                                      访问原网页
-                                    </a>
-                                  </DropdownMenuItem>
-                                )}
-                                {document.status === "ready" && (
-                                  <DropdownMenuItem
-                                    disabled={downloadMarkdown.isPending}
-                                    onSelect={() =>
-                                      downloadMarkdown.mutate(document.id)
-                                    }
-                                  >
-                                    <FileTextIcon aria-hidden="true" />
-                                    下载 Markdown
-                                  </DropdownMenuItem>
-                                )}
-                                {(document.status === "failed" ||
-                                  document.status === "timed_out") && (
-                                  <DropdownMenuItem
-                                    disabled={retryDocument.isPending}
-                                    onSelect={() =>
-                                      retryDocument.mutate(document.id)
-                                    }
-                                  >
-                                    <RefreshCwIcon aria-hidden="true" />
-                                    重试
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem
-                                  variant="destructive"
-                                  onSelect={() => {
-                                    clearActionError();
-                                    deleteDocument.reset();
-                                    setDocumentToDelete(document);
-                                  }}
-                                >
-                                  <TrashIcon aria-hidden="true" />
-                                  删除
-                                </DropdownMenuItem>
-                              </DropdownMenuGroup>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
+                    {rows.map((row) => (
+                      <TableRow key={row.id}>
+                        {row.getAllCells().map((cell) => (
+                          <TableCell key={cell.id}>
+                            <table.FlexRender cell={cell} />
+                          </TableCell>
+                        ))}
                       </TableRow>
                     ))}
                   </TableBody>
