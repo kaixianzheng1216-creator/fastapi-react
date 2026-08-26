@@ -1,11 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query
 
 from app.api.dependencies import SessionDep
 from app.modules.auth.dependencies import get_current_active_superuser
 from app.modules.brand_marketing import service
-from app.modules.brand_marketing.models import RegionalIndicatorCode
+from app.modules.brand_marketing.constants import RegionalIndicatorCode
 from app.modules.brand_marketing.schemas import (
     RegionalDataPublic,
     RegionalSortOrder,
@@ -16,12 +16,6 @@ router = APIRouter(
     tags=["brand-marketing"],
     dependencies=[Depends(get_current_active_superuser)],
 )
-
-
-@router.post("/regional-data/refresh", status_code=status.HTTP_204_NO_CONTENT)
-def refresh_regional_data(session: SessionDep) -> None:
-    """重新导入品牌营销区域数据。"""
-    service.refresh_regional_data(session=session)
 
 
 @router.get("/regional-data", response_model=RegionalDataPublic)

@@ -2,10 +2,18 @@ from enum import StrEnum
 
 from sqlmodel import SQLModel
 
+from app.modules.brand_marketing.constants import RegionalIndicatorCode
+
 
 class RegionalSortOrder(StrEnum):
     ASC = "asc"
     DESC = "desc"
+
+
+class RegionalIndicatorPublic(SQLModel):
+    code: RegionalIndicatorCode
+    name: str
+    unit: str
 
 
 class ProvinceAnnualDataPublic(SQLModel):
@@ -22,8 +30,9 @@ class ProvinceAnnualDataPublic(SQLModel):
 
 
 class RegionalDataPublic(SQLModel):
-    year: int
+    year: int | None
     years: list[int]
+    indicators: list[RegionalIndicatorPublic]
     data: list[ProvinceAnnualDataPublic]
     count: int
     source: str

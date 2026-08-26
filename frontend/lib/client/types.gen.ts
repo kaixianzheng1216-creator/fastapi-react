@@ -132,6 +132,90 @@ export type ArtifactPublic = {
 };
 
 /**
+ * BilibiliRankingCategoryCode
+ */
+export type BilibiliRankingCategoryCode = 'all' | 'animation' | 'game' | 'kichiku' | 'music' | 'dance' | 'cinephile' | 'entertainment' | 'knowledge' | 'tech' | 'food' | 'car' | 'fashion' | 'sports';
+
+/**
+ * BilibiliRankingCategoryPublic
+ */
+export type BilibiliRankingCategoryPublic = {
+    code: BilibiliRankingCategoryCode;
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
+ * BilibiliRankingItemPublic
+ */
+export type BilibiliRankingItemPublic = {
+    /**
+     * Rank
+     */
+    rank: number;
+    /**
+     * Bvid
+     */
+    bvid: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Cover Url
+     */
+    cover_url: string;
+    /**
+     * Duration Seconds
+     */
+    duration_seconds: number;
+    /**
+     * Author Name
+     */
+    author_name: string;
+    /**
+     * Content Category Name
+     */
+    content_category_name: string;
+    /**
+     * View Count
+     */
+    view_count: number;
+    /**
+     * Danmaku Count
+     */
+    danmaku_count: number;
+    /**
+     * Published At
+     */
+    published_at: string;
+};
+
+/**
+ * BilibiliRankingPublic
+ */
+export type BilibiliRankingPublic = {
+    /**
+     * Captured At
+     */
+    captured_at: string | null;
+    /**
+     * Categories
+     */
+    categories: Array<BilibiliRankingCategoryPublic>;
+    /**
+     * Data
+     */
+    data: Array<BilibiliRankingItemPublic>;
+    /**
+     * Count
+     */
+    count: number;
+};
+
+/**
  * Body_login-login_access_token
  */
 export type BodyLoginLoginAccessToken = {
@@ -833,11 +917,15 @@ export type RegionalDataPublic = {
     /**
      * Year
      */
-    year: number;
+    year: number | null;
     /**
      * Years
      */
     years: Array<number>;
+    /**
+     * Indicators
+     */
+    indicators: Array<RegionalIndicatorPublic>;
     /**
      * Data
      */
@@ -856,6 +944,21 @@ export type RegionalDataPublic = {
  * RegionalIndicatorCode
  */
 export type RegionalIndicatorCode = 'resident_population' | 'disposable_income' | 'consumption_expenditure' | 'retail_sales';
+
+/**
+ * RegionalIndicatorPublic
+ */
+export type RegionalIndicatorPublic = {
+    code: RegionalIndicatorCode;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Unit
+     */
+    unit: string;
+};
 
 /**
  * RegionalSortOrder
@@ -1496,22 +1599,6 @@ export type UsersCreateUserResponses = {
 };
 
 export type UsersCreateUserResponse = UsersCreateUserResponses[keyof UsersCreateUserResponses];
-
-export type BrandMarketingRefreshRegionalDataData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/brand-marketing/regional-data/refresh';
-};
-
-export type BrandMarketingRefreshRegionalDataResponses = {
-    /**
-     * Successful Response
-     */
-    204: void;
-};
-
-export type BrandMarketingRefreshRegionalDataResponse = BrandMarketingRefreshRegionalDataResponses[keyof BrandMarketingRefreshRegionalDataResponses];
 
 export type BrandMarketingReadRegionalDataData = {
     body?: never;
@@ -2483,6 +2570,41 @@ export type AgentUnarchiveConversationResponses = {
 };
 
 export type AgentUnarchiveConversationResponse = AgentUnarchiveConversationResponses[keyof AgentUnarchiveConversationResponses];
+
+export type ContentOperationsReadBilibiliRankingData = {
+    body?: never;
+    path?: never;
+    query?: {
+        category?: BilibiliRankingCategoryCode;
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/v1/admin/content-operations/rankings/bilibili';
+};
+
+export type ContentOperationsReadBilibiliRankingErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ContentOperationsReadBilibiliRankingError = ContentOperationsReadBilibiliRankingErrors[keyof ContentOperationsReadBilibiliRankingErrors];
+
+export type ContentOperationsReadBilibiliRankingResponses = {
+    /**
+     * Successful Response
+     */
+    200: BilibiliRankingPublic;
+};
+
+export type ContentOperationsReadBilibiliRankingResponse = ContentOperationsReadBilibiliRankingResponses[keyof ContentOperationsReadBilibiliRankingResponses];
 
 export type FilesCreateFileUploadData = {
     body: FileUploadRequest;

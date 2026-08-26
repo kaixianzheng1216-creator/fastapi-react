@@ -1,10 +1,8 @@
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from app.core.config import settings
 from app.db import models  # noqa: F401
 from app.db.session import engine
-from app.modules.brand_marketing.importer import import_regional_data
-from app.modules.brand_marketing.models import ProvinceAnnualIndicator
 from app.modules.users import service
 from app.modules.users.schemas import UserCreate
 
@@ -29,10 +27,3 @@ def initialize_data(session: Session) -> None:
                 is_superuser=True,
             ),
         )
-
-    regional_data_id = session.exec(
-        select(ProvinceAnnualIndicator.id).limit(1)
-    ).first()
-
-    if regional_data_id is None:
-        import_regional_data(session)

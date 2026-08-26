@@ -3,18 +3,18 @@ from decimal import Decimal
 from sqlalchemy import text
 from sqlmodel import Session
 
-from app.modules.brand_marketing.importer import import_regional_data
-from app.modules.brand_marketing.models import RegionalIndicatorCode
+from app.modules.brand_marketing.constants import (
+    REGIONAL_INDICATORS,
+    RegionalIndicatorCode,
+)
 from app.modules.brand_marketing.schemas import (
     ProvinceAnnualDataPublic,
     RegionalDataPublic,
+    RegionalIndicatorPublic,
     RegionalSortOrder,
 )
 
-
-def refresh_regional_data(*, session: Session) -> None:
-    """重新导入国家统计局分省年度数据。"""
-    import_regional_data(session)
+REGIONAL_DATA_SOURCE = "国家统计局"
 
 
 def get_regional_data(
@@ -33,19 +33,36 @@ def get_regional_data(
         text(
             """
             SELECT DISTINCT year
-            FROM dwd_province_annual_indicator
+            FROM province_annual_indicator
             ORDER BY year DESC
             """
         )
     ).scalars()
-
     years: list[int] = []
 
     for value in year_values:
         years.append(int(value))
 
+    indicators: list[RegionalIndicatorPublic] = []
+
+    for indicator in REGIONAL_INDICATORS:
+        indicators.append(
+            RegionalIndicatorPublic(
+                code=indicator.code,
+                name=indicator.name,
+                unit=indicator.unit,
+            )
+        )
+
     if not years:
-        raise RuntimeError("区域数据尚未初始化")
+        return RegionalDataPublic(
+            year=year,
+            years=[],
+            indicators=indicators,
+            data=[],
+            count=0,
+            source=REGIONAL_DATA_SOURCE,
+        )
 
     selected_year = year if year is not None else years[0]
     previous_year = selected_year - 1
@@ -65,7 +82,7 @@ def get_regional_data(
                         PARTITION BY province_code, indicator_code
                         ORDER BY year
                     ) AS previous_value
-                FROM dwd_province_annual_indicator
+                FROM province_annual_indicator
                 WHERE year IN (:year, :previous_year)
             )
             SELECT
@@ -153,9 +170,10 @@ def get_regional_data(
     return RegionalDataPublic(
         year=selected_year,
         years=years,
+        indicators=indicators,
         data=data,
         count=count,
-        source="国家统计局",
+        source=REGIONAL_DATA_SOURCE,
     )
 
 

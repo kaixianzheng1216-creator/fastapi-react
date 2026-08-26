@@ -1,21 +1,25 @@
+from contextlib import closing
 from decimal import Decimal
 from pathlib import Path
 
 from openpyxl import load_workbook
-from sqlmodel import Session, delete
+from sqlalchemy import delete
+from sqlmodel import Session
 
-from app.modules.brand_marketing.models import (
-    ProvinceAnnualIndicator,
+from app.modules.brand_marketing.constants import (
     RegionalIndicatorCode,
 )
+from app.modules.brand_marketing.models import ProvinceAnnualIndicator
 
 DATA_DIR = Path(__file__).resolve().parents[4] / "data"
-INDICATOR_FILES = {
+
+INDICATOR_FILENAMES = {
     RegionalIndicatorCode.RESIDENT_POPULATION: "年末常住人口 (万人).xlsx",
     RegionalIndicatorCode.DISPOSABLE_INCOME: "全体居民人均可支配收入 (元).xlsx",
     RegionalIndicatorCode.CONSUMPTION_EXPENDITURE: "全体居民人均消费支出 (元).xlsx",
     RegionalIndicatorCode.RETAIL_SALES: "社会消费品零售总额 (亿元).xlsx",
 }
+
 PROVINCE_CODES = {
     "北京市": "110000",
     "天津市": "120000",
@@ -51,11 +55,11 @@ PROVINCE_CODES = {
 }
 
 
-def import_regional_data(session: Session) -> None:
+def import_regional_data(*, session: Session) -> None:
     """导入国家统计局分省年度数据。"""
     records: list[ProvinceAnnualIndicator] = []
 
-    for indicator_code, filename in INDICATOR_FILES.items():
+    for indicator_code, filename in INDICATOR_FILENAMES.items():
         records.extend(_read_workbook(indicator_code, filename))
 
     session.exec(delete(ProvinceAnnualIndicator))
@@ -67,50 +71,52 @@ def _read_workbook(
     indicator_code: RegionalIndicatorCode,
     filename: str,
 ) -> list[ProvinceAnnualIndicator]:
-    workbook = load_workbook(
-        DATA_DIR / filename,
-        read_only=True,
-    )
+    with closing(load_workbook(DATA_DIR / filename, read_only=True)) as workbook:
+        sheet = workbook.worksheets[0]
 
-    sheet = workbook.worksheets[0]
+        if sheet.cell(4, 1).value != "地区":
+            raise ValueError(f"{filename} 第 4 行不是数据表头")
 
-    if sheet.cell(4, 1).value != "地区":
-        raise ValueError(f"{filename} 第 4 行不是数据表头")
+        years: list[int] = []
 
-    years: list[int] = []
+        for column in range(2, sheet.max_column + 1):
+            year = int(str(sheet.cell(4, column).value).removesuffix("年"))
+            years.append(year)
 
-    for column in range(2, sheet.max_column + 1):
-        year = int(str(sheet.cell(4, column).value).removesuffix("年"))
-        years.append(year)
+        if not years or len(years) != len(set(years)):
+            raise ValueError(f"{filename} 年份为空或重复")
 
-    records: list[ProvinceAnnualIndicator] = []
+        records: list[ProvinceAnnualIndicator] = []
+        province_names: set[str] = set()
 
-    for row in sheet.iter_rows(
-        min_row=5,
-        max_row=4 + len(PROVINCE_CODES),
-        max_col=len(years) + 1,
-        values_only=True,
-    ):
-        province_name = row[0]
+        for row in sheet.iter_rows(
+            min_row=5,
+            max_row=4 + len(PROVINCE_CODES),
+            max_col=len(years) + 1,
+            values_only=True,
+        ):
+            province_name = row[0]
 
-        if not isinstance(province_name, str):
-            raise ValueError(f"{filename} 包含无效地区")
+            if not isinstance(province_name, str):
+                raise ValueError(f"{filename} 包含无效地区")
 
-        province_code = PROVINCE_CODES[province_name]
+            if province_name not in PROVINCE_CODES or province_name in province_names:
+                raise ValueError(f"{filename} 包含未知或重复地区：{province_name}")
 
-        for column_index, year in enumerate(years, start=1):
-            value = row[column_index]
+            province_names.add(province_name)
 
-            records.append(
-                ProvinceAnnualIndicator(
-                    indicator_code=indicator_code.value,
-                    province_code=province_code,
-                    province_name=province_name,
-                    year=year,
-                    value=Decimal(str(value)),
+            for column_index, year in enumerate(years, start=1):
+                records.append(
+                    ProvinceAnnualIndicator(
+                        indicator_code=indicator_code.value,
+                        province_code=PROVINCE_CODES[province_name],
+                        province_name=province_name,
+                        year=year,
+                        value=Decimal(str(row[column_index])),
+                    )
                 )
-            )
 
-    workbook.close()
+        if province_names != PROVINCE_CODES.keys():
+            raise ValueError(f"{filename} 地区数据不完整")
 
-    return records
+        return records
