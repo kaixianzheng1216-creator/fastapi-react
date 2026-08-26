@@ -24,7 +24,7 @@ def get_regional_data(
     year_values = connection.execute(
         text(
             """
-            SELECT year
+            SELECT DISTINCT year
             FROM dwd_province_annual_indicator
             ORDER BY year DESC
             """
