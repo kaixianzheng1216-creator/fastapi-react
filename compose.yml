@@ -101,6 +101,7 @@ services:
     env_file:
       - .env
     environment:
+      - EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
       - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
       - POSTGRES_SERVER=db
       - QDRANT_URL=http://qdrant:6333
@@ -113,8 +114,6 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    volumes:
-      - knowledge-model-cache:/root/.cache/huggingface
 
   data-initializer:
     image: backend-data-initializer
@@ -153,11 +152,10 @@ services:
     env_file:
       - .env
     environment:
+      - EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
       - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
       - POSTGRES_SERVER=db
       - QDRANT_URL=http://qdrant:6333
-    volumes:
-      - knowledge-model-cache:/root/.cache/huggingface
 
   frontend:
     image: frontend
@@ -178,4 +176,3 @@ services:
 volumes:
   app-db-data:
   qdrant-data:
-  knowledge-model-cache:

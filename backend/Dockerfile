@@ -35,6 +35,13 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM dependencies AS application
 
+ENV EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
+
+COPY backend/scripts/download_embedding_tokenizer.py /tmp/download_embedding_tokenizer.py
+
+RUN python /tmp/download_embedding_tokenizer.py \
+    && rm /tmp/download_embedding_tokenizer.py
+
 COPY backend/scripts /app/backend/scripts
 COPY backend/alembic.ini /app/backend/alembic.ini
 COPY backend/alembic /app/backend/alembic
