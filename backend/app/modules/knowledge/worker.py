@@ -294,8 +294,9 @@ def _parse_with_docling(stored_file: StoredFile, content: bytes) -> DoclingDocum
             data={
                 "from_formats": document_format,
                 "to_formats": ["json"],
-                "image_export_mode": "placeholder",
+                "image_export_mode": "embedded",
                 "do_chart_extraction": "true",
+                "do_picture_description": "true",
             },
             files={
                 "files": (
