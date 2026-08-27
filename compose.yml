@@ -16,7 +16,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB?Variable not set}
 
   docling:
-    image: ghcr.io/docling-project/docling-serve-cpu:v1.21.0
+    image: ghcr.io/docling-project/docling-serve-cpu:v1.30.0
     restart: always
     environment:
         - DOCLING_SERVE_MAX_FILE_SIZE=104857600
