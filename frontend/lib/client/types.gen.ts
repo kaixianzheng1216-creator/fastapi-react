@@ -469,6 +469,77 @@ export type ImageMessagePart = {
 };
 
 /**
+ * InfluencerAccountPublic
+ */
+export type InfluencerAccountPublic = {
+    /**
+     * Public Account Id
+     */
+    public_account_id: string;
+    /**
+     * Nickname
+     */
+    nickname: string;
+    /**
+     * Avatar Url
+     */
+    avatar_url: string | null;
+    /**
+     * Profile Url
+     */
+    profile_url: string;
+    /**
+     * Location
+     */
+    location: string | null;
+    /**
+     * Bio
+     */
+    bio: string | null;
+    /**
+     * Followers
+     */
+    followers: number;
+    /**
+     * Engagement Count
+     */
+    engagement_count: number | null;
+};
+
+/**
+ * InfluencerAccountSortBy
+ */
+export type InfluencerAccountSortBy = 'followers' | 'engagement_count';
+
+/**
+ * InfluencerAccountsPublic
+ */
+export type InfluencerAccountsPublic = {
+    /**
+     * Captured At
+     */
+    captured_at: string | null;
+    /**
+     * Data
+     */
+    data: Array<InfluencerAccountPublic>;
+    /**
+     * Count
+     */
+    count: number;
+};
+
+/**
+ * InfluencerPlatformCode
+ */
+export type InfluencerPlatformCode = 'douyin' | 'xiaohongshu';
+
+/**
+ * InfluencerSortOrder
+ */
+export type InfluencerSortOrder = 'asc' | 'desc';
+
+/**
  * ItemCreate
  */
 export type ItemCreate = {
@@ -2605,6 +2676,47 @@ export type ContentOperationsReadBilibiliRankingResponses = {
 };
 
 export type ContentOperationsReadBilibiliRankingResponse = ContentOperationsReadBilibiliRankingResponses[keyof ContentOperationsReadBilibiliRankingResponses];
+
+export type InfluencerMarketingReadInfluencerAccountsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        platform?: InfluencerPlatformCode;
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Search
+         */
+        search?: string | null;
+        sort_by?: InfluencerAccountSortBy;
+        sort_order?: InfluencerSortOrder;
+    };
+    url: '/api/v1/admin/influencer-marketing/accounts';
+};
+
+export type InfluencerMarketingReadInfluencerAccountsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type InfluencerMarketingReadInfluencerAccountsError = InfluencerMarketingReadInfluencerAccountsErrors[keyof InfluencerMarketingReadInfluencerAccountsErrors];
+
+export type InfluencerMarketingReadInfluencerAccountsResponses = {
+    /**
+     * Successful Response
+     */
+    200: InfluencerAccountsPublic;
+};
+
+export type InfluencerMarketingReadInfluencerAccountsResponse = InfluencerMarketingReadInfluencerAccountsResponses[keyof InfluencerMarketingReadInfluencerAccountsResponses];
 
 export type FilesCreateFileUploadData = {
     body: FileUploadRequest;

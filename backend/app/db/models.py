@@ -12,6 +12,10 @@ from app.modules.conversations.models import (  # noqa: F401
     ConversationFile,
 )
 from app.modules.files.models import StoredFile  # noqa: F401
+from app.modules.influencer_marketing.models import (  # noqa: F401
+    InfluencerAccount,
+    InfluencerAccountSnapshot,
+)
 from app.modules.items.models import Item  # noqa: F401
 from app.modules.knowledge.models import (  # noqa: F401
     KnowledgeBase,

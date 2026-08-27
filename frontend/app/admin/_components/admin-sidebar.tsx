@@ -60,7 +60,16 @@ const businessModules = [
       },
     ],
   },
-  { name: "达人投放", icon: UsersIcon, items: [] },
+  {
+    name: "达人投放",
+    icon: UsersIcon,
+    items: [
+      {
+        name: "达人资源",
+        href: "/admin/influencer-marketing/resources",
+      },
+    ],
+  },
   { name: "海外营销", icon: GlobeIcon, items: [] },
 ];
 
