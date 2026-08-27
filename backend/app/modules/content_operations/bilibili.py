@@ -1,3 +1,4 @@
+import os
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -17,6 +18,9 @@ from app.modules.content_operations.constants import (
 BILIBILI_RANKING_PAGE_URL = "https://www.bilibili.com/v/popular/rank/all"
 BILIBILI_RANKING_API_PATH = "/x/web-interface/ranking/v2"
 BILIBILI_TIMEOUT_MS = 30_000
+PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH = os.getenv(
+    "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"
+)
 
 
 class _BilibiliOwner(BaseModel):
@@ -72,7 +76,10 @@ def fetch_bilibili_rankings() -> list[BilibiliRankingEntry]:
     """通过未登录浏览器获取 B 站各分区的真实排行榜。"""
     try:
         with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True)
+            browser = playwright.chromium.launch(
+                headless=True,
+                executable_path=PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+            )
 
             try:
                 page = browser.new_page(locale="zh-CN")
