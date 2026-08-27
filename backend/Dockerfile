@@ -21,6 +21,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM dependencies AS collector-dependencies
 
+RUN sed -i \
+    's|deb.debian.org|mirrors.cloud.tencent.com|g' \
+    /etc/apt/sources.list.d/debian.sources
+
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --package app --extra collector \
     && playwright install --with-deps --only-shell chromium
