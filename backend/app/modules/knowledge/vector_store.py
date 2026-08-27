@@ -214,12 +214,11 @@ def search(
     knowledge_base_id: uuid.UUID,
     knowledge_base_name: str,
     document_ids: Sequence[uuid.UUID],
-    skip: int,
     limit: int,
-) -> tuple[list[KnowledgeSearchResultPublic], int]:
+) -> list[KnowledgeSearchResultPublic]:
     """在指定知识库的可用文档中检索相关切片。"""
     if not document_ids:
-        return [], 0
+        return []
 
     client = _get_client()
 
@@ -237,19 +236,12 @@ def search(
     )
 
     try:
-        total = client.count(
-            collection_name=COLLECTION_NAME,
-            count_filter=search_filter,
-            exact=True,
-        ).count
-
         response = client.query_points(
             collection_name=COLLECTION_NAME,
             query=vector,
             using=VECTOR_NAME,
             query_filter=search_filter,
             limit=limit,
-            offset=skip,
             with_payload=True,
         )
     except ApiException as error:
@@ -276,7 +268,7 @@ def search(
             )
         )
 
-    return results, total
+    return results
 
 
 def delete_document(document_id: uuid.UUID) -> None:

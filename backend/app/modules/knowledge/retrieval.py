@@ -10,6 +10,7 @@ from app.modules.knowledge.schemas import KnowledgeSearchResultPublic
 from app.modules.knowledge.service import get_knowledge_base
 
 SEARCH_ERROR_LOG = "知识库检索失败"
+SEARCH_RESULT_LIMIT = 5
 logger = logging.getLogger(__name__)
 
 
@@ -18,9 +19,7 @@ def search_knowledge_base(
     session: Session,
     knowledge_base_id: uuid.UUID,
     query: str,
-    skip: int,
-    limit: int,
-) -> tuple[list[KnowledgeSearchResultPublic], int]:
+) -> list[KnowledgeSearchResultPublic]:
     knowledge_base = get_knowledge_base(
         session=session,
         knowledge_base_id=knowledge_base_id,
@@ -34,18 +33,17 @@ def search_knowledge_base(
     ).all()
 
     if not ready_document_ids:
-        return [], 0
+        return []
 
     try:
         query_vector = embedding.embed_texts([query])[0]
 
-        search_results, count = vector_store.search(
+        search_results = vector_store.search(
             vector=query_vector,
             knowledge_base_id=knowledge_base_id,
             knowledge_base_name=knowledge_base.name,
             document_ids=ready_document_ids,
-            skip=skip,
-            limit=limit,
+            limit=SEARCH_RESULT_LIMIT,
         )
     except (
         embedding.EmbeddingServiceError,
@@ -55,4 +53,4 @@ def search_knowledge_base(
 
         raise KnowledgeSearchUnavailableError from error
 
-    return search_results, count
+    return search_results

@@ -2124,16 +2124,7 @@ export type KnowledgeBasesSearchKnowledgeBaseData = {
          */
         knowledge_base_id: string;
     };
-    query?: {
-        /**
-         * Skip
-         */
-        skip?: number;
-        /**
-         * Limit
-         */
-        limit?: number;
-    };
+    query?: never;
     url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}/search';
 };
 

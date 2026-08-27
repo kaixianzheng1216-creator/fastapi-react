@@ -111,7 +111,6 @@ import {
 import { getPaginationHref, parsePage } from "@/lib/pagination";
 
 const PAGE_SIZE = 20;
-const SEARCH_PAGE_SIZE = 6;
 const DOCUMENT_POLL_INTERVAL_MS = 3000;
 const DOCUMENTS_QUERY_KEY = ["knowledge-documents"] as const;
 const DOCUMENT_ACCEPT = DOCUMENT_CONTENT_TYPES.join(",");
@@ -886,18 +885,12 @@ function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q")?.trim() ?? "";
-  const currentPage = parsePage(searchParams.get("searchPage"));
-  const pageIndex = currentPage - 1;
 
   const searchKnowledge = useQuery({
-    queryKey: ["knowledge-search", knowledgeBaseId, searchQuery, pageIndex],
+    queryKey: ["knowledge-search", knowledgeBaseId, searchQuery],
     queryFn: async ({ signal }) => {
       const { data } = await knowledgeBasesSearchKnowledgeBase({
         path: { knowledge_base_id: knowledgeBaseId },
-        query: {
-          skip: pageIndex * SEARCH_PAGE_SIZE,
-          limit: SEARCH_PAGE_SIZE,
-        },
         body: { query: searchQuery },
         signal,
         throwOnError: true,
@@ -911,11 +904,6 @@ function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
   });
 
   const searchResults = searchKnowledge.data?.data;
-  const pageCount = Math.ceil(
-    (searchKnowledge.data?.count ?? 0) / SEARCH_PAGE_SIZE,
-  );
-  const pageOutOfRange =
-    (searchKnowledge.data?.count ?? 0) > 0 && searchResults?.length === 0;
 
   function submitSearch(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -923,10 +911,10 @@ function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
     const query = String(formData.get("query") ?? "").trim();
 
     if (query) {
-      if (query === searchQuery && currentPage === 1) {
+      if (query === searchQuery) {
         void searchKnowledge.refetch();
       } else {
-        router.push(getKnowledgeSearchHref(knowledgeBaseId, query, 1), {
+        router.push(getKnowledgeSearchHref(knowledgeBaseId, query), {
           scroll: false,
         });
       }
@@ -985,23 +973,17 @@ function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
       ) : null}
 
       {searchResults?.length === 0 ? (
-        pageOutOfRange ? (
-          <PageOutOfRange
-            href={getKnowledgeSearchHref(knowledgeBaseId, searchQuery, 1)}
-          />
-        ) : (
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <SearchIcon aria-hidden="true" />
-              </EmptyMedia>
-              <EmptyTitle>未找到相关内容</EmptyTitle>
-              <EmptyDescription>
-                可以换个问法，或确认相关文档已处理完成。
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        )
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <SearchIcon aria-hidden="true" />
+            </EmptyMedia>
+            <EmptyTitle>未找到相关内容</EmptyTitle>
+            <EmptyDescription>
+              可以换个问法，或确认相关文档已处理完成。
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : null}
 
       {searchResults?.map((result) => (
@@ -1021,16 +1003,6 @@ function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
         </Card>
       ))}
 
-      {searchResults ? (
-        <PagePagination
-          ariaLabel="搜索结果分页"
-          currentPage={currentPage}
-          pageCount={pageCount}
-          getPageHref={(page) =>
-            getKnowledgeSearchHref(knowledgeBaseId, searchQuery, page)
-          }
-        />
-      ) : null}
     </>
   );
 }
@@ -1098,14 +1070,8 @@ function getDocumentsHref(knowledgeBaseId: string, page: number): string {
 function getKnowledgeSearchHref(
   knowledgeBaseId: string,
   query: string,
-  page: number,
 ): string {
   const parameters = new URLSearchParams({ view: "search", q: query });
 
-  return getPaginationHref(
-    `/admin/knowledge-bases/${knowledgeBaseId}`,
-    page,
-    parameters,
-    "searchPage",
-  );
+  return `/admin/knowledge-bases/${knowledgeBaseId}?${parameters}`;
 }
