@@ -70,6 +70,7 @@ services:
 
   prestart:
     image: backend
+    pull_policy: build
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -84,6 +85,7 @@ services:
 
   backend:
     image: backend
+    pull_policy: build
     restart: always
     depends_on:
       litellm:
@@ -116,6 +118,7 @@ services:
 
   data-initializer:
     image: backend-data-initializer
+    pull_policy: build
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -130,6 +133,7 @@ services:
 
   knowledge-worker:
     image: backend
+    pull_policy: build
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -157,6 +161,7 @@ services:
 
   frontend:
     image: frontend
+    pull_policy: build
     restart: always
     depends_on:
       backend:
