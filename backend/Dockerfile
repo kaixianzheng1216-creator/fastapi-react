@@ -1,11 +1,15 @@
+FROM ghcr.nju.edu.cn/astral-sh/uv:0.9.26 AS uv
+
 FROM python:3.14-slim AS dependencies
 
 ENV PYTHONUNBUFFERED=1 \
     UV_LINK_MODE=copy \
     UV_DEFAULT_INDEX=https://mirrors.aliyun.com/pypi/simple/ \
+    UV_HTTP_TIMEOUT=120 \
+    UV_HTTP_RETRIES=5 \
     PATH="/app/.venv/bin:$PATH"
 
-COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
+COPY --from=uv /uv /uvx /bin/
 
 WORKDIR /app
 
