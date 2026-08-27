@@ -460,7 +460,7 @@ function formatCount(value: number | null): string {
 }
 
 function getPlatform(value: string | null): InfluencerPlatformCode {
-  return value === "douyin" ? "douyin" : "xiaohongshu";
+  return value === "xiaohongshu" ? "xiaohongshu" : "douyin";
 }
 
 function getSortBy(value: string | null): InfluencerAccountSortBy {
@@ -480,7 +480,7 @@ function getInfluencerResourcesHref(
 ): string {
   const parameters = new URLSearchParams();
 
-  if (platform !== "xiaohongshu") {
+  if (platform !== "douyin") {
     parameters.set("platform", platform);
   }
 

@@ -23,7 +23,7 @@ router = APIRouter(
 @router.get("/accounts", response_model=InfluencerAccountsPublic)
 def read_influencer_accounts(
     session: SessionDep,
-    platform: InfluencerPlatformCode = InfluencerPlatformCode.XIAOHONGSHU,
+    platform: InfluencerPlatformCode = InfluencerPlatformCode.DOUYIN,
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     search: Annotated[str | None, Query(max_length=255)] = None,
