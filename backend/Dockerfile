@@ -2,6 +2,7 @@ FROM python:3.14-slim AS dependencies
 
 ENV PYTHONUNBUFFERED=1 \
     UV_LINK_MODE=copy \
+    UV_DEFAULT_INDEX=https://mirrors.aliyun.com/pypi/simple/ \
     PATH="/app/.venv/bin:$PATH"
 
 COPY --from=ghcr.io/astral-sh/uv:0.9.26 /uv /uvx /bin/
