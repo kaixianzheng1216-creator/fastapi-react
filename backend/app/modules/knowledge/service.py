@@ -135,7 +135,11 @@ def delete_knowledge_base(*, session: Session, knowledge_base_id: uuid.UUID) -> 
 
     session.commit()
 
-    documents.cleanup_deleted_documents(document_ids, object_keys)
+    documents.cleanup_deleted_documents(
+        document_ids,
+        object_keys,
+        delete_images=True,
+    )
 
 
 def create_document_upload(

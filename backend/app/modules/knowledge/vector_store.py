@@ -1,17 +1,14 @@
 import uuid
 from collections.abc import Sequence
+from dataclasses import dataclass
 from functools import cache
-from typing import Any
 
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from qdrant_client.http.exceptions import ApiException
 
 from app.modules.knowledge.config import settings
-from app.modules.knowledge.schemas import (
-    KnowledgeDocumentChunkPublic,
-    KnowledgeSearchResultPublic,
-)
+from app.modules.knowledge.schemas import KnowledgeSearchResultPublic
 
 COLLECTION_NAME = settings.QDRANT_COLLECTION_NAME
 VECTOR_NAME = "dense"
@@ -25,6 +22,15 @@ COLLECTION_METADATA = {
 
 class VectorStoreUnavailableError(Exception):
     pass
+
+
+@dataclass
+class DocumentChunk:
+    chunk_index: int
+    content: str
+    section_path: list[str]
+    page_numbers: list[int]
+    image_names: list[str]
 
 
 def ensure_collection() -> None:
@@ -113,7 +119,7 @@ def upsert_chunks(
     document_id: uuid.UUID,
     knowledge_base_id: uuid.UUID,
     filename: str,
-    chunks: Sequence[dict[str, Any]],
+    chunks: Sequence[DocumentChunk],
     vectors: Sequence[list[float]],
 ) -> None:
     """将文档切片及其向量写入 Qdrant。"""
@@ -129,18 +135,20 @@ def upsert_chunks(
 
         for index in range(batch_start, batch_end):
             chunk = chunks[index]
-            vector = vectors[index]
 
             points.append(
                 models.PointStruct(
-                    id=str(uuid.uuid5(document_id, str(index))),
-                    vector={VECTOR_NAME: vector},
+                    id=str(uuid.uuid5(document_id, str(chunk.chunk_index))),
+                    vector={VECTOR_NAME: vectors[index]},
                     payload={
                         "knowledge_base_id": str(knowledge_base_id),
                         "document_id": str(document_id),
                         "filename": filename,
-                        "chunk_index": index,
-                        **chunk,
+                        "chunk_index": chunk.chunk_index,
+                        "content": chunk.content,
+                        "section_path": chunk.section_path,
+                        "page_numbers": chunk.page_numbers,
+                        "image_names": chunk.image_names,
                     },
                 )
             )
@@ -157,7 +165,7 @@ def list_document_chunks(
     document_id: uuid.UUID,
     skip: int,
     limit: int,
-) -> tuple[list[KnowledgeDocumentChunkPublic], int]:
+) -> tuple[list[DocumentChunk], int]:
     """分页获取指定文档的切片。"""
     client = _get_client()
 
@@ -186,7 +194,7 @@ def list_document_chunks(
         limit=limit,
     )
 
-    chunks: list[KnowledgeDocumentChunkPublic] = []
+    chunks: list[DocumentChunk] = []
 
     for record in records:
         payload = record.payload
@@ -195,11 +203,12 @@ def list_document_chunks(
             raise RuntimeError("Qdrant 切片缺少 Payload")
 
         chunks.append(
-            KnowledgeDocumentChunkPublic(
+            DocumentChunk(
                 chunk_index=int(payload["chunk_index"]),
                 content=str(payload["content"]),
-                section_path=[str(value) for value in payload.get("section_path", [])],
-                page_numbers=[int(value) for value in payload.get("page_numbers", [])],
+                section_path=[str(value) for value in payload["section_path"]],
+                page_numbers=[int(value) for value in payload["page_numbers"]],
+                image_names=[str(value) for value in payload.get("image_names", [])],
             )
         )
 

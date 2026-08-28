@@ -8,7 +8,6 @@ import {
 import {
   AlertCircleIcon,
   ArrowLeftIcon,
-  BracesIcon,
   DownloadIcon,
   FileTextIcon,
   LayersIcon,
@@ -45,7 +44,6 @@ import {
 } from "@/components/ui/tabs";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
-  knowledgeDocumentsReadDoclingDocument,
   knowledgeDocumentsReadDocument,
   knowledgeDocumentsReadDocumentChunks,
   knowledgeDocumentsReadDocumentPreview,
@@ -57,7 +55,7 @@ import {
 import { getPaginationHref } from "@/lib/pagination";
 
 const CHUNK_PAGE_SIZE = 20;
-const MAX_INLINE_JSON_BYTES = 2 * 1024 * 1024;
+const CHUNKS_ANCHOR = "document-chunks";
 
 type KnowledgeDocumentPreviewProps = {
   knowledgeBaseId: string;
@@ -73,10 +71,7 @@ export function KnowledgeDocumentPreview({
   const documentPath = `/admin/knowledge-bases/${knowledgeBaseId}/documents/${documentId}`;
 
   const viewParameter = searchParams.get("view");
-  const activeView =
-    viewParameter === "json" || viewParameter === "chunks"
-      ? viewParameter
-      : "markdown";
+  const activeView = viewParameter === "chunks" ? viewParameter : "markdown";
 
   const chunkPageParameter = Number(searchParams.get("chunkPage"));
   const chunkPage =
@@ -144,7 +139,7 @@ export function KnowledgeDocumentPreview({
     const parameters = new URLSearchParams(searchParams);
     parameters.set("view", "chunks");
 
-    return getPaginationHref(documentPath, page, parameters, "chunkPage");
+    return `${getPaginationHref(documentPath, page, parameters, "chunkPage")}#${CHUNKS_ANCHOR}`;
   }
 
   return (
@@ -222,10 +217,6 @@ export function KnowledgeDocumentPreview({
                 <FileTextIcon aria-hidden="true" />
                 Markdown
               </TabsTrigger>
-              <TabsTrigger value="json">
-                <BracesIcon aria-hidden="true" />
-                Docling JSON
-              </TabsTrigger>
               <TabsTrigger value="chunks">
                 <LayersIcon aria-hidden="true" />
                 切片
@@ -258,102 +249,20 @@ export function KnowledgeDocumentPreview({
             </TabsContent>
 
             <TabsContent
-              value="json"
-              className="flex flex-col gap-4 pt-4"
-            >
-              <DoclingDocumentView documentId={documentId} />
-            </TabsContent>
-
-            <TabsContent
               value="chunks"
               className="pt-4"
             >
-              <DocumentChunksView
-                documentId={documentId}
-                page={chunkPage}
-                getPageHref={getChunkPageHref}
-              />
+              <div id={CHUNKS_ANCHOR} className="scroll-mt-4">
+                <DocumentChunksView
+                  documentId={documentId}
+                  page={chunkPage}
+                  getPageHref={getChunkPageHref}
+                />
+              </div>
             </TabsContent>
           </Tabs>
         </div>
       </div>
-    </>
-  );
-}
-
-function DoclingDocumentView({ documentId }: { documentId: string }) {
-  const doclingDocumentQuery = useQuery({
-    queryKey: ["knowledge-docling-document", documentId],
-    queryFn: async ({ signal }) => {
-      const { data } = await knowledgeDocumentsReadDoclingDocument({
-        path: { document_id: documentId },
-        signal,
-        throwOnError: true,
-      });
-
-      if (data.size > MAX_INLINE_JSON_BYTES) {
-        return { ...data, content: undefined };
-      }
-
-      const response = await fetch(data.downloadUrl, { signal });
-
-      if (!response.ok) {
-        throw new Error(`对象存储读取失败（${response.status}）`);
-      }
-
-      const content = JSON.stringify(await response.json(), null, 2);
-
-      return { ...data, content };
-    },
-    retry: false,
-  });
-
-  if (doclingDocumentQuery.isPending) {
-    return <Skeleton className="h-64" />;
-  }
-
-  if (doclingDocumentQuery.error) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircleIcon aria-hidden="true" />
-        <AlertTitle>
-          {getApiErrorMessage(
-            doclingDocumentQuery.error,
-            "读取 Docling JSON 失败",
-          )}
-        </AlertTitle>
-      </Alert>
-    );
-  }
-
-  return (
-    <>
-      <div className="flex justify-end">
-        <Button variant="outline" size="sm" asChild>
-          <a href={doclingDocumentQuery.data.downloadUrl}>
-            <DownloadIcon data-icon="inline-start" aria-hidden="true" />
-            下载完整 JSON
-          </a>
-        </Button>
-      </div>
-
-      {doclingDocumentQuery.data.content === undefined ? (
-        <Empty className="min-h-0 rounded-md border">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <BracesIcon aria-hidden="true" />
-            </EmptyMedia>
-            <EmptyTitle>JSON 文件过大，无法在线预览</EmptyTitle>
-            <EmptyDescription>
-              请使用上方按钮下载完整 document.json。
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      ) : (
-        <pre className="overflow-auto rounded-md border p-4 text-sm">
-          <code>{doclingDocumentQuery.data.content}</code>
-        </pre>
-      )}
     </>
   );
 }
@@ -437,7 +346,21 @@ function DocumentChunksView({
               {formatChunkLocation(chunk.section_path, chunk.page_numbers)}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {chunk.image_urls.length > 0 && (
+              <div className="grid gap-3 md:grid-cols-2">
+                {chunk.image_urls.map((imageUrl, imageIndex) => (
+                  <img
+                    key={imageUrl}
+                    src={imageUrl}
+                    alt={`切片 ${chunk.chunk_index + 1} 关联图片 ${imageIndex + 1}`}
+                    className="max-h-96 w-full rounded-md border bg-muted object-contain"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ))}
+              </div>
+            )}
             <p className="whitespace-pre-wrap text-sm leading-relaxed">
               {chunk.content}
             </p>

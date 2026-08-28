@@ -18,6 +18,7 @@ FILE_OBJECT_PREFIX = "files"
 UPLOAD_URL_LIFETIME_SECONDS = 15 * 60
 DOWNLOAD_URL_LIFETIME_SECONDS = 60 * 60
 DOCUMENT_SPOOL_MEMORY_LIMIT = 1024 * 1024
+OBJECT_DELETE_BATCH_SIZE = 1000
 UPLOAD_HEADERS = {"x-cos-forbid-overwrite": "true"}
 OBJECT_DELETE_ERROR_LOG = "删除存储文件对象失败"
 
@@ -100,14 +101,47 @@ def read_object_bytes(*, object_key: str, size: int | None = None) -> bytes:
         body.get_raw_stream().close()
 
 
-def write_object_content(*, object_key: str, content: bytes) -> None:
+def write_object_content(
+    *,
+    object_key: str,
+    content: bytes,
+    content_type: str | None = None,
+) -> None:
+    params: dict[str, Any] = {
+        "Bucket": settings.COS_BUCKET,
+        "Key": object_key,
+        "Body": content,
+    }
+
+    if content_type is not None:
+        params["ContentType"] = content_type
+
     try:
-        cos_client.put_object(
-            Bucket=settings.COS_BUCKET,
-            Key=object_key,
-            Body=content,
-        )
+        cos_client.put_object(**params)
     except (CosClientError, CosServiceError) as error:
+        raise FileStorageUnavailableError from error
+
+
+def list_object_keys(prefix: str) -> list[str]:
+    object_keys: list[str] = []
+    marker = ""
+
+    try:
+        while True:
+            response: dict[str, Any] = cos_client.list_objects(
+                Bucket=settings.COS_BUCKET,
+                Prefix=prefix,
+                Marker=marker,
+            )
+
+            for item in response.get("Contents", []):
+                object_keys.append(item["Key"])
+
+            if response.get("IsTruncated") != "true":
+                return object_keys
+
+            marker = response["NextMarker"]
+    except (CosClientError, CosServiceError, KeyError) as error:
         raise FileStorageUnavailableError from error
 
 
@@ -132,16 +166,39 @@ def download_to_temporary_file(object_key: str) -> IO[bytes]:
         raw_stream.close()
 
 
-def delete_object(object_key: str) -> None:
-    try:
-        cos_client.delete_object(
-            Bucket=settings.COS_BUCKET,
-            Key=object_key,
-        )
-    except (CosClientError, CosServiceError) as error:
-        logger.exception(OBJECT_DELETE_ERROR_LOG, extra={"object_key": object_key})
+def delete_objects(object_keys: list[str]) -> None:
+    for start_index in range(0, len(object_keys), OBJECT_DELETE_BATCH_SIZE):
+        batch = object_keys[start_index : start_index + OBJECT_DELETE_BATCH_SIZE]
+        objects_to_delete: list[dict[str, str]] = []
 
-        raise FileStorageUnavailableError from error
+        for object_key in batch:
+            objects_to_delete.append({"Key": object_key})
+
+        try:
+            response: dict[str, Any] = cos_client.delete_objects(
+                Bucket=settings.COS_BUCKET,
+                Delete={
+                    "Quiet": "true",
+                    "Object": objects_to_delete,
+                },
+            )
+        except (CosClientError, CosServiceError) as error:
+            logger.exception(
+                OBJECT_DELETE_ERROR_LOG,
+                extra={"object_count": len(batch)},
+            )
+
+            raise FileStorageUnavailableError from error
+
+        failed_objects = response.get("Error", [])
+
+        if failed_objects:
+            logger.error(
+                OBJECT_DELETE_ERROR_LOG,
+                extra={"failed_object_count": len(failed_objects)},
+            )
+
+            raise FileStorageUnavailableError
 
 
 def _get_object(*, object_key: str, size: int | None = None) -> Any:

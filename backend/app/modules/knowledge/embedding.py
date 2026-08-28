@@ -28,7 +28,7 @@ def get_tokenizer() -> HuggingFaceTokenizer:
 def _iter_text_batches(texts: Sequence[str]) -> Iterator[list[str]]:
     """按条数和模型补齐后的 Token 数量分批。"""
     tokenizer = get_tokenizer()
-    huggingface_tokenizer = tokenizer.get_tokenizer()
+    huggingface_tokenizer = tokenizer.tokenizer
     text_batch: list[str] = []
     longest_text_tokens = 0
 

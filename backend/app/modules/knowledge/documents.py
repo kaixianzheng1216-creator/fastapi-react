@@ -16,7 +16,7 @@ from app.modules.files.models import StoredFile
 from app.modules.files.object_storage import UPLOAD_HEADERS
 from app.modules.files.schemas import FileUploadRequest
 from app.modules.files.service import cleanup_objects
-from app.modules.knowledge import vector_store
+from app.modules.knowledge import document_images, vector_store
 from app.modules.knowledge.exceptions import (
     KnowledgeDocumentArtifactUnavailableError,
     KnowledgeDocumentNotFoundError,
@@ -242,7 +242,10 @@ def get_preview(
             object_key=document_preview_key(document_id)
         )
 
-        preview = content.decode("utf-8")
+        preview = document_images.resolve_markdown_image_urls(
+            document_id=document_id,
+            markdown=content.decode("utf-8"),
+        )
     except (FileNotFoundError, UnicodeDecodeError) as error:
         raise KnowledgeDocumentArtifactUnavailableError from error
 
@@ -250,27 +253,6 @@ def get_preview(
         filename=stored_file.filename,
         content=preview,
     )
-
-
-def get_docling_document(
-    *, session: Session, document_id: uuid.UUID
-) -> tuple[str, int]:
-    document, _ = _get_document_with_file(
-        session=session,
-        document_id=document_id,
-    )
-
-    if document.status != KnowledgeDocumentStatus.READY:
-        raise KnowledgeDocumentArtifactUnavailableError
-
-    object_key = document_json_key(document_id)
-
-    try:
-        metadata = object_storage.head_object(object_key)
-    except FileNotFoundError as error:
-        raise KnowledgeDocumentArtifactUnavailableError from error
-
-    return object_key, int(metadata["Content-Length"])
 
 
 def list_document_chunks(
@@ -288,11 +270,35 @@ def list_document_chunks(
     if document.status != KnowledgeDocumentStatus.READY:
         raise KnowledgeDocumentArtifactUnavailableError
 
-    return vector_store.list_document_chunks(
+    chunks, count = vector_store.list_document_chunks(
         document_id=document_id,
         skip=skip,
         limit=limit,
     )
+
+    public_chunks: list[KnowledgeDocumentChunkPublic] = []
+
+    for chunk in chunks:
+        image_urls: list[str] = []
+
+        for image_name in chunk.image_names:
+            image_url = document_images.create_image_download_url(
+                document_id,
+                image_name,
+            )
+            image_urls.append(image_url)
+
+        public_chunks.append(
+            KnowledgeDocumentChunkPublic(
+                chunk_index=chunk.chunk_index,
+                content=chunk.content,
+                section_path=chunk.section_path,
+                page_numbers=chunk.page_numbers,
+                image_urls=image_urls,
+            )
+        )
+
+    return public_chunks, count
 
 
 def get_original_file(*, session: Session, document_id: uuid.UUID) -> StoredFile:
@@ -341,7 +347,7 @@ def delete_document(*, session: Session, document_id: uuid.UUID) -> None:
     )
     session.commit()
 
-    cleanup_deleted_documents(document_ids, object_keys)
+    cleanup_deleted_documents(document_ids, object_keys, delete_images=True)
 
 
 def delete_knowledge_base_documents(
@@ -378,6 +384,8 @@ def to_public(
 def cleanup_deleted_documents(
     document_ids: Sequence[uuid.UUID],
     object_keys: list[str],
+    *,
+    delete_images: bool = False,
 ) -> None:
     for document_id in document_ids:
         try:
@@ -387,6 +395,16 @@ def cleanup_deleted_documents(
                 EXTERNAL_CLEANUP_ERROR_LOG,
                 extra={"document_id": str(document_id)},
             )
+
+    if delete_images:
+        for document_id in document_ids:
+            try:
+                object_keys.extend(document_images.list_image_object_keys(document_id))
+            except Exception:
+                logger.exception(
+                    EXTERNAL_CLEANUP_ERROR_LOG,
+                    extra={"document_id": str(document_id)},
+                )
 
     cleanup_objects(object_keys)
 

@@ -8,7 +8,9 @@ from typing import Any, Literal, cast
 import httpx
 from docling_core.transforms.chunker.doc_chunk import DocMeta
 from docling_core.transforms.chunker.hybrid_chunker import HybridChunker
+from docling_core.types.doc.base import ImageRefMode
 from docling_core.types.doc.document import DoclingDocument
+from docling_core.types.doc.items.picture.picture import PictureItem
 from docling_core.types.doc.labels import DocItemLabel
 from pydantic import BaseModel, ValidationError
 from sqlalchemy import update
@@ -19,8 +21,7 @@ from app.db.session import engine
 from app.modules.files import object_storage
 from app.modules.files.constants import DOCUMENT_FORMAT_BY_CONTENT_TYPE
 from app.modules.files.models import StoredFile
-from app.modules.files.service import cleanup_objects
-from app.modules.knowledge import embedding, vector_store
+from app.modules.knowledge import document_images, embedding, vector_store
 from app.modules.knowledge.documents import (
     cleanup_deleted_documents,
     document_json_key,
@@ -29,7 +30,7 @@ from app.modules.knowledge.documents import (
 from app.modules.knowledge.models import KnowledgeDocument, KnowledgeDocumentStatus
 
 POLL_INTERVAL_SECONDS = 2
-PROCESSING_TIMEOUT_SECONDS = 10 * 60
+PROCESSING_TIMEOUT_SECONDS = 15 * 60
 DOCUMENT_PROCESSING_TIMEOUT_LOG = "知识库文档处理超时"
 DOCUMENT_PROCESSING_TIMEOUT_MESSAGE = "文档处理超时"
 DOCLING_INVALID_RESPONSE_MESSAGE = "Docling 返回内容无效"
@@ -173,7 +174,9 @@ def _process_document(document_id: uuid.UUID) -> None:
             filename=stored_file.filename,
             chunks=chunk_records,
             vectors=vectors,
-            markdown=docling_document.export_to_markdown(),
+            markdown=docling_document.export_to_markdown(
+                image_mode=ImageRefMode.REFERENCED
+            ),
         )
     except (
         DocumentProcessingTimeoutError,
@@ -237,9 +240,7 @@ def _load_or_parse_document(
             object_key=document_json_key(document_id)
         )
 
-        docling_document = DoclingDocument.model_validate_json(document_json)
-
-        return docling_document
+        return DoclingDocument.model_validate_json(document_json)
     except FileNotFoundError:
         pass
     except ValidationError:
@@ -256,9 +257,15 @@ def _load_or_parse_document(
     else:
         docling_document = _parse_with_docling(stored_file, content)
 
+    document_images.store_embedded_images(
+        document_id=document_id,
+        document=docling_document,
+    )
+
     object_storage.write_object_content(
         object_key=document_json_key(document_id),
         content=docling_document.model_dump_json().encode("utf-8"),
+        content_type="application/json",
     )
 
     return docling_document
@@ -295,8 +302,8 @@ def _parse_with_docling(stored_file: StoredFile, content: bytes) -> DoclingDocum
                 "from_formats": document_format,
                 "to_formats": ["json"],
                 "image_export_mode": "embedded",
-                "do_chart_extraction": "true",
                 "do_picture_description": "true",
+                "picture_description_preset": "deepseek-v4-flash-vision-exp",
             },
             files={
                 "files": (
@@ -335,33 +342,51 @@ def _parse_with_docling(stored_file: StoredFile, content: bytes) -> DoclingDocum
 
 def _create_chunks(
     document: DoclingDocument,
-) -> tuple[list[dict[str, Any]], list[str]]:
+) -> tuple[list[vector_store.DocumentChunk], list[str]]:
     """创建检索切片及与其索引一一对应的 Embedding 文本。"""
     chunker = HybridChunker(tokenizer=embedding.get_tokenizer())
 
-    chunk_records: list[dict[str, Any]] = []
+    chunks: list[vector_store.DocumentChunk] = []
     embedding_texts: list[str] = []
 
-    for document_chunk in chunker.chunk(document):
+    for chunk_index, document_chunk in enumerate(chunker.chunk(document)):
         metadata = cast(DocMeta, document_chunk.meta)
 
         page_numbers: set[int] = set()
+        image_names: set[str] = set()
 
         for document_item in metadata.doc_items:
             for provenance in document_item.prov:
                 page_numbers.add(provenance.page_no)
 
-        chunk_records.append(
-            {
-                "content": document_chunk.text,
-                "section_path": metadata.headings or [],
-                "page_numbers": sorted(page_numbers),
-            }
+            if document_item.label != DocItemLabel.PICTURE:
+                continue
+
+            picture = document_item.get_ref().resolve(document)
+
+            if not isinstance(picture, PictureItem):
+                raise DocumentProcessingError("文档图片引用无效")
+
+            if picture.image is None:
+                continue
+
+            image_names.add(
+                document_images.image_name_from_reference(str(picture.image.uri))
+            )
+
+        chunks.append(
+            vector_store.DocumentChunk(
+                chunk_index=chunk_index,
+                content=document_chunk.text,
+                section_path=metadata.headings or [],
+                page_numbers=sorted(page_numbers),
+                image_names=sorted(image_names),
+            )
         )
 
         embedding_texts.append(chunker.contextualize(document_chunk))
 
-    return chunk_records, embedding_texts
+    return chunks, embedding_texts
 
 
 def _publish_document(
@@ -369,7 +394,7 @@ def _publish_document(
     document_id: uuid.UUID,
     knowledge_base_id: uuid.UUID,
     filename: str,
-    chunks: list[dict[str, Any]],
+    chunks: list[vector_store.DocumentChunk],
     vectors: list[list[float]],
     markdown: str,
 ) -> None:
@@ -378,8 +403,10 @@ def _publish_document(
         document = session.get(KnowledgeDocument, document_id)
 
     if document is None:
-        cleanup_objects(
-            [document_json_key(document_id), document_preview_key(document_id)]
+        cleanup_deleted_documents(
+            [document_id],
+            [document_json_key(document_id), document_preview_key(document_id)],
+            delete_images=True,
         )
 
         return
@@ -395,6 +422,7 @@ def _publish_document(
     object_storage.write_object_content(
         object_key=document_preview_key(document_id),
         content=markdown.encode("utf-8"),
+        content_type="text/markdown; charset=utf-8",
     )
 
     with Session(engine) as session:
@@ -414,6 +442,7 @@ def _publish_document(
     cleanup_deleted_documents(
         [document_id],
         [document_preview_key(document_id)],
+        delete_images=True,
     )
 
 
@@ -442,7 +471,11 @@ def _finish_with_error(
             document.error_message = error_message
             session.commit()
 
-    cleanup_deleted_documents([document_id], object_keys)
+    cleanup_deleted_documents(
+        [document_id],
+        object_keys,
+        delete_images=document is None,
+    )
 
 
 def _fail_processing_documents_after_restart() -> None:

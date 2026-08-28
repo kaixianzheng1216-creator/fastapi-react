@@ -19,10 +19,30 @@ services:
     image: ghcr.dockerproxy.net/docling-project/docling-serve-cpu:v1.30.0
     restart: always
     environment:
-        - DOCLING_SERVE_MAX_FILE_SIZE=104857600
-        - DOCLING_SERVE_MAX_NUM_PAGES=1000
-        - DOCLING_SERVE_MAX_SYNC_WAIT=300
-        - DOCLING_SERVE_MAX_DOCUMENT_TIMEOUT=300
+      DOCLING_SERVE_MAX_FILE_SIZE: "104857600"
+      DOCLING_SERVE_MAX_NUM_PAGES: "1000"
+      DOCLING_SERVE_MAX_SYNC_WAIT: "600"
+      DOCLING_SERVE_MAX_DOCUMENT_TIMEOUT: "600"
+      DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "true"
+      DOCLING_SERVE_CUSTOM_PICTURE_DESCRIPTION_PRESETS: |-
+        {
+          "deepseek-v4-flash-vision-exp": {
+            "engine_options": {
+              "engine_type": "api",
+              "url": "http://litellm:4000/v1/chat/completions",
+              "headers": {
+                "Authorization": "Bearer ${LITELLM_MASTER_KEY?Variable not set}"
+              }
+            },
+            "model_spec": {
+              "name": "DeepSeek V4 Flash Vision Exp",
+              "default_repo_id": "deepseek/deepseek-v4-flash-vision-exp",
+              "prompt": "请用中文简洁、准确地描述图片中的关键信息。图表需说明标题、指标、趋势和重要数值；不要猜测看不清的内容。",
+              "response_format": "plaintext"
+            },
+            "prompt": "请用中文简洁、准确地描述图片中的关键信息。图表需说明标题、指标、趋势和重要数值；不要猜测看不清的内容。"
+          }
+        }
     healthcheck:
       test:
         - CMD
@@ -43,7 +63,6 @@ services:
     environment:
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY?Variable not set}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY?Variable not set}
-      MOONSHOT_API_KEY: ${MOONSHOT_API_KEY?Variable not set}
       FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY?Variable not set}
       CLOUDFLARE_ACCOUNT_ID: ${CLOUDFLARE_ACCOUNT_ID?Variable not set}
       CLOUDFLARE_API_KEY: ${CLOUDFLARE_API_TOKEN?Variable not set}

@@ -88,16 +88,12 @@ class KnowledgeDocumentPreviewPublic(SQLModel):
     content: str
 
 
-class KnowledgeDocumentArtifactPublic(SQLModel):
-    size: int
-    download_url: str = Field(serialization_alias="downloadUrl")
-
-
 class KnowledgeDocumentChunkPublic(SQLModel):
     chunk_index: int
     content: str
     section_path: list[str]
     page_numbers: list[int]
+    image_urls: list[str]
 
 
 class KnowledgeDocumentChunksPublic(SQLModel):

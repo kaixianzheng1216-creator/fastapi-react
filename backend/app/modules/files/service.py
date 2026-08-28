@@ -296,8 +296,10 @@ async def _delete_invalid_upload(session: Session, stored_file: StoredFile) -> N
 
 
 def cleanup_objects(object_keys: list[str]) -> None:
-    for object_key in object_keys:
-        try:
-            object_storage.delete_object(object_key)
-        except FileStorageUnavailableError:
-            continue
+    if not object_keys:
+        return
+
+    try:
+        object_storage.delete_objects(object_keys)
+    except FileStorageUnavailableError:
+        return

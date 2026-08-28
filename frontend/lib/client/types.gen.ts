@@ -690,20 +690,6 @@ export type KnowledgeBasesPublic = {
 };
 
 /**
- * KnowledgeDocumentArtifactPublic
- */
-export type KnowledgeDocumentArtifactPublic = {
-    /**
-     * Size
-     */
-    size: number;
-    /**
-     * Downloadurl
-     */
-    downloadUrl: string;
-};
-
-/**
  * KnowledgeDocumentChunkPublic
  */
 export type KnowledgeDocumentChunkPublic = {
@@ -723,6 +709,10 @@ export type KnowledgeDocumentChunkPublic = {
      * Page Numbers
      */
     page_numbers: Array<number>;
+    /**
+     * Image Urls
+     */
+    image_urls: Array<string>;
 };
 
 /**
@@ -2265,36 +2255,6 @@ export type KnowledgeDocumentsReadDocumentPreviewResponses = {
 };
 
 export type KnowledgeDocumentsReadDocumentPreviewResponse = KnowledgeDocumentsReadDocumentPreviewResponses[keyof KnowledgeDocumentsReadDocumentPreviewResponses];
-
-export type KnowledgeDocumentsReadDoclingDocumentData = {
-    body?: never;
-    path: {
-        /**
-         * Document Id
-         */
-        document_id: string;
-    };
-    query?: never;
-    url: '/api/v1/admin/knowledge-documents/{document_id}/docling-document';
-};
-
-export type KnowledgeDocumentsReadDoclingDocumentErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type KnowledgeDocumentsReadDoclingDocumentError = KnowledgeDocumentsReadDoclingDocumentErrors[keyof KnowledgeDocumentsReadDoclingDocumentErrors];
-
-export type KnowledgeDocumentsReadDoclingDocumentResponses = {
-    /**
-     * Successful Response
-     */
-    200: KnowledgeDocumentArtifactPublic;
-};
-
-export type KnowledgeDocumentsReadDoclingDocumentResponse = KnowledgeDocumentsReadDoclingDocumentResponses[keyof KnowledgeDocumentsReadDoclingDocumentResponses];
 
 export type KnowledgeDocumentsReadDocumentChunksData = {
     body?: never;

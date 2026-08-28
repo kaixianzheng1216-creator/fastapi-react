@@ -13,7 +13,6 @@ from app.modules.knowledge.schemas import (
     KnowledgeBasePublic,
     KnowledgeBasesPublic,
     KnowledgeBaseUpdate,
-    KnowledgeDocumentArtifactPublic,
     KnowledgeDocumentChunksPublic,
     KnowledgeDocumentPreviewPublic,
     KnowledgeDocumentPublic,
@@ -217,29 +216,6 @@ def read_document_preview(
 ) -> KnowledgeDocumentPreviewPublic:
     """获取知识库文档 Markdown 预览。"""
     return documents.get_preview(session=session, document_id=document_id)
-
-
-@document_router.get(
-    "/{document_id}/docling-document",
-    response_model=KnowledgeDocumentArtifactPublic,
-)
-def read_docling_document(
-    session: SessionDep,
-    document_id: uuid.UUID,
-) -> KnowledgeDocumentArtifactPublic:
-    """获取知识库文档 Docling JSON 下载地址。"""
-    object_key, size = documents.get_docling_document(
-        session=session,
-        document_id=document_id,
-    )
-
-    return KnowledgeDocumentArtifactPublic(
-        size=size,
-        download_url=object_storage.create_download_url(
-            object_key,
-            "document.json",
-        ),
-    )
 
 
 @document_router.get(

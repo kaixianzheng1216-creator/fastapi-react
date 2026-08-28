@@ -14,7 +14,21 @@ export function MarkdownContent({
 }: MarkdownContentProps) {
   return (
     <div className={cn("prose dark:prose-invert", className)}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{children}</ReactMarkdown>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          img: ({ node: _node, alt, ...properties }) => (
+            <img
+              {...properties}
+              alt={alt ?? ""}
+              loading="lazy"
+              decoding="async"
+            />
+          ),
+        }}
+      >
+        {children}
+      </ReactMarkdown>
     </div>
   );
 }
