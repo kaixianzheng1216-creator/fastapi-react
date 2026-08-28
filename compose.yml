@@ -32,11 +32,6 @@ services:
               "url": "http://litellm:4000/v1/chat/completions",
               "headers": {
                 "Authorization": "Bearer ${LITELLM_MASTER_KEY?Variable not set}"
-              },
-              "params": {
-                "thinking": {
-                  "type": "disabled"
-                }
               }
             },
             "model_spec": {
@@ -47,7 +42,7 @@ services:
             },
             "prompt": "请用中文简洁、准确地描述图片中的关键信息。图表需说明标题、指标、趋势和重要数值；不要猜测看不清的内容。",
             "generation_config": {
-              "max_new_tokens": 500
+              "max_new_tokens": 1000
             }
           }
         }

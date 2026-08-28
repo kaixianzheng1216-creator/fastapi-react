@@ -56,6 +56,7 @@ import { getPaginationHref } from "@/lib/pagination";
 
 const CHUNK_PAGE_SIZE = 20;
 const CHUNKS_ANCHOR = "document-chunks";
+const PREVIEW_STALE_TIME_MS = 50 * 60 * 1000;
 
 type KnowledgeDocumentPreviewProps = {
   knowledgeBaseId: string;
@@ -106,6 +107,7 @@ export function KnowledgeDocumentPreview({
     },
     enabled: activeView === "markdown",
     retry: false,
+    staleTime: PREVIEW_STALE_TIME_MS,
   });
 
   const downloadDocument = useMutation({
