@@ -21,8 +21,8 @@ services:
     environment:
       DOCLING_SERVE_MAX_FILE_SIZE: "104857600"
       DOCLING_SERVE_MAX_NUM_PAGES: "1000"
-      DOCLING_SERVE_MAX_SYNC_WAIT: "600"
-      DOCLING_SERVE_MAX_DOCUMENT_TIMEOUT: "600"
+      DOCLING_SERVE_MAX_SYNC_WAIT: "840"
+      DOCLING_SERVE_MAX_DOCUMENT_TIMEOUT: "840"
       DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "true"
       DOCLING_SERVE_CUSTOM_PICTURE_DESCRIPTION_PRESETS: |-
         {
@@ -30,6 +30,7 @@ services:
             "engine_options": {
               "engine_type": "api",
               "url": "http://litellm:4000/v1/chat/completions",
+              "concurrency": 3,
               "headers": {
                 "Authorization": "Bearer ${LITELLM_MASTER_KEY?Variable not set}"
               }
