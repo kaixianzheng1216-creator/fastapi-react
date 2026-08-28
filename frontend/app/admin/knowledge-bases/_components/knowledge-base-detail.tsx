@@ -47,6 +47,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -125,8 +126,9 @@ const sizeFormatter = new Intl.NumberFormat("zh-CN", {
   maximumFractionDigits: 1,
 });
 
-const scoreFormatter = new Intl.NumberFormat("zh-CN", {
-  maximumFractionDigits: 2,
+const similarityFormatter = new Intl.NumberFormat("zh-CN", {
+  style: "percent",
+  maximumFractionDigits: 0,
 });
 
 const statusLabels: Record<KnowledgeDocumentPublic["status"], string> = {
@@ -994,10 +996,28 @@ function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
             <CardTitle>
               {result.knowledge_base_name} · {result.filename}
             </CardTitle>
-            <CardDescription>
-              {formatSource(result.section_path, result.page_numbers)} · 相关度{" "}
-              {scoreFormatter.format(result.score)}
+            <CardDescription className="flex flex-wrap gap-x-4 gap-y-1">
+              <span>
+                <span className="font-medium text-foreground">章节：</span>
+                {result.section_path.length > 0
+                  ? result.section_path.join(" / ")
+                  : "未标注"}
+              </span>
+              <span>
+                <span className="font-medium text-foreground">页码：</span>
+                {result.page_numbers.length > 0
+                  ? `第 ${result.page_numbers.join("、")} 页`
+                  : "未标注"}
+              </span>
             </CardDescription>
+            <CardAction>
+              <Badge
+                variant="secondary"
+                className="px-2.5 py-1 font-semibold tabular-nums"
+              >
+                相似度 {similarityFormatter.format(result.score)}
+              </Badge>
+            </CardAction>
           </CardHeader>
           <CardContent className="space-y-4">
             {result.image_urls.length > 0 ? (
@@ -1068,15 +1088,6 @@ function formatFileSize(size: number): string {
   }
 
   return `${sizeFormatter.format(size / 1024 / 1024)} MB`;
-}
-
-function formatSource(sectionPath: string[], pageNumbers: number[]): string {
-  const parts = [
-    sectionPath.length > 0 ? sectionPath.join(" / ") : undefined,
-    pageNumbers.length > 0 ? `第 ${pageNumbers.join("、")} 页` : undefined,
-  ].filter(Boolean);
-
-  return parts.join(" · ") || "未标注位置";
 }
 
 function getDocumentsHref(knowledgeBaseId: string, page: number): string {
