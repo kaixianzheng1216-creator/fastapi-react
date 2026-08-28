@@ -23,6 +23,11 @@ class RegionalIndicator:
 
 REGIONAL_INDICATORS = (
     RegionalIndicator(
+        RegionalIndicatorCode.PER_CAPITA_GDP,
+        "人均地区生产总值",
+        "元/人",
+    ),
+    RegionalIndicator(
         RegionalIndicatorCode.RESIDENT_POPULATION,
         "年末常住人口",
         "万人",
@@ -31,11 +36,6 @@ REGIONAL_INDICATORS = (
         RegionalIndicatorCode.URBANIZATION_RATE,
         "城镇化率",
         "%",
-    ),
-    RegionalIndicator(
-        RegionalIndicatorCode.PER_CAPITA_GDP,
-        "人均地区生产总值",
-        "元/人",
     ),
     RegionalIndicator(
         RegionalIndicatorCode.DISPOSABLE_INCOME,
