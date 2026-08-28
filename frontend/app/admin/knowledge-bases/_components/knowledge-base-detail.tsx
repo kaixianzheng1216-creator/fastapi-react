@@ -112,6 +112,7 @@ import { getPaginationHref, parsePage } from "@/lib/pagination";
 
 const PAGE_SIZE = 20;
 const DOCUMENT_POLL_INTERVAL_MS = 3000;
+const SEARCH_STALE_TIME_MS = 50 * 60 * 1000;
 const DOCUMENTS_QUERY_KEY = ["knowledge-documents"] as const;
 const DOCUMENT_ACCEPT = DOCUMENT_CONTENT_TYPES.join(",");
 const EMPTY_DOCUMENTS: KnowledgeDocumentPublic[] = [];
@@ -901,6 +902,7 @@ function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
     enabled: Boolean(searchQuery),
     placeholderData: keepPreviousData,
     retry: false,
+    staleTime: SEARCH_STALE_TIME_MS,
   });
 
   const searchResults = searchKnowledge.data?.data;
@@ -997,7 +999,21 @@ function KnowledgeSearch({ knowledgeBaseId }: KnowledgeBaseDetailProps) {
               {scoreFormatter.format(result.score)}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {result.image_urls.length > 0 ? (
+              <div className="grid gap-3 md:grid-cols-2">
+                {result.image_urls.map((imageUrl, imageIndex) => (
+                  <img
+                    key={imageUrl}
+                    src={imageUrl}
+                    alt={`搜索结果关联图片 ${imageIndex + 1}`}
+                    className="max-h-96 w-full rounded-md border bg-muted object-contain"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ))}
+              </div>
+            ) : null}
             <p className="whitespace-pre-wrap break-words">{result.content}</p>
           </CardContent>
         </Card>

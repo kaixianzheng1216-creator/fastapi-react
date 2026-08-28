@@ -872,6 +872,10 @@ export type KnowledgeSearchResultPublic = {
      */
     page_numbers: Array<number>;
     /**
+     * Image Urls
+     */
+    image_urls: Array<string>;
+    /**
      * Score
      */
     score: number;

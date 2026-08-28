@@ -3,7 +3,7 @@ import uuid
 
 from sqlmodel import Session, col, select
 
-from app.modules.knowledge import embedding, vector_store
+from app.modules.knowledge import document_images, embedding, vector_store
 from app.modules.knowledge.exceptions import KnowledgeSearchUnavailableError
 from app.modules.knowledge.models import KnowledgeDocument, KnowledgeDocumentStatus
 from app.modules.knowledge.schemas import KnowledgeSearchResultPublic
@@ -38,10 +38,9 @@ def search_knowledge_base(
     try:
         query_vector = embedding.embed_texts([query])[0]
 
-        search_results = vector_store.search(
+        matches = vector_store.search(
             vector=query_vector,
             knowledge_base_id=knowledge_base_id,
-            knowledge_base_name=knowledge_base.name,
             document_ids=ready_document_ids,
             limit=SEARCH_RESULT_LIMIT,
         )
@@ -52,5 +51,32 @@ def search_knowledge_base(
         logger.exception(SEARCH_ERROR_LOG)
 
         raise KnowledgeSearchUnavailableError from error
+
+    search_results: list[KnowledgeSearchResultPublic] = []
+
+    for match in matches:
+        image_urls: list[str] = []
+
+        for image_name in match.image_names:
+            image_url = document_images.create_image_download_url(
+                match.document_id,
+                image_name,
+            )
+
+            image_urls.append(image_url)
+
+        search_results.append(
+            KnowledgeSearchResultPublic(
+                document_id=match.document_id,
+                chunk_index=match.chunk_index,
+                knowledge_base_name=knowledge_base.name,
+                filename=match.filename,
+                content=match.content,
+                section_path=match.section_path,
+                page_numbers=match.page_numbers,
+                image_urls=image_urls,
+                score=match.score,
+            )
+        )
 
     return search_results

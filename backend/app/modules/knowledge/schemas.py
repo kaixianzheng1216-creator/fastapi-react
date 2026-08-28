@@ -116,6 +116,7 @@ class KnowledgeSearchResultPublic(SQLModel):
     content: str
     section_path: list[str]
     page_numbers: list[int]
+    image_urls: list[str]
     score: float
 
 

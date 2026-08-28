@@ -8,7 +8,6 @@ from qdrant_client.http import models
 from qdrant_client.http.exceptions import ApiException
 
 from app.modules.knowledge.config import settings
-from app.modules.knowledge.schemas import KnowledgeSearchResultPublic
 
 COLLECTION_NAME = settings.QDRANT_COLLECTION_NAME
 VECTOR_NAME = "dense"
@@ -31,6 +30,18 @@ class DocumentChunk:
     section_path: list[str]
     page_numbers: list[int]
     image_names: list[str]
+
+
+@dataclass
+class SearchResult:
+    document_id: uuid.UUID
+    chunk_index: int
+    filename: str
+    content: str
+    section_path: list[str]
+    page_numbers: list[int]
+    image_names: list[str]
+    score: float
 
 
 def ensure_collection() -> None:
@@ -221,10 +232,9 @@ def search(
     *,
     vector: list[float],
     knowledge_base_id: uuid.UUID,
-    knowledge_base_name: str,
     document_ids: Sequence[uuid.UUID],
     limit: int,
-) -> list[KnowledgeSearchResultPublic]:
+) -> list[SearchResult]:
     """在指定知识库的可用文档中检索相关切片。"""
     if not document_ids:
         return []
@@ -256,7 +266,7 @@ def search(
     except ApiException as error:
         raise VectorStoreUnavailableError from error
 
-    results: list[KnowledgeSearchResultPublic] = []
+    results: list[SearchResult] = []
 
     for point in response.points:
         payload = point.payload
@@ -265,14 +275,14 @@ def search(
             raise RuntimeError("Qdrant 检索结果缺少 Payload")
 
         results.append(
-            KnowledgeSearchResultPublic(
+            SearchResult(
                 document_id=uuid.UUID(str(payload["document_id"])),
                 chunk_index=int(payload["chunk_index"]),
-                knowledge_base_name=knowledge_base_name,
                 filename=str(payload["filename"]),
                 content=str(payload["content"]),
                 section_path=[str(value) for value in payload.get("section_path", [])],
                 page_numbers=[int(value) for value in payload.get("page_numbers", [])],
+                image_names=[str(value) for value in payload.get("image_names", [])],
                 score=point.score,
             )
         )
