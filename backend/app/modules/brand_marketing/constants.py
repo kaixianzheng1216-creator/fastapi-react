@@ -4,9 +4,13 @@ from enum import StrEnum
 
 class RegionalIndicatorCode(StrEnum):
     RESIDENT_POPULATION = "resident_population"
+    URBANIZATION_RATE = "urbanization_rate"
     DISPOSABLE_INCOME = "disposable_income"
     CONSUMPTION_EXPENDITURE = "consumption_expenditure"
     RETAIL_SALES = "retail_sales"
+
+
+URBAN_POPULATION_INDICATOR_CODE = "urban_population"
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,6 +25,11 @@ REGIONAL_INDICATORS = (
         RegionalIndicatorCode.RESIDENT_POPULATION,
         "年末常住人口",
         "万人",
+    ),
+    RegionalIndicator(
+        RegionalIndicatorCode.URBANIZATION_RATE,
+        "城镇化率",
+        "%",
     ),
     RegionalIndicator(
         RegionalIndicatorCode.DISPOSABLE_INCOME,

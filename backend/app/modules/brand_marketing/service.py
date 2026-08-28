@@ -5,6 +5,7 @@ from sqlmodel import Session
 
 from app.modules.brand_marketing.constants import (
     REGIONAL_INDICATORS,
+    URBAN_POPULATION_INDICATOR_CODE,
     RegionalIndicatorCode,
 )
 from app.modules.brand_marketing.schemas import (
@@ -84,7 +85,7 @@ def get_regional_data(
                     ) AS previous_value
                 FROM province_annual_indicator
                 WHERE year IN (:year, :previous_year)
-            )
+            ), province_values AS (
             SELECT
                 province_code,
                 province_name,
@@ -94,6 +95,12 @@ def get_regional_data(
                 MAX(previous_value) FILTER (
                     WHERE indicator_code = :resident_population
                 ) AS previous_resident_population,
+                MAX(value) FILTER (
+                    WHERE indicator_code = :urban_population
+                ) AS urban_population,
+                MAX(previous_value) FILTER (
+                    WHERE indicator_code = :urban_population
+                ) AS previous_urban_population,
                 MAX(value) FILTER (
                     WHERE indicator_code = :disposable_income
                 ) AS disposable_income,
@@ -111,12 +118,25 @@ def get_regional_data(
                 ) AS retail_sales,
                 MAX(previous_value) FILTER (
                     WHERE indicator_code = :retail_sales
-                ) AS previous_retail_sales,
-                COUNT(*) OVER () AS total_count
+                ) AS previous_retail_sales
             FROM indicator_values
             WHERE year = :year
             GROUP BY province_code, province_name
-            ORDER BY {sort_by.value} {sort_order.value}, province_code
+            )
+            SELECT
+                *,
+                CASE
+                    WHEN resident_population > 0 AND urban_population IS NOT NULL
+                    THEN urban_population / resident_population
+                END AS urbanization_rate,
+                CASE
+                    WHEN previous_resident_population > 0
+                        AND previous_urban_population IS NOT NULL
+                    THEN previous_urban_population / previous_resident_population
+                END AS previous_urbanization_rate,
+                COUNT(*) OVER () AS total_count
+            FROM province_values
+            ORDER BY {sort_by.value} {sort_order.value} NULLS LAST, province_code
             LIMIT :limit OFFSET :skip
             """
             ),
@@ -126,6 +146,7 @@ def get_regional_data(
                 "limit": limit,
                 "skip": skip,
                 "resident_population": RegionalIndicatorCode.RESIDENT_POPULATION.value,
+                "urban_population": URBAN_POPULATION_INDICATOR_CODE,
                 "disposable_income": RegionalIndicatorCode.DISPOSABLE_INCOME.value,
                 "consumption_expenditure": RegionalIndicatorCode.CONSUMPTION_EXPENDITURE.value,
                 "retail_sales": RegionalIndicatorCode.RETAIL_SALES.value,
@@ -146,6 +167,11 @@ def get_regional_data(
                 resident_population_yoy=_calculate_yoy(
                     row["resident_population"],
                     row["previous_resident_population"],
+                ),
+                urbanization_rate=_to_float(row["urbanization_rate"]),
+                urbanization_rate_yoy=_calculate_difference(
+                    row["urbanization_rate"],
+                    row["previous_urbanization_rate"],
                 ),
                 disposable_income=float(row["disposable_income"]),
                 disposable_income_yoy=_calculate_yoy(
@@ -182,3 +208,17 @@ def _calculate_yoy(value: Decimal, previous_value: Decimal | None) -> float | No
         return None
 
     return float((value - previous_value) / previous_value)
+
+
+def _calculate_difference(
+    value: Decimal | None,
+    previous_value: Decimal | None,
+) -> float | None:
+    if value is None or previous_value is None:
+        return None
+
+    return float(value - previous_value)
+
+
+def _to_float(value: Decimal | None) -> float | None:
+    return None if value is None else float(value)

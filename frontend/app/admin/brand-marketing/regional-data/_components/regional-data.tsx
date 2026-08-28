@@ -133,14 +133,23 @@ function createRegionalColumns(
         },
         cell: ({ row }) => {
           const changeRate = row.original[getYoyCode(indicator.code)];
+          const value = row.original[indicator.code];
+          const isUrbanizationRate = indicator.code === "urbanization_rate";
 
           return (
             <div className="flex items-center justify-end gap-2">
               <span>
-                {numberFormatter.format(row.original[indicator.code])}
+                {value === null
+                  ? "—"
+                  : isUrbanizationRate
+                    ? percentFormatter.format(value)
+                    : numberFormatter.format(value)}
               </span>
               {previousYear === undefined ? null : (
-                <ChangeBadge value={changeRate} />
+                <ChangeBadge
+                  value={changeRate}
+                  percentagePoint={isUrbanizationRate}
+                />
               )}
             </div>
           );
@@ -403,7 +412,13 @@ export function RegionalData() {
   );
 }
 
-function ChangeBadge({ value }: { value: number | null }) {
+function ChangeBadge({
+  value,
+  percentagePoint = false,
+}: {
+  value: number | null;
+  percentagePoint?: boolean;
+}) {
   if (value === null) {
     return (
       <Badge variant="outline" aria-label="无同比数据">
@@ -415,15 +430,20 @@ function ChangeBadge({ value }: { value: number | null }) {
   const ChangeIcon =
     value > 0 ? ArrowUpRightIcon : value < 0 ? ArrowDownRightIcon : MinusIcon;
   const direction = value > 0 ? "上升" : value < 0 ? "下降" : "持平";
+  const formattedValue = percentFormatter.format(Math.abs(value));
+  const accessibleValue = percentagePoint
+    ? `${formattedValue}个百分点`
+    : formattedValue;
 
   return (
     <Badge
       variant="outline"
       className="min-w-16 justify-start tabular-nums"
-      aria-label={`同比${direction}${percentFormatter.format(Math.abs(value))}`}
+      aria-label={`同比${direction}${accessibleValue}`}
     >
       <ChangeIcon aria-hidden="true" />
-      {percentFormatter.format(Math.abs(value))}
+      {formattedValue}
+      {percentagePoint ? "pp" : null}
     </Badge>
   );
 }

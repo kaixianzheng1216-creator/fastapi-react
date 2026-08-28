@@ -7,6 +7,7 @@ from sqlalchemy import delete
 from sqlmodel import Session
 
 from app.modules.brand_marketing.constants import (
+    URBAN_POPULATION_INDICATOR_CODE,
     RegionalIndicatorCode,
 )
 from app.modules.brand_marketing.models import ProvinceAnnualIndicator
@@ -14,10 +15,11 @@ from app.modules.brand_marketing.models import ProvinceAnnualIndicator
 DATA_DIR = Path(__file__).resolve().parents[4] / "data"
 
 INDICATOR_FILENAMES = {
-    RegionalIndicatorCode.RESIDENT_POPULATION: "年末常住人口 (万人).xlsx",
-    RegionalIndicatorCode.DISPOSABLE_INCOME: "全体居民人均可支配收入 (元).xlsx",
-    RegionalIndicatorCode.CONSUMPTION_EXPENDITURE: "全体居民人均消费支出 (元).xlsx",
-    RegionalIndicatorCode.RETAIL_SALES: "社会消费品零售总额 (亿元).xlsx",
+    RegionalIndicatorCode.RESIDENT_POPULATION.value: "年末常住人口 (万人).xlsx",
+    URBAN_POPULATION_INDICATOR_CODE: "城镇人口 (万人).xlsx",
+    RegionalIndicatorCode.DISPOSABLE_INCOME.value: "全体居民人均可支配收入 (元).xlsx",
+    RegionalIndicatorCode.CONSUMPTION_EXPENDITURE.value: "全体居民人均消费支出 (元).xlsx",
+    RegionalIndicatorCode.RETAIL_SALES.value: "社会消费品零售总额 (亿元).xlsx",
 }
 
 PROVINCE_CODES = {
@@ -68,7 +70,7 @@ def import_regional_data(*, session: Session) -> None:
 
 
 def _read_workbook(
-    indicator_code: RegionalIndicatorCode,
+    indicator_code: str,
     filename: str,
 ) -> list[ProvinceAnnualIndicator]:
     with closing(load_workbook(DATA_DIR / filename, read_only=True)) as workbook:
@@ -106,13 +108,18 @@ def _read_workbook(
             province_names.add(province_name)
 
             for column_index, year in enumerate(years, start=1):
+                value = row[column_index]
+
+                if value is None or value == "":
+                    continue
+
                 records.append(
                     ProvinceAnnualIndicator(
-                        indicator_code=indicator_code.value,
+                        indicator_code=indicator_code,
                         province_code=PROVINCE_CODES[province_name],
                         province_name=province_name,
                         year=year,
-                        value=Decimal(str(row[column_index])),
+                        value=Decimal(str(value)),
                     )
                 )
 

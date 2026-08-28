@@ -946,6 +946,14 @@ export type ProvinceAnnualDataPublic = {
      */
     resident_population_yoy: number | null;
     /**
+     * Urbanization Rate
+     */
+    urbanization_rate: number | null;
+    /**
+     * Urbanization Rate Yoy
+     */
+    urbanization_rate_yoy: number | null;
+    /**
      * Disposable Income
      */
     disposable_income: number;
@@ -1004,7 +1012,7 @@ export type RegionalDataPublic = {
 /**
  * RegionalIndicatorCode
  */
-export type RegionalIndicatorCode = 'resident_population' | 'disposable_income' | 'consumption_expenditure' | 'retail_sales';
+export type RegionalIndicatorCode = 'resident_population' | 'urbanization_rate' | 'disposable_income' | 'consumption_expenditure' | 'retail_sales';
 
 /**
  * RegionalIndicatorPublic

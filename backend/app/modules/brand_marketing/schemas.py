@@ -21,6 +21,8 @@ class ProvinceAnnualDataPublic(SQLModel):
     province_name: str
     resident_population: float
     resident_population_yoy: float | None
+    urbanization_rate: float | None
+    urbanization_rate_yoy: float | None
     disposable_income: float
     disposable_income_yoy: float | None
     consumption_expenditure: float
