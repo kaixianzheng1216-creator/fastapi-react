@@ -83,6 +83,10 @@ const percentFormatter = new Intl.NumberFormat("zh-CN", {
   maximumFractionDigits: 1,
 });
 
+const percentagePointFormatter = new Intl.NumberFormat("zh-CN", {
+  maximumFractionDigits: 1,
+});
+
 const regionalTableFeatures = tableFeatures({
   rowPaginationFeature,
   rowSortingFeature,
@@ -145,7 +149,7 @@ function createRegionalColumns(
                     ? percentFormatter.format(value)
                     : numberFormatter.format(value)}
               </span>
-              {previousYear === undefined ? null : (
+              {previousYear === undefined || value === null ? null : (
                 <ChangeBadge
                   value={changeRate}
                   percentagePoint={isUrbanizationRate}
@@ -430,7 +434,9 @@ function ChangeBadge({
   const ChangeIcon =
     value > 0 ? ArrowUpRightIcon : value < 0 ? ArrowDownRightIcon : MinusIcon;
   const direction = value > 0 ? "上升" : value < 0 ? "下降" : "持平";
-  const formattedValue = percentFormatter.format(Math.abs(value));
+  const formattedValue = percentagePoint
+    ? percentagePointFormatter.format(Math.abs(value) * 100)
+    : percentFormatter.format(Math.abs(value));
   const accessibleValue = percentagePoint
     ? `${formattedValue}个百分点`
     : formattedValue;
