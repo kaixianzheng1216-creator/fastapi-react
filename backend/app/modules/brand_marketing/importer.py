@@ -17,6 +17,7 @@ DATA_DIR = Path(__file__).resolve().parents[4] / "data"
 INDICATOR_FILENAMES = {
     RegionalIndicatorCode.RESIDENT_POPULATION.value: "年末常住人口 (万人).xlsx",
     URBAN_POPULATION_INDICATOR_CODE: "城镇人口 (万人).xlsx",
+    RegionalIndicatorCode.PER_CAPITA_GDP.value: "人均地区生产总值 (元人).xlsx",
     RegionalIndicatorCode.DISPOSABLE_INCOME.value: "全体居民人均可支配收入 (元).xlsx",
     RegionalIndicatorCode.CONSUMPTION_EXPENDITURE.value: "全体居民人均消费支出 (元).xlsx",
     RegionalIndicatorCode.RETAIL_SALES.value: "社会消费品零售总额 (亿元).xlsx",

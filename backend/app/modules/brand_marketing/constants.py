@@ -5,6 +5,7 @@ from enum import StrEnum
 class RegionalIndicatorCode(StrEnum):
     RESIDENT_POPULATION = "resident_population"
     URBANIZATION_RATE = "urbanization_rate"
+    PER_CAPITA_GDP = "per_capita_gdp"
     DISPOSABLE_INCOME = "disposable_income"
     CONSUMPTION_EXPENDITURE = "consumption_expenditure"
     RETAIL_SALES = "retail_sales"
@@ -30,6 +31,11 @@ REGIONAL_INDICATORS = (
         RegionalIndicatorCode.URBANIZATION_RATE,
         "城镇化率",
         "%",
+    ),
+    RegionalIndicator(
+        RegionalIndicatorCode.PER_CAPITA_GDP,
+        "人均地区生产总值",
+        "元/人",
     ),
     RegionalIndicator(
         RegionalIndicatorCode.DISPOSABLE_INCOME,

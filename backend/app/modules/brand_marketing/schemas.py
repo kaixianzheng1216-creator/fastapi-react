@@ -23,6 +23,8 @@ class ProvinceAnnualDataPublic(SQLModel):
     resident_population_yoy: float | None
     urbanization_rate: float | None
     urbanization_rate_yoy: float | None
+    per_capita_gdp: float
+    per_capita_gdp_yoy: float | None
     disposable_income: float
     disposable_income_yoy: float | None
     consumption_expenditure: float

@@ -295,6 +295,7 @@ function DocumentChunksView({
     },
     placeholderData: keepPreviousData,
     retry: false,
+    staleTime: PREVIEW_STALE_TIME_MS,
   });
 
   if (chunksQuery.isPending) {

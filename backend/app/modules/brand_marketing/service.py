@@ -102,6 +102,12 @@ def get_regional_data(
                     WHERE indicator_code = :urban_population
                 ) AS previous_urban_population,
                 MAX(value) FILTER (
+                    WHERE indicator_code = :per_capita_gdp
+                ) AS per_capita_gdp,
+                MAX(previous_value) FILTER (
+                    WHERE indicator_code = :per_capita_gdp
+                ) AS previous_per_capita_gdp,
+                MAX(value) FILTER (
                     WHERE indicator_code = :disposable_income
                 ) AS disposable_income,
                 MAX(previous_value) FILTER (
@@ -147,6 +153,7 @@ def get_regional_data(
                 "skip": skip,
                 "resident_population": RegionalIndicatorCode.RESIDENT_POPULATION.value,
                 "urban_population": URBAN_POPULATION_INDICATOR_CODE,
+                "per_capita_gdp": RegionalIndicatorCode.PER_CAPITA_GDP.value,
                 "disposable_income": RegionalIndicatorCode.DISPOSABLE_INCOME.value,
                 "consumption_expenditure": RegionalIndicatorCode.CONSUMPTION_EXPENDITURE.value,
                 "retail_sales": RegionalIndicatorCode.RETAIL_SALES.value,
@@ -172,6 +179,11 @@ def get_regional_data(
                 urbanization_rate_yoy=_calculate_difference(
                     row["urbanization_rate"],
                     row["previous_urbanization_rate"],
+                ),
+                per_capita_gdp=float(row["per_capita_gdp"]),
+                per_capita_gdp_yoy=_calculate_yoy(
+                    row["per_capita_gdp"],
+                    row["previous_per_capita_gdp"],
                 ),
                 disposable_income=float(row["disposable_income"]),
                 disposable_income_yoy=_calculate_yoy(
