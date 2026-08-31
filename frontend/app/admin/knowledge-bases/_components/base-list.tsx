@@ -27,7 +27,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useMemo, useState } from "react";
 
 import { AppHeader } from "@/components/layout/app-header";
-import { KnowledgeBaseDialog } from "@/app/admin/knowledge-bases/_components/knowledge-base-dialog";
+import { KnowledgeBaseDialog } from "@/app/admin/knowledge-bases/_components/base-dialog";
 import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { SearchToolbar } from "@/components/shared/search-toolbar";
 import { PagePagination } from "@/components/shared/page-pagination";
@@ -59,7 +59,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { FieldLegend, FieldSet } from "@/components/ui/field";
+import { Field, FieldTitle } from "@/components/ui/field";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
@@ -112,12 +112,6 @@ export function KnowledgeBaseManager() {
   const search = searchParams.get("search")?.trim() ?? "";
   const status = getStatusFilter(searchParams.get("status"));
 
-  const [createOpen, setCreateOpen] = useState(false);
-  const [knowledgeBaseToEdit, setKnowledgeBaseToEdit] =
-    useState<KnowledgeBasePublic>();
-  const [knowledgeBaseToDelete, setKnowledgeBaseToDelete] =
-    useState<KnowledgeBasePublic>();
-
   const knowledgeBasesQuery = useQuery({
     queryKey: [
       ...KNOWLEDGE_BASES_QUERY_KEY,
@@ -144,6 +138,39 @@ export function KnowledgeBaseManager() {
     retry: false,
   });
 
+  const knowledgeBases = knowledgeBasesQuery.data?.data ?? EMPTY_KNOWLEDGE_BASES;
+
+  const loadError = knowledgeBasesQuery.error
+    ? getApiErrorMessage(knowledgeBasesQuery.error, "读取知识库列表失败")
+    : "";
+
+  function submitSearch(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+
+    const nextSearch = String(formData.get("search") ?? "").trim();
+
+    router.push(getKnowledgeBasesHref(1, nextSearch, status));
+  }
+
+  function changeStatus(nextStatus: string): void {
+    if (nextStatus) {
+      router.push(
+        getKnowledgeBasesHref(1, search, nextStatus as StatusFilter),
+      );
+    }
+  }
+
+  async function refreshKnowledgeBases(): Promise<void> {
+    await queryClient.invalidateQueries({ queryKey: KNOWLEDGE_BASES_QUERY_KEY });
+  }
+
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const [knowledgeBaseToEdit, setKnowledgeBaseToEdit] =
+    useState<KnowledgeBasePublic>();
+
   const updateStatus = useMutation({
     mutationFn: async (knowledgeBase: KnowledgeBasePublic): Promise<void> => {
       await knowledgeBasesUpdateKnowledgeBase({
@@ -156,6 +183,15 @@ export function KnowledgeBaseManager() {
       await refreshKnowledgeBases();
     },
   });
+
+  const changeKnowledgeBaseStatus = updateStatus.mutate;
+
+  const statusError = updateStatus.error
+    ? getApiErrorMessage(updateStatus.error, "更新知识库状态失败")
+    : "";
+
+  const [knowledgeBaseToDelete, setKnowledgeBaseToDelete] =
+    useState<KnowledgeBasePublic>();
 
   const deleteKnowledgeBase = useMutation({
     mutationFn: async (knowledgeBaseId: string): Promise<void> => {
@@ -170,14 +206,24 @@ export function KnowledgeBaseManager() {
           getKnowledgeBasesHref(currentPage - 1, search, status),
         );
       }
+
       setKnowledgeBaseToDelete(undefined);
+
       await refreshKnowledgeBases();
     },
   });
 
-  const changeKnowledgeBaseStatus = updateStatus.mutate;
   const resetDelete = deleteKnowledgeBase.reset;
-  const knowledgeBases = knowledgeBasesQuery.data?.data ?? EMPTY_KNOWLEDGE_BASES;
+
+  const deleteError = deleteKnowledgeBase.error
+    ? getApiErrorMessage(deleteKnowledgeBase.error, "删除知识库失败")
+    : "";
+
+  function closeDeleteDialog(open: boolean): void {
+    if (!open && !deleteKnowledgeBase.isPending) {
+      setKnowledgeBaseToDelete(undefined);
+    }
+  }
 
   const columns = useMemo(
     () =>
@@ -285,40 +331,6 @@ export function KnowledgeBaseManager() {
   const rows = table.getRowModel().rows;
   const pageOutOfRange =
     (knowledgeBasesQuery.data?.count ?? 0) > 0 && rows.length === 0;
-  const loadError = knowledgeBasesQuery.error
-    ? getApiErrorMessage(knowledgeBasesQuery.error, "读取知识库列表失败")
-    : "";
-  const statusError = updateStatus.error
-    ? getApiErrorMessage(updateStatus.error, "更新知识库状态失败")
-    : "";
-  const deleteError = deleteKnowledgeBase.error
-    ? getApiErrorMessage(deleteKnowledgeBase.error, "删除知识库失败")
-    : "";
-
-  async function refreshKnowledgeBases(): Promise<void> {
-    await queryClient.invalidateQueries({ queryKey: KNOWLEDGE_BASES_QUERY_KEY });
-  }
-
-  function submitSearch(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const nextSearch = String(formData.get("search") ?? "").trim();
-    router.push(getKnowledgeBasesHref(1, nextSearch, status));
-  }
-
-  function changeStatus(nextStatus: string): void {
-    if (nextStatus) {
-      router.push(
-        getKnowledgeBasesHref(1, search, nextStatus as StatusFilter),
-      );
-    }
-  }
-
-  function closeDeleteDialog(open: boolean): void {
-    if (!open && !deleteKnowledgeBase.isPending) {
-      setKnowledgeBaseToDelete(undefined);
-    }
-  }
 
   return (
     <>
@@ -348,22 +360,22 @@ export function KnowledgeBaseManager() {
               defaultValue={search}
             />
 
-            <FieldSet className="w-auto flex-row items-center gap-3">
-              <FieldLegend variant="label" className="mb-0">
+            <Field orientation="horizontal" className="w-auto">
+              <FieldTitle id="knowledge-base-status">
                 状态
-              </FieldLegend>
+              </FieldTitle>
               <ToggleGroup
                 type="single"
                 variant="outline"
                 value={status}
                 onValueChange={changeStatus}
-                aria-label="知识库状态筛选"
+                aria-labelledby="knowledge-base-status"
               >
                 <ToggleGroupItem value="all">全部</ToggleGroupItem>
                 <ToggleGroupItem value="enabled">已启用</ToggleGroupItem>
                 <ToggleGroupItem value="disabled">已停用</ToggleGroupItem>
               </ToggleGroup>
-            </FieldSet>
+            </Field>
           </div>
 
           {statusError && (
@@ -421,9 +433,7 @@ export function KnowledgeBaseManager() {
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                       <TableHead key={header.id}>
-                        {header.isPlaceholder ? null : (
-                          <table.FlexRender header={header} />
-                        )}
+                        <table.FlexRender header={header} />
                       </TableHead>
                     ))}
                   </TableRow>
@@ -502,6 +512,7 @@ export function KnowledgeBaseManager() {
               disabled={deleteKnowledgeBase.isPending}
               onClick={(event) => {
                 event.preventDefault();
+
                 if (knowledgeBaseToDelete) {
                   deleteKnowledgeBase.mutate(knowledgeBaseToDelete.id);
                 }
@@ -533,6 +544,7 @@ function getKnowledgeBasesHref(
   status: StatusFilter,
 ): string {
   const parameters = new URLSearchParams();
+
   if (search) {
     parameters.set("search", search);
   }

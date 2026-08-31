@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-} from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import {
   AlertCircleIcon,
   ArrowLeftIcon,
@@ -36,12 +32,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   knowledgeDocumentsReadDocument,
@@ -52,7 +43,8 @@ import {
   downloadMarkdownKnowledgeDocument,
   downloadOriginalKnowledgeDocument,
 } from "@/lib/knowledge-document-download";
-import { getPaginationHref } from "@/lib/pagination";
+import { getPaginationHref, parsePage } from "@/lib/pagination";
+import { getKnowledgeDirectoryHref } from "@/app/admin/knowledge-bases/_lib/navigation";
 
 const CHUNK_PAGE_SIZE = 20;
 const CHUNKS_ANCHOR = "document-chunks";
@@ -71,15 +63,6 @@ export function KnowledgeDocumentPreview({
   const searchParams = useSearchParams();
   const documentPath = `/admin/knowledge-bases/${knowledgeBaseId}/documents/${documentId}`;
 
-  const viewParameter = searchParams.get("view");
-  const activeView = viewParameter === "chunks" ? viewParameter : "markdown";
-
-  const chunkPageParameter = Number(searchParams.get("chunkPage"));
-  const chunkPage =
-    Number.isInteger(chunkPageParameter) && chunkPageParameter > 0
-      ? chunkPageParameter
-      : 1;
-
   const documentQuery = useQuery({
     queryKey: ["knowledge-document", documentId],
     queryFn: async ({ signal }) => {
@@ -94,28 +77,9 @@ export function KnowledgeDocumentPreview({
     retry: false,
   });
 
-  const previewQuery = useQuery({
-    queryKey: ["knowledge-document-preview", documentId],
-    queryFn: async ({ signal }) => {
-      const { data } = await knowledgeDocumentsReadDocumentPreview({
-        path: { document_id: documentId },
-        signal,
-        throwOnError: true,
-      });
+  const viewParameter = searchParams.get("view");
 
-      return data;
-    },
-    enabled: activeView === "markdown",
-    retry: false,
-    staleTime: PREVIEW_STALE_TIME_MS,
-  });
-
-  const downloadDocument = useMutation({
-    mutationFn: (format: "original" | "markdown") =>
-      format === "original"
-        ? downloadOriginalKnowledgeDocument(documentId)
-        : downloadMarkdownKnowledgeDocument(documentId),
-  });
+  const activeView = viewParameter === "chunks" ? viewParameter : "markdown";
 
   function changeView(view: string): void {
     const parameters = new URLSearchParams(searchParams);
@@ -137,12 +101,42 @@ export function KnowledgeDocumentPreview({
     });
   }
 
+  const previewQuery = useQuery({
+    queryKey: ["knowledge-document-preview", documentId],
+    queryFn: async ({ signal }) => {
+      const { data } = await knowledgeDocumentsReadDocumentPreview({
+        path: { document_id: documentId },
+        signal,
+        throwOnError: true,
+      });
+
+      return data;
+    },
+    enabled: activeView === "markdown",
+    retry: false,
+    staleTime: PREVIEW_STALE_TIME_MS,
+  });
+
+  const chunkPageParameter = Number(searchParams.get("chunkPage"));
+  const chunkPage =
+    Number.isInteger(chunkPageParameter) && chunkPageParameter > 0
+      ? chunkPageParameter
+      : 1;
+
   function getChunkPageHref(page: number): string {
     const parameters = new URLSearchParams(searchParams);
+
     parameters.set("view", "chunks");
 
     return `${getPaginationHref(documentPath, page, parameters, "chunkPage")}#${CHUNKS_ANCHOR}`;
   }
+
+  const downloadDocument = useMutation({
+    mutationFn: (format: "original" | "markdown") =>
+      format === "original"
+        ? downloadOriginalKnowledgeDocument(documentId)
+        : downloadMarkdownKnowledgeDocument(documentId),
+  });
 
   return (
     <>
@@ -151,8 +145,12 @@ export function KnowledgeDocumentPreview({
         left={
           <Button variant="ghost" size="icon-sm" asChild>
             <Link
-              href={`/admin/knowledge-bases/${knowledgeBaseId}`}
-              aria-label="返回知识库详情"
+              href={getKnowledgeDirectoryHref(
+                knowledgeBaseId,
+                parsePage(searchParams.get("page")),
+                searchParams.get("folder") ?? undefined,
+              )}
+              aria-label="返回文档目录"
             >
               <ArrowLeftIcon aria-hidden="true" />
             </Link>
@@ -191,7 +189,7 @@ export function KnowledgeDocumentPreview({
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+        <div className="mx-auto flex max-w-5xl flex-col gap-6">
           {downloadDocument.error && (
             <Alert variant="destructive">
               <AlertCircleIcon aria-hidden="true" />
@@ -210,10 +208,7 @@ export function KnowledgeDocumentPreview({
             </Alert>
           )}
 
-          <Tabs
-            value={activeView}
-            onValueChange={changeView}
-          >
+          <Tabs value={activeView} onValueChange={changeView} className="gap-6">
             <TabsList>
               <TabsTrigger value="markdown">
                 <FileTextIcon aria-hidden="true" />
@@ -225,10 +220,7 @@ export function KnowledgeDocumentPreview({
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent
-              value="markdown"
-              className="pt-4"
-            >
+            <TabsContent value="markdown">
               {previewQuery.isPending ? (
                 <div className="flex flex-col gap-4">
                   <Skeleton className="h-8 w-1/3" />
@@ -250,10 +242,7 @@ export function KnowledgeDocumentPreview({
               )}
             </TabsContent>
 
-            <TabsContent
-              value="chunks"
-              className="pt-4"
-            >
+            <TabsContent value="chunks">
               <div id={CHUNKS_ANCHOR} className="scroll-mt-4">
                 <DocumentChunksView
                   documentId={documentId}
@@ -342,14 +331,14 @@ function DocumentChunksView({
   return (
     <div className="flex flex-col gap-4">
       {chunksQuery.data.data.map((chunk) => (
-        <Card key={chunk.chunk_index}>
+        <Card key={chunk.chunk_index} className="wrap-anywhere">
           <CardHeader>
             <CardTitle>切片 {chunk.chunk_index + 1}</CardTitle>
             <CardDescription>
               {formatChunkLocation(chunk.section_path, chunk.page_numbers)}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="flex flex-col gap-4">
             {chunk.image_urls.length > 0 && (
               <div className="grid gap-3 md:grid-cols-2">
                 {chunk.image_urls.map((imageUrl, imageIndex) => (
@@ -357,16 +346,14 @@ function DocumentChunksView({
                     key={imageUrl}
                     src={imageUrl}
                     alt={`切片 ${chunk.chunk_index + 1} 关联图片 ${imageIndex + 1}`}
-                    className="max-h-96 w-full rounded-md border bg-muted object-contain"
+                    className="max-h-96 w-full object-contain"
                     loading="lazy"
                     decoding="async"
                   />
                 ))}
               </div>
             )}
-            <p className="whitespace-pre-wrap text-sm leading-relaxed">
-              {chunk.content}
-            </p>
+            <p className="whitespace-pre-wrap">{chunk.content}</p>
           </CardContent>
         </Card>
       ))}

@@ -55,6 +55,7 @@ export function KnowledgeBaseDialog({
   onSaved,
 }: KnowledgeBaseDialogProps) {
   const isEditing = knowledgeBase !== undefined;
+
   const form = useForm<KnowledgeBaseValues>({
     resolver: zodResolver(knowledgeBaseSchema),
     defaultValues: {
@@ -74,6 +75,7 @@ export function KnowledgeBaseDialog({
           },
           throwOnError: true,
         });
+
         return;
       }
 
@@ -94,6 +96,16 @@ export function KnowledgeBaseDialog({
       )
     : "";
 
+  function submitKnowledgeBase(values: KnowledgeBaseValues): void {
+    saveKnowledgeBase.mutate(values, {
+      onSuccess: () => {
+        form.reset();
+        onOpenChange(false);
+        onSaved();
+      },
+    });
+  }
+
   function handleOpenChange(nextOpen: boolean): void {
     if (!nextOpen && saveKnowledgeBase.isPending) {
       return;
@@ -105,16 +117,6 @@ export function KnowledgeBaseDialog({
     }
 
     onOpenChange(nextOpen);
-  }
-
-  function submitKnowledgeBase(values: KnowledgeBaseValues): void {
-    saveKnowledgeBase.mutate(values, {
-      onSuccess: () => {
-        form.reset();
-        onOpenChange(false);
-        onSaved();
-      },
-    });
   }
 
   return (
