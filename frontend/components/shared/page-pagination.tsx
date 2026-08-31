@@ -24,7 +24,7 @@ export function PagePagination({
   getPageHref,
   className,
 }: PagePaginationProps) {
-  if (pageCount <= 1 || currentPage > pageCount) {
+  if (pageCount < 1 || currentPage > pageCount) {
     return null;
   }
 

@@ -29,6 +29,10 @@ export const CHAT_CONTENT_TYPES: readonly string[] = [
 export const MAX_FILE_SIZE = 100 * 1024 * 1024;
 export const MAX_FILE_COUNT = 9;
 
+const sizeFormatter = new Intl.NumberFormat("zh-CN", {
+  maximumFractionDigits: 1,
+});
+
 const CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
   csv: "text/csv",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -52,4 +56,12 @@ export function getFileContentType(file: File): string | undefined {
   const extension = file.name.split(".").pop()?.toLowerCase();
 
   return extension ? CONTENT_TYPE_BY_EXTENSION[extension] : undefined;
+}
+
+export function formatFileSize(size: number): string {
+  if (size < 1024 * 1024) {
+    return `${sizeFormatter.format(size / 1024)} KB`;
+  }
+
+  return `${sizeFormatter.format(size / 1024 / 1024)} MB`;
 }
