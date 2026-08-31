@@ -1,13 +1,18 @@
 import uuid
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
-from pydantic import HttpUrl, StringConstraints, field_validator
+from pydantic import HttpUrl, StringConstraints, field_validator, model_validator
 from sqlmodel import Field, SQLModel
 
 from app.modules.knowledge.models import KnowledgeDocumentStatus
 
 KnowledgeBaseName = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=100),
+]
+
+KnowledgeFolderName = Annotated[
     str,
     StringConstraints(strip_whitespace=True, min_length=1, max_length=100),
 ]
@@ -54,19 +59,51 @@ class KnowledgeBasesPublic(SQLModel):
     count: int
 
 
-class KnowledgeDocumentUploadPublic(SQLModel):
+class KnowledgeFolderCreate(SQLModel):
+    name: KnowledgeFolderName
+    parent_id: uuid.UUID | None = None
+
+
+class KnowledgeFolderUpdate(SQLModel):
+    name: KnowledgeFolderName
+
+
+class KnowledgeFolderMove(SQLModel):
+    parent_id: uuid.UUID | None
+
+
+class KnowledgeFolderPublic(SQLModel):
     id: uuid.UUID
-    upload_url: str = Field(serialization_alias="uploadUrl")
-    upload_headers: dict[str, str] = Field(serialization_alias="uploadHeaders")
+    knowledge_base_id: uuid.UUID
+    parent_id: uuid.UUID | None
+    name: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class KnowledgeFoldersPublic(SQLModel):
+    data: list[KnowledgeFolderPublic]
+    count: int
 
 
 class KnowledgeWebpageCreate(SQLModel):
     url: HttpUrl
 
 
+class KnowledgeDocumentMove(SQLModel):
+    folder_id: uuid.UUID | None
+
+
+class KnowledgeDocumentUploadPublic(SQLModel):
+    id: uuid.UUID
+    upload_url: str = Field(serialization_alias="uploadUrl")
+    upload_headers: dict[str, str] = Field(serialization_alias="uploadHeaders")
+
+
 class KnowledgeDocumentPublic(SQLModel):
     id: uuid.UUID
     knowledge_base_id: uuid.UUID
+    folder_id: uuid.UUID | None
     filename: str
     content_type: str
     size: int
@@ -78,8 +115,34 @@ class KnowledgeDocumentPublic(SQLModel):
     updated_at: datetime
 
 
-class KnowledgeDocumentsPublic(SQLModel):
-    data: list[KnowledgeDocumentPublic]
+class KnowledgeFolderEntryPublic(KnowledgeFolderPublic):
+    type: Literal["folder"]
+
+
+class KnowledgeDocumentEntryPublic(KnowledgeDocumentPublic):
+    type: Literal["document"]
+
+
+KnowledgeDirectoryEntryPublic = Annotated[
+    KnowledgeFolderEntryPublic | KnowledgeDocumentEntryPublic,
+    Field(discriminator="type"),
+]
+
+
+class KnowledgeDirectoryDelete(SQLModel):
+    folder_ids: set[uuid.UUID] = Field(default_factory=set)
+    document_ids: set[uuid.UUID] = Field(default_factory=set)
+
+    @model_validator(mode="after")
+    def validate_entries(self) -> KnowledgeDirectoryDelete:
+        if not self.folder_ids and not self.document_ids:
+            raise ValueError("至少选择一个文件夹或文档")
+
+        return self
+
+
+class KnowledgeDirectoryPublic(SQLModel):
+    data: list[KnowledgeDirectoryEntryPublic]
     count: int
 
 

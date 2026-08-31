@@ -1,7 +1,7 @@
 import uuid
 from enum import StrEnum
 
-from sqlalchemy import String, Text
+from sqlalchemy import ForeignKeyConstraint, String, Text, UniqueConstraint
 from sqlmodel import Field
 
 from app.db.timestamps import TimestampMixin
@@ -16,6 +16,38 @@ class KnowledgeBase(TimestampMixin, table=True):
     is_enabled: bool = False
 
 
+class KnowledgeFolder(TimestampMixin, table=True):
+    __tablename__ = "knowledge_folder"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["knowledge_base_id", "parent_id"],
+            ["knowledge_folder.knowledge_base_id", "knowledge_folder.id"],
+            name="fk_knowledge_folder_parent",
+            ondelete="CASCADE",
+        ),
+        UniqueConstraint(
+            "knowledge_base_id",
+            "id",
+            name="uq_knowledge_folder_knowledge_base_id_id",
+        ),
+        UniqueConstraint(
+            "knowledge_base_id",
+            "parent_id",
+            "name",
+            name="uq_knowledge_folder_parent_name",
+            postgresql_nulls_not_distinct=True,
+        ),
+    )
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    knowledge_base_id: uuid.UUID = Field(
+        foreign_key="knowledge_base.id",
+        ondelete="CASCADE",
+    )
+    parent_id: uuid.UUID | None = None
+    name: str = Field(max_length=100)
+
+
 class KnowledgeDocumentStatus(StrEnum):
     PENDING = "pending"
     PROCESSING = "processing"
@@ -26,10 +58,25 @@ class KnowledgeDocumentStatus(StrEnum):
 
 class KnowledgeDocument(TimestampMixin, table=True):
     __tablename__ = "knowledge_document"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["knowledge_base_id", "folder_id"],
+            ["knowledge_folder.knowledge_base_id", "knowledge_folder.id"],
+            name="fk_knowledge_document_folder",
+            ondelete="CASCADE",
+        ),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    knowledge_base_id: uuid.UUID = Field(foreign_key="knowledge_base.id")
-    stored_file_id: uuid.UUID = Field(foreign_key="stored_file.id", unique=True)
+    knowledge_base_id: uuid.UUID = Field(
+        foreign_key="knowledge_base.id",
+        ondelete="CASCADE",
+    )
+    folder_id: uuid.UUID | None = None
+    stored_file_id: uuid.UUID = Field(
+        foreign_key="stored_file.id",
+        unique=True,
+    )
     source_url: str | None = Field(default=None, max_length=2083)
     status: KnowledgeDocumentStatus = Field(
         default=KnowledgeDocumentStatus.PENDING,

@@ -3,7 +3,7 @@ import logging
 import uuid
 from collections.abc import Sequence
 
-from sqlmodel import Session, col, func, select
+from sqlmodel import Session, col, select
 
 from app.modules.files import object_storage
 from app.modules.files.constants import DOCUMENT_CONTENT_TYPES
@@ -51,6 +51,7 @@ def create_upload(
     session: Session,
     current_user: User,
     knowledge_base_id: uuid.UUID,
+    folder_id: uuid.UUID | None,
     upload_request: FileUploadRequest,
 ) -> KnowledgeDocumentUploadPublic:
     if upload_request.content_type not in DOCUMENT_CONTENT_TYPES:
@@ -76,6 +77,7 @@ def create_upload(
     document = KnowledgeDocument(
         id=document_id,
         knowledge_base_id=knowledge_base_id,
+        folder_id=folder_id,
         stored_file_id=file_id,
     )
 
@@ -92,11 +94,69 @@ def create_upload(
     )
 
 
+async def complete_upload(
+    *, session: Session, document_id: uuid.UUID
+) -> KnowledgeDocumentPublic:
+    document, stored_file = _get_document_with_file(
+        session=session,
+        document_id=document_id,
+    )
+
+    if stored_file.uploaded:
+        return to_public(document, stored_file)
+
+    object_key = stored_file.object_key
+    expected_size = stored_file.size
+
+    session.rollback()
+
+    try:
+        metadata = await asyncio.to_thread(object_storage.head_object, object_key)
+    except FileNotFoundError:
+        raise FileUploadIncompleteError from None
+
+    if int(metadata["Content-Length"]) != expected_size:
+        document, stored_file = _get_document_with_file(
+            session=session,
+            document_id=document_id,
+            for_update=True,
+        )
+
+        if not stored_file.uploaded:
+            object_key = stored_file.object_key
+
+            session.delete(document)
+            session.flush()
+
+            session.delete(stored_file)
+            session.commit()
+
+            await asyncio.to_thread(cleanup_objects, [object_key])
+
+        raise FileSizeMismatchError
+
+    document, stored_file = _get_document_with_file(
+        session=session,
+        document_id=document_id,
+        for_update=True,
+    )
+
+    if stored_file.uploaded:
+        return to_public(document, stored_file)
+
+    stored_file.uploaded = True
+
+    session.commit()
+
+    return to_public(document, stored_file)
+
+
 async def create_webpage(
     *,
     session: Session,
     current_user: User,
     knowledge_base_id: uuid.UUID,
+    folder_id: uuid.UUID | None,
     source_url: str,
     filename: str,
     content: bytes,
@@ -130,6 +190,7 @@ async def create_webpage(
     document = KnowledgeDocument(
         id=document_id,
         knowledge_base_id=knowledge_base_id,
+        folder_id=folder_id,
         stored_file_id=file_id,
         source_url=source_url,
     )
@@ -148,71 +209,6 @@ async def create_webpage(
         raise
 
     return to_public(document, stored_file)
-
-
-async def complete_upload(
-    *, session: Session, document_id: uuid.UUID
-) -> KnowledgeDocumentPublic:
-    document, stored_file = _get_document_with_file(
-        session=session,
-        document_id=document_id,
-    )
-
-    if stored_file.uploaded:
-        return to_public(document, stored_file)
-
-    object_key = stored_file.object_key
-    expected_size = stored_file.size
-
-    session.rollback()
-
-    try:
-        metadata = await asyncio.to_thread(object_storage.head_object, object_key)
-    except FileNotFoundError:
-        raise FileUploadIncompleteError from None
-
-    if int(metadata["Content-Length"]) != expected_size:
-        await _delete_invalid_upload(session, document_id)
-        raise FileSizeMismatchError
-
-    document, stored_file = _get_document_with_file(
-        session=session,
-        document_id=document_id,
-        for_update=True,
-    )
-
-    if stored_file.uploaded:
-        return to_public(document, stored_file)
-
-    stored_file.uploaded = True
-    session.commit()
-
-    return to_public(document, stored_file)
-
-
-def list_documents(
-    *,
-    session: Session,
-    knowledge_base_id: uuid.UUID,
-    skip: int,
-    limit: int,
-) -> tuple[Sequence[tuple[KnowledgeDocument, StoredFile]], int]:
-    condition = col(KnowledgeDocument.knowledge_base_id) == knowledge_base_id
-
-    count = session.exec(
-        select(func.count()).select_from(KnowledgeDocument).where(condition)
-    ).one()
-
-    statement = (
-        select(KnowledgeDocument, StoredFile)
-        .join(StoredFile, col(StoredFile.id) == KnowledgeDocument.stored_file_id)
-        .where(condition)
-        .order_by(col(KnowledgeDocument.created_at).desc())
-        .offset(skip)
-        .limit(limit)
-    )
-
-    return session.exec(statement).all(), count
 
 
 def get_document(
@@ -331,23 +327,22 @@ def retry_document(*, session: Session, document_id: uuid.UUID) -> None:
 
     document.status = KnowledgeDocumentStatus.PENDING
     document.error_message = None
+
     session.commit()
 
 
 def delete_document(*, session: Session, document_id: uuid.UUID) -> None:
-    document, stored_file = _get_document_with_file(
+    row = _get_document_with_file(
         session=session,
         document_id=document_id,
         for_update=True,
     )
 
-    document_ids, object_keys = _delete_document_records(
-        session,
-        [(document, stored_file)],
-    )
+    deleted_document_ids, object_keys = delete_document_records(session, [row])
+
     session.commit()
 
-    cleanup_deleted_documents(document_ids, object_keys, delete_images=True)
+    cleanup_deleted_documents(deleted_document_ids, object_keys, delete_images=True)
 
 
 def delete_knowledge_base_documents(
@@ -360,25 +355,35 @@ def delete_knowledge_base_documents(
         .with_for_update()
     ).all()
 
-    return _delete_document_records(session, rows)
+    return delete_document_records(session, rows)
 
 
-def to_public(
-    document: KnowledgeDocument, stored_file: StoredFile
-) -> KnowledgeDocumentPublic:
-    return KnowledgeDocumentPublic(
-        id=document.id,
-        knowledge_base_id=document.knowledge_base_id,
-        filename=stored_file.filename,
-        content_type=stored_file.content_type,
-        size=stored_file.size,
-        uploaded=stored_file.uploaded,
-        source_url=document.source_url,
-        status=document.status,
-        error_message=document.error_message,
-        created_at=document.created_at,
-        updated_at=document.updated_at,
-    )
+def delete_document_records(
+    session: Session,
+    rows: Sequence[tuple[KnowledgeDocument, StoredFile]],
+) -> tuple[list[uuid.UUID], list[str]]:
+    document_ids: list[uuid.UUID] = []
+    object_keys: list[str] = []
+
+    for document, stored_file in rows:
+        document_ids.append(document.id)
+
+        object_keys.extend(
+            [
+                stored_file.object_key,
+                document_json_key(document.id),
+                document_preview_key(document.id),
+            ]
+        )
+
+        session.delete(document)
+
+    session.flush()
+
+    for _, stored_file in rows:
+        session.delete(stored_file)
+
+    return document_ids, object_keys
 
 
 def cleanup_deleted_documents(
@@ -409,6 +414,25 @@ def cleanup_deleted_documents(
     cleanup_objects(object_keys)
 
 
+def to_public(
+    document: KnowledgeDocument, stored_file: StoredFile
+) -> KnowledgeDocumentPublic:
+    return KnowledgeDocumentPublic(
+        id=document.id,
+        knowledge_base_id=document.knowledge_base_id,
+        folder_id=document.folder_id,
+        filename=stored_file.filename,
+        content_type=stored_file.content_type,
+        size=stored_file.size,
+        uploaded=stored_file.uploaded,
+        source_url=document.source_url,
+        status=document.status,
+        error_message=document.error_message,
+        created_at=document.created_at,
+        updated_at=document.updated_at,
+    )
+
+
 def _get_document_with_file(
     *, session: Session, document_id: uuid.UUID, for_update: bool = False
 ) -> tuple[KnowledgeDocument, StoredFile]:
@@ -427,53 +451,3 @@ def _get_document_with_file(
         raise KnowledgeDocumentNotFoundError
 
     return result
-
-
-async def _delete_invalid_upload(
-    session: Session,
-    document_id: uuid.UUID,
-) -> None:
-    document, stored_file = _get_document_with_file(
-        session=session,
-        document_id=document_id,
-        for_update=True,
-    )
-
-    if stored_file.uploaded:
-        return
-
-    object_key = stored_file.object_key
-
-    session.delete(document)
-    session.flush()
-    session.delete(stored_file)
-    session.commit()
-
-    await asyncio.to_thread(cleanup_objects, [object_key])
-
-
-def _delete_document_records(
-    session: Session,
-    rows: Sequence[tuple[KnowledgeDocument, StoredFile]],
-) -> tuple[list[uuid.UUID], list[str]]:
-    document_ids: list[uuid.UUID] = []
-    object_keys: list[str] = []
-
-    for document, stored_file in rows:
-        document_ids.append(document.id)
-        object_keys.extend(
-            [
-                stored_file.object_key,
-                document_json_key(document.id),
-                document_preview_key(document.id),
-            ]
-        )
-
-        session.delete(document)
-
-    session.flush()
-
-    for _, stored_file in rows:
-        session.delete(stored_file)
-
-    return document_ids, object_keys

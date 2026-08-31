@@ -13,6 +13,21 @@ class KnowledgeBaseNotFoundError(ApplicationError):
     detail = "知识库不存在"
 
 
+class KnowledgeFolderAlreadyExistsError(ApplicationError):
+    status_code = status.HTTP_409_CONFLICT
+    detail = "文件夹名称已存在"
+
+
+class KnowledgeFolderNotFoundError(ApplicationError):
+    status_code = status.HTTP_404_NOT_FOUND
+    detail = "文件夹不存在"
+
+
+class KnowledgeFolderInvalidParentError(ApplicationError):
+    status_code = status.HTTP_409_CONFLICT
+    detail = "不能将文件夹移动到自身或其子文件夹"
+
+
 class KnowledgeDocumentNotFoundError(ApplicationError):
     status_code = status.HTTP_404_NOT_FOUND
     detail = "知识库文档不存在"

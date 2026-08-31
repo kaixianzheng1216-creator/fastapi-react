@@ -1,4 +1,4 @@
-import { KnowledgeDocumentPreview } from "@/app/admin/knowledge-bases/_components/knowledge-document-preview";
+import { KnowledgeDocumentPreview } from "@/app/admin/knowledge-bases/_components/document-preview";
 
 export default async function KnowledgeDocumentPreviewPage({
   params,

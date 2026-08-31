@@ -97,11 +97,16 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
-        sa.ForeignKeyConstraint(["knowledge_base_id"], ["knowledge_base.id"]),
+        sa.ForeignKeyConstraint(
+            ["knowledge_base_id"],
+            ["knowledge_base.id"],
+            ondelete="CASCADE",
+        ),
         sa.ForeignKeyConstraint(
             ["knowledge_base_id", "parent_id"],
             ["knowledge_folder.knowledge_base_id", "knowledge_folder.id"],
             name="fk_knowledge_folder_parent",
+            ondelete="CASCADE",
         ),
         sa.UniqueConstraint(
             "knowledge_base_id",
@@ -129,16 +134,20 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
-        sa.ForeignKeyConstraint(["knowledge_base_id"], ["knowledge_base.id"]),
+        sa.ForeignKeyConstraint(
+            ["knowledge_base_id"],
+            ["knowledge_base.id"],
+            ondelete="CASCADE",
+        ),
         sa.ForeignKeyConstraint(
             ["knowledge_base_id", "folder_id"],
             ["knowledge_folder.knowledge_base_id", "knowledge_folder.id"],
             name="fk_knowledge_document_folder",
+            ondelete="CASCADE",
         ),
         sa.ForeignKeyConstraint(["stored_file_id"], ["stored_file.id"]),
         sa.UniqueConstraint("stored_file_id"),
     )
-
     # 品牌营销
     op.create_table(
         "province_annual_indicator",

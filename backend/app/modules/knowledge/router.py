@@ -13,11 +13,18 @@ from app.modules.knowledge.schemas import (
     KnowledgeBasePublic,
     KnowledgeBasesPublic,
     KnowledgeBaseUpdate,
+    KnowledgeDirectoryDelete,
+    KnowledgeDirectoryPublic,
     KnowledgeDocumentChunksPublic,
+    KnowledgeDocumentMove,
     KnowledgeDocumentPreviewPublic,
     KnowledgeDocumentPublic,
-    KnowledgeDocumentsPublic,
     KnowledgeDocumentUploadPublic,
+    KnowledgeFolderCreate,
+    KnowledgeFolderMove,
+    KnowledgeFolderPublic,
+    KnowledgeFoldersPublic,
+    KnowledgeFolderUpdate,
     KnowledgeSearchRequest,
     KnowledgeSearchResultsPublic,
     KnowledgeWebpageCreate,
@@ -112,6 +119,136 @@ def delete_knowledge_base(session: SessionDep, knowledge_base_id: uuid.UUID) -> 
 
 
 @router.post(
+    "/{knowledge_base_id}/folders",
+    response_model=KnowledgeFolderPublic,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_folder(
+    *,
+    session: SessionDep,
+    knowledge_base_id: uuid.UUID,
+    body: KnowledgeFolderCreate,
+) -> KnowledgeFolderPublic:
+    """创建知识库文件夹。"""
+    folder = service.create_folder(
+        session=session,
+        knowledge_base_id=knowledge_base_id,
+        folder_create=body,
+    )
+
+    return KnowledgeFolderPublic.model_validate(folder)
+
+
+@router.get(
+    "/{knowledge_base_id}/folders",
+    response_model=KnowledgeFoldersPublic,
+)
+def read_folders(
+    session: SessionDep, knowledge_base_id: uuid.UUID
+) -> KnowledgeFoldersPublic:
+    """获取知识库文件夹。"""
+    folders = service.list_folders(
+        session=session,
+        knowledge_base_id=knowledge_base_id,
+    )
+
+    data: list[KnowledgeFolderPublic] = []
+
+    for folder in folders:
+        data.append(KnowledgeFolderPublic.model_validate(folder))
+
+    return KnowledgeFoldersPublic(
+        data=data,
+        count=len(folders),
+    )
+
+
+@router.patch(
+    "/{knowledge_base_id}/folders/{folder_id}",
+    response_model=KnowledgeFolderPublic,
+)
+def update_folder(
+    *,
+    session: SessionDep,
+    knowledge_base_id: uuid.UUID,
+    folder_id: uuid.UUID,
+    body: KnowledgeFolderUpdate,
+) -> KnowledgeFolderPublic:
+    """重命名知识库文件夹。"""
+    folder = service.update_folder(
+        session=session,
+        knowledge_base_id=knowledge_base_id,
+        folder_id=folder_id,
+        folder_update=body,
+    )
+
+    return KnowledgeFolderPublic.model_validate(folder)
+
+
+@router.patch(
+    "/{knowledge_base_id}/folders/{folder_id}/parent",
+    response_model=KnowledgeFolderPublic,
+)
+def move_folder(
+    *,
+    session: SessionDep,
+    knowledge_base_id: uuid.UUID,
+    folder_id: uuid.UUID,
+    body: KnowledgeFolderMove,
+) -> KnowledgeFolderPublic:
+    """移动知识库文件夹。"""
+    folder = service.move_folder(
+        session=session,
+        knowledge_base_id=knowledge_base_id,
+        folder_id=folder_id,
+        target_parent_id=body.parent_id,
+    )
+
+    return KnowledgeFolderPublic.model_validate(folder)
+
+
+@router.get(
+    "/{knowledge_base_id}/entries",
+    response_model=KnowledgeDirectoryPublic,
+)
+def read_directory(
+    session: SessionDep,
+    knowledge_base_id: uuid.UUID,
+    folder_id: uuid.UUID | None = None,
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> KnowledgeDirectoryPublic:
+    """获取文件夹优先排列的知识库目录。"""
+    entries, count = service.list_directory(
+        session=session,
+        knowledge_base_id=knowledge_base_id,
+        folder_id=folder_id,
+        skip=skip,
+        limit=limit,
+    )
+
+    return KnowledgeDirectoryPublic(data=entries, count=count)
+
+
+@router.post(
+    "/{knowledge_base_id}/directory/batch-delete",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_directory_entries(
+    session: SessionDep,
+    knowledge_base_id: uuid.UUID,
+    body: KnowledgeDirectoryDelete,
+) -> None:
+    """批量删除知识库文件夹和文档。"""
+    service.delete_directory_entries(
+        session=session,
+        knowledge_base_id=knowledge_base_id,
+        folder_ids=body.folder_ids,
+        document_ids=body.document_ids,
+    )
+
+
+@router.post(
     "/{knowledge_base_id}/documents/uploads",
     response_model=KnowledgeDocumentUploadPublic,
     status_code=status.HTTP_201_CREATED,
@@ -121,6 +258,7 @@ def create_document_upload(
     session: SessionDep,
     current_user: CurrentUser,
     knowledge_base_id: uuid.UUID,
+    folder_id: uuid.UUID | None = None,
     body: FileUploadRequest,
 ) -> KnowledgeDocumentUploadPublic:
     """创建知识库文档上传凭证。"""
@@ -128,28 +266,8 @@ def create_document_upload(
         session=session,
         current_user=current_user,
         knowledge_base_id=knowledge_base_id,
+        folder_id=folder_id,
         upload_request=body,
-    )
-
-
-@router.post(
-    "/{knowledge_base_id}/documents/webpages",
-    response_model=KnowledgeDocumentPublic,
-    status_code=status.HTTP_201_CREATED,
-)
-async def create_webpage_document(
-    *,
-    session: SessionDep,
-    current_user: CurrentUser,
-    knowledge_base_id: uuid.UUID,
-    body: KnowledgeWebpageCreate,
-) -> KnowledgeDocumentPublic:
-    """抓取网页并创建知识库文档。"""
-    return await service.create_webpage_document(
-        session=session,
-        current_user=current_user,
-        knowledge_base_id=knowledge_base_id,
-        url=str(body.url),
     )
 
 
@@ -168,29 +286,26 @@ async def complete_document_upload(
     )
 
 
-@router.get(
-    "/{knowledge_base_id}/documents",
-    response_model=KnowledgeDocumentsPublic,
+@router.post(
+    "/{knowledge_base_id}/documents/webpages",
+    response_model=KnowledgeDocumentPublic,
+    status_code=status.HTTP_201_CREATED,
 )
-def read_documents(
+async def create_webpage_document(
+    *,
     session: SessionDep,
+    current_user: CurrentUser,
     knowledge_base_id: uuid.UUID,
-    skip: Annotated[int, Query(ge=0)] = 0,
-    limit: Annotated[int, Query(ge=1, le=100)] = 20,
-) -> KnowledgeDocumentsPublic:
-    """获取知识库文档列表。"""
-    rows, count = service.list_documents(
+    folder_id: uuid.UUID | None = None,
+    body: KnowledgeWebpageCreate,
+) -> KnowledgeDocumentPublic:
+    """抓取网页并创建知识库文档。"""
+    return await service.create_webpage_document(
         session=session,
+        current_user=current_user,
         knowledge_base_id=knowledge_base_id,
-        skip=skip,
-        limit=limit,
-    )
-
-    return KnowledgeDocumentsPublic(
-        data=[
-            documents.to_public(document, stored_file) for document, stored_file in rows
-        ],
-        count=count,
+        folder_id=folder_id,
+        url=str(body.url),
     )
 
 
@@ -259,6 +374,24 @@ def download_original_document(
             stored_file.object_key,
             stored_file.filename,
         ),
+    )
+
+
+@document_router.patch(
+    "/{document_id}/folder",
+    response_model=KnowledgeDocumentPublic,
+)
+def move_document(
+    *,
+    session: SessionDep,
+    document_id: uuid.UUID,
+    body: KnowledgeDocumentMove,
+) -> KnowledgeDocumentPublic:
+    """移动知识库文档。"""
+    return service.move_document(
+        session=session,
+        document_id=document_id,
+        folder_id=body.folder_id,
     )
 
 
