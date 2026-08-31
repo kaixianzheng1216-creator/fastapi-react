@@ -12,7 +12,6 @@ from app.modules.files.router import router as files_router
 from app.modules.influencer_marketing.router import (
     router as influencer_marketing_router,
 )
-from app.modules.items.router import router as items_router
 from app.modules.knowledge.router import document_router as knowledge_document_router
 from app.modules.knowledge.router import router as knowledge_router
 from app.modules.skills.router import router as skills_router
@@ -32,7 +31,6 @@ api_router.include_router(authenticated_auth_router)
 api_router.include_router(authenticated_users_router)
 api_router.include_router(admin_users_router)
 api_router.include_router(brand_marketing_router)
-api_router.include_router(items_router)
 api_router.include_router(knowledge_router)
 api_router.include_router(knowledge_document_router)
 api_router.include_router(conversations_router)
