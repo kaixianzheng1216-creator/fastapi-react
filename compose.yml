@@ -117,6 +117,8 @@ services:
       - .env
     environment:
       - POSTGRES_SERVER=db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
 
   backend:
     image: backend
@@ -207,6 +209,8 @@ services:
       - .env
     environment:
       - POSTGRES_SERVER=db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
 
   knowledge-worker:
     image: backend
@@ -233,6 +237,8 @@ services:
       - EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
       - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
       - POSTGRES_SERVER=db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
       - QDRANT_URL=http://qdrant:6333
 
   frontend:
