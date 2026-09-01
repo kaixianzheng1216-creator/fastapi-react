@@ -7,9 +7,11 @@ import {
 import { createAssistantStream } from "assistant-stream";
 import {
   agentArchiveConversation,
+  agentCancelAgentRun,
   agentCreateConversation,
   agentDeleteConversation,
   agentGenerateConversationTitle,
+  agentReadAgentRunResumeState,
   agentReadConversation,
   agentReadConversations,
   agentRenameConversation,
@@ -18,6 +20,8 @@ import {
 } from "@/lib/client";
 
 const PAGE_SIZE = 100;
+const RUN_STOP_POLL_MS = 500;
+const RUN_STOP_TIMEOUT_MS = 15_000;
 
 const threadIdToRemoteId = new Map<string, string>();
 
@@ -123,6 +127,8 @@ export const conversationThreadListAdapter: RemoteThreadListAdapter = {
   async delete(remoteId) {
     const resolvedRemoteId = resolveRemoteId(remoteId);
 
+    await stopActiveRun(resolvedRemoteId);
+
     await agentDeleteConversation({
       path: { conversation_id: resolvedRemoteId },
       throwOnError: true,
@@ -131,6 +137,35 @@ export const conversationThreadListAdapter: RemoteThreadListAdapter = {
     threadIdToRemoteId.delete(remoteId);
   },
 };
+
+async function stopActiveRun(conversationId: string): Promise<void> {
+  const { data: activeRun } = await agentReadAgentRunResumeState({
+    body: { threadId: conversationId },
+    throwOnError: true,
+  });
+
+  if (!activeRun) return;
+
+  await agentCancelAgentRun({
+    path: { run_id: activeRun.runId },
+    throwOnError: true,
+  });
+
+  const deadline = Date.now() + RUN_STOP_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, RUN_STOP_POLL_MS));
+
+    const { data: remainingRun } = await agentReadAgentRunResumeState({
+      body: { threadId: conversationId },
+      throwOnError: true,
+    });
+
+    if (!remainingRun) return;
+  }
+
+  throw new Error("停止 Agent 运行超时");
+}
 
 export async function readConversationState(remoteId: string) {
   const { data } = await agentReadConversation({
