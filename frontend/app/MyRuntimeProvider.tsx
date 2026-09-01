@@ -197,14 +197,9 @@ function useConversationRuntime() {
       converter(state, connectionMetadata, fileTransport.getFilesForRequest()),
     adapters: { attachments: fileTransport.attachmentAdapter },
     prepareSendCommandsRequest: async (body) => {
-      const isFirstMessage = !body.threadId;
       const { remoteId } = await aui.threadListItem.initialize();
 
       resumedThreadId.current = remoteId;
-
-      if (isFirstMessage) {
-        aui.threadListItem.generateTitle();
-      }
 
       const modelConfig = body.config as LanguageModelConfig | undefined;
 

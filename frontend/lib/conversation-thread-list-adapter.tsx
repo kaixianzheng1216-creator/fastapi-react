@@ -127,7 +127,7 @@ export const conversationThreadListAdapter: RemoteThreadListAdapter = {
   async delete(remoteId) {
     const resolvedRemoteId = resolveRemoteId(remoteId);
 
-    await stopActiveRun(resolvedRemoteId);
+    await stopConversationRun(resolvedRemoteId);
 
     await agentDeleteConversation({
       path: { conversation_id: resolvedRemoteId },
@@ -138,7 +138,9 @@ export const conversationThreadListAdapter: RemoteThreadListAdapter = {
   },
 };
 
-async function stopActiveRun(conversationId: string): Promise<void> {
+export async function stopConversationRun(
+  conversationId: string,
+): Promise<void> {
   const { data: activeRun, response } = await agentReadAgentRunResumeState({
     body: { threadId: conversationId },
     throwOnError: true,
