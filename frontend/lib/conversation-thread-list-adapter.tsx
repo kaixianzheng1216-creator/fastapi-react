@@ -139,12 +139,13 @@ export const conversationThreadListAdapter: RemoteThreadListAdapter = {
 };
 
 async function stopActiveRun(conversationId: string): Promise<void> {
-  const { data: activeRun } = await agentReadAgentRunResumeState({
+  const { data: activeRun, response } = await agentReadAgentRunResumeState({
     body: { threadId: conversationId },
     throwOnError: true,
   });
 
-  if (!activeRun) return;
+  if (response.status === 204) return;
+  if (!activeRun) throw new Error("活动 Agent 运行缺少状态");
 
   await agentCancelAgentRun({
     path: { run_id: activeRun.runId },
@@ -156,12 +157,12 @@ async function stopActiveRun(conversationId: string): Promise<void> {
   while (Date.now() < deadline) {
     await new Promise((resolve) => setTimeout(resolve, RUN_STOP_POLL_MS));
 
-    const { data: remainingRun } = await agentReadAgentRunResumeState({
+    const { response } = await agentReadAgentRunResumeState({
       body: { threadId: conversationId },
       throwOnError: true,
     });
 
-    if (!remainingRun) return;
+    if (response.status === 204) return;
   }
 
   throw new Error("停止 Agent 运行超时");

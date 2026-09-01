@@ -21,6 +21,7 @@ import { RESUMABLE_STREAM_ID_HEADER } from "assistant-stream/resumable";
 import { type ReactNode, useEffect, useMemo, useRef } from "react";
 
 import { clearAccessToken, getAccessToken } from "@/lib/auth";
+import { agentCancelAgentRun } from "@/lib/client";
 import {
   conversationThreadListAdapter,
   readConversationState,
@@ -259,12 +260,14 @@ function useConversationRuntime() {
         void fileTransport.discard();
 
         const runId = activeRunId.current;
-        const accessToken = getAccessToken();
 
         cancelledRunId.current = runId;
 
-        if (runId && accessToken) {
-          void requestRunCancellation(runId, accessToken)
+        if (runId) {
+          void agentCancelAgentRun({
+            path: { run_id: runId },
+            throwOnError: true,
+          })
             .then(() => {
               if (activeRunId.current === runId) activeRunId.current = null;
               if (cancelledRunId.current === runId) cancelledRunId.current = null;
@@ -319,22 +322,4 @@ function useConversationRuntime() {
   }, [remoteId, runtime]);
 
   return runtime;
-}
-
-async function requestRunCancellation(
-  runId: string,
-  accessToken: string,
-): Promise<void> {
-  const response = await fetch("/api/agent/runs/cancel", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ runId }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`取消 Agent 运行失败：HTTP ${response.status}`);
-  }
 }
