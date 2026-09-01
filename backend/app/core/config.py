@@ -13,8 +13,8 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 API_V1_PREFIX = "/api/v1"
-# 60 分钟 * 24 小时 * 8 天 = 8 天
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 8
+# 60 分钟 * 24 小时 * 7 天 = 7 天
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
 PROJECT_NAME = "FastAPI React Project"
 
 
@@ -54,6 +54,8 @@ class Settings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
+    REDIS_URL: str
+    CELERY_BROKER_URL: str
 
     @computed_field  # type: ignore[prop-decorator]
     @property

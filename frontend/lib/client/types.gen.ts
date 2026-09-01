@@ -76,9 +76,9 @@ export type AgentChatRequest = {
     /**
      * State
      */
-    state?: {
+    state: {
         [key: string]: unknown;
-    } | null;
+    };
     /**
      * Commands
      */
@@ -111,6 +111,32 @@ export type AgentModelsPublic = {
      * Defaultmodel
      */
     defaultModel: string;
+};
+
+/**
+ * AgentRunResumeStatePublic
+ */
+export type AgentRunResumeStatePublic = {
+    /**
+     * Runid
+     */
+    runId: string;
+    /**
+     * State
+     */
+    state: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * AgentRunResumeStateRequest
+ */
+export type AgentRunResumeStateRequest = {
+    /**
+     * Threadid
+     */
+    threadId: string;
 };
 
 /**
@@ -3176,25 +3202,110 @@ export type AgentReadModelsResponses = {
 
 export type AgentReadModelsResponse = AgentReadModelsResponses[keyof AgentReadModelsResponses];
 
-export type AgentChatData = {
+export type AgentCreateAgentRunData = {
     body: AgentChatRequest;
     path?: never;
     query?: never;
-    url: '/api/v1/agent/chat';
+    url: '/api/v1/agent/runs';
 };
 
-export type AgentChatErrors = {
+export type AgentCreateAgentRunErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type AgentChatError = AgentChatErrors[keyof AgentChatErrors];
+export type AgentCreateAgentRunError = AgentCreateAgentRunErrors[keyof AgentCreateAgentRunErrors];
 
-export type AgentChatResponses = {
+export type AgentCreateAgentRunResponses = {
     /**
      * Successful Response
      */
     200: unknown;
+};
+
+export type AgentReadAgentRunResumeStateData = {
+    body: AgentRunResumeStateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/agent/runs/resume-state';
+};
+
+export type AgentReadAgentRunResumeStateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AgentReadAgentRunResumeStateError = AgentReadAgentRunResumeStateErrors[keyof AgentReadAgentRunResumeStateErrors];
+
+export type AgentReadAgentRunResumeStateResponses = {
+    /**
+     * Successful Response
+     */
+    200: AgentRunResumeStatePublic;
+    /**
+     * 没有活动运行
+     */
+    204: void;
+};
+
+export type AgentReadAgentRunResumeStateResponse = AgentReadAgentRunResumeStateResponses[keyof AgentReadAgentRunResumeStateResponses];
+
+export type AgentResumeAgentRunData = {
+    body?: never;
+    path: {
+        /**
+         * Run Id
+         */
+        run_id: string;
+    };
+    query?: never;
+    url: '/api/v1/agent/runs/{run_id}/stream';
+};
+
+export type AgentResumeAgentRunErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AgentResumeAgentRunError = AgentResumeAgentRunErrors[keyof AgentResumeAgentRunErrors];
+
+export type AgentResumeAgentRunResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type AgentCancelAgentRunData = {
+    body?: never;
+    path: {
+        /**
+         * Run Id
+         */
+        run_id: string;
+    };
+    query?: never;
+    url: '/api/v1/agent/runs/{run_id}/cancel';
+};
+
+export type AgentCancelAgentRunErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AgentCancelAgentRunError = AgentCancelAgentRunErrors[keyof AgentCancelAgentRunErrors];
+
+export type AgentCancelAgentRunResponses = {
+    /**
+     * Successful Response
+     */
+    202: unknown;
 };

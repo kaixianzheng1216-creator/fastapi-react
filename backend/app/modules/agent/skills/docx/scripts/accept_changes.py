@@ -114,7 +114,7 @@ def _setup_libreoffice_macro() -> bool:
         macro_file.write_text(ACCEPT_CHANGES_MACRO)
         return True
     except Exception as e:
-        logger.warning(f"Failed to setup LibreOffice macro: {e}")
+        logger.warning(f"配置 LibreOffice 宏失败：{e}")
         return False
 
 

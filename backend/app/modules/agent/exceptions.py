@@ -31,3 +31,23 @@ class ImageInputNotSupportedError(ApplicationError):
 class AttachmentTextTooLargeError(ApplicationError):
     status_code = status.HTTP_400_BAD_REQUEST
     detail = "单条消息的附件文本合计不能超过 256 KB"
+
+
+class AgentRunQueueUnavailableError(ApplicationError):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    detail = "Agent 任务队列暂不可用"
+
+
+class AgentRunActiveError(ApplicationError):
+    status_code = status.HTTP_409_CONFLICT
+    detail = "会话仍有正在运行的任务，请先取消任务"
+
+
+class AgentRunNotFoundError(ApplicationError):
+    status_code = status.HTTP_404_NOT_FOUND
+    detail = "Agent 运行不存在"
+
+
+class AgentRunStreamExpiredError(ApplicationError):
+    status_code = status.HTTP_404_NOT_FOUND
+    detail = "运行流已过期"

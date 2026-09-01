@@ -1,4 +1,9 @@
 services:
+  redis:
+    restart: "no"
+    ports:
+      - "6379:6379"
+
   db:
     restart: "no"
     ports:
@@ -27,6 +32,18 @@ services:
       watch:
         - path: ./backend
           action: sync
+          target: /app/backend
+          ignore:
+            - pyproject.toml
+        - path: ./backend/pyproject.toml
+          action: rebuild
+
+  agent-worker:
+    restart: "no"
+    develop:
+      watch:
+        - path: ./backend
+          action: sync+restart
           target: /app/backend
           ignore:
             - pyproject.toml

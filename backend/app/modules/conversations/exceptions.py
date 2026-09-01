@@ -11,3 +11,8 @@ class ConversationNotFoundError(ApplicationError):
 class ConversationTitleGenerationError(ApplicationError):
     status_code = status.HTTP_502_BAD_GATEWAY
     detail = "生成会话标题失败"
+
+
+class ConversationRunActiveError(ApplicationError):
+    status_code = status.HTTP_409_CONFLICT
+    detail = "会话仍有正在运行的任务，请先取消任务"

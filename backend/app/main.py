@@ -4,18 +4,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRoute
-from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-from langgraph.store.postgres.aio import AsyncPostgresStore
-from psycopg import AsyncConnection
 from scalar_fastapi import get_scalar_api_reference
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.exception_handlers import add_exception_handlers
 from app.api.router import api_router
 from app.core.config import API_V1_PREFIX, PROJECT_NAME, settings
-from app.modules.agent.agent import create_agent, create_chat_model
-
-CHECKPOINT_SCHEMA = "agent"
+from app.modules.agent.agent import create_chat_model
+from app.modules.agent.resources import open_agent_resources
+from app.modules.agent.run_stream import AgentRunStream
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -25,29 +22,22 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    database_uri = str(settings.CHECKPOINT_DATABASE_URI)
-
-    async with await AsyncConnection.connect(
-        database_uri,
-        autocommit=True,
-    ) as connection:
-        await connection.execute(f"CREATE SCHEMA IF NOT EXISTS {CHECKPOINT_SCHEMA}")
-
-    store_uri = f"{database_uri}?options=-csearch_path%3D{CHECKPOINT_SCHEMA}"
-
-    async with (
-        AsyncPostgresSaver.from_conn_string(store_uri) as checkpointer,
-        AsyncPostgresStore.from_conn_string(store_uri) as store,
-    ):
-        await checkpointer.setup()
-        await store.setup()
-
-        app.state.checkpointer = checkpointer
-        app.state.store = store
+    async with open_agent_resources() as resources:
+        app.state.checkpointer = resources.checkpointer
+        app.state.store = resources.store
         app.state.title_model = create_chat_model()
-        app.state.agent = await create_agent(checkpointer, store)
+        app.state.agent = resources.agent
 
-        yield
+        run_stream = AgentRunStream(redis_url=settings.REDIS_URL)
+
+        await run_stream.connect()
+
+        app.state.agent_run_stream = run_stream
+
+        try:
+            yield
+        finally:
+            await run_stream.close()
 
 
 app = FastAPI(

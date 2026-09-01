@@ -1,7 +1,8 @@
+import json
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 MAX_TEXT_PART_LENGTH = 20_000
 MAX_MESSAGE_ATTACHMENT_COUNT = 20
@@ -10,6 +11,8 @@ MAX_IDENTIFIER_LENGTH = 200
 MAX_MODEL_NAME_LENGTH = 200
 MAX_FILENAME_LENGTH = 255
 MAX_MIME_TYPE_LENGTH = 255
+MAX_COMMAND_COUNT = 20
+MAX_AGENT_REQUEST_BYTES = 2 * 1024 * 1024
 FILE_REFERENCE_PREFIX = "file:"
 
 
@@ -118,8 +121,35 @@ class AgentChatRequest(BaseModel):
         max_length=MAX_MODEL_NAME_LENGTH,
     )
     thinking_enabled: bool = Field(default=False, alias="thinkingEnabled")
-    state: dict[str, Any] | None = None
-    commands: list[AgentCommand] = Field(min_length=1)
+    state: dict[str, Any]
+    commands: list[AgentCommand] = Field(
+        min_length=1,
+        max_length=MAX_COMMAND_COUNT,
+    )
+
+    @model_validator(mode="after")
+    def validate_request_size(self) -> AgentChatRequest:
+        request_bytes = len(
+            json.dumps(
+                self.model_dump(mode="json", by_alias=True),
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ).encode()
+        )
+
+        if request_bytes > MAX_AGENT_REQUEST_BYTES:
+            raise ValueError(f"Agent 请求不能超过 {MAX_AGENT_REQUEST_BYTES} 字节")
+
+        return self
+
+
+class AgentRunResumeStateRequest(BaseModel):
+    thread_id: UUID = Field(alias="threadId")
+
+
+class AgentRunResumeStatePublic(BaseModel):
+    run_id: UUID = Field(alias="runId")
+    state: dict[str, Any]
 
 
 class AgentModelPublic(BaseModel):

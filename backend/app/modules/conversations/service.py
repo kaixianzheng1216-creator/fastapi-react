@@ -13,8 +13,10 @@ from sqlalchemy.sql.elements import ColumnElement
 from sqlmodel import Session, col, func, select
 
 from app.db.timestamps import utc_now
+from app.modules.agent.models import ACTIVE_AGENT_RUN_STATUSES, AgentRun
 from app.modules.conversations.exceptions import (
     ConversationNotFoundError,
+    ConversationRunActiveError,
     ConversationTitleGenerationError,
 )
 from app.modules.conversations.file_service import delete_file_links
@@ -229,13 +231,30 @@ async def delete_conversation(
         conversation_id=conversation_id,
     )
 
+    session.refresh(conversation, with_for_update=True)
+
+    active_run_id = session.exec(
+        select(AgentRun.id).where(
+            AgentRun.owner_id == current_user.id,
+            AgentRun.conversation_id == conversation.id,
+            col(AgentRun.status).in_(ACTIVE_AGENT_RUN_STATUSES),
+        )
+    ).first()
+
+    if active_run_id is not None:
+        raise ConversationRunActiveError
+
     file_ids = delete_file_links(
         session=session,
         conversation_id=conversation.id,
     )
+
     session.flush()
+
     object_keys = delete_file_records(session=session, file_ids=file_ids)
+
     session.flush()
+
     session.delete(conversation)
 
     session.commit()
@@ -266,8 +285,6 @@ def touch_conversation(
     conversation.updated_at = utc_now()
 
     session.add(conversation)
-
-    session.commit()
 
     return conversation
 

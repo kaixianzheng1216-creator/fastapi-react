@@ -4,7 +4,6 @@ FROM python:3.14-slim AS dependencies
 
 ENV PYTHONUNBUFFERED=1 \
     UV_LINK_MODE=copy \
-    UV_DEFAULT_INDEX=https://mirrors.aliyun.com/pypi/simple/ \
     UV_HTTP_TIMEOUT=120 \
     UV_HTTP_RETRIES=5 \
     PATH="/app/.venv/bin:$PATH"
@@ -17,7 +16,7 @@ COPY pyproject.toml uv.lock ./
 COPY backend/pyproject.toml backend/pyproject.toml
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-dev --package app
+    uv sync --locked --no-dev --package app --no-install-project
 
 FROM dependencies AS collector-dependencies
 
@@ -28,7 +27,7 @@ RUN sed -i \
     /etc/apt/sources.list.d/debian.sources
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-dev --package app --extra collector \
+    uv sync --locked --no-dev --package app --extra collector --no-install-project \
     && apt-get update \
     && apt-get install --yes --no-install-recommends chromium \
     && rm -rf /var/lib/apt/lists/*
@@ -42,13 +41,18 @@ COPY backend/scripts/download_embedding_tokenizer.py /tmp/download_embedding_tok
 RUN python /tmp/download_embedding_tokenizer.py \
     && rm /tmp/download_embedding_tokenizer.py
 
-COPY backend/scripts /app/backend/scripts
-COPY backend/alembic.ini /app/backend/alembic.ini
-COPY backend/alembic /app/backend/alembic
-COPY backend/app /app/backend/app
-COPY data /app/data
+RUN groupadd --system app \
+    && useradd --system --gid app --home-dir /home/app --create-home app
+
+COPY --chown=app:app backend/scripts /app/backend/scripts
+COPY --chown=app:app backend/alembic.ini /app/backend/alembic.ini
+COPY --chown=app:app backend/alembic /app/backend/alembic
+COPY --chown=app:app backend/app /app/backend/app
+COPY --chown=app:app data /app/data
 
 WORKDIR /app/backend
+
+USER app
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0"]
 

@@ -1,6 +1,7 @@
 import json
 import logging
 from collections.abc import AsyncGenerator
+from dataclasses import dataclass
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -51,6 +52,11 @@ TRACE_NAME = "agent-chat"
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class RunOutcome:
+    failed: bool = False
+
+
 async def list_models() -> list[ModelCapabilities]:
     return await list_capabilities()
 
@@ -61,9 +67,10 @@ def stream_chat(
     session: Session,
     user_id: UUID,
     chat_request: AgentChatRequest,
+    outcome: RunOutcome,
 ) -> AsyncGenerator[Any]:
     async def run(controller: RunController) -> None:
-        await _run(controller, agent, session, user_id, chat_request)
+        await _run(controller, agent, session, user_id, chat_request, outcome)
 
     stream: AsyncGenerator[Any] = create_run(
         run,
@@ -79,6 +86,7 @@ async def _run(
     session: Session,
     user_id: UUID,
     chat_request: AgentChatRequest,
+    outcome: RunOutcome,
 ) -> None:
     thread_id = f"{user_id}:{chat_request.thread_id}"
     events: Any | None = None
@@ -158,13 +166,22 @@ async def _run(
                     chunk["data"],
                 )
     except ApplicationError as error:
-        logger.warning("Agent 请求被拒绝: %s", type(error).__name__)
+        logger.warning("请求被拒绝：%s", type(error).__name__)
+
+        outcome.failed = True
+
         controller.add_error(error.detail)
     except APIError:
         logger.exception(MODEL_REQUEST_ERROR_LOG)
+
+        outcome.failed = True
+
         controller.add_error(ModelServiceUnavailableError.detail)
     except Exception:
         logger.exception(STREAM_ERROR_DETAIL)
+
+        outcome.failed = True
+
         controller.add_error(STREAM_ERROR_DETAIL)
     finally:
         if events is not None:

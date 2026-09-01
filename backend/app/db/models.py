@@ -8,6 +8,7 @@ from app.modules.conversations.models import (  # noqa: F401
     Conversation,
     ConversationFile,
 )
+from app.modules.agent.models import AgentRun  # noqa: F401
 from app.modules.knowledge.models import (  # noqa: F401
     KnowledgeBase,
     KnowledgeDocument,

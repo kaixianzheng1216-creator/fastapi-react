@@ -17,13 +17,15 @@ import {
   convertLangChainMessages,
   type LangChainMessage,
 } from "@assistant-ui/react-langgraph";
+import { RESUMABLE_STREAM_ID_HEADER } from "assistant-stream/resumable";
+import { type ReactNode, useEffect, useMemo, useRef } from "react";
+
 import { clearAccessToken, getAccessToken } from "@/lib/auth";
 import {
   conversationThreadListAdapter,
   readConversationState,
 } from "@/lib/conversation-thread-list-adapter";
 import { createFileAttachmentTransport } from "@/lib/file-upload-adapter";
-import { type ReactNode, useEffect, useMemo } from "react";
 
 type MyRuntimeProviderProps = {
   children: ReactNode;
@@ -174,6 +176,9 @@ export function MyRuntimeProvider({ children }: MyRuntimeProviderProps) {
 function useConversationRuntime() {
   const aui = useAui();
   const fileTransport = useMemo(createFileAttachmentTransport, []);
+  const activeRunId = useRef<string | null>(null);
+  const cancelledRunId = useRef<string | null>(null);
+  const resumedThreadId = useRef<string | null>(null);
 
   const remoteId = useAuiState((state) =>
     state.threadListItem.custom?.persisted
@@ -184,13 +189,17 @@ function useConversationRuntime() {
   const runtime = useAssistantTransportRuntime<State>({
     protocol: "assistant-transport",
     initialState: { messages: [] },
-    api: "/api/chat",
+    api: "/api/agent/runs",
+    resumeApi: "/api/agent/runs/resume",
+    resumeStateApi: "/api/agent/runs/resume-state",
     converter: (state, connectionMetadata) =>
       converter(state, connectionMetadata, fileTransport.getFilesForRequest()),
     adapters: { attachments: fileTransport.attachmentAdapter },
     prepareSendCommandsRequest: async (body) => {
       const isFirstMessage = !body.threadId;
       const { remoteId } = await aui.threadListItem.initialize();
+
+      resumedThreadId.current = remoteId;
 
       if (isFirstMessage) {
         aui.threadListItem.generateTitle();
@@ -219,19 +228,52 @@ function useConversationRuntime() {
     headers: async () => {
       const accessToken = getAccessToken();
       const headers: Record<string, string> = {};
+
       if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+
       return headers;
     },
     onResponse: (response) => {
+      const responseRunId = response.headers.get(RESUMABLE_STREAM_ID_HEADER);
+
+      if (responseRunId) {
+        activeRunId.current = responseRunId;
+        cancelledRunId.current = null;
+      }
+
       if (response.status === 401) {
         clearAccessToken();
         window.location.assign("/login");
       }
     },
-    onFinish: fileTransport.complete,
+    onFinish: () => {
+      if (activeRunId.current !== cancelledRunId.current) {
+        activeRunId.current = null;
+      }
+
+      fileTransport.complete();
+    },
     onError: fileTransport.discard,
     onCancel: ({ updateState, error }) => {
-      if (!error) void fileTransport.discard();
+      if (!error) {
+        void fileTransport.discard();
+
+        const runId = activeRunId.current;
+        const accessToken = getAccessToken();
+
+        cancelledRunId.current = runId;
+
+        if (runId && accessToken) {
+          void requestRunCancellation(runId, accessToken)
+            .then(() => {
+              if (activeRunId.current === runId) activeRunId.current = null;
+              if (cancelledRunId.current === runId) cancelledRunId.current = null;
+            })
+            .catch((cancelError: unknown) => {
+              console.error("取消 Agent 运行失败", cancelError);
+            });
+        }
+      }
 
       updateState((state) => {
         const toolCallIds = state.messages
@@ -254,10 +296,45 @@ function useConversationRuntime() {
   useEffect(() => {
     if (!remoteId) return;
 
-    void readConversationState(remoteId).then((state) => {
-      runtime.thread.importExternalState(state);
-    });
+    let isCurrent = true;
+
+    void readConversationState(remoteId)
+      .then((state) => {
+        if (!isCurrent) return;
+
+        runtime.thread.importExternalState(state);
+
+        if (resumedThreadId.current !== remoteId) {
+          resumedThreadId.current = remoteId;
+          runtime.thread.resumeRun({ parentId: null });
+        }
+      })
+      .catch((error: unknown) => {
+        if (isCurrent) console.error("读取会话状态失败", error);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
   }, [remoteId, runtime]);
 
   return runtime;
+}
+
+async function requestRunCancellation(
+  runId: string,
+  accessToken: string,
+): Promise<void> {
+  const response = await fetch("/api/agent/runs/cancel", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ runId }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`取消 Agent 运行失败：HTTP ${response.status}`);
+  }
 }

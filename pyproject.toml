@@ -5,3 +5,7 @@ dev = [
 
 [tool.uv.workspace]
 members = ["backend"]
+
+[[tool.uv.index]]
+url = "https://mirrors.aliyun.com/pypi/simple/"
+default = true

@@ -1,4 +1,16 @@
 services:
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --appendonly yes
+    volumes:
+      - app-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   db:
     image: postgres:18
     restart: always
@@ -121,12 +133,16 @@ services:
         condition: service_completed_successfully
       qdrant:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file:
       - .env
     environment:
       - EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
       - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
       - POSTGRES_SERVER=db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
       - QDRANT_URL=http://qdrant:6333
       - LANGFUSE_TRACING_ENVIRONMENT=${ENVIRONMENT}
     healthcheck:
@@ -135,6 +151,44 @@ services:
       timeout: 5s
       retries: 5
       start_period: 90s
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+
+  agent-worker:
+    image: backend
+    pull_policy: build
+    restart: always
+    command:
+      - celery
+      - --app
+      - app.modules.agent.task_queue:celery_app
+      - worker
+      - --loglevel=INFO
+      - --concurrency=1
+    depends_on:
+      litellm:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      docling:
+        condition: service_healthy
+      data-initializer:
+        condition: service_completed_successfully
+      qdrant:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
+      - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
+      - POSTGRES_SERVER=db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - QDRANT_URL=http://qdrant:6333
+      - LANGFUSE_TRACING_ENVIRONMENT=${ENVIRONMENT}
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -199,4 +253,5 @@ services:
 
 volumes:
   app-db-data:
+  app-redis-data:
   qdrant-data:
