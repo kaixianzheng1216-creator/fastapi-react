@@ -72,5 +72,5 @@ class AgentRun(TimestampMixin, table=True):
 
     request_payload: dict[str, Any] | None = Field(
         default=None,
-        sa_column=Column(JSON, nullable=True),
+        sa_column=Column(JSON(none_as_null=True), nullable=True),
     )
