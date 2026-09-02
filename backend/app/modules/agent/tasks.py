@@ -40,9 +40,6 @@ def warm_agent_worker(**_kwargs: object) -> None:
 
 @celery_app.task(  # type: ignore[untyped-decorator]
     name=AGENT_RUN_TASK_NAME,
-    ignore_result=True,
-    acks_late=True,
-    reject_on_worker_lost=True,
 )
 def run_agent(run_id: str) -> None:
     asyncio.run(_run_agent(UUID(run_id)))

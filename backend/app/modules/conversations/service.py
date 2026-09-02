@@ -14,7 +14,9 @@ from sqlmodel import Session, col, func, select
 
 from app.db.timestamps import utc_now
 from app.modules.agent.models import ACTIVE_AGENT_RUN_STATUSES, AgentRun
+from app.modules.agent.task_queue import celery_app
 from app.modules.conversations.exceptions import (
+    ConversationDeleteQueueError,
     ConversationNotFoundError,
     ConversationRunActiveError,
     ConversationTitleGenerationError,
@@ -34,6 +36,7 @@ from app.modules.files.service import (
 from app.modules.users.models import User
 
 DEFAULT_CONVERSATION_TITLE = "新对话"
+DELETE_TASK = "conversation.delete"
 MAX_CONVERSATION_TITLE_LENGTH = 100
 TITLE_SYSTEM_PROMPT = (
     "根据用户的第一条消息生成一个简短、准确的会话标题。"
@@ -101,7 +104,10 @@ def list_conversations(
     search: str | None = None,
     archived: bool | None = None,
 ) -> tuple[Sequence[Conversation], int]:
-    filters: list[ColumnElement[bool]] = [col(Conversation.owner_id) == current_user.id]
+    filters: list[ColumnElement[bool]] = [
+        col(Conversation.owner_id) == current_user.id,
+        col(Conversation.deleting_at).is_(None),
+    ]
 
     if search is not None:
         filters.append(col(Conversation.title).contains(search))
@@ -218,12 +224,11 @@ def unarchive_conversation(
     return conversation
 
 
-async def delete_conversation(
+async def request_delete(
     *,
     session: Session,
     current_user: User,
     conversation_id: uuid.UUID,
-    checkpointer: AsyncPostgresSaver,
 ) -> None:
     conversation = session.exec(
         select(Conversation)
@@ -235,17 +240,90 @@ async def delete_conversation(
     ).one_or_none()
 
     if conversation is None:
+        session.rollback()
+
         return
 
-    active_run_id = session.exec(
+    if conversation.deleting_at is not None:
+        session.rollback()
+
+        return
+
+    conversation.deleting_at = utc_now()
+
+    session.flush()
+
+    try:
+        await asyncio.to_thread(
+            celery_app.send_task,
+            DELETE_TASK,
+            args=[str(conversation.id), str(current_user.id)],
+        )
+    except Exception as error:
+        session.rollback()
+
+        logger.exception(
+            "会话删除任务投递失败",
+            extra={"conversation_id": str(conversation.id)},
+        )
+
+        raise ConversationDeleteQueueError from error
+
+    session.commit()
+
+
+def is_deleting(
+    *,
+    session: Session,
+    owner_id: uuid.UUID,
+    conversation_id: uuid.UUID,
+) -> bool:
+    conversation = session.exec(
+        select(Conversation)
+        .where(
+            Conversation.id == conversation_id,
+            Conversation.owner_id == owner_id,
+        )
+        .with_for_update()
+    ).one_or_none()
+
+    deleting = conversation is not None and conversation.deleting_at is not None
+
+    session.rollback()
+
+    return deleting
+
+
+async def finish_delete(
+    *,
+    session: Session,
+    owner_id: uuid.UUID,
+    conversation_id: uuid.UUID,
+    checkpointer: AsyncPostgresSaver,
+) -> None:
+    conversation = session.exec(
+        select(Conversation)
+        .where(
+            Conversation.id == conversation_id,
+            Conversation.owner_id == owner_id,
+            col(Conversation.deleting_at).is_not(None),
+        )
+        .with_for_update()
+    ).one_or_none()
+
+    if conversation is None:
+        session.rollback()
+        return
+
+    run_id = session.exec(
         select(AgentRun.id).where(
-            AgentRun.owner_id == current_user.id,
+            AgentRun.owner_id == owner_id,
             AgentRun.conversation_id == conversation.id,
             col(AgentRun.status).in_(ACTIVE_AGENT_RUN_STATUSES),
         )
     ).first()
 
-    if active_run_id is not None:
+    if run_id is not None:
         raise ConversationRunActiveError
 
     file_ids = delete_file_links(
@@ -266,7 +344,7 @@ async def delete_conversation(
     await asyncio.to_thread(cleanup_objects, object_keys)
 
     try:
-        await checkpointer.adelete_thread(f"{current_user.id}:{conversation_id}")
+        await checkpointer.adelete_thread(f"{owner_id}:{conversation_id}")
     except Exception:
         logger.exception(
             CONVERSATION_CLEANUP_ERROR_LOG,
@@ -303,6 +381,7 @@ def get_conversation(
         select(Conversation).where(
             Conversation.id == conversation_id,
             Conversation.owner_id == current_user.id,
+            col(Conversation.deleting_at).is_(None),
         )
     ).one_or_none()
 

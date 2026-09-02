@@ -513,7 +513,7 @@ export const agentGenerateConversationTitle = <ThrowOnError extends boolean = fa
 /**
  * Delete Conversation
  *
- * 删除会话。
+ * 接受会话删除请求。
  */
 export const agentDeleteConversation = <ThrowOnError extends boolean = false>(options: Options<AgentDeleteConversationData, ThrowOnError>): RequestResult<AgentDeleteConversationResponses, AgentDeleteConversationErrors, ThrowOnError> => (options.client ?? client).delete<AgentDeleteConversationResponses, AgentDeleteConversationErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

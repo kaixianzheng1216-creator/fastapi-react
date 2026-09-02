@@ -16,3 +16,8 @@ class ConversationTitleGenerationError(ApplicationError):
 class ConversationRunActiveError(ApplicationError):
     status_code = status.HTTP_409_CONFLICT
     detail = "会话仍有正在运行的任务，请先取消任务"
+
+
+class ConversationDeleteQueueError(ApplicationError):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    detail = "删除任务队列暂不可用"

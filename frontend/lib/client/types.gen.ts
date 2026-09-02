@@ -2690,10 +2690,8 @@ export type AgentDeleteConversationResponses = {
     /**
      * Successful Response
      */
-    204: void;
+    202: unknown;
 };
-
-export type AgentDeleteConversationResponse = AgentDeleteConversationResponses[keyof AgentDeleteConversationResponses];
 
 export type AgentReadConversationData = {
     body?: never;
