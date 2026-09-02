@@ -223,9 +223,6 @@ const ThreadListItemGroups: FC = () => {
     const itemsById = new Map(threadItems.map((item) => [item.id, item]));
     const dates = threadIds.map((id) => itemsById.get(id)?.lastMessageAt);
     const indices = threadIds.map((_, index) => index);
-    if (!indices.some((index) => dates[index])) {
-      return null;
-    }
 
     const now = new Date();
     const startOfToday = new Date(
@@ -249,16 +246,6 @@ const ThreadListItemGroups: FC = () => {
     }
     return result;
   }, [threadIds, threadItems]);
-
-  if (!groups) {
-    return threadIds.map((threadId, index) => (
-      <ThreadListPrimitive.ItemByIndex
-        key={threadId}
-        index={index}
-        components={{ ThreadListItem }}
-      />
-    ));
-  }
 
   return groups.map((group) => (
     <Fragment key={group.label}>
