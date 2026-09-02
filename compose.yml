@@ -167,7 +167,6 @@ services:
       - app.modules.agent.task_queue:celery_app
       - worker
       - --loglevel=INFO
-      - --concurrency=1
     depends_on:
       litellm:
         condition: service_healthy
