@@ -6,11 +6,13 @@ from uuid import UUID
 from assistant_stream.serialization import (  # type: ignore[import-untyped]
     AssistantTransportEncoder,
 )
+from celery.signals import worker_process_init  # type: ignore[import-untyped]
 from sqlmodel import Session
 
 from app.core.config import settings
 from app.db.session import engine
 from app.modules.agent import run_service, service
+from app.modules.agent.connections.litellm_mcp import load_litellm_mcp_tools
 from app.modules.agent.models import AgentRunStatus
 from app.modules.agent.resources import open_agent_resources
 from app.modules.agent.run_stream import (
@@ -23,6 +25,17 @@ from app.modules.agent.task_queue import AGENT_RUN_TASK_NAME, celery_app
 RUN_INTERRUPTED_DETAIL = "服务中断，请重试"
 RUN_FAILED_DETAIL = "Agent 运行失败"
 logger = logging.getLogger(__name__)
+
+
+@worker_process_init.connect  # type: ignore[untyped-decorator]
+def warm_agent_worker(**_kwargs: object) -> None:
+    """在 worker 启动阶段加载远程工具，避免首条消息承担发现耗时。"""
+    try:
+        asyncio.run(load_litellm_mcp_tools())
+
+        logger.info("Agent Worker 依赖预热完成")
+    except Exception:
+        logger.exception("Agent Worker 依赖预热失败")
 
 
 @celery_app.task(  # type: ignore[untyped-decorator]
