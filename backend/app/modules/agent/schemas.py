@@ -88,11 +88,9 @@ class AddMessageCommand(BaseModel):
         min_length=1,
         max_length=MAX_IDENTIFIER_LENGTH,
     )
-    source_id: str | None = Field(
+    source_id: None = Field(
         default=None,
         alias="sourceId",
-        min_length=1,
-        max_length=MAX_IDENTIFIER_LENGTH,
     )
 
 

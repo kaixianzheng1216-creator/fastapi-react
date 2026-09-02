@@ -116,7 +116,6 @@ async def _run(
 
         agent_config, input_messages = await _prepare_run(
             controller,
-            agent,
             session,
             user_id,
             thread_id,
@@ -223,7 +222,6 @@ def _validate_command_model_input(
 
 async def _prepare_run(
     controller: RunController,
-    agent: Any,
     session: Session,
     user_id: UUID,
     thread_id: str,
@@ -231,60 +229,10 @@ async def _prepare_run(
     commands: list[AgentCommand],
 ) -> tuple[RunnableConfig, list[BaseMessage]]:
     agent_config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
+
     input_messages: list[BaseMessage] = []
+
     state_messages = controller.state["messages"]
-    edit_command: AddMessageCommand | None = None
-
-    for command in commands:
-        if isinstance(command, AddMessageCommand) and command.source_id is not None:
-            edit_command = command
-            break
-
-    if edit_command is not None:
-        if len(commands) != 1:
-            raise ValueError("编辑消息不能与其他命令同时发送")
-
-        last_user_index: int | None = None
-
-        for index in reversed(range(len(state_messages))):
-            if state_messages[index]["type"] == "human":
-                last_user_index = index
-                break
-
-        if (
-            last_user_index is None
-            or state_messages[last_user_index]["id"] != edit_command.source_id
-        ):
-            raise ValueError("只允许编辑最后一条用户消息")
-
-        previous_message_id = (
-            None if last_user_index == 0 else state_messages[last_user_index - 1]["id"]
-        )
-
-        restored_config: RunnableConfig | None = None
-
-        async for snapshot in agent.aget_state_history(agent_config):
-            snapshot_messages = snapshot.values.get("messages", [])
-
-            if previous_message_id is None:
-                if not snapshot_messages:
-                    restored_config = snapshot.config
-                    break
-            elif snapshot_messages and snapshot_messages[-1].id == previous_message_id:
-                restored_config = snapshot.config
-                break
-
-        if restored_config is None:
-            raise ValueError("未找到编辑消息之前的检查点")
-
-        agent_config = restored_config
-        messages_before_edit = [
-            state_messages[index] for index in range(last_user_index)
-        ]
-        state_messages.clear()
-
-        for state_message in messages_before_edit:
-            state_messages.append(state_message)
 
     for command in commands:
         message: BaseMessage

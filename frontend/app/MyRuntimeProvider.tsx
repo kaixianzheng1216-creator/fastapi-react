@@ -220,6 +220,7 @@ function useConversationRuntime() {
         thinkingEnabled: modelConfig?.reasoningEffort === "enabled",
       };
     },
+    // 保留 assistant-ui 官方编辑 runtime 能力；入口暂时在 thread.tsx 中注释隐藏。
     capabilities: { edit: true },
     headers: async () => {
       const accessToken = getAccessToken();

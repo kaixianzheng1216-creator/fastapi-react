@@ -437,7 +437,8 @@ const AssistantActionBar: FC = () => {
           </AuiIf>
         </TooltipIconButton>
       </ActionBarPrimitive.Copy>
-      <RegenerateButton />
+      {/* 编辑/重试后端恢复前暂时隐藏；取消下一行注释即可恢复官方样式入口。 */}
+      {/* <RegenerateButton /> */}
       <ActionBarMorePrimitive.Root>
         <ActionBarMorePrimitive.Trigger asChild>
           <TooltipIconButton
@@ -527,9 +528,12 @@ const UserMessage: FC = () => {
         <div className="aui-user-message-content peer bg-muted text-foreground rounded-xl px-4 py-2 wrap-break-word empty:hidden">
           <MessagePrimitive.Parts />
         </div>
+        {/* 编辑/重试后端恢复前暂时隐藏；取消下面区块注释即可恢复官方样式入口。 */}
+        {/*
         <div className="aui-user-action-bar-wrapper absolute start-0 top-1/2 -translate-x-full -translate-y-1/2 pe-2 peer-empty:hidden rtl:translate-x-full">
           <UserActionBar />
         </div>
+        */}
       </div>
 
       <BranchPicker

@@ -20,7 +20,7 @@ export type AddMessageCommand = {
     /**
      * Sourceid
      */
-    sourceId?: string | null;
+    sourceId?: null;
 };
 
 /**
