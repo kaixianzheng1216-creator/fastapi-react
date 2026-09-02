@@ -51,3 +51,8 @@ class AgentRunNotFoundError(ApplicationError):
 class AgentRunStreamExpiredError(ApplicationError):
     status_code = status.HTTP_404_NOT_FOUND
     detail = "运行流已过期"
+
+
+class AgentRunCancellationTimeoutError(ApplicationError):
+    status_code = status.HTTP_409_CONFLICT
+    detail = "任务取消超时，请稍后重试"

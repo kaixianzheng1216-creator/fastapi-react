@@ -20,10 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarItemButton } from "@/app/(authenticated)/_components/sidebar-item-button";
-import {
-  searchConversations,
-  stopConversationRun,
-} from "@/lib/conversation-thread-list-adapter";
+import { searchConversations } from "@/lib/conversation-thread-list-adapter";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
@@ -444,14 +441,6 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
   const [isRenameOpen, setRenameOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
 
-  async function deleteConversation(): Promise<void> {
-    const remoteId = aui.threadListItem.getState().remoteId;
-    if (!remoteId) throw new Error("对话缺少远程 ID");
-
-    await stopConversationRun(remoteId);
-    await aui.threadListItem.delete();
-  }
-
   const renameConversation = async (
     event: SubmitEvent<HTMLFormElement>,
   ): Promise<void> => {
@@ -509,18 +498,15 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
             归档
           </ThreadListItemMorePrimitive.Item>
         </ThreadListItemPrimitive.Archive>
-        <ThreadListItemMorePrimitive.Item
-          data-slot="aui_thread-list-item-more-item"
-          className="text-destructive hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm outline-none select-none"
-          onSelect={() => {
-            void deleteConversation().catch((error: unknown) => {
-              console.error("删除对话失败", error);
-            });
-          }}
-        >
-          <TrashIcon className="size-4" />
-          删除
-        </ThreadListItemMorePrimitive.Item>
+        <ThreadListItemPrimitive.Delete asChild>
+          <ThreadListItemMorePrimitive.Item
+            data-slot="aui_thread-list-item-more-item"
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm outline-none select-none"
+          >
+            <TrashIcon className="size-4" />
+            删除
+          </ThreadListItemMorePrimitive.Item>
+        </ThreadListItemPrimitive.Delete>
       </ThreadListItemMorePrimitive.Content>
 
       <Dialog open={isRenameOpen} onOpenChange={setRenameOpen}>

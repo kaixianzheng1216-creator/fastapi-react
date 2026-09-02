@@ -7,11 +7,9 @@ import {
 import { createAssistantStream } from "assistant-stream";
 import {
   agentArchiveConversation,
-  agentCancelAgentRun,
   agentCreateConversation,
   agentDeleteConversation,
   agentGenerateConversationTitle,
-  agentReadAgentRunResumeState,
   agentReadConversation,
   agentReadConversations,
   agentRenameConversation,
@@ -20,14 +18,6 @@ import {
 } from "@/lib/client";
 
 const PAGE_SIZE = 100;
-const RUN_STOP_POLL_MS = 500;
-const RUN_STOP_TIMEOUT_MS = 15_000;
-
-const threadIdToRemoteId = new Map<string, string>();
-
-function resolveRemoteId(threadId: string): string {
-  return threadIdToRemoteId.get(threadId) ?? threadId;
-}
 
 function getFirstUserText(messages: readonly ThreadMessage[]): string {
   for (const message of messages) {
@@ -62,14 +52,12 @@ export const conversationThreadListAdapter: RemoteThreadListAdapter = {
     };
   },
 
-  async initialize(threadId) {
+  async initialize() {
     const { data } = await agentCreateConversation({
       throwOnError: true,
     });
 
-    threadIdToRemoteId.set(threadId, data.id);
-
-    return { remoteId: data.id, externalId: undefined };
+    return { remoteId: data.id };
   },
 
   async fetch(remoteId) {
@@ -105,70 +93,32 @@ export const conversationThreadListAdapter: RemoteThreadListAdapter = {
   async rename(remoteId, newTitle) {
     await agentRenameConversation({
       body: { title: newTitle },
-      path: { conversation_id: resolveRemoteId(remoteId) },
+      path: { conversation_id: remoteId },
       throwOnError: true,
     });
   },
 
   async archive(remoteId) {
     await agentArchiveConversation({
-      path: { conversation_id: resolveRemoteId(remoteId) },
+      path: { conversation_id: remoteId },
       throwOnError: true,
     });
   },
 
   async unarchive(remoteId) {
     await agentUnarchiveConversation({
-      path: { conversation_id: resolveRemoteId(remoteId) },
+      path: { conversation_id: remoteId },
       throwOnError: true,
     });
   },
 
   async delete(remoteId) {
-    const resolvedRemoteId = resolveRemoteId(remoteId);
-
-    await stopConversationRun(resolvedRemoteId);
-
     await agentDeleteConversation({
-      path: { conversation_id: resolvedRemoteId },
+      path: { conversation_id: remoteId },
       throwOnError: true,
     });
-
-    threadIdToRemoteId.delete(remoteId);
   },
 };
-
-export async function stopConversationRun(
-  conversationId: string,
-): Promise<void> {
-  const { data: activeRun, response } = await agentReadAgentRunResumeState({
-    body: { threadId: conversationId },
-    throwOnError: true,
-  });
-
-  if (response.status === 204) return;
-  if (!activeRun) throw new Error("活动 Agent 运行缺少状态");
-
-  await agentCancelAgentRun({
-    path: { run_id: activeRun.runId },
-    throwOnError: true,
-  });
-
-  const deadline = Date.now() + RUN_STOP_TIMEOUT_MS;
-
-  while (Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, RUN_STOP_POLL_MS));
-
-    const { response } = await agentReadAgentRunResumeState({
-      body: { threadId: conversationId },
-      throwOnError: true,
-    });
-
-    if (response.status === 204) return;
-  }
-
-  throw new Error("停止 Agent 运行超时");
-}
 
 export async function readConversationState(remoteId: string) {
   const { data } = await agentReadConversation({

@@ -225,13 +225,17 @@ async def delete_conversation(
     conversation_id: uuid.UUID,
     checkpointer: AsyncPostgresSaver,
 ) -> None:
-    conversation = get_conversation(
-        session=session,
-        current_user=current_user,
-        conversation_id=conversation_id,
-    )
+    conversation = session.exec(
+        select(Conversation)
+        .where(
+            Conversation.id == conversation_id,
+            Conversation.owner_id == current_user.id,
+        )
+        .with_for_update()
+    ).one_or_none()
 
-    session.refresh(conversation, with_for_update=True)
+    if conversation is None:
+        return
 
     active_run_id = session.exec(
         select(AgentRun.id).where(

@@ -9,6 +9,7 @@ from sqlmodel import Session, col, select
 from app.db.session import engine
 from app.modules.agent.exceptions import (
     AgentRunActiveError,
+    AgentRunCancellationTimeoutError,
     AgentRunNotFoundError,
     AgentRunQueueUnavailableError,
     AgentRunStreamExpiredError,
@@ -19,7 +20,7 @@ from app.modules.agent.models import (
     AgentRun,
     AgentRunStatus,
 )
-from app.modules.agent.run_stream import AgentRunStream
+from app.modules.agent.run_stream import HEARTBEAT_TTL_SECONDS, AgentRunStream
 from app.modules.agent.schemas import (
     AgentChatRequest,
     AgentRunResumeStatePublic,
@@ -29,6 +30,9 @@ from app.modules.conversations import service as conversation_service
 from app.modules.users.models import User
 
 logger = logging.getLogger(__name__)
+
+RUN_CANCELLATION_POLL_SECONDS = 0.5
+RUN_CANCELLATION_TIMEOUT_SECONDS = HEARTBEAT_TTL_SECONDS + 5.0
 
 
 async def create_run(
@@ -261,6 +265,53 @@ async def cancel_run(
     session.rollback()
 
     await stream.request_cancel(run_id)
+
+
+async def stop_conversation_run(
+    *,
+    session: Session,
+    user_id: UUID,
+    conversation_id: UUID,
+    stream: AgentRunStream,
+) -> None:
+    """取消会话的活动运行，并等待其进入终态。"""
+    run = _get_active_run(
+        session=session,
+        user_id=user_id,
+        conversation_id=conversation_id,
+    )
+
+    if run is None:
+        return
+
+    run_id = run.id
+
+    session.rollback()
+
+    try:
+        await cancel_run(
+            session=session,
+            user_id=user_id,
+            run_id=run_id,
+            stream=stream,
+        )
+    except AgentRunNotFoundError:
+        return
+
+    loop = asyncio.get_running_loop()
+
+    deadline = loop.time() + RUN_CANCELLATION_TIMEOUT_SECONDS
+
+    while True:
+        status = await _ensure_live(run_id, stream)
+
+        if status is None or status in TERMINAL_AGENT_RUN_STATUSES:
+            return
+
+        if loop.time() >= deadline:
+            raise AgentRunCancellationTimeoutError
+
+        await asyncio.sleep(RUN_CANCELLATION_POLL_SECONDS)
 
 
 def claim_run(run_id: UUID) -> tuple[UUID, AgentChatRequest] | None:

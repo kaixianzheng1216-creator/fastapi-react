@@ -1,9 +1,11 @@
 import uuid
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, Query, Request, status
 
 from app.api.dependencies import SessionDep
+from app.modules.agent import run_service
+from app.modules.agent.run_stream import AgentRunStream
 from app.modules.auth.dependencies import CurrentUser, get_current_user
 from app.modules.conversations import service
 from app.modules.conversations.schemas import (
@@ -156,7 +158,14 @@ async def delete_conversation(
     current_user: CurrentUser,
     conversation_id: uuid.UUID,
 ) -> None:
-    """删除会话。"""
+    """停止活动运行并删除会话。"""
+    await run_service.stop_conversation_run(
+        session=session,
+        user_id=current_user.id,
+        conversation_id=conversation_id,
+        stream=cast(AgentRunStream, request.app.state.agent_run_stream),
+    )
+
     await service.delete_conversation(
         session=session,
         current_user=current_user,
