@@ -17,7 +17,7 @@ SessionDep = Annotated[Session, Depends(get_db)]
 
 
 def get_store(request: Request) -> AsyncPostgresStore:
-    return cast(AsyncPostgresStore, request.app.state.store)
+    return cast(AsyncPostgresStore, request.app.state.agent_resources.store)
 
 
 StoreDep = Annotated[AsyncPostgresStore, Depends(get_store)]

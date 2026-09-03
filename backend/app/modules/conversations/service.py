@@ -13,7 +13,11 @@ from sqlalchemy.sql.elements import ColumnElement
 from sqlmodel import Session, col, func, select
 
 from app.db.timestamps import utc_now
-from app.modules.agent.models import ACTIVE_AGENT_RUN_STATUSES, AgentRun
+from app.modules.agent.models import (
+    ACTIVE_AGENT_RUN_STATUSES,
+    AgentRun,
+    AgentRunStatus,
+)
 from app.modules.agent.task_queue import celery_app
 from app.modules.conversations.exceptions import (
     ConversationDeleteQueueError,
@@ -23,7 +27,7 @@ from app.modules.conversations.exceptions import (
 )
 from app.modules.conversations.file_service import delete_file_links
 from app.modules.conversations.message_files import refresh_message_file_urls
-from app.modules.conversations.models import Conversation
+from app.modules.conversations.models import Conversation, ConversationKind
 from app.modules.conversations.schemas import (
     ConversationDetailPublic,
     ConversationPublic,
@@ -36,6 +40,7 @@ from app.modules.files.service import (
 from app.modules.users.models import User
 
 DEFAULT_CONVERSATION_TITLE = "新对话"
+DEFAULT_RESEARCH_TITLE = "新调研"
 DELETE_TASK = "conversation.delete"
 MAX_CONVERSATION_TITLE_LENGTH = 100
 TITLE_SYSTEM_PROMPT = (
@@ -48,8 +53,13 @@ CONVERSATION_CLEANUP_ERROR_LOG = "清理对话检查点失败"
 logger = logging.getLogger(__name__)
 
 
-def create_conversation(*, session: Session, current_user: User) -> Conversation:
-    conversation = Conversation(owner_id=current_user.id)
+def create_conversation(
+    *,
+    session: Session,
+    current_user: User,
+    kind: ConversationKind,
+) -> Conversation:
+    conversation = Conversation(owner_id=current_user.id, kind=kind)
     session.add(conversation)
     session.commit()
     session.refresh(conversation)
@@ -136,13 +146,15 @@ async def get_conversation_detail(
     session: Session,
     current_user: User,
     conversation_id: uuid.UUID,
-    agent: Any,
+    resources: Any,
 ) -> ConversationDetailPublic:
     conversation = get_conversation(
         session=session,
         current_user=current_user,
         conversation_id=conversation_id,
     )
+
+    agent = resources.get_agent(conversation.kind)
 
     snapshot = await agent.aget_state(
         {
@@ -154,6 +166,23 @@ async def get_conversation_detail(
 
     values = snapshot.values
 
+    run_status = None
+
+    if conversation.kind == ConversationKind.RESEARCH:
+        latest_run_status = session.exec(
+            select(AgentRun.status)
+            .where(
+                AgentRun.owner_id == current_user.id,
+                AgentRun.conversation_id == conversation.id,
+            )
+            .order_by(col(AgentRun.created_at).desc())
+            .limit(1)
+        ).first()
+
+        run_status = (
+            AgentRunStatus(latest_run_status) if latest_run_status is not None else None
+        )
+
     state = ConversationStatePublic(
         messages=[
             refresh_message_file_urls(message, current_user.id).model_dump(mode="json")
@@ -161,6 +190,13 @@ async def get_conversation_detail(
         ],
         todos=values.get("todos", []),
         artifacts=values.get("artifacts", []),
+        stage=values.get("stage"),
+        run_status=run_status,
+        plan=values.get("plan"),
+        research_messages=values.get("research_messages", []),
+        outline=values.get("outline"),
+        draft=values.get("draft"),
+        report=values.get("report"),
     )
 
     return ConversationDetailPublic(
@@ -352,25 +388,6 @@ async def finish_delete(
         )
 
 
-def touch_conversation(
-    *,
-    session: Session,
-    current_user: User,
-    conversation_id: uuid.UUID,
-) -> Conversation:
-    conversation = get_conversation(
-        session=session,
-        current_user=current_user,
-        conversation_id=conversation_id,
-    )
-
-    conversation.updated_at = utc_now()
-
-    session.add(conversation)
-
-    return conversation
-
-
 def get_conversation(
     *,
     session: Session,
@@ -394,8 +411,14 @@ def get_conversation(
 def to_public(conversation: Conversation) -> ConversationPublic:
     return ConversationPublic(
         id=conversation.id,
-        title=conversation.title or DEFAULT_CONVERSATION_TITLE,
+        title=conversation.title
+        or (
+            DEFAULT_RESEARCH_TITLE
+            if conversation.kind == ConversationKind.RESEARCH
+            else DEFAULT_CONVERSATION_TITLE
+        ),
         archived=conversation.archived,
+        kind=conversation.kind,
         created_at=conversation.created_at,
         updated_at=conversation.updated_at,
     )

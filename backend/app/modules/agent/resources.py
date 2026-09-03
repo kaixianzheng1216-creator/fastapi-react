@@ -3,12 +3,15 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Any
 
+from langchain_core.language_models import BaseChatModel
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.store.postgres.aio import AsyncPostgresStore
 from psycopg import AsyncConnection
 
 from app.core.config import settings
-from app.modules.agent.agent import create_agent
+from app.modules.agent.agent import create_agent, create_chat_model
+from app.modules.agent.research import create_research_graph
+from app.modules.conversations.models import ConversationKind
 
 CHECKPOINT_SCHEMA = "agent"
 
@@ -17,7 +20,15 @@ CHECKPOINT_SCHEMA = "agent"
 class AgentResources:
     checkpointer: AsyncPostgresSaver
     store: AsyncPostgresStore
-    agent: Any
+    title_model: BaseChatModel
+    chat_agent: Any
+    research_agent: Any
+
+    def get_agent(self, kind: ConversationKind | str) -> Any:
+        if ConversationKind(kind) == ConversationKind.RESEARCH:
+            return self.research_agent
+
+        return self.chat_agent
 
 
 @asynccontextmanager
@@ -52,5 +63,7 @@ async def open_agent_resources() -> AsyncIterator[AgentResources]:
         yield AgentResources(
             checkpointer=checkpointer,
             store=store,
-            agent=await create_agent(checkpointer, store),
+            title_model=create_chat_model(),
+            chat_agent=await create_agent(checkpointer, store),
+            research_agent=await create_research_graph(checkpointer),
         )

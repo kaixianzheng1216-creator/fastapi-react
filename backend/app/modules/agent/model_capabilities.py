@@ -23,6 +23,7 @@ class ModelCapabilities:
 
 
 class _ModelInfo(BaseModel):
+    mode: str | None = None
     supports_vision: bool | None = None
     supported_openai_params: list[str] | None = None
 
@@ -55,6 +56,10 @@ async def list_capabilities() -> list[ModelCapabilities]:
 
     for model in response.data:
         model_info = model.model_info
+
+        if model_info.mode != "chat":
+            continue
+
         supports_thinking = False
 
         if model_info.supported_openai_params is not None:

@@ -7,6 +7,7 @@ from app.api.dependencies import SessionDep
 from app.modules.auth.dependencies import CurrentUser, get_current_user
 from app.modules.conversations import service
 from app.modules.conversations.schemas import (
+    ConversationCreate,
     ConversationDetailPublic,
     ConversationPublic,
     ConversationRenameRequest,
@@ -25,11 +26,13 @@ router = APIRouter(
 def create_conversation(
     session: SessionDep,
     current_user: CurrentUser,
+    body: ConversationCreate,
 ) -> ConversationPublic:
     """创建会话。"""
     conversation = service.create_conversation(
         session=session,
         current_user=current_user,
+        kind=body.kind,
     )
 
     return service.to_public(conversation)
@@ -52,7 +55,7 @@ async def generate_conversation_title(
         current_user=current_user,
         conversation_id=conversation_id,
         text=message.text,
-        title_model=request.app.state.title_model,
+        title_model=request.app.state.agent_resources.title_model,
     )
 
     return service.to_public(conversation)
@@ -95,7 +98,7 @@ async def read_conversation(
         session=session,
         current_user=current_user,
         conversation_id=conversation_id,
-        agent=request.app.state.agent,
+        resources=request.app.state.agent_resources,
     )
 
 

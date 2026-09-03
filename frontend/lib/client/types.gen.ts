@@ -140,6 +140,11 @@ export type AgentRunResumeStateRequest = {
 };
 
 /**
+ * AgentRunStatus
+ */
+export type AgentRunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+
+/**
  * ArtifactPublic
  */
 export type ArtifactPublic = {
@@ -282,6 +287,13 @@ export type BodySkillsCreateZipSkill = {
 };
 
 /**
+ * ConversationCreate
+ */
+export type ConversationCreate = {
+    kind?: ConversationKind;
+};
+
+/**
  * ConversationDetailPublic
  */
 export type ConversationDetailPublic = {
@@ -297,6 +309,7 @@ export type ConversationDetailPublic = {
      * Archived
      */
     archived: boolean;
+    kind: ConversationKind;
     /**
      * Createdat
      */
@@ -307,6 +320,11 @@ export type ConversationDetailPublic = {
     updatedAt: string;
     state: ConversationStatePublic;
 };
+
+/**
+ * ConversationKind
+ */
+export type ConversationKind = 'chat' | 'research';
 
 /**
  * ConversationPublic
@@ -324,6 +342,7 @@ export type ConversationPublic = {
      * Archived
      */
     archived: boolean;
+    kind: ConversationKind;
     /**
      * Createdat
      */
@@ -362,6 +381,35 @@ export type ConversationStatePublic = {
      * Artifacts
      */
     artifacts: Array<ArtifactPublic>;
+    /**
+     * Stage
+     */
+    stage?: string | null;
+    runStatus?: AgentRunStatus | null;
+    /**
+     * Plan
+     */
+    plan?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Researchmessages
+     */
+    researchMessages?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Outline
+     */
+    outline?: string | null;
+    /**
+     * Draft
+     */
+    draft?: string | null;
+    /**
+     * Report
+     */
+    report?: string | null;
 };
 
 /**
@@ -2620,11 +2668,20 @@ export type AgentReadConversationsResponses = {
 export type AgentReadConversationsResponse = AgentReadConversationsResponses[keyof AgentReadConversationsResponses];
 
 export type AgentCreateConversationData = {
-    body?: never;
+    body: ConversationCreate;
     path?: never;
     query?: never;
     url: '/api/v1/agent/conversations';
 };
+
+export type AgentCreateConversationErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AgentCreateConversationError = AgentCreateConversationErrors[keyof AgentCreateConversationErrors];
 
 export type AgentCreateConversationResponses = {
     /**

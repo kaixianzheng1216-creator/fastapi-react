@@ -1,18 +1,22 @@
 import asyncio
 import logging
 from collections.abc import AsyncGenerator
+from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, col, select
 
 from app.db.session import engine
+from app.db.timestamps import utc_now
 from app.modules.agent.exceptions import (
     AgentRunActiveError,
     AgentRunCancellationTimeoutError,
     AgentRunNotFoundError,
     AgentRunQueueUnavailableError,
     AgentRunStreamExpiredError,
+    ResearchAlreadyStartedError,
+    ResearchInputError,
 )
 from app.modules.agent.models import (
     ACTIVE_AGENT_RUN_STATUSES,
@@ -22,17 +26,20 @@ from app.modules.agent.models import (
 )
 from app.modules.agent.run_stream import HEARTBEAT_TTL_SECONDS, AgentRunStream
 from app.modules.agent.schemas import (
+    AddMessageCommand,
     AgentChatRequest,
     AgentRunResumeStatePublic,
 )
 from app.modules.agent.task_queue import AGENT_RUN_TASK_NAME, celery_app
 from app.modules.conversations import service as conversation_service
+from app.modules.conversations.models import ConversationKind
 from app.modules.users.models import User
 
 logger = logging.getLogger(__name__)
 
 RUN_CANCELLATION_POLL_SECONDS = 0.5
 RUN_CANCELLATION_TIMEOUT_SECONDS = HEARTBEAT_TTL_SECONDS + 5.0
+CHINA_STANDARD_TIME = timezone(timedelta(hours=8))
 
 
 async def create_run(
@@ -41,11 +48,42 @@ async def create_run(
     current_user: User,
     request: AgentChatRequest,
 ) -> UUID:
-    conversation_service.touch_conversation(
+    conversation = conversation_service.get_conversation(
         session=session,
         current_user=current_user,
         conversation_id=request.thread_id,
     )
+
+    if conversation.kind == ConversationKind.RESEARCH:
+        if len(request.commands) != 1 or not isinstance(
+            request.commands[0], AddMessageCommand
+        ):
+            raise ResearchInputError
+
+        session.refresh(conversation, with_for_update=True)
+
+        previous_run = session.exec(
+            select(AgentRun.id)
+            .where(AgentRun.conversation_id == conversation.id)
+            .limit(1)
+        ).first()
+
+        if previous_run is not None:
+            raise ResearchAlreadyStartedError
+
+        request.state = {
+            "kind": ConversationKind.RESEARCH.value,
+            "messages": [],
+            "asOf": datetime.now(CHINA_STANDARD_TIME).date().isoformat(),
+            "stage": "plan",
+            "research_messages": [],
+        }
+    else:
+        request.state["kind"] = ConversationKind.CHAT.value
+
+    conversation.updated_at = utc_now()
+
+    session.add(conversation)
 
     run_id = uuid4()
 

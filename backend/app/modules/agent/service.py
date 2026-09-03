@@ -43,6 +43,7 @@ from app.modules.agent.schemas import (
 )
 from app.modules.conversations import file_service as conversation_file_service
 from app.modules.conversations.message_files import refresh_message_file_urls
+from app.modules.conversations.models import ConversationKind
 from app.modules.files import service as file_service
 from app.modules.files.exceptions import FileTypeNotAllowedError
 
@@ -88,56 +89,77 @@ async def _run(
     chat_request: AgentChatRequest,
     outcome: RunOutcome,
 ) -> None:
-    thread_id = f"{user_id}:{chat_request.thread_id}"
-    events: Any | None = None
+    graph_thread_id = f"{user_id}:{chat_request.thread_id}"
+    event_stream: Any | None = None
 
     try:
+        conversation_kind = ConversationKind(chat_request.state["kind"])
+
         if controller.state is None:
             controller.state = {"messages": []}
         elif "messages" not in controller.state:
             controller.state["messages"] = []
 
+        controller.state["kind"] = conversation_kind.value
+
+        if conversation_kind == ConversationKind.RESEARCH:
+            controller.state["runStatus"] = "running"
+            controller.state["runError"] = ""
+
         if controller.is_cancelled:
             return
 
-        capabilities = await get_capabilities(
+        model_capabilities = await get_capabilities(
             chat_request.model or settings.DEFAULT_MODEL_NAME
         )
 
-        if chat_request.thinking_enabled and not capabilities.supports_thinking:
+        if (
+            chat_request.thinking_enabled
+            and not model_capabilities.supports_thinking
+        ):
             raise ThinkingNotSupportedError
 
         _validate_command_model_input(
             session=session,
             user_id=user_id,
             commands=chat_request.commands,
-            capabilities=capabilities,
+            capabilities=model_capabilities,
         )
 
-        agent_config, input_messages = await _prepare_run(
+        run_config, agent_input_messages = await _prepare_run(
             controller,
             session,
             user_id,
-            thread_id,
+            graph_thread_id,
             chat_request.thread_id,
             chat_request.commands,
         )
 
-        agent_config["callbacks"] = [CallbackHandler()]
+        run_config["callbacks"] = [CallbackHandler()]
 
         with propagate_attributes(
             trace_name=TRACE_NAME,
             user_id=str(user_id),
-            session_id=thread_id,
+            session_id=graph_thread_id,
         ):
-            events = agent.astream(
-                {"messages": input_messages},
-                config=agent_config,
+            agent_input: dict[str, Any] = {"messages": agent_input_messages}
+
+            if conversation_kind == ConversationKind.RESEARCH:
+                agent_input.update(
+                    {
+                        "as_of": controller.state["asOf"],
+                        "stage": controller.state["stage"],
+                    }
+                )
+
+            event_stream = agent.astream(
+                agent_input,
+                config=run_config,
                 context={
-                    "model_name": capabilities.model_name,
+                    "model_name": model_capabilities.model_name,
                     "user_id": user_id,
-                    "supports_vision": capabilities.supports_vision,
-                    "supports_thinking": capabilities.supports_thinking,
+                    "supports_vision": model_capabilities.supports_vision,
+                    "supports_thinking": model_capabilities.supports_thinking,
                     "thinking_enabled": chat_request.thinking_enabled,
                 },
                 stream_mode=["messages", "updates"],
@@ -145,29 +167,47 @@ async def _run(
                 version="v2",
             )
 
-            async for chunk in events:
+            async for event in event_stream:
                 if controller.is_cancelled:
                     break
 
-                state = get_tool_call_subgraph_state(
-                    controller,
-                    namespace=chunk["ns"],
-                    subgraph_node="tools",
-                    tool_name="task",
-                    artifact_field_name="subgraph_state",
-                    default_state={"messages": []},
-                )
+                if conversation_kind == ConversationKind.RESEARCH:
+                    if event["type"] == "messages":
+                        if not _in_namespace(event["ns"], "research"):
+                            continue
+
+                        target_state = {
+                            "messages": controller.state["research_messages"]
+                        }
+                    else:
+                        target_state = controller.state
+                else:
+                    target_state = get_tool_call_subgraph_state(
+                        controller,
+                        namespace=event["ns"],
+                        subgraph_node="tools",
+                        tool_name="task",
+                        artifact_field_name="subgraph_state",
+                        default_state={"messages": []},
+                    )
 
                 append_langgraph_event(
-                    state,
-                    chunk["ns"],
-                    chunk["type"],
-                    chunk["data"],
+                    target_state,
+                    event["ns"],
+                    event["type"],
+                    event["data"],
+                )
+
+            if conversation_kind == ConversationKind.RESEARCH:
+                controller.state["runStatus"] = (
+                    "cancelled" if controller.is_cancelled else "completed"
                 )
     except ApplicationError as error:
         logger.warning("请求被拒绝：%s", type(error).__name__)
 
         outcome.failed = True
+
+        _mark_research_failed(controller, error.detail)
 
         controller.add_error(error.detail)
     except APIError:
@@ -175,19 +215,36 @@ async def _run(
 
         outcome.failed = True
 
+        _mark_research_failed(controller, ModelServiceUnavailableError.detail)
+
         controller.add_error(ModelServiceUnavailableError.detail)
     except Exception:
         logger.exception(STREAM_ERROR_DETAIL)
 
         outcome.failed = True
 
+        _mark_research_failed(controller, STREAM_ERROR_DETAIL)
+
         controller.add_error(STREAM_ERROR_DETAIL)
     finally:
-        if events is not None:
-            close = getattr(events, "aclose", None)
+        if event_stream is not None:
+            close_event_stream = getattr(event_stream, "aclose", None)
 
-            if close is not None:
-                await close()
+            if close_event_stream is not None:
+                await close_event_stream()
+
+
+def _mark_research_failed(controller: RunController, detail: str) -> None:
+    if (
+        controller.state is not None
+        and controller.state.get("kind") == ConversationKind.RESEARCH.value
+    ):
+        controller.state["runStatus"] = "failed"
+        controller.state["runError"] = detail
+
+
+def _in_namespace(namespace: tuple[str, ...], node: str) -> bool:
+    return any(part.split(":", 1)[0] == node for part in namespace)
 
 
 def _validate_command_model_input(

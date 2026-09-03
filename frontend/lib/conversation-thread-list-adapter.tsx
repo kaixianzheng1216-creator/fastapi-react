@@ -34,91 +34,96 @@ function getFirstUserText(messages: readonly ThreadMessage[]): string {
   return "";
 }
 
-export const conversationThreadListAdapter: RemoteThreadListAdapter = {
-  async list() {
-    const { data } = await agentReadConversations({
-      query: { limit: PAGE_SIZE },
-      throwOnError: true,
-    });
+export function createConversationThreadListAdapter(
+  getNewConversationKind: () => "chat" | "research",
+): RemoteThreadListAdapter {
+  return {
+    async list() {
+      const { data } = await agentReadConversations({
+        query: { limit: PAGE_SIZE },
+        throwOnError: true,
+      });
 
-    return {
-      threads: data.data.map((conversation) => ({
-        remoteId: conversation.id,
-        status: conversation.archived ? "archived" : "regular",
-        title: conversation.title,
-        lastMessageAt: new Date(conversation.updatedAt),
-        custom: { persisted: true },
-      })),
-    };
-  },
+      return {
+        threads: data.data.map((conversation) => ({
+          remoteId: conversation.id,
+          status: conversation.archived ? "archived" : "regular",
+          title: conversation.title,
+          lastMessageAt: new Date(conversation.updatedAt),
+          custom: { persisted: true, kind: conversation.kind },
+        })),
+      };
+    },
 
-  async initialize() {
-    const { data } = await agentCreateConversation({
-      throwOnError: true,
-    });
+    async initialize() {
+      const { data } = await agentCreateConversation({
+        body: { kind: getNewConversationKind() },
+        throwOnError: true,
+      });
 
-    return { remoteId: data.id };
-  },
+      return { remoteId: data.id };
+    },
 
-  async fetch(remoteId) {
-    const { data } = await agentReadConversation({
-      path: { conversation_id: remoteId },
-      throwOnError: true,
-    });
+    async fetch(remoteId) {
+      const { data } = await agentReadConversation({
+        path: { conversation_id: remoteId },
+        throwOnError: true,
+      });
 
-    return {
-      remoteId: data.id,
-      status: data.archived ? "archived" : "regular",
-      title: data.title,
-      lastMessageAt: new Date(data.updatedAt),
-      custom: { persisted: true },
-    };
-  },
+      return {
+        remoteId: data.id,
+        status: data.archived ? "archived" : "regular",
+        title: data.title,
+        lastMessageAt: new Date(data.updatedAt),
+        custom: { persisted: true, kind: data.kind },
+      };
+    },
 
-  async generateTitle(remoteId, messages) {
-    const text = getFirstUserText(messages);
-    if (!text) return createAssistantStream(() => {});
+    async generateTitle(remoteId, messages) {
+      const text = getFirstUserText(messages);
+      if (!text) return createAssistantStream(() => {});
 
-    const { data } = await agentGenerateConversationTitle({
-      body: { role: "user", parts: [{ type: "text", text }] },
-      path: { conversation_id: remoteId },
-      throwOnError: true,
-    });
+      const { data } = await agentGenerateConversationTitle({
+        body: { role: "user", parts: [{ type: "text", text }] },
+        path: { conversation_id: remoteId },
+        throwOnError: true,
+      });
 
-    return createAssistantStream((controller) => {
-      controller.appendText(data.title);
-    });
-  },
+      return createAssistantStream((controller) => {
+        controller.appendText(data.title);
+      });
+    },
 
-  async rename(remoteId, newTitle) {
-    await agentRenameConversation({
-      body: { title: newTitle },
-      path: { conversation_id: remoteId },
-      throwOnError: true,
-    });
-  },
+    async rename(remoteId, newTitle) {
+      await agentRenameConversation({
+        body: { title: newTitle },
+        path: { conversation_id: remoteId },
+        throwOnError: true,
+      });
+    },
 
-  async archive(remoteId) {
-    await agentArchiveConversation({
-      path: { conversation_id: remoteId },
-      throwOnError: true,
-    });
-  },
+    async archive(remoteId) {
+      await agentArchiveConversation({
+        path: { conversation_id: remoteId },
+        throwOnError: true,
+      });
+    },
 
-  async unarchive(remoteId) {
-    await agentUnarchiveConversation({
-      path: { conversation_id: remoteId },
-      throwOnError: true,
-    });
-  },
+    async unarchive(remoteId) {
+      await agentUnarchiveConversation({
+        path: { conversation_id: remoteId },
+        throwOnError: true,
+      });
+    },
 
-  async delete(remoteId) {
-    await agentDeleteConversation({
-      path: { conversation_id: remoteId },
-      throwOnError: true,
-    });
-  },
-};
+    async delete(remoteId) {
+      await agentDeleteConversation({
+        path: { conversation_id: remoteId },
+        throwOnError: true,
+      });
+    },
+  };
+}
 
 export async function readConversationState(remoteId: string) {
   const { data } = await agentReadConversation({
@@ -126,7 +131,7 @@ export async function readConversationState(remoteId: string) {
     throwOnError: true,
   });
 
-  return data.state;
+  return { ...data.state, kind: data.kind };
 }
 
 export async function searchConversations(

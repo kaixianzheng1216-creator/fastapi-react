@@ -10,7 +10,6 @@ from starlette.middleware.cors import CORSMiddleware
 from app.api.exception_handlers import add_exception_handlers
 from app.api.router import api_router
 from app.core.config import API_V1_PREFIX, PROJECT_NAME, settings
-from app.modules.agent.agent import create_chat_model
 from app.modules.agent.resources import open_agent_resources
 from app.modules.agent.run_stream import AgentRunStream
 
@@ -23,10 +22,7 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     async with open_agent_resources() as resources:
-        app.state.checkpointer = resources.checkpointer
-        app.state.store = resources.store
-        app.state.title_model = create_chat_model()
-        app.state.agent = resources.agent
+        app.state.agent_resources = resources
 
         run_stream = AgentRunStream(redis_url=settings.REDIS_URL)
 

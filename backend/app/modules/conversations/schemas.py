@@ -4,13 +4,20 @@ from typing import Annotated, Any, Literal, Self
 
 from pydantic import BaseModel, Field, StringConstraints, model_validator
 
+from app.modules.agent.models import AgentRunStatus
 from app.modules.agent.schemas import Message, TextMessagePart
+from app.modules.conversations.models import ConversationKind
+
+
+class ConversationCreate(BaseModel):
+    kind: ConversationKind = ConversationKind.CHAT
 
 
 class ConversationPublic(BaseModel):
     id: uuid.UUID
     title: str
     archived: bool
+    kind: ConversationKind
     created_at: datetime = Field(serialization_alias="createdAt")
     updated_at: datetime = Field(serialization_alias="updatedAt")
 
@@ -59,6 +66,19 @@ class ConversationStatePublic(BaseModel):
     messages: list[dict[str, Any]]
     todos: list[TodoPublic]
     artifacts: list[ArtifactPublic]
+    stage: str | None = None
+    run_status: AgentRunStatus | None = Field(
+        default=None,
+        serialization_alias="runStatus",
+    )
+    plan: dict[str, Any] | None = None
+    research_messages: list[dict[str, Any]] = Field(
+        default_factory=list,
+        serialization_alias="researchMessages",
+    )
+    outline: str | None = None
+    draft: str | None = None
+    report: str | None = None
 
 
 class ConversationDetailPublic(ConversationPublic):

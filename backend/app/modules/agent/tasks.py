@@ -171,7 +171,7 @@ async def _execute_agent(
             outcome = service.RunOutcome()
 
             chunks = service.stream_chat(
-                agent=resources.agent,
+                agent=resources.get_agent(request.state["kind"]),
                 session=session,
                 user_id=user_id,
                 chat_request=request,

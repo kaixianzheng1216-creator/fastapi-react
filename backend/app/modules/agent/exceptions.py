@@ -43,6 +43,16 @@ class AgentRunActiveError(ApplicationError):
     detail = "会话仍有正在运行的任务，请先取消任务"
 
 
+class ResearchAlreadyStartedError(ApplicationError):
+    status_code = status.HTTP_409_CONFLICT
+    detail = "此会话已发起过调研，请新建调研会话"
+
+
+class ResearchInputError(ApplicationError):
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = "调研只接受一条用户消息，不支持多轮对话或提交工具结果"
+
+
 class AgentRunNotFoundError(ApplicationError):
     status_code = status.HTTP_404_NOT_FOUND
     detail = "Agent 运行不存在"
