@@ -22,6 +22,10 @@ from app.modules.agent.connections.litellm_mcp import load_litellm_mcp_tools
 from app.modules.agent.file_messages import prepare_message_file_inputs
 
 PROMPTS = Path(__file__).parent / "prompts" / "research.md"
+RESEARCH_TOOL_NAMES = {
+    "firecrawl-firecrawl_search",
+    "firecrawl-firecrawl_scrape",
+}
 PLAN_PROMPT, RESEARCH_PROMPT, OUTLINE_PROMPT, DRAFT_PROMPT, FINAL_PROMPT = (
     PROMPTS.read_text(encoding="utf-8")
     .strip()
@@ -154,9 +158,13 @@ def _model(runtime: Runtime[AgentContext]) -> BaseChatModel:
 async def create_research_graph(
     checkpointer: AsyncPostgresSaver,
 ) -> Any:
+    tools = await load_litellm_mcp_tools()
+
+    research_tools = [tool for tool in tools if tool.name in RESEARCH_TOOL_NAMES]
+
     research_agent = create_agent(
         model=create_chat_model(),
-        tools=await load_litellm_mcp_tools(),
+        tools=research_tools,
         middleware=[select_chat_model],
         system_prompt=RESEARCH_PROMPT,
         context_schema=AgentContext,
