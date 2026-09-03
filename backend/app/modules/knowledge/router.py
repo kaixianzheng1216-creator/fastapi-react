@@ -4,10 +4,32 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 
 from app.api.dependencies import SessionDep
+from app.api.responses import error_responses
 from app.modules.auth.dependencies import CurrentUser, get_current_active_superuser
+from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
 from app.modules.files import object_storage
+from app.modules.files.exceptions import (
+    FileSizeMismatchError,
+    FileStorageUnavailableError,
+    FileTypeNotAllowedError,
+    FileUploadIncompleteError,
+)
 from app.modules.files.schemas import FileCompletePublic, FileUploadRequest
 from app.modules.knowledge import documents, retrieval, service
+from app.modules.knowledge.exceptions import (
+    KnowledgeBaseAlreadyExistsError,
+    KnowledgeBaseNotFoundError,
+    KnowledgeDocumentArtifactUnavailableError,
+    KnowledgeDocumentNotFoundError,
+    KnowledgeDocumentStateError,
+    KnowledgeFolderAlreadyExistsError,
+    KnowledgeFolderInvalidParentError,
+    KnowledgeFolderNotFoundError,
+    KnowledgeSearchUnavailableError,
+    WebpageScrapeError,
+    WebpageScrapeUnavailableError,
+    WebpageTooLargeError,
+)
 from app.modules.knowledge.schemas import (
     KnowledgeBaseCreate,
     KnowledgeBasePublic,
@@ -29,22 +51,34 @@ from app.modules.knowledge.schemas import (
     KnowledgeSearchResultsPublic,
     KnowledgeWebpageCreate,
 )
+from app.modules.users.exceptions import InsufficientPrivilegesError
+
+ADMIN_ERROR_RESPONSES = error_responses(
+    CredentialsValidationError,
+    InactiveUserError,
+    InsufficientPrivilegesError,
+)
 
 router = APIRouter(
     prefix="/admin/knowledge-bases",
     tags=["knowledge-bases"],
     dependencies=[Depends(get_current_active_superuser)],
+    responses=ADMIN_ERROR_RESPONSES,
 )
 
 document_router = APIRouter(
     prefix="/admin/knowledge-documents",
     tags=["knowledge-documents"],
     dependencies=[Depends(get_current_active_superuser)],
+    responses=ADMIN_ERROR_RESPONSES,
 )
 
 
 @router.post(
-    "", response_model=KnowledgeBasePublic, status_code=status.HTTP_201_CREATED
+    "",
+    response_model=KnowledgeBasePublic,
+    status_code=status.HTTP_201_CREATED,
+    responses=error_responses(KnowledgeBaseAlreadyExistsError),
 )
 def create_knowledge_base(
     *, session: SessionDep, body: KnowledgeBaseCreate
@@ -83,7 +117,11 @@ def read_knowledge_bases(
     )
 
 
-@router.get("/{knowledge_base_id}", response_model=KnowledgeBasePublic)
+@router.get(
+    "/{knowledge_base_id}",
+    response_model=KnowledgeBasePublic,
+    responses=error_responses(KnowledgeBaseNotFoundError),
+)
 def read_knowledge_base(
     session: SessionDep, knowledge_base_id: uuid.UUID
 ) -> KnowledgeBasePublic:
@@ -95,7 +133,14 @@ def read_knowledge_base(
     return KnowledgeBasePublic.model_validate(knowledge_base)
 
 
-@router.patch("/{knowledge_base_id}", response_model=KnowledgeBasePublic)
+@router.patch(
+    "/{knowledge_base_id}",
+    response_model=KnowledgeBasePublic,
+    responses=error_responses(
+        KnowledgeBaseNotFoundError,
+        KnowledgeBaseAlreadyExistsError,
+    ),
+)
 def update_knowledge_base(
     *,
     session: SessionDep,
@@ -112,7 +157,11 @@ def update_knowledge_base(
     return KnowledgeBasePublic.model_validate(knowledge_base)
 
 
-@router.delete("/{knowledge_base_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{knowledge_base_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=error_responses(KnowledgeBaseNotFoundError),
+)
 def delete_knowledge_base(session: SessionDep, knowledge_base_id: uuid.UUID) -> None:
     """删除知识库。"""
     service.delete_knowledge_base(session=session, knowledge_base_id=knowledge_base_id)
@@ -122,6 +171,11 @@ def delete_knowledge_base(session: SessionDep, knowledge_base_id: uuid.UUID) -> 
     "/{knowledge_base_id}/folders",
     response_model=KnowledgeFolderPublic,
     status_code=status.HTTP_201_CREATED,
+    responses=error_responses(
+        KnowledgeBaseNotFoundError,
+        KnowledgeFolderNotFoundError,
+        KnowledgeFolderAlreadyExistsError,
+    ),
 )
 def create_folder(
     *,
@@ -142,6 +196,7 @@ def create_folder(
 @router.get(
     "/{knowledge_base_id}/folders",
     response_model=KnowledgeFoldersPublic,
+    responses=error_responses(KnowledgeBaseNotFoundError),
 )
 def read_folders(
     session: SessionDep, knowledge_base_id: uuid.UUID
@@ -166,6 +221,11 @@ def read_folders(
 @router.patch(
     "/{knowledge_base_id}/folders/{folder_id}",
     response_model=KnowledgeFolderPublic,
+    responses=error_responses(
+        KnowledgeBaseNotFoundError,
+        KnowledgeFolderNotFoundError,
+        KnowledgeFolderAlreadyExistsError,
+    ),
 )
 def update_folder(
     *,
@@ -188,6 +248,12 @@ def update_folder(
 @router.patch(
     "/{knowledge_base_id}/folders/{folder_id}/parent",
     response_model=KnowledgeFolderPublic,
+    responses=error_responses(
+        KnowledgeBaseNotFoundError,
+        KnowledgeFolderNotFoundError,
+        KnowledgeFolderInvalidParentError,
+        KnowledgeFolderAlreadyExistsError,
+    ),
 )
 def move_folder(
     *,
@@ -210,6 +276,10 @@ def move_folder(
 @router.get(
     "/{knowledge_base_id}/entries",
     response_model=KnowledgeDirectoryPublic,
+    responses=error_responses(
+        KnowledgeBaseNotFoundError,
+        KnowledgeFolderNotFoundError,
+    ),
 )
 def read_directory(
     session: SessionDep,
@@ -233,6 +303,11 @@ def read_directory(
 @router.post(
     "/{knowledge_base_id}/directory/batch-delete",
     status_code=status.HTTP_204_NO_CONTENT,
+    responses=error_responses(
+        KnowledgeBaseNotFoundError,
+        KnowledgeFolderNotFoundError,
+        KnowledgeDocumentNotFoundError,
+    ),
 )
 def delete_directory_entries(
     session: SessionDep,
@@ -252,6 +327,12 @@ def delete_directory_entries(
     "/{knowledge_base_id}/documents/uploads",
     response_model=KnowledgeDocumentUploadPublic,
     status_code=status.HTTP_201_CREATED,
+    responses=error_responses(
+        KnowledgeBaseNotFoundError,
+        KnowledgeFolderNotFoundError,
+        FileTypeNotAllowedError,
+        FileStorageUnavailableError,
+    ),
 )
 def create_document_upload(
     *,
@@ -274,6 +355,12 @@ def create_document_upload(
 @document_router.post(
     "/{document_id}/complete",
     response_model=KnowledgeDocumentPublic,
+    responses=error_responses(
+        KnowledgeDocumentNotFoundError,
+        FileUploadIncompleteError,
+        FileSizeMismatchError,
+        FileStorageUnavailableError,
+    ),
 )
 async def complete_document_upload(
     session: SessionDep,
@@ -290,6 +377,14 @@ async def complete_document_upload(
     "/{knowledge_base_id}/documents/webpages",
     response_model=KnowledgeDocumentPublic,
     status_code=status.HTTP_201_CREATED,
+    responses=error_responses(
+        KnowledgeBaseNotFoundError,
+        KnowledgeFolderNotFoundError,
+        WebpageScrapeError,
+        WebpageScrapeUnavailableError,
+        WebpageTooLargeError,
+        FileStorageUnavailableError,
+    ),
 )
 async def create_webpage_document(
     *,
@@ -312,6 +407,7 @@ async def create_webpage_document(
 @document_router.get(
     "/{document_id}",
     response_model=KnowledgeDocumentPublic,
+    responses=error_responses(KnowledgeDocumentNotFoundError),
 )
 def read_document(
     session: SessionDep,
@@ -324,6 +420,11 @@ def read_document(
 @document_router.get(
     "/{document_id}/preview",
     response_model=KnowledgeDocumentPreviewPublic,
+    responses=error_responses(
+        KnowledgeDocumentNotFoundError,
+        KnowledgeDocumentArtifactUnavailableError,
+        FileStorageUnavailableError,
+    ),
 )
 def read_document_preview(
     session: SessionDep,
@@ -336,6 +437,10 @@ def read_document_preview(
 @document_router.get(
     "/{document_id}/chunks",
     response_model=KnowledgeDocumentChunksPublic,
+    responses=error_responses(
+        KnowledgeDocumentNotFoundError,
+        KnowledgeDocumentArtifactUnavailableError,
+    ),
 )
 def read_document_chunks(
     session: SessionDep,
@@ -357,6 +462,11 @@ def read_document_chunks(
 @document_router.get(
     "/{document_id}/download",
     response_model=FileCompletePublic,
+    responses=error_responses(
+        KnowledgeDocumentNotFoundError,
+        FileUploadIncompleteError,
+        FileStorageUnavailableError,
+    ),
 )
 def download_original_document(
     session: SessionDep,
@@ -380,6 +490,11 @@ def download_original_document(
 @document_router.patch(
     "/{document_id}/folder",
     response_model=KnowledgeDocumentPublic,
+    responses=error_responses(
+        KnowledgeDocumentNotFoundError,
+        KnowledgeBaseNotFoundError,
+        KnowledgeFolderNotFoundError,
+    ),
 )
 def move_document(
     *,
@@ -395,7 +510,14 @@ def move_document(
     )
 
 
-@document_router.post("/{document_id}/retry", status_code=status.HTTP_204_NO_CONTENT)
+@document_router.post(
+    "/{document_id}/retry",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=error_responses(
+        KnowledgeDocumentNotFoundError,
+        KnowledgeDocumentStateError,
+    ),
+)
 def retry_document(session: SessionDep, document_id: uuid.UUID) -> None:
     """重试知识库文档处理。"""
     documents.retry_document(session=session, document_id=document_id)
@@ -404,6 +526,7 @@ def retry_document(session: SessionDep, document_id: uuid.UUID) -> None:
 @document_router.delete(
     "/{document_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    responses=error_responses(KnowledgeDocumentNotFoundError),
 )
 def delete_document(session: SessionDep, document_id: uuid.UUID) -> None:
     """删除知识库文档。"""
@@ -413,6 +536,10 @@ def delete_document(session: SessionDep, document_id: uuid.UUID) -> None:
 @router.post(
     "/{knowledge_base_id}/search",
     response_model=KnowledgeSearchResultsPublic,
+    responses=error_responses(
+        KnowledgeBaseNotFoundError,
+        KnowledgeSearchUnavailableError,
+    ),
 )
 def search_knowledge_base(
     session: SessionDep,

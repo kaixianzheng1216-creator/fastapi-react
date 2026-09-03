@@ -34,17 +34,12 @@ dependencies = [
     "docling-core[chunking]>=2.50,<3",
     "celery>=5.6,<6",
     "redis>=6,<8",
-]
-
-[project.optional-dependencies]
-collector = [
     "playwright>=1.58,<2.0.0",
 ]
 
 [dependency-groups]
 dev = [
     "mypy<3.0.0,>=1.8.0",
-    "playwright>=1.58,<2.0.0",
     "ruff<1.0.0,>=0.2.2",
     "types-openpyxl>=3.1.5.20250919",
     "types-PyYAML>=6.0.12.20250915",

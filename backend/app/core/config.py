@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)
     ] = []
+    FRONTEND_URL: AnyHttpUrl = AnyHttpUrl("http://localhost:3001")
+    PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: str | None = None
 
     @computed_field  # type: ignore[prop-decorator]
     @property

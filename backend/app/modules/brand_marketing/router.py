@@ -3,18 +3,26 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from app.api.dependencies import SessionDep
+from app.api.responses import error_responses
 from app.modules.auth.dependencies import get_current_active_superuser
+from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
 from app.modules.brand_marketing import service
 from app.modules.brand_marketing.constants import RegionalIndicatorCode
 from app.modules.brand_marketing.schemas import (
     RegionalDataPublic,
     RegionalSortOrder,
 )
+from app.modules.users.exceptions import InsufficientPrivilegesError
 
 router = APIRouter(
     prefix="/admin/brand-marketing",
     tags=["brand-marketing"],
     dependencies=[Depends(get_current_active_superuser)],
+    responses=error_responses(
+        CredentialsValidationError,
+        InactiveUserError,
+        InsufficientPrivilegesError,
+    ),
 )
 
 

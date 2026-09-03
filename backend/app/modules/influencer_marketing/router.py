@@ -3,7 +3,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from app.api.dependencies import SessionDep
+from app.api.responses import error_responses
 from app.modules.auth.dependencies import get_current_active_superuser
+from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
 from app.modules.influencer_marketing import service
 from app.modules.influencer_marketing.constants import InfluencerPlatformCode
 from app.modules.influencer_marketing.schemas import (
@@ -12,11 +14,17 @@ from app.modules.influencer_marketing.schemas import (
     InfluencerAccountsPublic,
     InfluencerSortOrder,
 )
+from app.modules.users.exceptions import InsufficientPrivilegesError
 
 router = APIRouter(
     prefix="/admin/influencer-marketing",
     tags=["influencer-marketing"],
     dependencies=[Depends(get_current_active_superuser)],
+    responses=error_responses(
+        CredentialsValidationError,
+        InactiveUserError,
+        InsufficientPrivilegesError,
+    ),
 )
 
 

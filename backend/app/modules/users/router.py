@@ -4,13 +4,24 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 
 from app.api.dependencies import SessionDep
+from app.api.responses import error_responses
 from app.common.schemas import Message
 from app.modules.auth.dependencies import (
     CurrentUser,
     get_current_active_superuser,
     get_current_user,
 )
+from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
 from app.modules.users import service
+from app.modules.users.exceptions import (
+    IncorrectPasswordError,
+    InsufficientPrivilegesError,
+    PasswordUnchangedError,
+    SelfAdminStatusChangeForbiddenError,
+    SelfDeletionForbiddenError,
+    UserAlreadyExistsError,
+    UserNotFoundError,
+)
 from app.modules.users.schemas import (
     UpdatePassword,
     UserCreate,
@@ -27,12 +38,21 @@ authenticated_router = APIRouter(
     prefix="/users",
     tags=["users"],
     dependencies=[Depends(get_current_user)],
+    responses=error_responses(
+        CredentialsValidationError,
+        InactiveUserError,
+    ),
 )
 
 admin_router = APIRouter(
     prefix="/users",
     tags=["users"],
     dependencies=[Depends(get_current_active_superuser)],
+    responses=error_responses(
+        CredentialsValidationError,
+        InactiveUserError,
+        InsufficientPrivilegesError,
+    ),
 )
 
 
@@ -40,6 +60,7 @@ admin_router = APIRouter(
     "/signup",
     response_model=UserPublic,
     status_code=status.HTTP_201_CREATED,
+    responses=error_responses(UserAlreadyExistsError),
 )
 def register_user(session: SessionDep, user_in: UserRegister) -> UserPublic:
     """无需登录即可创建新用户。"""
@@ -57,7 +78,11 @@ def read_user_me(current_user: CurrentUser) -> UserPublic:
     return UserPublic.model_validate(current_user)
 
 
-@authenticated_router.patch("/me", response_model=UserPublic)
+@authenticated_router.patch(
+    "/me",
+    response_model=UserPublic,
+    responses=error_responses(UserAlreadyExistsError),
+)
 def update_user_me(
     *, session: SessionDep, user_in: UserUpdateMe, current_user: CurrentUser
 ) -> UserPublic:
@@ -69,7 +94,14 @@ def update_user_me(
     return UserPublic.model_validate(user)
 
 
-@authenticated_router.patch("/me/password", response_model=Message)
+@authenticated_router.patch(
+    "/me/password",
+    response_model=Message,
+    responses=error_responses(
+        IncorrectPasswordError,
+        PasswordUnchangedError,
+    ),
+)
 def update_password_me(
     *, session: SessionDep, body: UpdatePassword, current_user: CurrentUser
 ) -> Message:
@@ -84,7 +116,11 @@ def update_password_me(
     return Message(message="Password updated successfully")
 
 
-@authenticated_router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+@authenticated_router.delete(
+    "/me",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=error_responses(SelfDeletionForbiddenError),
+)
 def delete_user_me(session: SessionDep, current_user: CurrentUser) -> None:
     """删除当前用户。"""
     service.delete_current_user(session=session, current_user=current_user)
@@ -94,6 +130,7 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> None:
     "",
     response_model=UserPublic,
     status_code=status.HTTP_201_CREATED,
+    responses=error_responses(UserAlreadyExistsError),
 )
 def create_user(*, session: SessionDep, user_in: UserCreate) -> UserPublic:
     """创建新用户。"""
@@ -126,7 +163,14 @@ def read_users(
     return UsersPublic(data=public_users, count=count)
 
 
-@authenticated_router.get("/{user_id}", response_model=UserPublic)
+@authenticated_router.get(
+    "/{user_id}",
+    response_model=UserPublic,
+    responses=error_responses(
+        InsufficientPrivilegesError,
+        UserNotFoundError,
+    ),
+)
 def read_user_by_id(
     user_id: uuid.UUID, session: SessionDep, current_user: CurrentUser
 ) -> UserPublic:
@@ -138,7 +182,15 @@ def read_user_by_id(
     return UserPublic.model_validate(user)
 
 
-@admin_router.patch("/{user_id}", response_model=UserPublic)
+@admin_router.patch(
+    "/{user_id}",
+    response_model=UserPublic,
+    responses=error_responses(
+        UserNotFoundError,
+        UserAlreadyExistsError,
+        SelfAdminStatusChangeForbiddenError,
+    ),
+)
 def update_user(
     *,
     session: SessionDep,
@@ -157,7 +209,14 @@ def update_user(
     return UserPublic.model_validate(user)
 
 
-@admin_router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@admin_router.delete(
+    "/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=error_responses(
+        UserNotFoundError,
+        SelfDeletionForbiddenError,
+    ),
+)
 def delete_user(
     session: SessionDep, current_user: CurrentUser, user_id: uuid.UUID
 ) -> None:

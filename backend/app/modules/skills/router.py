@@ -5,21 +5,41 @@ from fastapi import APIRouter, File, Query, UploadFile, status
 from fastapi.responses import Response
 
 from app.api.dependencies import StoreDep
+from app.api.responses import error_responses
 from app.modules.auth.dependencies import CurrentUser
+from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
 from app.modules.skills import service
+from app.modules.skills.exceptions import (
+    SkillAlreadyExistsError,
+    SkillInvalidError,
+    SkillMdTooLargeError,
+    SkillNotFoundError,
+    SkillZipTooLargeError,
+)
 from app.modules.skills.schemas import (
     SkillMdRequest,
     SkillPublic,
     SkillsPublic,
 )
 
-router = APIRouter(prefix="/skills", tags=["skills"])
+router = APIRouter(
+    prefix="/skills",
+    tags=["skills"],
+    responses=error_responses(
+        CredentialsValidationError,
+        InactiveUserError,
+    ),
+)
 
 
 @router.post(
     "/md",
     response_model=SkillPublic,
     status_code=status.HTTP_201_CREATED,
+    responses=error_responses(
+        SkillAlreadyExistsError,
+        SkillMdTooLargeError,
+    ),
 )
 async def create_md_skill(
     store: StoreDep,
@@ -38,6 +58,12 @@ async def create_md_skill(
     "/zip",
     response_model=SkillPublic,
     status_code=status.HTTP_201_CREATED,
+    responses=error_responses(
+        SkillInvalidError,
+        SkillAlreadyExistsError,
+        SkillZipTooLargeError,
+        SkillMdTooLargeError,
+    ),
 )
 async def create_zip_skill(
     store: StoreDep,
@@ -54,7 +80,15 @@ async def create_zip_skill(
     )
 
 
-@router.get("", response_model=SkillsPublic)
+@router.get(
+    "",
+    response_model=SkillsPublic,
+    responses=error_responses(
+        SkillInvalidError,
+        SkillNotFoundError,
+        SkillMdTooLargeError,
+    ),
+)
 async def read_skills(
     store: StoreDep,
     current_user: CurrentUser,
@@ -77,6 +111,11 @@ async def read_skills(
 @router.get(
     "/{skill_name}",
     response_model=SkillPublic,
+    responses=error_responses(
+        SkillInvalidError,
+        SkillNotFoundError,
+        SkillMdTooLargeError,
+    ),
 )
 async def read_skill(
     store: StoreDep,
@@ -91,7 +130,21 @@ async def read_skill(
     )
 
 
-@router.get("/{skill_name}/files/{file_path:path}")
+@router.get(
+    "/{skill_name}/files/{file_path:path}",
+    response_class=Response,
+    responses={
+        **error_responses(SkillNotFoundError),
+        status.HTTP_200_OK: {
+            "description": "Skill 文件内容",
+            "content": {
+                "application/octet-stream": {
+                    "schema": {"type": "string", "format": "binary"}
+                }
+            },
+        },
+    },
+)
 async def read_skill_file(
     store: StoreDep,
     current_user: CurrentUser,
@@ -110,7 +163,11 @@ async def read_skill_file(
     return Response(content=content, media_type=media_type)
 
 
-@router.delete("/{skill_name}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{skill_name}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=error_responses(SkillNotFoundError),
+)
 async def delete_skill(
     store: StoreDep,
     current_user: CurrentUser,

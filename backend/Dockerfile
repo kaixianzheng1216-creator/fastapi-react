@@ -26,13 +26,11 @@ RUN sed -i \
     's|deb.debian.org|mirrors.cloud.tencent.com|g' \
     /etc/apt/sources.list.d/debian.sources
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-dev --package app --extra collector --no-install-project \
-    && apt-get update \
-    && apt-get install --yes --no-install-recommends chromium \
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends chromium fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
-FROM dependencies AS application
+FROM collector-dependencies AS application
 
 ENV EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
 

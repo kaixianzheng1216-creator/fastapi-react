@@ -14,6 +14,7 @@ import {
   agentReadConversations,
   agentRenameConversation,
   agentUnarchiveConversation,
+  type ConversationKind,
   type ConversationPublic,
 } from "@/lib/client";
 
@@ -35,7 +36,7 @@ function getFirstUserText(messages: readonly ThreadMessage[]): string {
 }
 
 export function createConversationThreadListAdapter(
-  getNewConversationKind: () => "chat" | "research",
+  getNewConversationKind: () => ConversationKind,
 ): RemoteThreadListAdapter {
   return {
     async list() {
@@ -131,7 +132,13 @@ export async function readConversationState(remoteId: string) {
     throwOnError: true,
   });
 
-  return { ...data.state, kind: data.kind };
+  const { researchMessages, ...state } = data.state;
+
+  return {
+    ...state,
+    kind: data.kind,
+    research_messages: researchMessages,
+  };
 }
 
 export async function searchConversations(

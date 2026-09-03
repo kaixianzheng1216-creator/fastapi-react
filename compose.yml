@@ -141,6 +141,7 @@ services:
     env_file:
       - .env
     environment:
+      - FRONTEND_URL=http://frontend:3000
       - EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
       - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
       - LITELLM_BASE_URL=http://litellm:4000/v1

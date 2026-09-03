@@ -3,15 +3,23 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 
 from app.api.dependencies import SessionDep
+from app.api.responses import error_responses
 from app.modules.auth.dependencies import get_current_active_superuser
+from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
 from app.modules.content_operations import service
 from app.modules.content_operations.constants import BilibiliRankingCategoryCode
 from app.modules.content_operations.schemas import BilibiliRankingPublic
+from app.modules.users.exceptions import InsufficientPrivilegesError
 
 router = APIRouter(
     prefix="/admin/content-operations",
     tags=["content-operations"],
     dependencies=[Depends(get_current_active_superuser)],
+    responses=error_responses(
+        CredentialsValidationError,
+        InactiveUserError,
+        InsufficientPrivilegesError,
+    ),
 )
 
 
