@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { QueryProvider } from "@/app/query-provider";
 import { ThemeProvider } from "@/app/theme-provider";
 import "./globals.css";
@@ -16,15 +15,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <head>
-        {process.env.NODE_ENV === "development" && (
-          <Script
-            src="//unpkg.com/react-grab/dist/index.global.js"
-            crossOrigin="anonymous"
-            strategy="beforeInteractive"
-          />
-        )}
-      </head>
       <body className="font-sans antialiased">
         <ThemeProvider
           attribute="class"

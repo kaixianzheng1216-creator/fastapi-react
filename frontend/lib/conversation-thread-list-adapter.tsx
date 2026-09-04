@@ -4,6 +4,7 @@ import {
   type RemoteThreadListAdapter,
   type ThreadMessage,
 } from "@assistant-ui/react";
+import type { LangChainMessage } from "@assistant-ui/react-langgraph";
 import { createAssistantStream } from "assistant-stream";
 import {
   agentArchiveConversation,
@@ -132,12 +133,11 @@ export async function readConversationState(remoteId: string) {
     throwOnError: true,
   });
 
-  const { researchMessages, ...state } = data.state;
+  const { researchMessages = [], ...state } = data.state;
 
   return {
     ...state,
-    kind: data.kind,
-    research_messages: researchMessages,
+    research_messages: researchMessages as LangChainMessage[],
   };
 }
 

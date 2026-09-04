@@ -1,0 +1,103 @@
+@page {
+  size: A4;
+  margin: 14mm 15mm 16mm;
+}
+
+.page {
+  box-sizing: border-box;
+  min-height: 100vh;
+  background: white;
+  color: #111827;
+  font-family: "Noto Sans CJK SC", "Noto Sans SC", sans-serif;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.report {
+  width: 100%;
+  overflow-wrap: break-word;
+}
+
+.report :global(.prose) {
+  max-width: none;
+  color: #1f2937;
+  font-size: 10.5pt;
+  line-height: 1.75;
+}
+
+.report :global(h1),
+.report :global(h2),
+.report :global(h3),
+.report :global(h4) {
+  break-after: avoid-page;
+}
+
+.report :global(p),
+.report :global(li) {
+  orphans: 3;
+  widows: 3;
+}
+
+.report :global(figure),
+.report :global([data-slot="card"]),
+.report :global(pre),
+.report :global(blockquote),
+.report :global(tr) {
+  break-inside: avoid-page;
+}
+
+.report :global(table) {
+  width: 100%;
+  table-layout: auto;
+  font-size: 9pt;
+}
+
+.report :global(thead) {
+  display: table-header-group;
+}
+
+.report :global(tfoot) {
+  display: table-footer-group;
+}
+
+.report :global(th),
+.report :global(td) {
+  overflow-wrap: anywhere;
+}
+
+.report :global(img) {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 250mm;
+  object-fit: contain;
+  break-inside: avoid-page;
+}
+
+.report :global(svg),
+.report :global(canvas) {
+  max-width: 100%;
+}
+
+.message {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+@media screen {
+  .page {
+    margin: 0 auto;
+    width: 210mm;
+    padding: 14mm 15mm 16mm;
+  }
+}
+
+@media print {
+  .page {
+    min-height: auto;
+  }
+}

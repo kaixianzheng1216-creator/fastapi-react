@@ -20,6 +20,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarItemButton } from "@/app/(authenticated)/_components/sidebar-item-button";
+import {
+  type ConversationKind,
+  useNewConversationKind,
+} from "@/app/conversation-kind";
 import { searchConversations } from "@/lib/conversation-thread-list-adapter";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -88,6 +92,7 @@ export const ThreadList: FC = () => {
     <ThreadListRoot>
       <ThreadListSearch />
       <ThreadListNew />
+      <ThreadListNew kind="research" />
       <SidebarItemButton
         asChild
         isActive={pathname.startsWith("/skills")}
@@ -110,6 +115,7 @@ export const ThreadListSearch: FC<{
 }> = ({ archived = false, open: controlledOpen, onOpenChange }) => {
   const aui = useAui();
   const router = useRouter();
+  const { select: selectNewKind } = useNewConversationKind();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [search, setSearch] = useState("");
   const open = controlledOpen ?? uncontrolledOpen;
@@ -117,6 +123,13 @@ export const ThreadListSearch: FC<{
   function setOpen(value: boolean): void {
     setUncontrolledOpen(value);
     onOpenChange?.(value);
+  }
+
+  function createNewThread(kind: ConversationKind): void {
+    selectNewKind(kind);
+    aui.threads.switchToNewThread();
+    router.replace("/");
+    setOpen(false);
   }
 
   return (
@@ -127,7 +140,7 @@ export const ThreadListSearch: FC<{
           className="bg-muted/25 text-muted-foreground hover:text-muted-foreground justify-start font-normal"
           onClick={() => setOpen(true)}
         >
-          <SearchIcon />
+          <SearchIcon data-icon="inline-start" />
           搜索对话…
         </Button>
       )}
@@ -147,14 +160,16 @@ export const ThreadListSearch: FC<{
           {!archived && !search && (
             <CommandGroup heading="快捷创建">
               <CommandItem
-                onSelect={() => {
-                  aui.threads.switchToNewThread();
-                  router.replace("/");
-                  setOpen(false);
-                }}
+                onSelect={() => createNewThread("chat")}
               >
                 <SquarePenIcon />
                 新对话
+              </CommandItem>
+              <CommandItem
+                onSelect={() => createNewThread("research")}
+              >
+                <SearchIcon />
+                新调研
               </CommandItem>
             </CommandGroup>
           )}
@@ -296,11 +311,7 @@ export const ThreadListSearchResults: FC<{
   if (isError) return <CommandEmpty>搜索失败</CommandEmpty>;
   if (!results) return <ThreadListSkeleton />;
   if (results.length === 0) {
-    return (
-      <div className="text-muted-foreground py-6 text-center text-sm">
-        未找到对话
-      </div>
-    );
+    return <CommandEmpty>未找到对话</CommandEmpty>;
   }
 
   return (
@@ -318,7 +329,11 @@ export const ThreadListSearchResults: FC<{
             onSelect();
           }}
         >
-          <MessageCircleIcon />
+          {conversation.kind === "research" ? (
+            <SearchIcon />
+          ) : (
+            <MessageCircleIcon />
+          )}
           <span className="min-w-0 flex-1 truncate">{conversation.title}</span>
           <span className="text-muted-foreground text-xs group-hover:hidden">
             {formatConversationTime(conversation.updatedAt)}
@@ -330,36 +345,47 @@ export const ThreadListSearchResults: FC<{
   );
 };
 
+type ThreadListNewProps = ComponentPropsWithoutRef<
+  typeof SidebarItemButton
+> & {
+  kind?: ConversationKind;
+};
+
 export const ThreadListNew = forwardRef<
   HTMLButtonElement,
-  ComponentPropsWithoutRef<typeof SidebarItemButton>
->(({ className, children, onClick, ...props }, ref) => {
+  ThreadListNewProps
+>(({ kind = "chat", className, children, onClick, ...props }, ref) => {
   const aui = useAui();
   const pathname = usePathname();
   const router = useRouter();
+  const { kind: selectedKind, select: selectNewKind } =
+    useNewConversationKind();
   const isNewThread = useAuiState(
     (state) => state.threads.newThreadId === state.threads.mainThreadId,
   );
+  const Icon = kind === "research" ? SearchIcon : SquarePenIcon;
+  const label = kind === "research" ? "新调研" : "新对话";
 
   return (
     <SidebarItemButton
       ref={ref}
-      isActive={pathname === "/" && isNewThread}
+      isActive={pathname === "/" && isNewThread && selectedKind === kind}
       data-slot="aui_thread-list-new"
       className={className}
       {...props}
       onClick={(event) => {
         onClick?.(event);
-        if (!event.defaultPrevented) {
-          aui.threads.switchToNewThread();
-          router.replace("/");
-        }
+        if (event.defaultPrevented) return;
+
+        selectNewKind(kind);
+        aui.threads.switchToNewThread();
+        router.replace("/");
       }}
     >
       {children ?? (
         <>
-          <SquarePenIcon data-slot="aui_thread-list-new-icon" />
-          <span data-slot="aui_thread-list-new-label">新对话</span>
+          <Icon data-slot="aui_thread-list-new-icon" />
+          <span data-slot="aui_thread-list-new-label">{label}</span>
         </>
       )}
     </SidebarItemButton>
@@ -392,9 +418,16 @@ const ThreadListSkeleton: FC = () => {
 export const ThreadListItem: FC = () => {
   const pathname = usePathname();
   const router = useRouter();
+  const { kind: selectedKind } = useNewConversationKind();
   const isActive = useAuiState(
     (state) => state.threads.mainThreadId === state.threadListItem.id,
   );
+  const savedKind = useAuiState(
+    (state) =>
+      state.threadListItem.custom?.kind as ConversationKind | undefined,
+  );
+  const isResearch =
+    (savedKind ?? (isActive ? selectedKind : "chat")) === "research";
 
   return (
     <ThreadListItemPrimitive.Root
@@ -410,9 +443,15 @@ export const ThreadListItem: FC = () => {
           data-slot="aui_thread-list-item-trigger"
           onClick={() => router.replace("/")}
         >
-          <MessageCircleIcon aria-hidden="true" />
+          {isResearch ? (
+            <SearchIcon aria-hidden="true" />
+          ) : (
+            <MessageCircleIcon aria-hidden="true" />
+          )}
           <span data-slot="aui_thread-list-item-title">
-            <ThreadListItemPrimitive.Title fallback="新对话" />
+            <ThreadListItemPrimitive.Title
+              fallback={isResearch ? "新调研" : "新对话"}
+            />
           </span>
         </ThreadListItemPrimitive.Trigger>
       </SidebarItemButton>

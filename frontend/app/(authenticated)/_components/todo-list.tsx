@@ -1,6 +1,8 @@
 "use client";
 
-import { type Todo, type TodoState } from "@/app/MyRuntimeProvider";
+import type { TodoState } from "@/lib/conversation-state";
+import type { TodoPublic } from "@/lib/client";
+import { cn } from "@/lib/utils";
 import {
   CardContent,
   CardDescription,
@@ -57,15 +59,16 @@ export function TodoList() {
   );
 }
 
-function TodoItem({ todo }: { todo: Todo }) {
+function TodoItem({ todo }: { todo: TodoPublic }) {
   const Icon = statusIcon[todo.status];
 
   return (
     <li className="flex items-start gap-2">
       <Icon
-        className={`mt-0.5 size-4 shrink-0 ${
-          todo.status === "in_progress" ? "animate-spin" : ""
-        }`}
+        className={cn(
+          "mt-0.5 size-4 shrink-0",
+          todo.status === "in_progress" && "animate-spin",
+        )}
       />
       <span
         className={todo.status === "completed" ? "line-through" : undefined}

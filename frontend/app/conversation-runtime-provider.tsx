@@ -18,43 +18,43 @@ import {
   type LangChainMessage,
 } from "@assistant-ui/react-langgraph";
 import { RESUMABLE_STREAM_ID_HEADER } from "assistant-stream/resumable";
-import { type ReactNode, useEffect, useMemo, useRef } from "react";
+import type { ReadonlyJSONObject } from "assistant-stream/utils";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
+import {
+  type ConversationKind,
+  NewConversationKindContext,
+} from "@/app/conversation-kind";
 import { clearAccessToken, getAccessToken } from "@/lib/auth";
 import { agentCancelAgentRun } from "@/lib/client";
+import type {
+  ArtifactState,
+  ResearchState,
+  TodoState,
+} from "@/lib/conversation-state";
 import {
-  conversationThreadListAdapter,
+  createConversationThreadListAdapter,
   readConversationState,
 } from "@/lib/conversation-thread-list-adapter";
 import { createFileAttachmentTransport } from "@/lib/file-upload-adapter";
 
-type MyRuntimeProviderProps = {
+type ConversationRuntimeProviderProps = {
   children: ReactNode;
 };
 
-export type Todo = {
-  content: string;
-  status: "pending" | "in_progress" | "completed";
-};
-
-export type TodoState = {
-  todos?: Todo[];
-};
-
-export type Artifact = {
-  name: string;
-  url: string;
-  contentType: string;
-};
-
-export type ArtifactState = {
-  artifacts?: Artifact[];
-};
-
-export type State = TodoState & ArtifactState & {
-  messages: LangChainMessage[];
-  cancelledToolCallIds?: string[];
-};
+export type State = TodoState &
+  ArtifactState & {
+    messages: LangChainMessage[];
+    cancelledToolCallIds?: string[];
+    research_messages?: LangChainMessage[];
+  } & Omit<ResearchState, "researchMessages">;
 
 const LangChainMessageConverter = createMessageConverter(
   convertLangChainMessages,
@@ -64,6 +64,7 @@ const converter = (
   state: State,
   connectionMetadata: AssistantTransportConnectionMetadata,
   stagedFiles: readonly FileMessagePart[],
+  loadError?: string,
 ) => {
   const pendingMessages = connectionMetadata.pendingCommands.filter(
     (command) => command.type === "add-message",
@@ -134,6 +135,21 @@ const converter = (
   });
 
   const cancelledToolCallIds = new Set(state.cancelledToolCallIds);
+  const externalState = {
+    todos: state.todos ?? [],
+    artifacts: state.artifacts ?? [],
+    ...(state.runStatus ? { runStatus: state.runStatus } : {}),
+    ...(state.runStartedAt ? { runStartedAt: state.runStartedAt } : {}),
+    ...(state.runFinishedAt ? { runFinishedAt: state.runFinishedAt } : {}),
+    ...(state.runError ? { runError: state.runError } : {}),
+    ...(loadError ? { loadError } : {}),
+    ...(state.stage ? { stage: state.stage } : {}),
+    ...(state.plan ? { plan: state.plan } : {}),
+    researchMessages: state.research_messages ?? [],
+    ...(state.outline ? { outline: state.outline } : {}),
+    ...(state.draft ? { draft: state.draft } : {}),
+    ...(state.report ? { report: state.report } : {}),
+  } as ReadonlyJSONObject;
 
   return {
     messages: threadMessages.map((message) => {
@@ -153,30 +169,46 @@ const converter = (
 
       return message;
     }),
-    state: {
-      todos: state.todos ?? [],
-      artifacts: state.artifacts ?? [],
-    } satisfies TodoState & ArtifactState,
+    state: externalState,
     isRunning,
   };
 };
 
-export function MyRuntimeProvider({ children }: MyRuntimeProviderProps) {
+export function ConversationRuntimeProvider({
+  children,
+}: ConversationRuntimeProviderProps) {
+  const newKindRef = useRef<ConversationKind>("chat");
+  const [newKind, setNewKind] = useState<ConversationKind>("chat");
+  const selectNewKind = useCallback((kind: ConversationKind) => {
+    newKindRef.current = kind;
+    setNewKind(kind);
+  }, []);
+  const adapter = useMemo(
+    () => createConversationThreadListAdapter(() => newKindRef.current),
+    [],
+  );
   const runtime = useRemoteThreadListRuntime({
-    adapter: conversationThreadListAdapter,
+    adapter,
     runtimeHook: useConversationRuntime,
   });
+  const newConversationKind = useMemo(
+    () => ({ kind: newKind, select: selectNewKind }),
+    [newKind, selectNewKind],
+  );
 
   return (
-    <AssistantRuntimeProvider runtime={runtime}>
-      {children}
-    </AssistantRuntimeProvider>
+    <NewConversationKindContext.Provider value={newConversationKind}>
+      <AssistantRuntimeProvider runtime={runtime}>
+        {children}
+      </AssistantRuntimeProvider>
+    </NewConversationKindContext.Provider>
   );
 }
 
 function useConversationRuntime() {
   const aui = useAui();
   const fileTransport = useMemo(createFileAttachmentTransport, []);
+  const [loadError, setLoadError] = useState<string>();
   const activeRunId = useRef<string | null>(null);
   const cancelledRunId = useRef<string | null>(null);
   const resumedThreadId = useRef<string | null>(null);
@@ -189,12 +221,17 @@ function useConversationRuntime() {
 
   const runtime = useAssistantTransportRuntime<State>({
     protocol: "assistant-transport",
-    initialState: { messages: [] },
+    initialState: { messages: [], research_messages: [] },
     api: "/api/agent/runs",
     resumeApi: "/api/agent/runs/resume",
     resumeStateApi: "/api/agent/runs/resume-state",
     converter: (state, connectionMetadata) =>
-      converter(state, connectionMetadata, fileTransport.getFilesForRequest()),
+      converter(
+        state,
+        connectionMetadata,
+        fileTransport.getFilesForRequest(),
+        loadError,
+      ),
     adapters: { attachments: fileTransport.attachmentAdapter },
     prepareSendCommandsRequest: async (body) => {
       const { remoteId } = await aui.threadListItem.initialize();
@@ -250,28 +287,35 @@ function useConversationRuntime() {
 
       fileTransport.complete();
     },
-    onError: fileTransport.discard,
+    onError: (error, { updateState }) => {
+      fileTransport.discard();
+      updateState((state) => ({
+        ...state,
+        runStatus: "failed",
+        runError: error.message,
+      }));
+    },
     onCancel: ({ updateState, error }) => {
-      if (!error) {
-        void fileTransport.discard();
+      if (error) return;
 
-        const runId = activeRunId.current;
+      fileTransport.discard();
 
-        cancelledRunId.current = runId;
+      const runId = activeRunId.current;
 
-        if (runId) {
-          void agentCancelAgentRun({
-            path: { run_id: runId },
-            throwOnError: true,
+      cancelledRunId.current = runId;
+
+      if (runId) {
+        void agentCancelAgentRun({
+          path: { run_id: runId },
+          throwOnError: true,
+        })
+          .then(() => {
+            if (activeRunId.current === runId) activeRunId.current = null;
+            if (cancelledRunId.current === runId) cancelledRunId.current = null;
           })
-            .then(() => {
-              if (activeRunId.current === runId) activeRunId.current = null;
-              if (cancelledRunId.current === runId) cancelledRunId.current = null;
-            })
-            .catch((cancelError: unknown) => {
-              console.error("取消 Agent 运行失败", cancelError);
-            });
-        }
+          .catch((cancelError: unknown) => {
+            console.error("取消 Agent 运行失败", cancelError);
+          });
       }
 
       updateState((state) => {
@@ -279,11 +323,16 @@ function useConversationRuntime() {
           .findLast((message) => message.type === "ai")
           ?.tool_calls?.map((toolCall) => toolCall.id)
           .filter((id): id is string => Boolean(id));
+        const nextState = {
+          ...state,
+          runStatus: "cancelled" as const,
+          runError: "",
+        };
 
-        if (!toolCallIds?.length) return state;
+        if (!toolCallIds?.length) return nextState;
 
         return {
-          ...state,
+          ...nextState,
           cancelledToolCallIds: [
             ...new Set([...(state.cancelledToolCallIds ?? []), ...toolCallIds]),
           ],
@@ -293,6 +342,8 @@ function useConversationRuntime() {
   });
 
   useEffect(() => {
+    setLoadError(undefined);
+
     if (!remoteId) return;
 
     let isCurrent = true;
@@ -309,7 +360,11 @@ function useConversationRuntime() {
         }
       })
       .catch((error: unknown) => {
-        if (isCurrent) console.error("读取会话状态失败", error);
+        if (!isCurrent) return;
+
+        console.error("读取会话状态失败", error);
+
+        setLoadError("读取会话失败，请刷新页面后重试。");
       });
 
     return () => {
