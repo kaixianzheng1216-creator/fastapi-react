@@ -62,16 +62,38 @@ class ArtifactPublic(BaseModel):
     content_type: str = Field(alias="contentType")
 
 
+ResearchStage = Literal[
+    "plan",
+    "research",
+    "outline",
+    "draft",
+    "finalize",
+    "complete",
+]
+
+
+class ResearchPeriodPublic(BaseModel):
+    start: str
+    end: str
+
+
+class ResearchPlanPublic(BaseModel):
+    intent: str
+    period: ResearchPeriodPublic | None
+    questions: list[str]
+    metrics: list[str]
+
+
 class ConversationStatePublic(BaseModel):
     messages: list[dict[str, Any]]
     todos: list[TodoPublic]
     artifacts: list[ArtifactPublic]
-    stage: str | None = None
+    stage: ResearchStage | None = None
     run_status: AgentRunStatus | None = Field(
         default=None,
         serialization_alias="runStatus",
     )
-    plan: dict[str, Any] | None = None
+    plan: ResearchPlanPublic | None = None
     research_messages: list[dict[str, Any]] = Field(
         default_factory=list,
         serialization_alias="researchMessages",
