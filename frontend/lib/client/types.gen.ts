@@ -384,14 +384,21 @@ export type ConversationStatePublic = {
     /**
      * Stage
      */
-    stage?: string | null;
+    stage?: 'plan' | 'research' | 'outline' | 'draft' | 'finalize' | 'complete' | null;
     runStatus?: AgentRunStatus | null;
     /**
-     * Plan
+     * Runstartedat
      */
-    plan?: {
-        [key: string]: unknown;
-    } | null;
+    runStartedAt?: string | null;
+    /**
+     * Runfinishedat
+     */
+    runFinishedAt?: string | null;
+    /**
+     * Runerror
+     */
+    runError?: string | null;
+    plan?: ResearchPlanPublic | null;
     /**
      * Researchmessages
      */
@@ -1252,6 +1259,39 @@ export type RegionalIndicatorPublic = {
  * RegionalSortOrder
  */
 export type RegionalSortOrder = 'asc' | 'desc';
+
+/**
+ * ResearchPeriodPublic
+ */
+export type ResearchPeriodPublic = {
+    /**
+     * Start
+     */
+    start: string;
+    /**
+     * End
+     */
+    end: string;
+};
+
+/**
+ * ResearchPlanPublic
+ */
+export type ResearchPlanPublic = {
+    /**
+     * Intent
+     */
+    intent: string;
+    period: ResearchPeriodPublic | null;
+    /**
+     * Questions
+     */
+    questions: Array<string>;
+    /**
+     * Metrics
+     */
+    metrics: Array<string>;
+};
 
 /**
  * SkillFileNodePublic

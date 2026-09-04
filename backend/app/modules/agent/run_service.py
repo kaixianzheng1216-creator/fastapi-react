@@ -81,7 +81,12 @@ async def create_run(
     else:
         request.state["kind"] = ConversationKind.CHAT.value
 
-    conversation.updated_at = utc_now()
+    started_at = utc_now()
+
+    if conversation.kind == ConversationKind.RESEARCH:
+        request.state["runStartedAt"] = started_at.isoformat()
+
+    conversation.updated_at = started_at
 
     session.add(conversation)
 
@@ -92,6 +97,7 @@ async def create_run(
         owner_id=current_user.id,
         conversation_id=request.thread_id,
         request_payload=request.model_dump(mode="json", by_alias=True),
+        started_at=started_at,
     )
 
     session.add(run)
@@ -115,7 +121,12 @@ async def create_run(
     try:
         await _dispatch_run(run_id)
     except AgentRunQueueUnavailableError:
-        await asyncio.to_thread(finish_run, run_id, AgentRunStatus.FAILED)
+        await asyncio.to_thread(
+            finish_run,
+            run_id,
+            AgentRunStatus.FAILED,
+            AgentRunQueueUnavailableError.detail,
+        )
 
         raise
 
@@ -267,7 +278,7 @@ def _fail_run(run_id: UUID) -> AgentRunStatus | None:
         if run.status != AgentRunStatus.RUNNING:
             return run.status
 
-        _set_terminal(run, AgentRunStatus.FAILED)
+        _set_terminal(run, AgentRunStatus.FAILED, "服务中断，请重试")
 
         session.commit()
 
@@ -376,6 +387,7 @@ def claim_run(run_id: UUID) -> tuple[UUID, AgentChatRequest] | None:
 def finish_run(
     run_id: UUID,
     status: AgentRunStatus,
+    error_message: str | None = None,
 ) -> None:
     if status not in TERMINAL_AGENT_RUN_STATUSES:
         raise ValueError(f"无效的结束状态：{status}")
@@ -388,7 +400,7 @@ def finish_run(
         if run is None or run.status in TERMINAL_AGENT_RUN_STATUSES:
             return
 
-        _set_terminal(run, status)
+        _set_terminal(run, status, error_message)
 
         session.commit()
 
@@ -396,7 +408,9 @@ def finish_run(
 def _set_terminal(
     run: AgentRun,
     status: AgentRunStatus,
+    error_message: str | None = None,
 ) -> None:
     run.status = status
-
     run.request_payload = None
+    run.finished_at = utc_now()
+    run.error_message = error_message

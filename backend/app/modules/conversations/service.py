@@ -17,7 +17,6 @@ from app.db.timestamps import utc_now
 from app.modules.agent.models import (
     ACTIVE_AGENT_RUN_STATUSES,
     AgentRun,
-    AgentRunStatus,
 )
 from app.modules.agent.task_queue import celery_app
 from app.modules.conversations import report_pdf
@@ -169,11 +168,11 @@ async def get_conversation_detail(
 
     values = snapshot.values
 
-    run_status = None
+    latest_run = None
 
     if conversation.kind == ConversationKind.RESEARCH:
-        latest_run_status = session.exec(
-            select(AgentRun.status)
+        latest_run = session.exec(
+            select(AgentRun)
             .where(
                 AgentRun.owner_id == current_user.id,
                 AgentRun.conversation_id == conversation.id,
@@ -181,10 +180,6 @@ async def get_conversation_detail(
             .order_by(col(AgentRun.created_at).desc())
             .limit(1)
         ).first()
-
-        run_status = (
-            AgentRunStatus(latest_run_status) if latest_run_status is not None else None
-        )
 
     state = ConversationStatePublic(
         messages=[
@@ -194,7 +189,10 @@ async def get_conversation_detail(
         todos=values.get("todos", []),
         artifacts=values.get("artifacts", []),
         stage=values.get("stage"),
-        run_status=run_status,
+        run_status=latest_run.status if latest_run else None,
+        run_started_at=latest_run.started_at if latest_run else None,
+        run_finished_at=latest_run.finished_at if latest_run else None,
+        run_error=latest_run.error_message if latest_run else None,
         plan=values.get("plan"),
         research_messages=values.get("research_messages", []),
         outline=values.get("outline"),

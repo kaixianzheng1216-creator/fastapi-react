@@ -79,14 +79,18 @@ async def _run_agent(run_id: UUID) -> None:
         )
 
         # 3. 执行 Agent 并写入流。
-        status = await _execute_agent(
+        outcome = await _execute_agent(
             run_id,
             user_id,
             request,
             stream,
         )
 
-        await _finish_run(run_id, status)
+        status = (
+            AgentRunStatus.FAILED if outcome.failed else AgentRunStatus.COMPLETED
+        )
+
+        await _finish_run(run_id, status, outcome.error)
     except asyncio.CancelledError:
         # 4. 处理取消或中断。
         if not run_claimed:
@@ -105,7 +109,9 @@ async def _run_agent(run_id: UUID) -> None:
                     stream.append_error(run_id, RUN_INTERRUPTED_DETAIL)
                 )
 
-        await asyncio.shield(_finish_run(run_id, status))
+        error = None if cancelled else RUN_INTERRUPTED_DETAIL
+
+        await asyncio.shield(_finish_run(run_id, status, error))
 
         if not cancelled:
             raise RuntimeError(RUN_INTERRUPTED_DETAIL) from None
@@ -116,7 +122,7 @@ async def _run_agent(run_id: UUID) -> None:
         with contextlib.suppress(Exception):
             await stream.append_error(run_id, RUN_FAILED_DETAIL)
 
-        await _finish_run(run_id, AgentRunStatus.FAILED)
+        await _finish_run(run_id, AgentRunStatus.FAILED, RUN_FAILED_DETAIL)
 
         raise
     finally:
@@ -165,7 +171,7 @@ async def _execute_agent(
     user_id: UUID,
     request: AgentChatRequest,
     stream: AgentRunStream,
-) -> AgentRunStatus:
+) -> service.RunOutcome:
     async with open_agent_resources() as resources:
         with Session(engine) as session:
             outcome = service.RunOutcome()
@@ -183,8 +189,12 @@ async def _execute_agent(
             async for chunk in encoder.encode_stream(chunks):
                 await stream.append(run_id, chunk.encode())
 
-    return AgentRunStatus.FAILED if outcome.failed else AgentRunStatus.COMPLETED
+    return outcome
 
 
-async def _finish_run(run_id: UUID, status: AgentRunStatus) -> None:
-    await asyncio.to_thread(run_service.finish_run, run_id, status)
+async def _finish_run(
+    run_id: UUID,
+    status: AgentRunStatus,
+    error: str | None = None,
+) -> None:
+    await asyncio.to_thread(run_service.finish_run, run_id, status, error)

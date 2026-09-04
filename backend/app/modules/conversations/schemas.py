@@ -93,6 +93,18 @@ class ConversationStatePublic(BaseModel):
         default=None,
         serialization_alias="runStatus",
     )
+    run_started_at: datetime | None = Field(
+        default=None,
+        serialization_alias="runStartedAt",
+    )
+    run_finished_at: datetime | None = Field(
+        default=None,
+        serialization_alias="runFinishedAt",
+    )
+    run_error: str | None = Field(
+        default=None,
+        serialization_alias="runError",
+    )
     plan: ResearchPlanPublic | None = None
     research_messages: list[dict[str, Any]] = Field(
         default_factory=list,

@@ -22,6 +22,7 @@ from openai import APIError
 from sqlmodel import Session
 
 from app.common.exceptions import ApplicationError
+from app.db.timestamps import utc_now
 from app.modules.agent.config import settings
 from app.modules.agent.exceptions import (
     ImageInputNotSupportedError,
@@ -56,6 +57,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RunOutcome:
     failed: bool = False
+    error: str | None = None
 
 
 async def list_models() -> list[ModelCapabilities]:
@@ -200,10 +202,12 @@ async def _run(
                 controller.state["runStatus"] = (
                     "cancelled" if controller.is_cancelled else "completed"
                 )
+                controller.state["runFinishedAt"] = utc_now().isoformat()
     except ApplicationError as error:
         logger.warning("请求被拒绝：%s", type(error).__name__)
 
         outcome.failed = True
+        outcome.error = error.detail
 
         _mark_research_failed(controller, error.detail)
 
@@ -212,6 +216,7 @@ async def _run(
         logger.exception(MODEL_REQUEST_ERROR_LOG)
 
         outcome.failed = True
+        outcome.error = ModelServiceUnavailableError.detail
 
         _mark_research_failed(controller, ModelServiceUnavailableError.detail)
 
@@ -220,6 +225,7 @@ async def _run(
         logger.exception(STREAM_ERROR_DETAIL)
 
         outcome.failed = True
+        outcome.error = STREAM_ERROR_DETAIL
 
         _mark_research_failed(controller, STREAM_ERROR_DETAIL)
 
@@ -239,6 +245,7 @@ def _mark_research_failed(controller: RunController, detail: str) -> None:
     ):
         controller.state["runStatus"] = "failed"
         controller.state["runError"] = detail
+        controller.state["runFinishedAt"] = utc_now().isoformat()
 
 
 def _in_namespace(namespace: tuple[str, ...], node: str) -> bool:

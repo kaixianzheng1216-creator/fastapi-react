@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from enum import StrEnum
 from typing import Any
 
@@ -6,8 +7,10 @@ from sqlalchemy import (
     JSON,
     CheckConstraint,
     Column,
+    DateTime,
     Index,
     String,
+    Text,
     text,
 )
 from sqlmodel import Field
@@ -74,3 +77,12 @@ class AgentRun(TimestampMixin, table=True):
         default=None,
         sa_column=Column(JSON(none_as_null=True), nullable=True),
     )
+    started_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    finished_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),  # type: ignore
+    )
+    error_message: str | None = Field(default=None, sa_type=Text)
