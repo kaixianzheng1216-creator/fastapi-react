@@ -7,6 +7,7 @@ if (!backendUrl) throw new Error("BACKEND_API_URL 未配置");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
+  allowedDevOrigins: ["frontend"],
   async rewrites() {
     return [
       {

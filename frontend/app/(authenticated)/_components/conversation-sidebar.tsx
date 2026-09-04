@@ -3,6 +3,7 @@
 import { ArtifactList } from "@/app/(authenticated)/_components/artifact-list";
 import { TodoList } from "@/app/(authenticated)/_components/todo-list";
 import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
@@ -23,7 +24,7 @@ function ConversationOverview() {
   return (
     <Card className="gap-2 py-4">
       <TodoList />
-      <div className="mx-6 my-2 border-t" />
+      <Separator className="mx-6 my-2 w-auto" />
       <ArtifactList />
     </Card>
   );

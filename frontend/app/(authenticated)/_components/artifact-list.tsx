@@ -1,9 +1,7 @@
 "use client";
 
-import {
-  type Artifact,
-  type ArtifactState,
-} from "@/app/MyRuntimeProvider";
+import type { ArtifactState } from "@/app/MyRuntimeProvider";
+import type { ArtifactPublic } from "@/lib/client";
 import {
   CardContent,
   CardDescription,
@@ -49,7 +47,7 @@ export function ArtifactList() {
   );
 }
 
-function ArtifactItem({ artifact }: { artifact: Artifact }) {
+function ArtifactItem({ artifact }: { artifact: ArtifactPublic }) {
   return (
     <li>
       <a
