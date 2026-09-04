@@ -21,13 +21,30 @@ def validate_research_report(report: str) -> None:
     if not report.strip():
         raise ValueError("最终报告为空")
 
+    card_count = 0
+    previous_end = 0
+
     for match in REPORT_BLOCK_PATTERN.finditer(report):
         block_type, content = match.groups()
+
+        if card_count and (
+            block_type != "card" or report[previous_end : match.start()].strip()
+        ):
+            if card_count not in (2, 3, 4):
+                raise ValueError("每组文本卡片必须包含 2 至 4 张")
+
+            card_count = 0
 
         if block_type == "chart":
             ResearchChart.model_validate_json(content, strict=True)
         else:
             ResearchCard.model_validate_json(content, strict=True)
+            card_count += 1
+
+        previous_end = match.end()
+
+    if card_count not in (0, 2, 3, 4):
+        raise ValueError("每组文本卡片必须包含 2 至 4 张")
 
 
 class ResearchChartSeries(BaseModel):
