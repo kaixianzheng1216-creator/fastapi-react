@@ -47,6 +47,7 @@ MOONSHOT_MODEL_PREFIX = "moonshot/"
 class AgentContext(TypedDict):
     model_name: str
     user_id: UUID
+    conversation_id: UUID
     supports_vision: bool
     supports_thinking: bool
     thinking_enabled: bool

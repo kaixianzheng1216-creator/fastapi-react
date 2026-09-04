@@ -113,10 +113,7 @@ async def _run(
             chat_request.model or settings.DEFAULT_MODEL_NAME
         )
 
-        if (
-            chat_request.thinking_enabled
-            and not model_capabilities.supports_thinking
-        ):
+        if chat_request.thinking_enabled and not model_capabilities.supports_thinking:
             raise ThinkingNotSupportedError
 
         _validate_command_model_input(
@@ -158,6 +155,7 @@ async def _run(
                 context={
                     "model_name": model_capabilities.model_name,
                     "user_id": user_id,
+                    "conversation_id": chat_request.thread_id,
                     "supports_vision": model_capabilities.supports_vision,
                     "supports_thinking": model_capabilities.supports_thinking,
                     "thinking_enabled": chat_request.thinking_enabled,

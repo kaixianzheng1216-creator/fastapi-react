@@ -20,13 +20,23 @@ from app.modules.agent.agent import (
 )
 from app.modules.agent.connections.litellm_mcp import load_litellm_mcp_tools
 from app.modules.agent.file_messages import prepare_message_file_inputs
+from app.modules.agent.research_report import validate_research_report
+from app.modules.conversations.report_pdf import generate_and_store_report_pdf
 
 PROMPTS = Path(__file__).parent / "prompts" / "research.md"
 RESEARCH_TOOL_NAMES = {
     "firecrawl-firecrawl_search",
     "firecrawl-firecrawl_scrape",
 }
-PLAN_PROMPT, RESEARCH_PROMPT, OUTLINE_PROMPT, DRAFT_PROMPT, FINAL_PROMPT = (
+
+(
+    PLAN_PROMPT,
+    RESEARCH_PROMPT,
+    OUTLINE_PROMPT,
+    DRAFT_PROMPT,
+    FINAL_PROMPT,
+    REPORT_REPAIR_PROMPT,
+) = (
     PROMPTS.read_text(encoding="utf-8")
     .strip()
     .split("\n\n<!-- ===== NEXT PROMPT ===== -->\n\n")
@@ -272,7 +282,9 @@ async def create_research_graph(
         state: ResearchState,
         runtime: Runtime[AgentContext],
     ) -> dict[str, str]:
-        response = await _model(runtime).ainvoke(
+        model = _model(runtime)
+
+        response = await model.ainvoke(
             [
                 SystemMessage(FINAL_PROMPT),
                 _user_message(state["messages"], runtime),
@@ -287,7 +299,35 @@ async def create_research_graph(
             ]
         )
 
-        return {"report": response.text, "stage": "complete"}
+        report = response.text
+
+        try:
+            validate_research_report(report)
+        except ValueError as error:
+            response = await model.ainvoke(
+                [
+                    SystemMessage(FINAL_PROMPT),
+                    SystemMessage(REPORT_REPAIR_PROMPT),
+                    HumanMessage(
+                        _input(
+                            格式错误=str(error),
+                            待修正报告=report,
+                        )
+                    ),
+                ]
+            )
+
+            report = response.text
+
+            validate_research_report(report)
+
+        await generate_and_store_report_pdf(
+            owner_id=runtime.context["user_id"],
+            conversation_id=runtime.context["conversation_id"],
+            report=report,
+        )
+
+        return {"report": report, "stage": "complete"}
 
     graph = StateGraph(ResearchState, context_schema=AgentContext)
 

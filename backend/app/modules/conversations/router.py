@@ -4,8 +4,16 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 
 from app.api.dependencies import SessionDep
+from app.api.responses import error_responses
 from app.modules.auth.dependencies import CurrentUser, get_current_user
+from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
 from app.modules.conversations import service
+from app.modules.conversations.exceptions import (
+    ConversationDeleteQueueError,
+    ConversationNotFoundError,
+    ConversationReportNotReadyError,
+    ConversationTitleGenerationError,
+)
 from app.modules.conversations.schemas import (
     ConversationCreate,
     ConversationDetailPublic,
@@ -14,11 +22,16 @@ from app.modules.conversations.schemas import (
     ConversationsPublic,
     ConversationTitleRequest,
 )
+from app.modules.files.exceptions import FileStorageUnavailableError
 
 router = APIRouter(
     prefix="/agent/conversations",
     tags=["agent"],
     dependencies=[Depends(get_current_user)],
+    responses=error_responses(
+        CredentialsValidationError,
+        InactiveUserError,
+    ),
 )
 
 
@@ -41,6 +54,10 @@ def create_conversation(
 @router.post(
     "/{conversation_id}/generate-title",
     response_model=ConversationPublic,
+    responses=error_responses(
+        ConversationNotFoundError,
+        ConversationTitleGenerationError,
+    ),
 )
 async def generate_conversation_title(
     request: Request,
@@ -86,7 +103,11 @@ def read_conversations(
     )
 
 
-@router.get("/{conversation_id}", response_model=ConversationDetailPublic)
+@router.get(
+    "/{conversation_id}",
+    response_model=ConversationDetailPublic,
+    responses=error_responses(ConversationNotFoundError),
+)
 async def read_conversation(
     request: Request,
     session: SessionDep,
@@ -102,7 +123,47 @@ async def read_conversation(
     )
 
 
-@router.patch("/{conversation_id}", response_model=ConversationPublic)
+@router.get(
+    "/{conversation_id}/report.pdf",
+    response_class=Response,
+    responses={
+        **error_responses(
+            ConversationNotFoundError,
+            ConversationReportNotReadyError,
+            FileStorageUnavailableError,
+        ),
+        status.HTTP_200_OK: {
+            "description": "PDF 报告",
+            "content": {
+                "application/pdf": {"schema": {"type": "string", "format": "binary"}}
+            },
+        },
+    },
+)
+async def download_conversation_report_pdf(
+    session: SessionDep,
+    current_user: CurrentUser,
+    conversation_id: uuid.UUID,
+) -> Response:
+    """下载当前用户已经生成的调研报告 PDF。"""
+    pdf = await service.get_conversation_report_pdf(
+        session=session,
+        current_user=current_user,
+        conversation_id=conversation_id,
+    )
+
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@router.patch(
+    "/{conversation_id}",
+    response_model=ConversationPublic,
+    responses=error_responses(ConversationNotFoundError),
+)
 def rename_conversation(
     session: SessionDep,
     current_user: CurrentUser,
@@ -120,7 +181,11 @@ def rename_conversation(
     return service.to_public(conversation)
 
 
-@router.post("/{conversation_id}/archive", response_model=ConversationPublic)
+@router.post(
+    "/{conversation_id}/archive",
+    response_model=ConversationPublic,
+    responses=error_responses(ConversationNotFoundError),
+)
 def archive_conversation(
     session: SessionDep,
     current_user: CurrentUser,
@@ -136,7 +201,11 @@ def archive_conversation(
     return service.to_public(conversation)
 
 
-@router.post("/{conversation_id}/unarchive", response_model=ConversationPublic)
+@router.post(
+    "/{conversation_id}/unarchive",
+    response_model=ConversationPublic,
+    responses=error_responses(ConversationNotFoundError),
+)
 def unarchive_conversation(
     session: SessionDep,
     current_user: CurrentUser,
@@ -156,6 +225,7 @@ def unarchive_conversation(
     "/{conversation_id}",
     status_code=status.HTTP_202_ACCEPTED,
     response_class=Response,
+    responses=error_responses(ConversationDeleteQueueError),
 )
 async def delete_conversation(
     session: SessionDep,

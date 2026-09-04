@@ -6,8 +6,18 @@ from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi.responses import StreamingResponse
 
 from app.api.dependencies import SessionDep
+from app.api.responses import error_responses
 from app.modules.agent import run_service, service
 from app.modules.agent.config import settings
+from app.modules.agent.exceptions import (
+    AgentRunActiveError,
+    AgentRunNotFoundError,
+    AgentRunQueueUnavailableError,
+    AgentRunStreamExpiredError,
+    ModelsUnavailableError,
+    ResearchAlreadyStartedError,
+    ResearchInputError,
+)
 from app.modules.agent.run_stream import AgentRunStream
 from app.modules.agent.schemas import (
     AgentChatRequest,
@@ -17,11 +27,17 @@ from app.modules.agent.schemas import (
     AgentRunResumeStateRequest,
 )
 from app.modules.auth.dependencies import CurrentUser, get_current_user
+from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
+from app.modules.conversations.exceptions import ConversationNotFoundError
 
 router = APIRouter(
     prefix="/agent",
     tags=["agent"],
     dependencies=[Depends(get_current_user)],
+    responses=error_responses(
+        CredentialsValidationError,
+        InactiveUserError,
+    ),
 )
 
 RESUMABLE_STREAM_ID_HEADER = "x-resumable-stream-id"
@@ -40,7 +56,11 @@ def _stream_response(run_id: UUID, content: AsyncIterable[bytes]) -> StreamingRe
     return response
 
 
-@router.get("/models", response_model=AgentModelsPublic)
+@router.get(
+    "/models",
+    response_model=AgentModelsPublic,
+    responses=error_responses(ModelsUnavailableError),
+)
 async def read_models() -> AgentModelsPublic:
     """读取可用模型。"""
     models = await service.list_models()
@@ -57,7 +77,16 @@ async def read_models() -> AgentModelsPublic:
     )
 
 
-@router.post("/runs")
+@router.post(
+    "/runs",
+    responses=error_responses(
+        ConversationNotFoundError,
+        ResearchInputError,
+        ResearchAlreadyStartedError,
+        AgentRunActiveError,
+        AgentRunQueueUnavailableError,
+    ),
+)
 async def create_agent_run(
     request: Request,
     session: SessionDep,
@@ -104,7 +133,14 @@ async def read_agent_run_resume_state(
     return resume_state
 
 
-@router.get("/runs/{run_id}/stream")
+@router.get(
+    "/runs/{run_id}/stream",
+    responses=error_responses(
+        AgentRunNotFoundError,
+        AgentRunQueueUnavailableError,
+        AgentRunStreamExpiredError,
+    ),
+)
 async def resume_agent_run(
     request: Request,
     session: SessionDep,
@@ -127,7 +163,11 @@ async def resume_agent_run(
     )
 
 
-@router.post("/runs/{run_id}/cancel", status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/runs/{run_id}/cancel",
+    status_code=status.HTTP_202_ACCEPTED,
+    responses=error_responses(AgentRunNotFoundError),
+)
 async def cancel_agent_run(
     request: Request,
     session: SessionDep,

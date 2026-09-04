@@ -12,7 +12,6 @@ from app.api.router import api_router
 from app.core.config import API_V1_PREFIX, PROJECT_NAME, settings
 from app.modules.agent.resources import open_agent_resources
 from app.modules.agent.run_stream import AgentRunStream
-from app.modules.conversations.report_pdf import open_report_pdf_renderer
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
@@ -22,12 +21,8 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    async with (
-        open_agent_resources() as resources,
-        open_report_pdf_renderer() as report_pdf_renderer,
-    ):
+    async with open_agent_resources() as resources:
         app.state.agent_resources = resources
-        app.state.report_pdf_renderer = report_pdf_renderer
 
         run_stream = AgentRunStream(redis_url=settings.REDIS_URL)
 

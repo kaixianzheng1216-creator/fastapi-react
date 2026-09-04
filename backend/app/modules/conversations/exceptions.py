@@ -21,3 +21,13 @@ class ConversationRunActiveError(ApplicationError):
 class ConversationDeleteQueueError(ApplicationError):
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     detail = "删除任务队列暂不可用"
+
+
+class ConversationReportNotReadyError(ApplicationError):
+    status_code = status.HTTP_409_CONFLICT
+    detail = "调研报告尚未生成"
+
+
+class ConversationReportPdfGenerationError(ApplicationError):
+    status_code = status.HTTP_502_BAD_GATEWAY
+    detail = "生成 PDF 失败"

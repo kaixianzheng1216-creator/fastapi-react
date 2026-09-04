@@ -1,4 +1,5 @@
 import asyncio
+import builtins
 import logging
 import uuid
 from collections.abc import Sequence
@@ -19,9 +20,11 @@ from app.modules.agent.models import (
     AgentRunStatus,
 )
 from app.modules.agent.task_queue import celery_app
+from app.modules.conversations import report_pdf
 from app.modules.conversations.exceptions import (
     ConversationDeleteQueueError,
     ConversationNotFoundError,
+    ConversationReportNotReadyError,
     ConversationRunActiveError,
     ConversationTitleGenerationError,
 )
@@ -205,6 +208,27 @@ async def get_conversation_detail(
     )
 
 
+async def get_conversation_report_pdf(
+    *,
+    session: Session,
+    current_user: User,
+    conversation_id: uuid.UUID,
+) -> bytes:
+    conversation = get_conversation(
+        session=session,
+        current_user=current_user,
+        conversation_id=conversation_id,
+    )
+
+    try:
+        return await report_pdf.read_report_pdf(
+            owner_id=current_user.id,
+            conversation_id=conversation.id,
+        )
+    except builtins.FileNotFoundError:
+        raise ConversationReportNotReadyError from None
+
+
 def rename_conversation(
     *,
     session: Session,
@@ -370,6 +394,7 @@ async def finish_delete(
     session.flush()
 
     object_keys = delete_file_records(session=session, file_ids=file_ids)
+    object_keys.append(report_pdf.report_pdf_object_key(owner_id, conversation.id))
 
     session.flush()
 

@@ -554,7 +554,7 @@ export const agentRenameConversation = <ThrowOnError extends boolean = false>(op
 /**
  * Download Conversation Report Pdf
  *
- * 使用 Chromium 的打印排版生成当前用户的调研报告 PDF。
+ * 下载当前用户已经生成的调研报告 PDF。
  */
 export const agentDownloadConversationReportPdf = <ThrowOnError extends boolean = false>(options: Options<AgentDownloadConversationReportPdfData, ThrowOnError>): RequestResult<AgentDownloadConversationReportPdfResponses, AgentDownloadConversationReportPdfErrors, ThrowOnError> => (options.client ?? client).get<AgentDownloadConversationReportPdfResponses, AgentDownloadConversationReportPdfErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
