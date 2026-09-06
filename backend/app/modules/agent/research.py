@@ -74,7 +74,7 @@ class ResearchPlan(BaseModel):
 
 class ResearchState(TypedDict, total=False):
     messages: Annotated[list[BaseMessage], add_messages]
-    as_of: str
+    asOf: str
     stage: Literal[
         "plan",
         "research",
@@ -84,7 +84,7 @@ class ResearchState(TypedDict, total=False):
         "complete",
     ]
     plan: ResearchPlanData
-    research_messages: list[dict[str, Any]]
+    researchMessages: list[dict[str, Any]]
     outline: str
     draft: str
     report: str
@@ -193,7 +193,7 @@ async def create_research_graph(
                 _user_message(state["messages"], runtime),
                 HumanMessage(
                     _input(
-                        当前日期=state["as_of"],
+                        当前日期=state["asOf"],
                     )
                 ),
             ]
@@ -216,7 +216,7 @@ async def create_research_graph(
                 _user_message(state["messages"], runtime),
                 HumanMessage(
                     _input(
-                        当前日期=state["as_of"],
+                        当前日期=state["asOf"],
                         调研计划=state["plan"],
                     )
                 ),
@@ -235,7 +235,7 @@ async def create_research_graph(
             messages.append(message.model_dump(mode="json"))
 
         return {
-            "research_messages": messages,
+            "researchMessages": messages,
             "stage": "outline",
         }
 
@@ -250,7 +250,7 @@ async def create_research_graph(
                 HumanMessage(
                     _input(
                         调研计划=state["plan"],
-                        工具调用输出=format_research(state["research_messages"]),
+                        工具调用输出=format_research(state["researchMessages"]),
                     )
                 ),
             ]
@@ -269,7 +269,7 @@ async def create_research_graph(
                 HumanMessage(
                     _input(
                         调研计划=state["plan"],
-                        工具调用输出=format_research(state["research_messages"]),
+                        工具调用输出=format_research(state["researchMessages"]),
                         报告大纲=state["outline"],
                     )
                 ),
@@ -291,7 +291,7 @@ async def create_research_graph(
                 HumanMessage(
                     _input(
                         调研计划=state["plan"],
-                        工具调用输出=format_research(state["research_messages"]),
+                        工具调用输出=format_research(state["researchMessages"]),
                         报告大纲=state["outline"],
                         报告初稿=state["draft"],
                     )

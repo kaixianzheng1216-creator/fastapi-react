@@ -86,9 +86,7 @@ async def _run_agent(run_id: UUID) -> None:
             stream,
         )
 
-        status = (
-            AgentRunStatus.FAILED if outcome.failed else AgentRunStatus.COMPLETED
-        )
+        status = AgentRunStatus.FAILED if outcome.failed else AgentRunStatus.COMPLETED
 
         await _finish_run(run_id, status, outcome.error)
     except asyncio.CancelledError:
@@ -175,9 +173,10 @@ async def _execute_agent(
     async with open_agent_resources() as resources:
         with Session(engine) as session:
             outcome = service.RunOutcome()
+            agent = resources.get_agent(request.state["kind"])
 
             chunks = service.stream_chat(
-                agent=resources.get_agent(request.state["kind"]),
+                agent=agent,
                 session=session,
                 user_id=user_id,
                 chat_request=request,
@@ -186,8 +185,31 @@ async def _execute_agent(
 
             encoder = AssistantTransportEncoder()
 
-            async for chunk in encoder.encode_stream(chunks):
-                await stream.append(run_id, chunk.encode())
+            try:
+                async for chunk in encoder.encode_stream(chunks):
+                    await stream.append(run_id, chunk.encode())
+            except asyncio.CancelledError:
+                if await stream.is_cancel_requested(run_id):
+                    try:
+                        cancelled_state = await asyncio.shield(
+                            service.persist_cancelled_state(
+                                agent=agent,
+                                user_id=user_id,
+                                conversation_id=request.thread_id,
+                                state=request.state,
+                            )
+                        )
+
+                        await asyncio.shield(
+                            stream.append_state(run_id, cancelled_state)
+                        )
+                    except Exception:
+                        logger.exception(
+                            "取消状态持久化失败",
+                            extra={"run_id": str(run_id)},
+                        )
+
+                raise
 
     return outcome
 

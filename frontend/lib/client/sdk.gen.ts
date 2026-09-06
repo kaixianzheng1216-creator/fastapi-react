@@ -784,7 +784,7 @@ export const agentResumeAgentRun = <ThrowOnError extends boolean = false>(option
 /**
  * Cancel Agent Run
  *
- * 请求取消指定运行。
+ * 取消指定运行，并等待取消状态持久化。
  */
 export const agentCancelAgentRun = <ThrowOnError extends boolean = false>(options: Options<AgentCancelAgentRunData, ThrowOnError>): RequestResult<AgentCancelAgentRunResponses, AgentCancelAgentRunErrors, ThrowOnError> => (options.client ?? client).post<AgentCancelAgentRunResponses, AgentCancelAgentRunErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

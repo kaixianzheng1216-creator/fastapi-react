@@ -4,6 +4,7 @@ from uuid import UUID
 
 from assistant_stream.assistant_stream_chunk import (  # type: ignore[import-untyped]
     ErrorChunk,
+    UpdateStateChunk,
 )
 from assistant_stream.serialization import (  # type: ignore[import-untyped]
     AssistantTransportEncoder,
@@ -57,6 +58,17 @@ class AgentRunStream:
     async def append_error(self, run_id: UUID, detail: str) -> None:
         async def chunks() -> AsyncGenerator[ErrorChunk]:
             yield ErrorChunk(error=detail)
+
+        encoder = AssistantTransportEncoder()
+
+        async for chunk in encoder.encode_stream(chunks()):
+            await self.append(run_id, chunk.encode())
+
+    async def append_state(self, run_id: UUID, state: dict[str, Any]) -> None:
+        async def chunks() -> AsyncGenerator[UpdateStateChunk]:
+            yield UpdateStateChunk(
+                operations=[{"type": "set", "path": [], "value": state}]
+            )
 
         encoder = AssistantTransportEncoder()
 

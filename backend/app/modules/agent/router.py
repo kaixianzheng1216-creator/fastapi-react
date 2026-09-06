@@ -11,6 +11,7 @@ from app.modules.agent import run_service, service
 from app.modules.agent.config import settings
 from app.modules.agent.exceptions import (
     AgentRunActiveError,
+    AgentRunCancellationTimeoutError,
     AgentRunNotFoundError,
     AgentRunQueueUnavailableError,
     AgentRunStreamExpiredError,
@@ -165,8 +166,11 @@ async def resume_agent_run(
 
 @router.post(
     "/runs/{run_id}/cancel",
-    status_code=status.HTTP_202_ACCEPTED,
-    responses=error_responses(AgentRunNotFoundError),
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=error_responses(
+        AgentRunNotFoundError,
+        AgentRunCancellationTimeoutError,
+    ),
 )
 async def cancel_agent_run(
     request: Request,
@@ -174,7 +178,7 @@ async def cancel_agent_run(
     current_user: CurrentUser,
     run_id: UUID,
 ) -> None:
-    """请求取消指定运行。"""
+    """取消指定运行，并等待取消状态持久化。"""
     await run_service.cancel_run(
         session=session,
         user_id=current_user.id,

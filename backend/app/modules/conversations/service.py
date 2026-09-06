@@ -194,7 +194,7 @@ async def get_conversation_detail(
         run_finished_at=latest_run.finished_at if latest_run else None,
         run_error=latest_run.error_message if latest_run else None,
         plan=values.get("plan"),
-        research_messages=values.get("research_messages", []),
+        research_messages=values.get("researchMessages", []),
         outline=values.get("outline"),
         draft=values.get("draft"),
         report=values.get("report"),

@@ -4373,6 +4373,10 @@ export type AgentCancelAgentRunErrors = {
      */
     404: ErrorResponse;
     /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
@@ -4384,5 +4388,7 @@ export type AgentCancelAgentRunResponses = {
     /**
      * Successful Response
      */
-    202: unknown;
+    204: void;
 };
+
+export type AgentCancelAgentRunResponse = AgentCancelAgentRunResponses[keyof AgentCancelAgentRunResponses];

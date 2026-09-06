@@ -76,7 +76,7 @@ async def create_run(
             "messages": [],
             "asOf": datetime.now(CHINA_STANDARD_TIME).date().isoformat(),
             "stage": "plan",
-            "research_messages": [],
+            "researchMessages": [],
         }
     else:
         request.state["kind"] = ConversationKind.CHAT.value
@@ -315,6 +315,8 @@ async def cancel_run(
 
     await stream.request_cancel(run_id)
 
+    await _wait_for_terminal(run_id, stream)
+
 
 async def stop_conversation_run(
     *,
@@ -347,6 +349,11 @@ async def stop_conversation_run(
     except AgentRunNotFoundError:
         return
 
+
+async def _wait_for_terminal(
+    run_id: UUID,
+    stream: AgentRunStream,
+) -> None:
     loop = asyncio.get_running_loop()
 
     deadline = loop.time() + RUN_CANCELLATION_TIMEOUT_SECONDS

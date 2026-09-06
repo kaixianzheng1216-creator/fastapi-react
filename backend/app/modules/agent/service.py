@@ -11,6 +11,7 @@ from assistant_stream.modules.langgraph import (  # type: ignore[import-untyped]
     get_tool_call_subgraph_state,
 )
 from langchain_core.messages import (
+    AIMessage,
     BaseMessage,
     HumanMessage,
     ToolMessage,
@@ -51,6 +52,10 @@ from app.modules.files.exceptions import FileTypeNotAllowedError
 STREAM_ERROR_DETAIL = "Agent 流式响应失败"
 MODEL_REQUEST_ERROR_LOG = "模型请求失败"
 TRACE_NAME = "agent-chat"
+CANCELLED_MESSAGE_STATUS = {
+    "type": "incomplete",
+    "reason": "cancelled",
+}
 logger = logging.getLogger(__name__)
 
 
@@ -81,6 +86,54 @@ def stream_chat(
     )
 
     return stream
+
+
+async def persist_cancelled_state(
+    *,
+    agent: Any,
+    user_id: UUID,
+    conversation_id: UUID,
+    state: dict[str, Any],
+) -> dict[str, Any]:
+    conversation_kind = ConversationKind(state["kind"])
+
+    message_field = (
+        "researchMessages"
+        if conversation_kind == ConversationKind.RESEARCH
+        else "messages"
+    )
+
+    messages = state.get(message_field, [])
+
+    if messages and messages[-1].get("type") == "ai":
+        cancelled_message = {
+            **messages[-1],
+            "status": CANCELLED_MESSAGE_STATUS,
+        }
+
+        messages[-1] = cancelled_message
+
+        graph_state = (
+            {message_field: messages}
+            if conversation_kind == ConversationKind.RESEARCH
+            else {"messages": [AIMessage.model_validate(cancelled_message)]}
+        )
+
+        await agent.aupdate_state(
+            {
+                "configurable": {
+                    "thread_id": f"{user_id}:{conversation_id}",
+                }
+            },
+            graph_state,
+        )
+
+    if conversation_kind == ConversationKind.RESEARCH:
+        state["runStatus"] = "cancelled"
+        state["runError"] = ""
+        state["runFinishedAt"] = utc_now().isoformat()
+
+    return state
 
 
 async def _run(
@@ -146,7 +199,7 @@ async def _run(
             if conversation_kind == ConversationKind.RESEARCH:
                 agent_input.update(
                     {
-                        "as_of": controller.state["asOf"],
+                        "asOf": controller.state["asOf"],
                         "stage": controller.state["stage"],
                     }
                 )
@@ -177,7 +230,7 @@ async def _run(
                             continue
 
                         target_state = {
-                            "messages": controller.state["research_messages"]
+                            "messages": controller.state["researchMessages"]
                         }
                     else:
                         target_state = controller.state
