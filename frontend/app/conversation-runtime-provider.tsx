@@ -1,48 +1,29 @@
 "use client";
 
 import {
-  AssistantRuntimeProvider,
-  type AssistantTransportConnectionMetadata,
-  type CompleteAttachment,
-  type FileMessagePart,
-  type LanguageModelConfig,
-  type ThreadMessage,
-  type ThreadUserMessagePart,
-  unstable_createMessageConverter as createMessageConverter,
-  useAui,
-  useAssistantTransportRuntime,
-  useRemoteThreadListRuntime,
+    AssistantRuntimeProvider,
+    type AssistantTransportConnectionMetadata,
+    type CompleteAttachment,
+    type FileMessagePart,
+    type LanguageModelConfig,
+    type ThreadMessage,
+    type ThreadUserMessagePart,
+    unstable_createMessageConverter as createMessageConverter,
+    useAssistantTransportRuntime,
+    useAui,
+    useRemoteThreadListRuntime,
 } from "@assistant-ui/react";
-import {
-  convertLangChainMessages,
-  type LangChainMessage,
-} from "@assistant-ui/react-langgraph";
-import { RESUMABLE_STREAM_ID_HEADER } from "assistant-stream/resumable";
-import type { ReadonlyJSONObject } from "assistant-stream/utils";
-import {
-  type ReactNode,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import {convertLangChainMessages, type LangChainMessage,} from "@assistant-ui/react-langgraph";
+import {RESUMABLE_STREAM_ID_HEADER} from "assistant-stream/resumable";
+import type {ReadonlyJSONObject} from "assistant-stream/utils";
+import {type ReactNode, useEffect, useMemo, useRef, useState,} from "react";
 
-import {
-  type ConversationKind,
-  NewConversationKindContext,
-  useConversationKind,
-} from "@/app/conversation-kind";
-import { getAccessToken, handleUnauthorizedResponse } from "@/lib/auth";
-import {
-  agentCancelAgentRun,
-  type ConversationStatePublic,
-} from "@/lib/client";
-import type { ApplicationState } from "@/lib/conversation-state";
-import {
-  createConversationThreadListAdapter,
-  readConversationState,
-} from "@/lib/conversation-thread-list-adapter";
-import { createFileAttachmentTransport } from "@/lib/file-upload-adapter";
+import {type ConversationKind, NewConversationKindContext, useConversationKind,} from "@/app/conversation-kind";
+import {getAccessToken, handleUnauthorizedResponse} from "@/lib/auth";
+import {agentCancelAgentRun, type ConversationStatePublic,} from "@/lib/client";
+import type {ApplicationState} from "@/lib/conversation-state";
+import {createConversationThreadListAdapter, readConversationState,} from "@/lib/conversation-thread-list-adapter";
+import {createFileAttachmentTransport} from "@/lib/file-upload-adapter";
 
 type ConversationRuntimeProviderProps = {
   children: ReactNode;
@@ -168,9 +149,7 @@ function useConversationRuntime() {
     onResponse: (response) => {
       if (handleUnauthorizedResponse(response)) return;
 
-      const runId = response.headers.get(RESUMABLE_STREAM_ID_HEADER);
-
-      activeRunIdRef.current = runId;
+      activeRunIdRef.current = response.headers.get(RESUMABLE_STREAM_ID_HEADER);
     },
 
     onFinish: () => {
