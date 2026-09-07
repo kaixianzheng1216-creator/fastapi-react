@@ -39,6 +39,7 @@ export function ThreadListSidebar({
         <SidebarHeader className="p-3 pb-2">
           <ThreadListSearch />
           <ThreadListNew />
+          <ThreadListNew kind="research" />
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarItemButton

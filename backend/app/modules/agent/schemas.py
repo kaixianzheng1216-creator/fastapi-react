@@ -28,7 +28,6 @@ def _validate_file_reference(resource_reference: str) -> str:
     return resource_reference
 
 
-# 消息内容
 class TextMessagePart(BaseModel):
     type: Literal["text"]
     text: str = Field(min_length=1, max_length=MAX_TEXT_PART_LENGTH)
@@ -126,7 +125,14 @@ class AgentChatRequest(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_request_size(self) -> AgentChatRequest:
+    def validate_request(self) -> AgentChatRequest:
+        message_count = sum(
+            isinstance(command, AddMessageCommand) for command in self.commands
+        )
+
+        if message_count > 1:
+            raise ValueError("每次请求只能包含一条用户消息")
+
         request_bytes = len(
             json.dumps(
                 self.model_dump(mode="json", by_alias=True),

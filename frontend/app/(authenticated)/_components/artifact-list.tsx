@@ -1,6 +1,6 @@
 "use client";
 
-import type { ArtifactState } from "@/app/MyRuntimeProvider";
+import type { ArtifactState } from "@/lib/conversation-state";
 import type { ArtifactPublic } from "@/lib/client";
 import {
   CardContent,

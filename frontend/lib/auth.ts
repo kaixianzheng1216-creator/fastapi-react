@@ -15,18 +15,23 @@ export function clearAccessToken(): void {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
 }
 
+export function handleUnauthorizedResponse(response: Response): boolean {
+  if (response.status !== 401) return false;
+
+  clearAccessToken();
+
+  window.location.replace("/login");
+
+  return true;
+}
+
 export function configureApiClient(): void {
   if (apiClientConfigured) return;
 
   client.setConfig({ auth: () => getAccessToken() ?? undefined });
 
   client.interceptors.response.use((response) => {
-    if (response.status === 401) {
-      clearAccessToken();
-
-      window.location.replace("/login");
-    }
-
+    handleUnauthorizedResponse(response);
     return response;
   });
 

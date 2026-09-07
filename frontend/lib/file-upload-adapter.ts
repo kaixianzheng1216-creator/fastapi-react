@@ -1,9 +1,9 @@
 import type {
+  AssistantTransportCommand,
   AttachmentAdapter,
   CompleteAttachment,
   FileMessagePart,
   PendingAttachment,
-  SendCommandsRequestBody,
   ThreadUserMessagePart,
 } from "@assistant-ui/react";
 import {
@@ -181,45 +181,40 @@ export function createFileAttachmentTransport() {
     },
   };
 
-  const prepareRequest = (
-    body: SendCommandsRequestBody,
-  ): Record<string, unknown> => {
-    if (pendingFiles.length === 0) return body;
-
-    const messageCommandIndexes = body.commands.flatMap((command, index) =>
-      command.type === "add-message" && command.message.role === "user"
-        ? [index]
-        : [],
+  const prepareCommands = (commands: AssistantTransportCommand[]) => {
+    const messageCommands = commands.filter(
+      (command) => command.type === "add-message",
     );
 
-    if (messageCommandIndexes.length !== 1) {
-      throw new Error("附件必须随一条用户消息发送");
+    if (messageCommands.length > 1) {
+      throw new Error("每次只能发送一条用户消息");
     }
 
-    const messageCommandIndex = messageCommandIndexes[0];
+    if (pendingFiles.length === 0) return commands;
+
+    const messageCommand = messageCommands[0];
+
+    if (!messageCommand) {
+      throw new Error("附件必须随一条用户消息发送");
+    }
 
     inFlightFiles = pendingFiles;
     pendingFiles = [];
 
-    return {
-      ...body,
-      commands: body.commands.map((command, index) => {
-        if (index !== messageCommandIndex || command.type !== "add-message") {
-          return command;
-        }
+    return commands.map((command) => {
+      if (command !== messageCommand) return command;
 
-        return {
-          ...command,
-          message: {
-            ...command.message,
-            parts: [...command.message.parts, ...inFlightFiles],
-          },
-        };
-      }),
-    };
+      return {
+        ...command,
+        message: {
+          ...command.message,
+          parts: [...command.message.parts, ...inFlightFiles],
+        },
+      };
+    });
   };
 
-  const getFilesForRequest = (): readonly FileMessagePart[] => [
+  const getPendingMessageFiles = (): readonly FileMessagePart[] => [
     ...pendingFiles,
     ...inFlightFiles,
   ];
@@ -235,8 +230,8 @@ export function createFileAttachmentTransport() {
 
   return {
     attachmentAdapter,
-    getFilesForRequest,
-    prepareRequest,
+    getPendingMessageFiles,
+    prepareCommands,
     complete,
     discard,
   };

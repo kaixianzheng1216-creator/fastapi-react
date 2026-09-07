@@ -4,6 +4,7 @@ import {
   type RemoteThreadListAdapter,
   type ThreadMessage,
 } from "@assistant-ui/react";
+import type { LangChainMessage } from "@assistant-ui/react-langgraph";
 import { createAssistantStream } from "assistant-stream";
 import {
   agentArchiveConversation,
@@ -51,7 +52,7 @@ export function createConversationThreadListAdapter(
           status: conversation.archived ? "archived" : "regular",
           title: conversation.title,
           lastMessageAt: new Date(conversation.updatedAt),
-          custom: { persisted: true, kind: conversation.kind },
+          custom: { kind: conversation.kind },
         })),
       };
     },
@@ -76,7 +77,7 @@ export function createConversationThreadListAdapter(
         status: data.archived ? "archived" : "regular",
         title: data.title,
         lastMessageAt: new Date(data.updatedAt),
-        custom: { persisted: true, kind: data.kind },
+        custom: { kind: data.kind },
       };
     },
 
@@ -132,12 +133,12 @@ export async function readConversationState(remoteId: string) {
     throwOnError: true,
   });
 
-  const { researchMessages, ...state } = data.state;
+  const { messages, researchMessages = [], ...state } = data.state;
 
   return {
     ...state,
-    kind: data.kind,
-    research_messages: researchMessages,
+    messages: messages as LangChainMessage[],
+    researchMessages: researchMessages as LangChainMessage[],
   };
 }
 
