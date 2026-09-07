@@ -224,6 +224,7 @@ function useConversationRuntime() {
         if (connectedThreadIdRef.current === threadId) return;
 
         connectedThreadIdRef.current = threadId;
+
         runtime.thread.resumeRun({ parentId: null });
       })
       .catch((error: unknown) => {
