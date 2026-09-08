@@ -35,9 +35,12 @@ import {
   SearchIcon,
   type LucideIcon,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { ResearchReport } from "./research-report";
+const ResearchReport = dynamic(() =>
+  import("./research-report").then((module) => module.ResearchReport),
+);
 
 type ResearchStage = NonNullable<ResearchState["stage"]>;
 
@@ -147,9 +150,7 @@ export function ResearchProgress() {
   let researchContent: ReactNode = null;
 
   if (toolSteps.length > 0) {
-    researchContent = (
-      <ToolSteps toolSteps={toolSteps} runStatus={runStatus} />
-    );
+    researchContent = <ToolSteps toolSteps={toolSteps} runStatus={runStatus} />;
   } else if (currentStage === "research" && runStatus === "running") {
     researchContent = (
       <p className="text-muted-foreground">正在准备工具调用…</p>
@@ -511,9 +512,10 @@ function ToolDetails({
 
   if (step.name === "firecrawl-firecrawl_search") {
     const query = step.args.query as string;
-    const result = step.resultText !== undefined
-      ? (JSON.parse(step.resultText) as SearchToolResult)
-      : undefined;
+    const result =
+      step.resultText !== undefined
+        ? (JSON.parse(step.resultText) as SearchToolResult)
+        : undefined;
 
     if (!result) return <p>正在搜索“{query}”…</p>;
 
@@ -548,9 +550,10 @@ function ToolDetails({
   }
 
   const url = step.args.url as string;
-  const result = step.resultText !== undefined
-    ? (JSON.parse(step.resultText) as ScrapeToolResult)
-    : undefined;
+  const result =
+    step.resultText !== undefined
+      ? (JSON.parse(step.resultText) as ScrapeToolResult)
+      : undefined;
 
   if (!result) return <p>正在抓取 {url} 正文…</p>;
 
