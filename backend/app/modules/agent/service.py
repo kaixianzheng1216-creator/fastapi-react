@@ -150,17 +150,6 @@ async def _run(
     try:
         conversation_kind = ConversationKind(chat_request.state["kind"])
 
-        if controller.state is None:
-            controller.state = {"messages": []}
-        elif "messages" not in controller.state:
-            controller.state["messages"] = []
-
-        controller.state["kind"] = conversation_kind.value
-
-        if conversation_kind == ConversationKind.RESEARCH:
-            controller.state["runStatus"] = "running"
-            controller.state["runError"] = ""
-
         if controller.is_cancelled:
             return
 
@@ -178,7 +167,10 @@ async def _run(
             capabilities=model_capabilities,
         )
 
-        run_config, agent_input_messages = await _prepare_run(
+        if "messages" not in controller.state:
+            controller.state["messages"] = []
+
+        run_config, agent_input_messages = _prepare_run(
             controller,
             session,
             user_id,
@@ -186,6 +178,12 @@ async def _run(
             chat_request.thread_id,
             chat_request.commands,
         )
+
+        controller.state["kind"] = conversation_kind.value
+
+        if conversation_kind == ConversationKind.RESEARCH:
+            controller.state["runStatus"] = "running"
+            controller.state["runError"] = ""
 
         run_config["callbacks"] = [CallbackHandler()]
 
@@ -335,7 +333,7 @@ def _validate_command_model_input(
         raise ImageInputNotSupportedError
 
 
-async def _prepare_run(
+def _prepare_run(
     controller: RunController,
     session: Session,
     user_id: UUID,
