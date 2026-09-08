@@ -20,11 +20,19 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { agentDownloadConversationReportPdf } from "@/lib/client";
 import { cn } from "@/lib/utils";
-import { DownloadIcon } from "lucide-react";
+import { DownloadIcon, Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { memo } from "react";
 import {
   Area,
@@ -62,6 +70,7 @@ const CHART_COLORS = [
 
 export function ResearchReport({ report }: { report: string }) {
   const conversationId = useAuiState((state) => state.threadListItem.remoteId)!;
+  const reportTitle = getReportTitle(report);
 
   const pdfDownload = useMutation({
     mutationFn: async () => {
@@ -72,7 +81,7 @@ export function ResearchReport({ report }: { report: string }) {
       });
 
       const downloadUrl = URL.createObjectURL(pdfBlob);
-      const pdfFilename = getReportTitle(report)
+      const pdfFilename = reportTitle
         .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "")
         .trim();
 
@@ -86,37 +95,82 @@ export function ResearchReport({ report }: { report: string }) {
     },
   });
 
+  const downloadError = pdfDownload.error
+    ? getApiErrorMessage(pdfDownload.error, "PDF 导出失败，请重试。")
+    : undefined;
+
+  const downloadButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={pdfDownload.isPending}
+      aria-busy={pdfDownload.isPending}
+      onClick={() => pdfDownload.mutate()}
+    >
+      {pdfDownload.isPending ? (
+        <Spinner data-icon="inline-start" />
+      ) : (
+        <DownloadIcon data-icon="inline-start" aria-hidden="true" />
+      )}
+      {pdfDownload.isPending ? "正在下载…" : "下载 PDF"}
+    </Button>
+  );
+
   return (
     <article className="mt-8">
       <Card>
         <CardHeader>
-          <CardAction>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={pdfDownload.isPending}
-              aria-busy={pdfDownload.isPending}
-              onClick={() => pdfDownload.mutate()}
-            >
-              {pdfDownload.isPending ? (
-                <Spinner data-icon="inline-start" />
-              ) : (
-                <DownloadIcon data-icon="inline-start" aria-hidden="true" />
-              )}
-              {pdfDownload.isPending ? "正在下载…" : "下载 PDF"}
-            </Button>
+          <CardAction className="flex gap-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Maximize2Icon data-icon="inline-start" aria-hidden="true" />
+                  全屏查看
+                </Button>
+              </DialogTrigger>
+
+              <DialogContent
+                showCloseButton={false}
+                className="top-0 left-0 flex h-dvh max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-0 p-0 sm:max-w-none"
+              >
+                <DialogHeader className="flex-row justify-end border-b px-6 py-3">
+                  <DialogTitle className="sr-only">{reportTitle}</DialogTitle>
+
+                  <DialogClose asChild>
+                    <Button variant="outline" size="sm">
+                      <Minimize2Icon
+                        data-icon="inline-start"
+                        aria-hidden="true"
+                      />
+                      退出全屏
+                    </Button>
+                  </DialogClose>
+
+                  {downloadButton}
+                </DialogHeader>
+
+                <div className="min-h-0 flex-1 overscroll-contain overflow-y-auto">
+                  <div className="mx-auto max-w-5xl p-6">
+                    {downloadError && (
+                      <Alert className="mb-6" variant="destructive">
+                        <AlertDescription>{downloadError}</AlertDescription>
+                      </Alert>
+                    )}
+
+                    <ResearchReportContent report={report} />
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {downloadButton}
           </CardAction>
         </CardHeader>
 
-        <CardContent className="flex flex-col gap-6">
-          {pdfDownload.error && (
-            <Alert variant="destructive">
-              <AlertDescription>
-                {getApiErrorMessage(
-                  pdfDownload.error,
-                  "PDF 导出失败，请重试。",
-                )}
-              </AlertDescription>
+        <CardContent>
+          {downloadError && (
+            <Alert className="mb-6" variant="destructive">
+              <AlertDescription>{downloadError}</AlertDescription>
             </Alert>
           )}
 

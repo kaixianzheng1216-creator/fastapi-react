@@ -305,7 +305,7 @@ function ResearchTiming({
   if (hours > 0) duration = `${hours}小时${minutes}分${seconds}秒`;
 
   return (
-    <div className="text-muted-foreground flex flex-wrap gap-x-6 gap-y-1 text-sm">
+    <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
       <span>开始时间：{dateTimeFormatter.format(startTime)}</span>
       <span>用时：{duration}</span>
     </div>
