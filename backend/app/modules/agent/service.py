@@ -183,6 +183,7 @@ async def _run(
 
         if conversation_kind == ConversationKind.RESEARCH:
             controller.state["runStatus"] = "running"
+            controller.state["runStartedAt"] = chat_request.state["runStartedAt"]
             controller.state["runError"] = ""
 
         run_config["callbacks"] = [CallbackHandler()]
