@@ -1,0 +1,19 @@
+@page {
+  size: A4;
+  margin: 16mm;
+}
+
+.report :global(h1),
+.report :global(h2),
+.report :global(h3),
+.report :global(h4) {
+  break-after: avoid-page;
+}
+
+.report :global(figure),
+.report :global([data-slot="card"]),
+.report :global(pre),
+.report :global(blockquote),
+.report :global(tr) {
+  break-inside: avoid-page;
+}
