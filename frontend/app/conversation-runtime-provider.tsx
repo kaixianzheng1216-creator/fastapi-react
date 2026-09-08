@@ -18,7 +18,7 @@ import {RESUMABLE_STREAM_ID_HEADER} from "assistant-stream/resumable";
 import type {ReadonlyJSONObject} from "assistant-stream/utils";
 import {type ReactNode, useEffect, useMemo, useRef, useState,} from "react";
 
-import {type ConversationKind, NewConversationKindContext, useConversationKind,} from "@/app/conversation-kind";
+import {type ConversationKind, NewConversationKindContext,} from "@/app/conversation-kind";
 import {getAccessToken, handleUnauthorizedResponse} from "@/lib/auth";
 import {agentCancelAgentRun, type ConversationStatePublic,} from "@/lib/client";
 import type {ApplicationState} from "@/lib/conversation-state";
@@ -32,6 +32,7 @@ type ConversationRuntimeProviderProps = {
 type AgentState = Partial<
   Omit<ConversationStatePublic, "messages" | "researchMessages">
 > & {
+  kind?: ConversationKind;
   messages: LangChainMessage[];
   researchMessages?: LangChainMessage[];
 };
@@ -74,7 +75,6 @@ export function ConversationRuntimeProvider({
 
 function useConversationRuntime() {
   const assistant = useAui();
-  const isResearch = useConversationKind() === "research";
   const [threadId] = useState(() => {
     const thread = assistant.threadListItem.getState();
     return thread.status === "new" ? undefined : thread.remoteId;
@@ -103,11 +103,7 @@ function useConversationRuntime() {
         connection,
         fileTransport.getPendingMessageFiles(),
       ),
-      state: toApplicationState(
-        state,
-        isResearch,
-        loadError,
-      ) as ReadonlyJSONObject,
+      state: toApplicationState(state, loadError) as ReadonlyJSONObject,
       isRunning: connection.isSending,
     }),
 
@@ -119,12 +115,17 @@ function useConversationRuntime() {
     prepareSendCommandsRequest: async (body) => {
       const savedStatePromise = savedStatePromiseRef.current;
 
-      const savedState = savedStatePromise
+      let savedState = savedStatePromise
         ? await savedStatePromise
         : undefined;
 
       const { remoteId: remoteThreadId } =
         await assistant.threadListItem.initialize();
+
+      if (!savedState && !connectedThreadIdRef.current) {
+        savedState = await readConversationState(remoteThreadId);
+        runtime.thread.importExternalState(savedState);
+      }
 
       connectedThreadIdRef.current = remoteThreadId;
 
@@ -161,13 +162,17 @@ function useConversationRuntime() {
     onError: (error, { updateState }) => {
       fileTransport.discard();
 
-      if (isResearch) {
-        updateState((state) => ({
-          ...state,
-          runStatus: "failed",
-          runError: error.message,
-        }));
-      }
+      if (!connectedThreadIdRef.current) setLoadError(error.message);
+
+      updateState((state) =>
+        state.kind === "research"
+          ? {
+              ...state,
+              runStatus: "failed",
+              runError: error.message,
+            }
+          : state,
+      );
     },
 
     onCancel: ({ updateState, error }) => {
@@ -179,13 +184,15 @@ function useConversationRuntime() {
 
       activeRunIdRef.current = null;
 
-      if (isResearch) {
-        updateState((state) => ({
-          ...state,
-          runStatus: "cancelled",
-          runError: "",
-        }));
-      }
+      updateState((state) =>
+        state.kind === "research"
+          ? {
+              ...state,
+              runStatus: "cancelled",
+              runError: "",
+            }
+          : state,
+      );
 
       if (!runId) return;
 
@@ -330,7 +337,6 @@ function moveFilesToAttachments(message: ThreadMessage) {
 
 function toApplicationState(
   state: AgentState,
-  isResearch: boolean,
   loadError?: string,
 ): ApplicationState {
   const baseState = {
@@ -339,7 +345,7 @@ function toApplicationState(
     loadError,
   };
 
-  if (!isResearch) return baseState;
+  if (state.kind !== "research") return baseState;
 
   return {
     ...baseState,

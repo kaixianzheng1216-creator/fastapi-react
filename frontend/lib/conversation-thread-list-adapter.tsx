@@ -137,6 +137,7 @@ export async function readConversationState(remoteId: string) {
 
   return {
     ...state,
+    kind: data.kind,
     messages: messages as LangChainMessage[],
     researchMessages: researchMessages as LangChainMessage[],
   };
