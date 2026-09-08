@@ -44,7 +44,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { getPaginationHref, parsePage } from "@/lib/pagination";
 import {
@@ -270,117 +270,130 @@ export function InfluencerResourceManager() {
               ))}
             </TabsList>
 
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div className="flex flex-col gap-1">
-                <h3 className="font-medium">{platformName}达人</h3>
-                <p className="text-sm text-muted-foreground" aria-live="polite">
-                  {accountsQuery.data?.captured_at
-                    ? `采集于 ${capturedAtFormatter.format(new Date(accountsQuery.data.captured_at))} · 共 ${accountsQuery.data.count} 位达人`
-                    : "尚未导入达人数据"}
-                </p>
-              </div>
+            {Object.keys(PLATFORMS).map((code) => (
+              <TabsContent
+                key={code}
+                value={code}
+                className="flex flex-col gap-6"
+                aria-busy={code === platform && accountsQuery.isFetching}
+              >
+                {code === platform && (
+                  <>
+                    <div className="flex flex-wrap items-end justify-between gap-4">
+                      <div className="flex flex-col gap-1">
+                        <h3 className="font-medium">{platformName}达人</h3>
+                        <p className="text-sm text-muted-foreground" aria-live="polite">
+                          {accountsQuery.data?.captured_at
+                            ? `采集于 ${capturedAtFormatter.format(new Date(accountsQuery.data.captured_at))} · 共 ${accountsQuery.data.count} 位达人`
+                            : "尚未导入达人数据"}
+                        </p>
+                      </div>
 
-              <SearchToolbar
-                id="influencer-search"
-                label="搜索昵称或平台账号"
-                placeholder="搜索昵称或平台账号…"
-                onSubmit={submitSearch}
-                key={search}
-                defaultValue={search}
-                maxLength={255}
-              />
-            </div>
+                      <SearchToolbar
+                        id="influencer-search"
+                        label="搜索昵称或平台账号"
+                        placeholder="搜索昵称或平台账号…"
+                        onSubmit={submitSearch}
+                        key={search}
+                        defaultValue={search}
+                        maxLength={255}
+                      />
+                    </div>
 
-            {accountsQuery.isPending ? (
-              <Skeleton className="h-80" />
-            ) : accountsQuery.error ? (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <AlertCircleIcon aria-hidden="true" />
-                  </EmptyMedia>
-                  <EmptyTitle>无法读取达人资源</EmptyTitle>
-                  <EmptyDescription>
-                    {getApiErrorMessage(
-                      accountsQuery.error,
-                      "读取达人资源失败",
+                    {accountsQuery.isPending ? (
+                      <Skeleton className="h-80" />
+                    ) : accountsQuery.error ? (
+                      <Empty>
+                        <EmptyHeader>
+                          <EmptyMedia variant="icon">
+                            <AlertCircleIcon aria-hidden="true" />
+                          </EmptyMedia>
+                          <EmptyTitle>无法读取达人资源</EmptyTitle>
+                          <EmptyDescription>
+                            {getApiErrorMessage(
+                              accountsQuery.error,
+                              "读取达人资源失败",
+                            )}
+                          </EmptyDescription>
+                        </EmptyHeader>
+                      </Empty>
+                    ) : rows.length === 0 ? (
+                      pageOutOfRange ? (
+                        <PageOutOfRange
+                          href={getInfluencerResourcesHref(
+                            platform,
+                            1,
+                            search,
+                            sortBy,
+                            sortOrder,
+                          )}
+                        />
+                      ) : (
+                        <Empty>
+                          <EmptyHeader>
+                            <EmptyMedia variant="icon">
+                              <UsersIcon aria-hidden="true" />
+                            </EmptyMedia>
+                            <EmptyTitle>暂无{platformName}达人数据</EmptyTitle>
+                            <EmptyDescription>
+                              {search
+                                ? "没有符合当前搜索条件的达人。"
+                                : `当前还没有采集到${platformName}达人。`}
+                            </EmptyDescription>
+                          </EmptyHeader>
+                        </Empty>
+                      )
+                    ) : (
+                      <Table className="table-fixed tabular-nums">
+                        <TableHeader>
+                          {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                              {headerGroup.headers.map((header) => (
+                                <TableHead
+                                  key={header.id}
+                                  className={header.column.columnDef.meta?.className}
+                                >
+                                  <table.FlexRender header={header} />
+                                </TableHead>
+                              ))}
+                            </TableRow>
+                          ))}
+                        </TableHeader>
+                        <TableBody>
+                          {rows.map((row) => (
+                            <TableRow key={row.id}>
+                              {row.getAllCells().map((cell) => (
+                                <TableCell
+                                  key={cell.id}
+                                  className={cell.column.columnDef.meta?.className}
+                                >
+                                  <table.FlexRender cell={cell} />
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     )}
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            ) : rows.length === 0 ? (
-              pageOutOfRange ? (
-                <PageOutOfRange
-                  href={getInfluencerResourcesHref(
-                    platform,
-                    1,
-                    search,
-                    sortBy,
-                    sortOrder,
-                  )}
-                />
-              ) : (
-                <Empty>
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                      <UsersIcon aria-hidden="true" />
-                    </EmptyMedia>
-                    <EmptyTitle>暂无{platformName}达人数据</EmptyTitle>
-                    <EmptyDescription>
-                      {search
-                        ? "没有符合当前搜索条件的达人。"
-                        : `当前还没有采集到${platformName}达人。`}
-                    </EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-              )
-            ) : (
-              <Table className="table-fixed tabular-nums">
-                <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <TableHead
-                          key={header.id}
-                          className={header.column.columnDef.meta?.className}
-                        >
-                          <table.FlexRender header={header} />
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getAllCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
-                          className={cell.column.columnDef.meta?.className}
-                        >
-                          <table.FlexRender cell={cell} />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
 
-            <PagePagination
-              ariaLabel={`${platformName}达人分页`}
-              currentPage={currentPage}
-              pageCount={pageCount}
-              getPageHref={(page) =>
-                getInfluencerResourcesHref(
-                  platform,
-                  page,
-                  search,
-                  sortBy,
-                  sortOrder,
-                )
-              }
-            />
+                    <PagePagination
+                      ariaLabel={`${platformName}达人分页`}
+                      currentPage={currentPage}
+                      pageCount={pageCount}
+                      getPageHref={(page) =>
+                        getInfluencerResourcesHref(
+                          platform,
+                          page,
+                          search,
+                          sortBy,
+                          sortOrder,
+                        )
+                      }
+                    />
+                  </>
+                )}
+              </TabsContent>
+            ))}
           </Tabs>
         </section>
       </div>

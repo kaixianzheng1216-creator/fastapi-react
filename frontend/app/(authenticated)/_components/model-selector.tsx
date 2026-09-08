@@ -282,14 +282,11 @@ function ModelSelectorTrigger({
       data-slot="model-selector-trigger"
       data-variant={variant ?? "outline"}
       data-size={size ?? "default"}
-      role="combobox"
-      aria-haspopup="listbox"
       className={cn(modelSelectorTriggerVariants({ variant, size }), className)}
       onKeyDown={(e) => {
         onKeyDown?.(e);
         if (e.defaultPrevented) return;
-        // ARIA combobox: arrows open the listbox from a focused trigger.
-        // Popover leaves this to the consumer.
+        // Also allow arrow keys to open the model settings panel.
         if (e.key === "ArrowDown" || e.key === "ArrowUp") {
           e.preventDefault();
           setOpen(true);
@@ -402,6 +399,7 @@ function ModelSelectorContent({
   return (
     <PopoverContent
       data-slot="model-selector-content"
+      aria-label="模型与思考设置"
       align={align}
       sideOffset={sideOffset}
       className={cn(
