@@ -33,14 +33,14 @@ import {
   knowledgeDocumentsDeleteDocument,
 } from "@/lib/client";
 import {
-  DOCUMENT_CONTENT_TYPES,
   formatFileSize,
   getFileContentType,
+  KNOWLEDGE_CONTENT_TYPES,
   MAX_FILE_SIZE,
 } from "@/lib/file-types";
 
 const UPLOAD_CONCURRENCY = 3;
-const DOCUMENT_ACCEPT = DOCUMENT_CONTENT_TYPES.join(",");
+const DOCUMENT_ACCEPT = KNOWLEDGE_CONTENT_TYPES.join(",");
 
 export function KnowledgeDocumentImport({
   knowledgeBaseId,
@@ -61,7 +61,7 @@ export function KnowledgeDocumentImport({
       const validatedFiles = files.map((file) => {
         const contentType = getFileContentType(file);
 
-        if (!contentType || !DOCUMENT_CONTENT_TYPES.includes(contentType)) {
+        if (!contentType || !KNOWLEDGE_CONTENT_TYPES.includes(contentType)) {
           throw new Error(`${file.name} 的文件类型不受支持`);
         }
 
@@ -187,8 +187,9 @@ export function KnowledgeDocumentImport({
                 <Field>
                   <FieldLabel htmlFor="knowledge-document">文件</FieldLabel>
                   <FieldDescription>
-                    支持 PDF、Office、HTML、Markdown、TXT、CSV 和
-                    JSON。单个文件最大 {formatFileSize(MAX_FILE_SIZE)}。
+                    支持图片（PNG、JPEG、WebP）、PDF、Word、Excel、PowerPoint、HTML、
+                    Markdown、TXT、CSV 和 JSON。单个文件最大{" "}
+                    {formatFileSize(MAX_FILE_SIZE)}。
                   </FieldDescription>
                   <Input
                     id="knowledge-document"

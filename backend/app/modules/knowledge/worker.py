@@ -302,6 +302,7 @@ def _parse_with_docling(stored_file: StoredFile, content: bytes) -> DoclingDocum
                 "from_formats": document_format,
                 "to_formats": ["json"],
                 "image_export_mode": "embedded",
+                "do_ocr": "false",
                 "do_picture_description": "true",
                 "picture_description_preset": "deepseek-v4-flash-vision-exp",
             },

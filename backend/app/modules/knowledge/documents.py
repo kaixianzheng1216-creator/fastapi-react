@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from sqlmodel import Session, col, select
 
 from app.modules.files import object_storage
-from app.modules.files.constants import DOCUMENT_CONTENT_TYPES
+from app.modules.files.constants import KNOWLEDGE_CONTENT_TYPES
 from app.modules.files.exceptions import (
     FileSizeMismatchError,
     FileTypeNotAllowedError,
@@ -54,7 +54,7 @@ def create_upload(
     folder_id: uuid.UUID | None,
     upload_request: FileUploadRequest,
 ) -> KnowledgeDocumentUploadPublic:
-    if upload_request.content_type not in DOCUMENT_CONTENT_TYPES:
+    if upload_request.content_type not in KNOWLEDGE_CONTENT_TYPES:
         raise FileTypeNotAllowedError
 
     document_id = uuid.uuid4()

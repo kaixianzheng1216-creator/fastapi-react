@@ -5,6 +5,12 @@ export const TEXT_CONTENT_TYPES: readonly string[] = [
   "text/plain",
 ];
 
+export const IMAGE_CONTENT_TYPES: readonly string[] = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
+
 const DOCLING_CONTENT_TYPES: readonly string[] = [
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
@@ -18,13 +24,12 @@ export const DOCUMENT_CONTENT_TYPES: readonly string[] = [
   ...TEXT_CONTENT_TYPES,
 ];
 
-export const CHAT_CONTENT_TYPES: readonly string[] = [
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
+export const KNOWLEDGE_CONTENT_TYPES: readonly string[] = [
+  ...IMAGE_CONTENT_TYPES,
   ...DOCUMENT_CONTENT_TYPES,
 ];
+
+export const CHAT_CONTENT_TYPES = KNOWLEDGE_CONTENT_TYPES;
 
 export const MAX_FILE_SIZE = 100 * 1024 * 1024;
 export const MAX_FILE_COUNT = 9;
@@ -36,7 +41,6 @@ const sizeFormatter = new Intl.NumberFormat("zh-CN", {
 const CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
   csv: "text/csv",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  gif: "image/gif",
   html: "text/html",
   jpeg: "image/jpeg",
   jpg: "image/jpeg",

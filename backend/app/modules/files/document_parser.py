@@ -49,6 +49,7 @@ async def extract_markdown(
                     "from_formats": document_format,
                     "to_formats": "md",
                     "image_export_mode": "placeholder",
+                    "do_ocr": "false",
                 },
                 files={"files": (filename, file)},
             )
