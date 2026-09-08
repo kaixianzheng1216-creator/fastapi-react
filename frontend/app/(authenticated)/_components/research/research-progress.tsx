@@ -299,10 +299,10 @@ function ResearchTiming({
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  let duration = `${seconds} 秒`;
+  let duration = `${seconds}秒`;
 
-  if (minutes > 0) duration = `${minutes} 分 ${seconds} 秒`;
-  if (hours > 0) duration = `${hours} 小时 ${minutes} 分 ${seconds} 秒`;
+  if (minutes > 0) duration = `${minutes}分${seconds}秒`;
+  if (hours > 0) duration = `${hours}小时${minutes}分${seconds}秒`;
 
   return (
     <div className="text-muted-foreground flex flex-wrap gap-x-6 gap-y-1 text-sm">
