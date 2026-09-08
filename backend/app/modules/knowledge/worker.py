@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 import multiprocessing
@@ -12,6 +13,7 @@ from docling_core.types.doc.base import ImageRefMode
 from docling_core.types.doc.document import DoclingDocument
 from docling_core.types.doc.items.picture.picture import PictureItem
 from docling_core.types.doc.labels import DocItemLabel
+from openai import APITimeoutError, OpenAI
 from pydantic import BaseModel, ValidationError
 from sqlalchemy import update
 from sqlmodel import Session, col, select
@@ -19,9 +21,13 @@ from sqlmodel import Session, col, select
 from app.core.config import settings as app_settings
 from app.db.session import engine
 from app.modules.files import object_storage
-from app.modules.files.constants import DOCUMENT_FORMAT_BY_CONTENT_TYPE
+from app.modules.files.constants import (
+    DOCUMENT_FORMAT_BY_CONTENT_TYPE,
+    IMAGE_CONTENT_TYPES,
+)
 from app.modules.files.models import StoredFile
 from app.modules.knowledge import document_images, embedding, vector_store
+from app.modules.knowledge.config import settings as knowledge_settings
 from app.modules.knowledge.documents import (
     cleanup_deleted_documents,
     document_json_key,
@@ -34,6 +40,11 @@ PROCESSING_TIMEOUT_SECONDS = 15 * 60
 DOCUMENT_PROCESSING_TIMEOUT_LOG = "知识库文档处理超时"
 DOCUMENT_PROCESSING_TIMEOUT_MESSAGE = "文档处理超时"
 DOCLING_INVALID_RESPONSE_MESSAGE = "Docling 返回内容无效"
+IMAGE_DESCRIPTION_MODEL = "deepseek/deepseek-v4-flash-vision-exp"
+IMAGE_DESCRIPTION_PROMPT = (
+    "请用中文简洁、准确地描述图片中的关键信息。"
+    "图表需说明标题、指标、趋势和重要数值；不要猜测看不清的内容。"
+)
 
 logger = logging.getLogger(__name__)
 
@@ -254,6 +265,8 @@ def _load_or_parse_document(
 
     if stored_file.content_type == "application/json":
         docling_document = _parse_json_document(stored_file, content)
+    elif stored_file.content_type in IMAGE_CONTENT_TYPES:
+        docling_document = _parse_image_document(stored_file, content)
     else:
         docling_document = _parse_with_docling(stored_file, content)
 
@@ -287,6 +300,51 @@ def _parse_json_document(
         DocItemLabel.TEXT,
         json.dumps(parsed_json, ensure_ascii=False, indent=4),
     )
+
+    return document
+
+
+def _parse_image_document(
+    stored_file: StoredFile,
+    content: bytes,
+) -> DoclingDocument:
+    """使用视觉模型生成可检索的图片描述。"""
+    image_url = (
+        f"data:{stored_file.content_type};base64,"
+        f"{base64.b64encode(content).decode()}"
+    )
+
+    try:
+        with OpenAI(
+            api_key=knowledge_settings.LITELLM_API_KEY.get_secret_value(),
+            base_url=knowledge_settings.LITELLM_BASE_URL,
+        ) as client:
+            response = client.chat.completions.create(
+                model=IMAGE_DESCRIPTION_MODEL,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": IMAGE_DESCRIPTION_PROMPT},
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": image_url},
+                            },
+                        ],
+                    }
+                ],
+            )
+    except APITimeoutError as error:
+        raise DocumentProcessingTimeoutError from error
+
+    description = response.choices[0].message.content
+
+    if not description:
+        raise DocumentProcessingError("视觉模型未生成图片描述")
+
+    document = DoclingDocument(name=stored_file.filename)
+
+    document.add_text(DocItemLabel.TEXT, description)
 
     return document
 
