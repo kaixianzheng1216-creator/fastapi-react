@@ -17,6 +17,7 @@ import {
 import {
   Empty,
   EmptyHeader,
+  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -124,7 +125,10 @@ export function KnowledgeSearch({
         !searchResults?.length && (
         <Empty>
           <EmptyHeader>
-            <EmptyTitle>暂无可显示内容</EmptyTitle>
+            <EmptyMedia variant="icon">
+              <SearchIcon />
+            </EmptyMedia>
+            <EmptyTitle>未找到相关内容</EmptyTitle>
           </EmptyHeader>
         </Empty>
         )}
@@ -165,7 +169,7 @@ export function KnowledgeSearch({
                     key={imageUrl}
                     src={imageUrl}
                     alt={`搜索结果关联图片 ${imageIndex + 1}`}
-                    className="max-h-96 w-full object-contain"
+                    className="aspect-video max-h-96 w-full object-contain"
                     loading="lazy"
                     decoding="async"
                   />

@@ -15,6 +15,7 @@ import {
   ChevronDownIcon,
   ChevronsUpDownIcon,
   ChevronUpIcon,
+  MapIcon,
   MinusIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -25,7 +26,7 @@ import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Select,
@@ -311,7 +312,10 @@ export function RegionalData() {
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyTitle>暂无可显示内容</EmptyTitle>
+                  <EmptyMedia variant="icon">
+                    <MapIcon />
+                  </EmptyMedia>
+                  <EmptyTitle>暂无区域数据</EmptyTitle>
                 </EmptyHeader>
               </Empty>
             )

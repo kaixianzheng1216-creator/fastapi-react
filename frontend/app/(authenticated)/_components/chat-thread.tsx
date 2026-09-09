@@ -34,10 +34,11 @@ import {
   CheckIcon,
   CopyIcon,
   DownloadIcon,
+  MessageCircleIcon,
   MoreHorizontalIcon,
 } from "lucide-react";
 import type { FC } from "react";
-import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import type { ApplicationState } from "@/lib/conversation-state";
 
 export const ChatThread: FC = () => {
@@ -71,7 +72,10 @@ export const ChatThread: FC = () => {
       {isEmpty && !isLoading && isExisting && (
         <Empty>
           <EmptyHeader>
-            <EmptyTitle>暂无可显示内容</EmptyTitle>
+            <EmptyMedia variant="icon">
+              <MessageCircleIcon />
+            </EmptyMedia>
+            <EmptyTitle>会话中暂无消息</EmptyTitle>
           </EmptyHeader>
         </Empty>
       )}

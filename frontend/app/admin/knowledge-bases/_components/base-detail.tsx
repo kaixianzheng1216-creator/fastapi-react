@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, BookOpenIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyHeader,
+  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -78,7 +79,10 @@ export function KnowledgeBaseDetail({
         ) : !knowledgeBaseQuery.data ? (
           <Empty className="mx-auto min-h-full max-w-6xl">
             <EmptyHeader>
-              <EmptyTitle>暂无可显示内容</EmptyTitle>
+              <EmptyMedia variant="icon">
+                <BookOpenIcon />
+              </EmptyMedia>
+              <EmptyTitle>暂无知识库信息</EmptyTitle>
             </EmptyHeader>
           </Empty>
         ) : null}

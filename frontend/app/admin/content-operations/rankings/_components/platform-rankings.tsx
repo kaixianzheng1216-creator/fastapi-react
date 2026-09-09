@@ -9,13 +9,15 @@ import {
   useTable,
 } from "@tanstack/react-table";
 import Link from "next/link";
+import { ChartNoAxesColumnIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/app-header";
 import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
-import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Select,
@@ -260,7 +262,10 @@ export function PlatformRankings() {
                 {item.code !== "bilibili" ? (
                   <Empty>
                     <EmptyHeader>
-                      <EmptyTitle>暂无可显示内容</EmptyTitle>
+                      <EmptyMedia variant="icon">
+                        <ChartNoAxesColumnIcon />
+                      </EmptyMedia>
+                      <EmptyTitle>暂无{item.name}榜单数据</EmptyTitle>
                     </EmptyHeader>
                   </Empty>
                 ) : (
@@ -270,14 +275,18 @@ export function PlatformRankings() {
                         <h3 className="font-medium">
                           B 站 · {getCategoryName(ranking, category)}排行榜
                         </h3>
-                        <p
-                          className="text-sm text-muted-foreground"
-                          aria-live="polite"
-                        >
-                          {ranking?.captured_at
-                            ? `采集于 ${capturedAtFormatter.format(new Date(ranking.captured_at))} · 共 ${ranking.count} 条`
-                            : "尚未导入榜单数据"}
-                        </p>
+                        {rankingQuery.isPending ? (
+                          <Skeleton className="h-4 w-48" />
+                        ) : (
+                          <p
+                            className="text-sm text-muted-foreground"
+                            aria-live="polite"
+                          >
+                            {ranking?.captured_at
+                              ? `采集于 ${capturedAtFormatter.format(new Date(ranking.captured_at))} · 共 ${ranking.count} 条`
+                              : "尚未导入榜单数据"}
+                          </p>
+                        )}
                       </div>
 
                       {ranking?.categories.length ? (
@@ -327,7 +336,10 @@ export function PlatformRankings() {
                       ) : (
                         <Empty>
                           <EmptyHeader>
-                            <EmptyTitle>暂无可显示内容</EmptyTitle>
+                            <EmptyMedia variant="icon">
+                              <ChartNoAxesColumnIcon />
+                            </EmptyMedia>
+                            <EmptyTitle>暂无榜单数据</EmptyTitle>
                           </EmptyHeader>
                         </Empty>
                       )

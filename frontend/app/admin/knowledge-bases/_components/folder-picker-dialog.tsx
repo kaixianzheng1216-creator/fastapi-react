@@ -23,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import type { KnowledgeFolderPublic } from "@/lib/client";
@@ -192,7 +192,10 @@ export function KnowledgeFolderPickerDialog({
         {visibleIds?.size === 0 ? (
           <Empty>
             <EmptyHeader>
-              <EmptyTitle>暂无可显示内容</EmptyTitle>
+              <EmptyMedia variant="icon">
+                <FolderOpenIcon />
+              </EmptyMedia>
+              <EmptyTitle>未找到文件夹</EmptyTitle>
             </EmptyHeader>
           </Empty>
         ) : (

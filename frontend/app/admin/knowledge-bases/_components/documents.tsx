@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { FolderOpenIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useRef, useState } from "react";
@@ -37,7 +38,9 @@ import {
 } from "@/components/ui/breadcrumb";
 import {
   Empty,
+  EmptyDescription,
   EmptyHeader,
+  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -358,7 +361,13 @@ export function KnowledgeDocuments({
         ) : (
           <Empty>
             <EmptyHeader>
-              <EmptyTitle>暂无可显示内容</EmptyTitle>
+              <EmptyMedia variant="icon">
+                <FolderOpenIcon aria-hidden="true" />
+              </EmptyMedia>
+              <EmptyTitle>此文件夹为空</EmptyTitle>
+              <EmptyDescription>
+                上传文件、添加网页或新建文件夹。
+              </EmptyDescription>
             </EmptyHeader>
           </Empty>
         ))}

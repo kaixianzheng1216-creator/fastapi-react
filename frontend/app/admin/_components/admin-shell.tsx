@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CircleAlertIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { AdminSidebar } from "@/app/admin/_components/admin-sidebar";
@@ -10,6 +11,7 @@ import {
   EmptyContent,
   EmptyDescription,
   EmptyHeader,
+  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import {
@@ -30,6 +32,9 @@ function AdminShellState({
     <main className="flex min-h-svh">
       <Empty role="status">
         <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CircleAlertIcon />
+          </EmptyMedia>
           <EmptyTitle>{title}</EmptyTitle>
           {description && <EmptyDescription>{description}</EmptyDescription>}
         </EmptyHeader>
@@ -55,7 +60,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   }
 
   if (!currentUserQuery.data) {
-    return <AdminShellState title="暂无可显示内容" />;
+    return <AdminShellState title="账户信息不可用" />;
   }
 
   if (!currentUserQuery.data.is_superuser) {

@@ -13,6 +13,7 @@ import {
   useTable,
 } from "@tanstack/react-table";
 import {
+  BookOpenIcon,
   MoreHorizontalIcon,
   PencilIcon,
   PlusIcon,
@@ -48,7 +49,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldTitle } from "@/components/ui/field";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
@@ -354,7 +355,14 @@ export function KnowledgeBaseManager() {
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyTitle>暂无可显示内容</EmptyTitle>
+                  <EmptyMedia variant="icon">
+                    <BookOpenIcon />
+                  </EmptyMedia>
+                  <EmptyTitle>
+                    {search || status !== "all"
+                      ? "未找到符合条件的知识库"
+                      : "暂无知识库"}
+                  </EmptyTitle>
                 </EmptyHeader>
               </Empty>
             )

@@ -9,6 +9,7 @@ import {
   FileIcon,
   FolderIcon,
   ImageIcon,
+  PuzzleIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -102,7 +103,10 @@ export function SkillDetail({ skillName }: SkillDetailProps) {
           {!detailQuery.isPending && !detail && (
             <Empty>
               <EmptyHeader>
-                <EmptyTitle>暂无可显示内容</EmptyTitle>
+                <EmptyMedia variant="icon">
+                  <PuzzleIcon />
+                </EmptyMedia>
+                <EmptyTitle>暂无技能信息</EmptyTitle>
               </EmptyHeader>
             </Empty>
           )}
@@ -263,6 +267,19 @@ function SkillFileTree({
   selectedPath: string | undefined;
   onSelect: (path: string) => void;
 }) {
+  if (nodes.length === 0) {
+    return (
+      <Empty className="p-4 md:p-4">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <FileIcon />
+          </EmptyMedia>
+          <EmptyTitle>暂无文件</EmptyTitle>
+        </EmptyHeader>
+      </Empty>
+    );
+  }
+
   return (
     <div className="flex min-w-0 flex-col gap-1">
       {nodes.map((node) => (
@@ -380,7 +397,10 @@ function FilePreviewContent({
     return (
       <Empty>
         <EmptyHeader>
-          <EmptyTitle>暂无可显示内容</EmptyTitle>
+          <EmptyMedia variant="icon">
+            <FileIcon />
+          </EmptyMedia>
+          <EmptyTitle>暂无文件内容</EmptyTitle>
         </EmptyHeader>
       </Empty>
     );

@@ -58,7 +58,7 @@ import {
   type FC,
   type SubmitEvent,
 } from "react";
-import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -241,7 +241,10 @@ export const ThreadListItems: FC<ComponentPropsWithoutRef<"div">> = ({
       >
         <Empty>
           <EmptyHeader>
-            <EmptyTitle>暂无可显示内容</EmptyTitle>
+            <EmptyMedia variant="icon">
+              <MessageCircleIcon />
+            </EmptyMedia>
+            <EmptyTitle>暂无会话</EmptyTitle>
           </EmptyHeader>
         </Empty>
       </AuiIf>
@@ -348,7 +351,15 @@ export const ThreadListSearchResults: FC<{
   }
 
   if (!conversationsQuery.data?.length) {
-    return <CommandEmpty>暂无可显示内容</CommandEmpty>;
+    return (
+      <CommandEmpty>
+        {searchQuery
+          ? "未找到相关会话"
+          : archived
+            ? "暂无已归档会话"
+            : "暂无会话"}
+      </CommandEmpty>
+    );
   }
 
   return (

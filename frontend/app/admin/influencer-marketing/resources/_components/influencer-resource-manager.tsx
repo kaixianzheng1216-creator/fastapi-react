@@ -14,6 +14,7 @@ import {
   ChevronDownIcon,
   ChevronsUpDownIcon,
   ChevronUpIcon,
+  UsersIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -25,7 +26,8 @@ import { PagePagination } from "@/components/shared/page-pagination";
 import { SearchToolbar } from "@/components/shared/search-toolbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
 import {
@@ -266,14 +268,18 @@ export function InfluencerResourceManager() {
                     <div className="flex flex-wrap items-end justify-between gap-4">
                       <div className="flex flex-col gap-1">
                         <h3 className="font-medium">{platformName}达人</h3>
-                        <p
-                          className="text-sm text-muted-foreground"
-                          aria-live="polite"
-                        >
-                          {accountsQuery.data?.captured_at
-                            ? `采集于 ${capturedAtFormatter.format(new Date(accountsQuery.data.captured_at))} · 共 ${accountsQuery.data.count} 位达人`
-                            : "尚未导入达人数据"}
-                        </p>
+                        {accountsQuery.isPending ? (
+                          <Skeleton className="h-4 w-48" />
+                        ) : (
+                          <p
+                            className="text-sm text-muted-foreground"
+                            aria-live="polite"
+                          >
+                            {accountsQuery.data?.captured_at
+                              ? `采集于 ${capturedAtFormatter.format(new Date(accountsQuery.data.captured_at))} · 共 ${accountsQuery.data.count} 位达人`
+                              : "尚未导入达人数据"}
+                          </p>
+                        )}
                       </div>
 
                       <SearchToolbar
@@ -303,7 +309,14 @@ export function InfluencerResourceManager() {
                       ) : (
                         <Empty>
                           <EmptyHeader>
-                            <EmptyTitle>暂无可显示内容</EmptyTitle>
+                            <EmptyMedia variant="icon">
+                              <UsersIcon />
+                            </EmptyMedia>
+                            <EmptyTitle>
+                              {search
+                                ? "未找到符合条件的达人"
+                                : "暂无达人数据"}
+                            </EmptyTitle>
                           </EmptyHeader>
                         </Empty>
                       )

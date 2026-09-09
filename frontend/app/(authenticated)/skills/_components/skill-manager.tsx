@@ -10,6 +10,7 @@ import {
 import {
   MoreHorizontalIcon,
   PlusIcon,
+  PuzzleIcon,
   TrashIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -45,6 +46,7 @@ import {
 import {
   Empty,
   EmptyHeader,
+  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import { AppHeader } from "@/components/layout/app-header";
@@ -177,7 +179,12 @@ export function SkillManager() {
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyTitle>暂无可显示内容</EmptyTitle>
+                  <EmptyMedia variant="icon">
+                    <PuzzleIcon />
+                  </EmptyMedia>
+                  <EmptyTitle>
+                    {searchQuery ? "未找到相关技能" : "暂无技能"}
+                  </EmptyTitle>
                 </EmptyHeader>
               </Empty>
             ))}

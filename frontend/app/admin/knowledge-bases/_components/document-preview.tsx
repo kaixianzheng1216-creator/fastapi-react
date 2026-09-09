@@ -25,6 +25,7 @@ import {
 import {
   Empty,
   EmptyHeader,
+  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -214,7 +215,10 @@ export function KnowledgeDocumentPreview({
               ) : !previewQuery.data ? (
                 <Empty>
                   <EmptyHeader>
-                    <EmptyTitle>暂无可显示内容</EmptyTitle>
+                    <EmptyMedia variant="icon">
+                      <FileTextIcon />
+                    </EmptyMedia>
+                    <EmptyTitle>暂无文档内容</EmptyTitle>
                   </EmptyHeader>
                 </Empty>
               ) : (
@@ -296,7 +300,10 @@ function DocumentChunksView({
     return (
       <Empty>
         <EmptyHeader>
-          <EmptyTitle>暂无可显示内容</EmptyTitle>
+          <EmptyMedia variant="icon">
+            <LayersIcon />
+          </EmptyMedia>
+          <EmptyTitle>暂无文档切片</EmptyTitle>
         </EmptyHeader>
       </Empty>
     );
@@ -329,7 +336,7 @@ function DocumentChunksView({
                     key={imageUrl}
                     src={imageUrl}
                     alt={`切片 ${chunk.chunk_index + 1} 关联图片 ${imageIndex + 1}`}
-                    className="max-h-96 w-full object-contain"
+                    className="aspect-video max-h-96 w-full object-contain"
                     loading="lazy"
                     decoding="async"
                   />

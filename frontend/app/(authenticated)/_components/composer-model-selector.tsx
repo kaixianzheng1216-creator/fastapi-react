@@ -35,7 +35,7 @@ export function ComposerModelSelector() {
 
   if (!modelsQuery.data?.data.length)
     return (
-      <span className="text-muted-foreground text-xs">暂无可显示内容</span>
+      <span className="text-muted-foreground text-xs">暂无可用模型</span>
     );
 
   return (

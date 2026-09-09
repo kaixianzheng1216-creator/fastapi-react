@@ -15,10 +15,10 @@ import {
   ThreadPrimitive,
   useAuiState,
 } from "@assistant-ui/react";
-import { SquareIcon } from "lucide-react";
+import { SearchIcon, SquareIcon } from "lucide-react";
 
 import { ResearchProgress } from "./research-progress";
-import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 
 export function ResearchThread() {
   const isEmpty = useAuiState(selectIsNewConversation);
@@ -53,7 +53,10 @@ export function ResearchThread() {
         (isExisting ? (
           <Empty>
             <EmptyHeader>
-              <EmptyTitle>暂无可显示内容</EmptyTitle>
+              <EmptyMedia variant="icon">
+                <SearchIcon />
+              </EmptyMedia>
+              <EmptyTitle>暂无调研内容</EmptyTitle>
             </EmptyHeader>
           </Empty>
         ) : (

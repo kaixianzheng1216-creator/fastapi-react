@@ -19,6 +19,7 @@ import {
   PowerIcon,
   PowerOffIcon,
   TrashIcon,
+  UsersIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useMemo, useState } from "react";
@@ -48,7 +49,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { FieldLegend, FieldSet } from "@/components/ui/field";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -399,7 +400,14 @@ export function UserManager() {
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyTitle>暂无可显示内容</EmptyTitle>
+                  <EmptyMedia variant="icon">
+                    <UsersIcon />
+                  </EmptyMedia>
+                  <EmptyTitle>
+                    {search || role !== "all" || status !== "all"
+                      ? "未找到符合条件的用户"
+                      : "暂无用户"}
+                  </EmptyTitle>
                 </EmptyHeader>
               </Empty>
             )
