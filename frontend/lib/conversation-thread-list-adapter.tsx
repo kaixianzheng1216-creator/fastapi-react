@@ -6,6 +6,8 @@ import {
 } from "@assistant-ui/react";
 import type { LangChainMessage } from "@assistant-ui/react-langgraph";
 import { createAssistantStream } from "assistant-stream";
+import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/api-error";
 import {
   agentArchiveConversation,
   agentCreateConversation,
@@ -44,6 +46,11 @@ export function createConversationThreadListAdapter(
       const { data } = await agentReadConversations({
         query: { limit: PAGE_SIZE },
         throwOnError: true,
+      }).catch((error: unknown) => {
+        toast.error(getApiErrorMessage(error, "会话列表加载失败，请稍后再试"), {
+          id: "conversation-list-load",
+        });
+        throw error;
       });
 
       return {
@@ -70,6 +77,11 @@ export function createConversationThreadListAdapter(
       const { data } = await agentReadConversation({
         path: { conversation_id: remoteId },
         throwOnError: true,
+      }).catch((error: unknown) => {
+        toast.error(getApiErrorMessage(error, "会话加载失败，请稍后再试"), {
+          id: `conversation-load-${remoteId}`,
+        });
+        throw error;
       });
 
       return {

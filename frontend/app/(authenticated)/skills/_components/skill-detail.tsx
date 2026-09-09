@@ -1,5 +1,8 @@
 "use client";
 
+import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/api-error";
+
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -229,8 +232,10 @@ function SkillFileBrowser({
         kind: "text",
         content: JSON.stringify(data, null, 2) ?? String(data),
       });
-    } catch {
-      // Missing content uses the same empty state as an empty response.
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        toast.error(getApiErrorMessage(error, "文件加载失败，请稍后再试"));
+      }
     } finally {
       if (!controller.signal.aborted) {
         setFileLoading(false);

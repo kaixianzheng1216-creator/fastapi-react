@@ -24,6 +24,8 @@ import { type ConversationStatePublic } from "@/lib/client";
 import type {ApplicationState} from "@/lib/conversation-state";
 import { createConversationThreadListAdapter, readConversationState } from "@/lib/conversation-thread-list-adapter";
 import {createFileAttachmentTransport} from "@/lib/file-upload-adapter";
+import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 type ConversationRuntimeProviderProps = {
   children: ReactNode;
@@ -219,7 +221,7 @@ function useConversationRuntime() {
       .catch((error: unknown) => {
         if (ignoreResult) return;
 
-        console.error("读取会话状态失败", error);
+        toast.error(getApiErrorMessage(error, "会话加载失败，请稍后再试"));
 
         savedStatePromiseRef.current = null;
       })
