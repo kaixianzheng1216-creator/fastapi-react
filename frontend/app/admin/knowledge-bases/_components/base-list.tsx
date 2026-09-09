@@ -182,7 +182,7 @@ export function KnowledgeBaseManager() {
       });
     },
     onSuccess: () => {
-      toast.success("已删除");
+      toast.success("知识库已删除");
       if (knowledgeBasesQuery.data?.data.length === 1 && currentPage > 1) {
         router.replace(getKnowledgeBasesHref(currentPage - 1, search, status));
       }

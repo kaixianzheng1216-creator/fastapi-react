@@ -160,7 +160,7 @@ export function UserManager() {
       });
     },
     onSuccess: () => {
-      toast.success("已删除");
+      toast.success("用户已删除");
       if (usersQuery.data?.data.length === 1 && currentPage > 1) {
         router.replace(getUsersHref(currentPage - 1, search, role, status));
       }

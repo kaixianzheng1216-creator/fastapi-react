@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  keepPreviousData,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useRef, useState } from "react";
@@ -129,7 +125,14 @@ export function KnowledgeDocuments({
       return hasProcessingDocument ? DOCUMENT_POLL_INTERVAL_MS : false;
     },
     enabled: activeView === "documents",
-    placeholderData: keepPreviousData,
+    placeholderData: (previousData, previousQuery) => {
+      const previousQueryKey = previousQuery?.queryKey;
+
+      return previousQueryKey?.at(-3) === knowledgeBaseId &&
+        previousQueryKey.at(-2) === currentFolderId
+        ? previousData
+        : undefined;
+    },
   });
 
   const directoryEntries = directoryQuery.data?.data ?? EMPTY_DIRECTORY_ENTRIES;

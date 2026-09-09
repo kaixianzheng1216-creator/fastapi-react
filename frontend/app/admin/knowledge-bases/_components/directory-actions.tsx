@@ -201,7 +201,7 @@ export function useDirectoryActions({
         throwOnError: true,
       }),
     onSuccess: (_, target) => {
-      toast.success("已删除");
+      toast.success("项目已删除");
       actionTriggerRef.current = null;
       setDeleteTarget(undefined);
       onChanged({ type: "deleted", entries: target.entries });

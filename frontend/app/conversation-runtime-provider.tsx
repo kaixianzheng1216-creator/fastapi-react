@@ -178,7 +178,7 @@ function useConversationRuntime() {
       fileTransport.complete();
     },
 
-    onError: (error, { updateState }) => {
+    onError: (_, { updateState }) => {
       fileTransport.discard();
 
       updateState((state) =>
@@ -186,7 +186,7 @@ function useConversationRuntime() {
           ? {
               ...state,
               runStatus: "failed",
-              runError: error.message,
+              runError: "请重新提交调研",
             }
           : state,
       );

@@ -1,6 +1,6 @@
 "use client";
 
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { SearchIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent } from "react";
@@ -53,7 +53,6 @@ export function KnowledgeSearch({
       return data;
     },
     enabled: Boolean(searchQuery),
-    placeholderData: keepPreviousData,
   });
 
   const searchResults = knowledgeSearchQuery.data?.data;
