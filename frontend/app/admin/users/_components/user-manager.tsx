@@ -144,12 +144,12 @@ export function UserManager() {
         throwOnError: true,
       });
     },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "更新状态失败"));
-    },
     onSuccess: async () => {
       toast.success("状态已更新");
       await queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "更新状态失败，请重试"));
     },
   });
 
@@ -160,9 +160,6 @@ export function UserManager() {
         throwOnError: true,
       });
     },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "删除失败"));
-    },
     onSuccess: async () => {
       toast.success("已删除");
       if (usersQuery.data?.data.length === 1 && currentPage > 1) {
@@ -172,6 +169,9 @@ export function UserManager() {
       setUserToDelete(undefined);
 
       await queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "删除失败，请重试"));
     },
   });
 

@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { GlobeIcon, UploadIcon } from "lucide-react";
-import { type FormEvent, useState, useRef } from "react";
+import { type FormEvent, useRef, useState } from "react";
 
 import { KNOWLEDGE_DOCUMENT_UPLOAD_KEY } from "@/app/admin/knowledge-bases/_lib/directory";
 import { Button } from "@/components/ui/button";
@@ -154,14 +154,14 @@ export function KnowledgeDocumentImport({
         body: { url },
         throwOnError: true,
       }),
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "添加网页失败"));
-    },
-
     onSuccess: () => {
       toast.success("网页已添加，正在处理");
       setWebpageUrl("");
       return onDocumentsChanged();
+    },
+
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "添加网页失败，请重试"));
     },
   });
 

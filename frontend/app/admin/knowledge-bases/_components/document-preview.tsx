@@ -129,11 +129,11 @@ export function KnowledgeDocumentPreview({
       format === "original"
         ? downloadOriginalKnowledgeDocument(documentId)
         : downloadMarkdownKnowledgeDocument(documentId),
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "下载失败"));
-    },
     onSuccess: () => {
       toast.success("已开始下载");
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "下载失败，请重试"));
     },
   });
 

@@ -533,15 +533,14 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
         body: { title },
         throwOnError: true,
       }),
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "重命名失败"));
-    },
-
     onSuccess: () => {
       toast.success("会话已重命名");
       setRenameOpen(false);
 
       return refreshConversations();
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "重命名失败，请重试"));
     },
   });
 
@@ -551,16 +550,15 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
         path: { conversation_id: item.remoteId! },
         throwOnError: true,
       }),
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "归档失败"));
-    },
-
     onSuccess: () => {
       toast.success("会话已归档");
       if (aui.threads.getState().mainThreadId === item.id)
         aui.threads.switchToNewThread();
 
       return refreshConversations();
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "归档失败，请重试"));
     },
   });
 
@@ -570,10 +568,6 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
         path: { conversation_id: item.remoteId! },
         throwOnError: true,
       }),
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "删除会话失败"));
-    },
-
     onSuccess: () => {
       toast.success("会话已删除");
       setDeleteOpen(false);
@@ -581,6 +575,9 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
         aui.threads.switchToNewThread();
 
       return refreshConversations();
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "删除会话失败，请重试"));
     },
   });
 

@@ -107,12 +107,12 @@ export function useDirectoryActions({
         path: { document_id: documentId },
         throwOnError: true,
       }),
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "文档操作失败"));
-    },
     onSuccess: () => {
       toast.success("上传已确认");
       void onChanged({ type: "documents" });
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "文档操作失败，请重试"));
     },
   });
 
@@ -122,32 +122,32 @@ export function useDirectoryActions({
         path: { document_id: documentId },
         throwOnError: true,
       }),
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "文档操作失败"));
-    },
     onSuccess: () => {
       toast.success("已提交重新解析");
       void onChanged({ type: "documents" });
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "文档操作失败，请重试"));
     },
   });
 
   const downloadOriginal = useMutation({
     mutationFn: downloadOriginalKnowledgeDocument,
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "文档操作失败"));
-    },
     onSuccess: () => {
       toast.success("已开始下载");
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "文档操作失败，请重试"));
     },
   });
 
   const downloadMarkdown = useMutation({
     mutationFn: downloadMarkdownKnowledgeDocument,
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "文档操作失败"));
-    },
     onSuccess: () => {
       toast.success("已开始下载");
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "文档操作失败，请重试"));
     },
   });
 
@@ -178,15 +178,15 @@ export function useDirectoryActions({
         });
       }
     },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "移动失败"));
-    },
     onSuccess: async (_, { entry }) => {
       toast.success("已移动");
       actionTriggerRef.current = null;
       setEntryToMove(undefined);
 
       await onChanged({ type: "moved", entry });
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "移动失败，请重试"));
     },
   });
 
@@ -210,15 +210,15 @@ export function useDirectoryActions({
         },
         throwOnError: true,
       }),
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "删除失败"));
-    },
     onSuccess: async (_, target) => {
       toast.success("已删除");
       actionTriggerRef.current = null;
       setDeleteTarget(undefined);
 
       await onChanged({ type: "deleted", entries: target.entries });
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "删除失败，请重试"));
     },
   });
 

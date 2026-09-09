@@ -93,11 +93,11 @@ export function ResearchReport({ report }: { report: string }) {
 
       setTimeout(() => URL.revokeObjectURL(downloadUrl), 0);
     },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "PDF 导出失败，请重试"));
-    },
     onSuccess: () => {
       toast.success("已开始下载");
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "PDF 导出失败，请重试"));
     },
   });
 

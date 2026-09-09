@@ -45,18 +45,18 @@ export function LoginForm({
         body: { username, password },
         throwOnError: true,
       }),
-    onError: (error) => {
-      loginForm.setError("root", {
-        message: getApiErrorMessage(error, "登录失败，请稍后重试"),
-      });
-    },
-
     onSuccess: ({ data }) => {
       saveAccessToken(data.access_token);
 
       queryClient.clear();
 
       window.location.replace("/");
+    },
+
+    onError: (error) => {
+      loginForm.setError("root", {
+        message: getApiErrorMessage(error, "登录失败，请稍后重试"),
+      });
     },
   });
 
@@ -84,6 +84,8 @@ export function LoginForm({
               disabled={loginMutation.isPending}
               id="username"
               autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
               aria-invalid={!!loginForm.formState.errors.username}
               {...loginForm.register("username")}
             />

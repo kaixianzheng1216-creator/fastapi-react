@@ -161,12 +161,12 @@ export function KnowledgeBaseManager() {
         throwOnError: true,
       });
     },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "更新状态失败"));
-    },
     onSuccess: async () => {
       toast.success("状态已更新");
       await refreshKnowledgeBases();
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "更新状态失败，请重试"));
     },
   });
 
@@ -182,9 +182,6 @@ export function KnowledgeBaseManager() {
         throwOnError: true,
       });
     },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "删除失败"));
-    },
     onSuccess: async () => {
       toast.success("已删除");
       if (knowledgeBasesQuery.data?.data.length === 1 && currentPage > 1) {
@@ -195,8 +192,10 @@ export function KnowledgeBaseManager() {
 
       await refreshKnowledgeBases();
     },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "删除失败，请重试"));
+    },
   });
-
 
   function closeDeleteDialog(open: boolean): void {
     if (!open && !deleteKnowledgeBase.isPending) {

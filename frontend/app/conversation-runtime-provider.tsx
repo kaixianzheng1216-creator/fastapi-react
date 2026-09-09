@@ -1,31 +1,46 @@
 "use client";
 
 import {
-    AssistantRuntimeProvider,
-    type AssistantTransportConnectionMetadata,
-    type CompleteAttachment,
-    type FileMessagePart,
-    type LanguageModelConfig,
-    type ThreadMessage,
-    type ThreadUserMessagePart,
-    unstable_createMessageConverter as createMessageConverter,
-    useAssistantTransportRuntime,
-    useAui,
-    useRemoteThreadListRuntime,
+  AssistantRuntimeProvider,
+  type AssistantTransportConnectionMetadata,
+  type CompleteAttachment,
+  type FileMessagePart,
+  type LanguageModelConfig,
+  type ThreadMessage,
+  type ThreadUserMessagePart,
+  unstable_createMessageConverter as createMessageConverter,
+  useAssistantTransportRuntime,
+  useAui,
+  useRemoteThreadListRuntime,
 } from "@assistant-ui/react";
-import { convertLangChainMessages, type LangChainMessage } from "@assistant-ui/react-langgraph";
-import {RESUMABLE_STREAM_ID_HEADER} from "assistant-stream/resumable";
-import type {ReadonlyJSONObject} from "assistant-stream/utils";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-
-import { type ConversationKind, NewConversationKindContext } from "@/app/conversation-kind";
-import {getAccessToken, handleUnauthorizedResponse} from "@/lib/auth";
-import { type ConversationStatePublic } from "@/lib/client";
-import type {ApplicationState} from "@/lib/conversation-state";
-import { createConversationThreadListAdapter, readConversationState } from "@/lib/conversation-thread-list-adapter";
-import {createFileAttachmentTransport} from "@/lib/file-upload-adapter";
+import {
+  convertLangChainMessages,
+  type LangChainMessage,
+} from "@assistant-ui/react-langgraph";
+import { RESUMABLE_STREAM_ID_HEADER } from "assistant-stream/resumable";
+import type { ReadonlyJSONObject } from "assistant-stream/utils";
+import {
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
+
+import {
+  type ConversationKind,
+  NewConversationKindContext,
+} from "@/app/conversation-kind";
 import { getApiErrorMessage } from "@/lib/api-error";
+import { getAccessToken, handleUnauthorizedResponse } from "@/lib/auth";
+import { type ConversationStatePublic } from "@/lib/client";
+import type { ApplicationState } from "@/lib/conversation-state";
+import {
+  createConversationThreadListAdapter,
+  readConversationState,
+} from "@/lib/conversation-thread-list-adapter";
+import { createFileAttachmentTransport } from "@/lib/file-upload-adapter";
 
 type ConversationRuntimeProviderProps = {
   children: ReactNode;
@@ -221,7 +236,9 @@ function useConversationRuntime() {
       .catch((error: unknown) => {
         if (ignoreResult) return;
 
-        toast.error(getApiErrorMessage(error, "会话加载失败，请稍后再试"));
+        toast.error(getApiErrorMessage(error, "会话加载失败，请稍后再试"), {
+          id: `conversation-load-${threadId}`,
+        });
 
         savedStatePromiseRef.current = null;
       })

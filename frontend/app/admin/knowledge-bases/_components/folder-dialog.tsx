@@ -65,12 +65,12 @@ export function KnowledgeFolderEditorDialog({
         throwOnError: true,
       });
     },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "保存文件夹失败"));
-    },
     onSuccess: () => {
       toast.success(folder ? "文件夹已重命名" : "文件夹已创建");
       void onSaved();
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "保存文件夹失败，请重试"));
     },
   });
 

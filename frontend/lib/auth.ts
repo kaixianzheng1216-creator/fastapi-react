@@ -1,4 +1,3 @@
-
 import { client } from "@/lib/client/client.gen";
 
 const ACCESS_TOKEN_KEY = "access_token";

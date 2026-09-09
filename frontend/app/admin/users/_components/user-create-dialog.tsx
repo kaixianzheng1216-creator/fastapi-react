@@ -82,15 +82,15 @@ export function UserCreateDialog({
       });
     },
 
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "创建用户失败"));
-    },
-
     onSuccess: () => {
       toast.success("用户已创建");
       form.reset();
       onOpenChange(false);
       onCreated();
+    },
+
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "创建用户失败，请重试"));
     },
   });
 
@@ -125,6 +125,8 @@ export function UserCreateDialog({
                 disabled={createUser.isPending}
                 id="new-user-username"
                 autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
                 aria-invalid={!!form.formState.errors.username}
                 {...form.register("username")}
               />

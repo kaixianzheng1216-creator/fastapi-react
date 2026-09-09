@@ -79,11 +79,11 @@ export function SkillCreateDialog({
       await skillsCreateMdSkill({ body, throwOnError: true });
     },
 
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "创建技能失败"));
-    },
-
     onSuccess: handleCreateSuccess,
+
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "创建技能失败，请重试"));
+    },
   });
 
   const createZipMutation = useMutation({
@@ -94,11 +94,11 @@ export function SkillCreateDialog({
       });
     },
 
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "导入技能失败"));
-    },
-
     onSuccess: handleCreateSuccess,
+
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "导入技能失败，请重试"));
+    },
   });
 
   const isSubmitting =

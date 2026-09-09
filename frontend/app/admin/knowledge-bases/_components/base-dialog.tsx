@@ -89,15 +89,15 @@ export function KnowledgeBaseDialog({
       });
     },
 
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "保存知识库失败"));
-    },
-
     onSuccess: () => {
       toast.success("知识库已保存");
       form.reset();
       onOpenChange(false);
       onSaved();
+    },
+
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "保存知识库失败，请重试"));
     },
   });
 

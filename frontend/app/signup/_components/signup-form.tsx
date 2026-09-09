@@ -58,15 +58,15 @@ export function SignupForm({
         },
         throwOnError: true,
       }),
+    onSuccess: () => {
+      toast.success("注册成功，请登录");
+      router.replace("/login");
+    },
+
     onError: (error) => {
       signupForm.setError("root", {
         message: getApiErrorMessage(error, "注册失败，请稍后重试"),
       });
-    },
-
-    onSuccess: () => {
-      toast.success("注册成功，请登录");
-      router.replace("/login");
     },
   });
 
@@ -107,6 +107,8 @@ export function SignupForm({
               disabled={signupMutation.isPending}
               id="username"
               autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
               minLength={3}
               maxLength={255}
               aria-invalid={!!signupForm.formState.errors.username}

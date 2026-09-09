@@ -1,8 +1,13 @@
 "use client";
 
-import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
+
 import { getApiErrorMessage } from "@/lib/api-error";
 
 export function QueryProvider({ children }: { children: ReactNode }) {
@@ -16,14 +21,14 @@ export function QueryProvider({ children }: { children: ReactNode }) {
 
           notifiedQueries.add(query);
 
+          const isRefresh = query.state.data !== undefined;
+
           toast.error(
             getApiErrorMessage(
               error,
-              query.state.data === undefined
-                ? "加载失败，请稍后再试"
-                : "刷新失败，请稍后再试",
+              isRefresh ? "刷新失败，请稍后再试" : "加载失败，请稍后再试",
             ),
-            { id: query.queryHash },
+            { id: isRefresh ? "query-refresh-error" : "query-load-error" },
           );
         },
         onSuccess: (_, query) => {

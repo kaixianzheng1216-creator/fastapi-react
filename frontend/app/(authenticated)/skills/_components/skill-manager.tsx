@@ -116,9 +116,6 @@ export function SkillManager() {
         throwOnError: true,
       });
     },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "删除技能失败"));
-    },
     onSuccess: () => {
       toast.success("技能已删除");
       setSkillToDelete(undefined);
@@ -127,6 +124,9 @@ export function SkillManager() {
       if (skills.length === 1 && offset > 0) {
         router.replace(getSkillsHref(currentPage - 1, searchQuery));
       }
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "删除技能失败，请重试"));
     },
   });
 
