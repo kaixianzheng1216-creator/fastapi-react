@@ -41,7 +41,7 @@ import { toast } from "sonner";
 const UPLOAD_CONCURRENCY = 3;
 const DOCUMENT_ACCEPT = KNOWLEDGE_CONTENT_TYPES.join(",");
 
-type UploadResult = { file: File; error?: string; needsCheck?: boolean };
+type UploadResult = { file: File; error?: string };
 
 export function KnowledgeDocumentImport({
   knowledgeBaseId,
@@ -106,11 +106,7 @@ export function KnowledgeDocumentImport({
       ]);
 
       const failures = results.filter((result) => result.error);
-      setSelectedFiles(
-        failures
-          .filter((result) => !result.needsCheck)
-          .map((result) => result.file),
-      );
+      setSelectedFiles(failures.map((result) => result.file));
 
       if (fileInputRef.current) fileInputRef.current.value = "";
 
@@ -125,7 +121,7 @@ export function KnowledgeDocumentImport({
         toast.success(`文件已上传 ${results.length} 个，正在处理`);
       }
 
-      if (results.some((result) => !result.error || result.needsCheck)) {
+      if (results.some((result) => !result.error)) {
         onDocumentsChanged();
       }
     },
@@ -336,7 +332,7 @@ async function uploadKnowledgeDocument(
       throw new Error(`对象存储上传失败（${response.status}）`);
     }
   } catch (error) {
-    const { error: cleanupError } = await knowledgeDocumentsDeleteDocument({
+    await knowledgeDocumentsDeleteDocument({
       path: { document_id: upload.id },
       throwOnError: false,
     });
@@ -345,10 +341,7 @@ async function uploadKnowledgeDocument(
 
     return {
       file,
-      needsCheck: Boolean(cleanupError),
-      error: cleanupError
-        ? `上传失败：${reason}。清理请求也失败：${getApiErrorMessage(cleanupError, "请求未完成")}。请刷新目录检查并删除残留记录后再上传。`
-        : `上传失败：${reason}。文档记录已清理，可重新上传。`,
+      error: `上传失败：${reason}`,
     };
   }
 
@@ -360,8 +353,7 @@ async function uploadKnowledgeDocument(
   if (confirmationError) {
     return {
       file,
-      needsCheck: true,
-      error: `确认上传失败：${getApiErrorMessage(confirmationError, "请求未完成")}。请先刷新目录检查状态；若仍显示“等待确认上传”，请使用“确认上传”，避免重复上传。`,
+      error: getApiErrorMessage(confirmationError, "确认上传失败"),
     };
   }
 

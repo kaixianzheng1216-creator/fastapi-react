@@ -34,7 +34,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 
 const ResearchReport = dynamic(() =>
   import("./research-report").then((module) => module.ResearchReport),
@@ -75,6 +75,12 @@ const TOOL_LABELS = {
   "firecrawl-firecrawl_scrape": "网页抓取",
 } as const;
 
+const dateTimeFormatter = new Intl.DateTimeFormat("zh-CN", {
+  dateStyle: "medium",
+  timeStyle: "medium",
+  hour12: false,
+});
+
 type ResearchToolName = keyof typeof TOOL_LABELS;
 
 type ToolStep = {
@@ -84,12 +90,6 @@ type ToolStep = {
   resultText?: string;
   status?: "success" | "error";
 };
-
-const dateTimeFormatter = new Intl.DateTimeFormat("zh-CN", {
-  dateStyle: "medium",
-  timeStyle: "medium",
-  hour12: false,
-});
 
 export function ResearchProgress() {
   const researchState = useAuiState(
@@ -149,19 +149,18 @@ export function ResearchProgress() {
         </p>
 
         <Collapsible key={threadId} defaultOpen={!report}>
-          <div className="mb-3 flex items-start justify-between gap-4">
-            {runStartedAt ? (
-              <ResearchTiming
-                startedAt={runStartedAt}
-                finishedAt={runFinishedAt}
-                isRunning={runStatus === "running"}
-              />
-            ) : null}
+          {report && (
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              {runStartedAt && runFinishedAt ? (
+                <ResearchTiming
+                  startedAt={runStartedAt}
+                  finishedAt={runFinishedAt}
+                />
+              ) : null}
 
-            {report && (
               <CollapsibleTrigger asChild>
                 <Button
-                  className="group"
+                  className="group ml-auto"
                   type="button"
                   variant="ghost"
                   size="sm"
@@ -170,8 +169,8 @@ export function ResearchProgress() {
                   <ChevronDownIcon className="transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none" />
                 </Button>
               </CollapsibleTrigger>
-            )}
-          </div>
+            </div>
+          )}
 
           <CollapsibleContent>
             <Accordion type="multiple">
@@ -257,33 +256,23 @@ export function ResearchProgress() {
 function ResearchTiming({
   startedAt,
   finishedAt,
-  isRunning,
 }: {
   startedAt: string;
-  finishedAt?: string;
-  isRunning: boolean;
+  finishedAt: string;
 }) {
-  const [now, setNow] = useState(Date.now);
-
   const startTime = Date.parse(startedAt);
-  const finishTime = finishedAt ? Date.parse(finishedAt) : undefined;
-
-  useEffect(() => {
-    if (!isRunning || finishTime !== undefined) return;
-
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
-
-    return () => window.clearInterval(timer);
-  }, [finishTime, isRunning]);
-
-  const totalSeconds = Math.floor(((finishTime ?? now) - startTime) / 1000);
+  const totalSeconds = Math.max(
+    0,
+    Math.floor((Date.parse(finishedAt) - startTime) / 1000),
+  );
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  let duration = `${seconds}秒`;
-
-  if (minutes > 0) duration = `${minutes}分${seconds}秒`;
-  if (hours > 0) duration = `${hours}小时${minutes}分${seconds}秒`;
+  const duration = [
+    hours > 0 ? `${hours}小时` : "",
+    minutes > 0 ? `${minutes}分` : "",
+    `${seconds}秒`,
+  ].join("");
 
   return (
     <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
