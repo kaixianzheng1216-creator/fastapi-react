@@ -21,6 +21,7 @@ import { RESUMABLE_STREAM_ID_HEADER } from "assistant-stream/resumable";
 import type { ReadonlyJSONObject } from "assistant-stream/utils";
 import {
   type ReactNode,
+  type RefObject,
   useEffect,
   useMemo,
   useRef,
@@ -78,7 +79,7 @@ export function ConversationRuntimeProvider({
 
   const listRuntime = useRemoteThreadListRuntime({
     adapter: listAdapter,
-    runtimeHook: useConversationRuntime,
+    runtimeHook: () => useConversationRuntime(newKindRef),
   });
 
   return (
@@ -90,7 +91,9 @@ export function ConversationRuntimeProvider({
   );
 }
 
-function useConversationRuntime() {
+function useConversationRuntime(
+  newKindRef: RefObject<ConversationKind>,
+) {
   const assistant = useAui();
   const [threadId] = useState(() => {
     const thread = assistant.threadListItem.getState();
@@ -122,7 +125,11 @@ function useConversationRuntime() {
         fileTransport.getPendingMessageFiles(),
       ),
       state: {
-        ...toApplicationState(state),
+        ...toApplicationState(
+          state,
+          state.kind ?? (!threadId ? newKindRef.current : undefined),
+          connection.isSending,
+        ),
         isLoading,
         runId,
       } as ReadonlyJSONObject,
@@ -142,7 +149,7 @@ function useConversationRuntime() {
       const { remoteId: remoteThreadId } =
         await assistant.threadListItem.initialize();
 
-      if (!savedState && !connectedThreadIdRef.current) {
+      if (!savedState && threadId && !connectedThreadIdRef.current) {
         savedState = await readConversationState(remoteThreadId);
         runtime.thread.importExternalState(savedState);
       }
@@ -339,21 +346,25 @@ function moveFilesToAttachments(message: ThreadMessage) {
   };
 }
 
-function toApplicationState(state: AgentState): ApplicationState {
+function toApplicationState(
+  state: AgentState,
+  kind: ConversationKind | undefined,
+  isRunning: boolean,
+): ApplicationState {
   const baseState = {
     todos: state.todos ?? [],
     artifacts: state.artifacts ?? [],
   };
 
-  if (state.kind !== "research") return baseState;
+  if (kind !== "research") return baseState;
 
   return {
     ...baseState,
-    runStatus: state.runStatus ?? undefined,
+    runStatus: state.runStatus ?? (isRunning ? "running" : undefined),
     runStartedAt: state.runStartedAt ?? undefined,
     runFinishedAt: state.runFinishedAt ?? undefined,
     runError: state.runError ?? undefined,
-    stage: state.stage ?? undefined,
+    stage: state.stage ?? (isRunning ? "plan" : undefined),
     plan: state.plan ?? undefined,
     researchMessages: state.researchMessages ?? [],
     outline: state.outline ?? undefined,

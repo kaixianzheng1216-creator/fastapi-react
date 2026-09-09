@@ -63,7 +63,7 @@ export function createConversationThreadListAdapter(
           id: "conversation-list-load",
         });
 
-        return { threads: [] };
+        throw error;
       }
     },
 

@@ -125,7 +125,9 @@ export function KnowledgeDocumentImport({
         toast.success(`文件已上传 ${results.length} 个，正在处理`);
       }
 
-      onDocumentsChanged();
+      if (results.some((result) => !result.error || result.needsCheck)) {
+        onDocumentsChanged();
+      }
     },
 
     onError: () => {

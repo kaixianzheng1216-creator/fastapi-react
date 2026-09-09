@@ -95,12 +95,10 @@ export function ResearchProgress() {
   const researchState = useAuiState(
     (value) => value.thread.state,
   ) as ResearchState | null;
-  const isRunning = useAuiState((value) => value.thread.isRunning);
   const threadId = useAuiState((value) => value.threads.mainThreadId);
 
-  const currentStage = researchState?.stage ?? (isRunning ? "plan" : undefined);
-  const runStatus =
-    researchState?.runStatus ?? (isRunning ? "running" : undefined);
+  const currentStage = researchState?.stage;
+  const runStatus = researchState?.runStatus;
   const researchMessages = researchState?.researchMessages;
   const toolSteps = useMemo(
     () => getToolSteps(researchMessages ?? []),
