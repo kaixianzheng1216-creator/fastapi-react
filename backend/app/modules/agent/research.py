@@ -24,10 +24,6 @@ from app.modules.agent.research_report import validate_research_report
 from app.modules.conversations.report_pdf import generate_and_store_report_pdf
 
 PROMPTS = Path(__file__).parent / "prompts" / "research.md"
-RESEARCH_TOOL_NAMES = {
-    "firecrawl-firecrawl_search",
-    "firecrawl-firecrawl_scrape",
-}
 
 (
     PLAN_PROMPT,
@@ -170,11 +166,9 @@ async def create_research_graph(
 ) -> Any:
     tools = await load_litellm_mcp_tools()
 
-    research_tools = [tool for tool in tools if tool.name in RESEARCH_TOOL_NAMES]
-
     research_agent = create_agent(
         model=create_chat_model(),
-        tools=research_tools,
+        tools=tools,
         middleware=[select_chat_model],
         system_prompt=RESEARCH_PROMPT,
         context_schema=AgentContext,

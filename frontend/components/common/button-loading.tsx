@@ -12,7 +12,14 @@ export function ButtonLoading({
 }) {
   return (
     <>
-      <span className={cn(loading && "opacity-0")}>{children}</span>
+      <span
+        className={cn(
+          "inline-flex items-center gap-2",
+          loading && "opacity-0",
+        )}
+      >
+        {children}
+      </span>
       {loading ? (
         <span
           className="absolute inset-0 flex items-center justify-center"

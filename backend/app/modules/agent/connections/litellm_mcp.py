@@ -5,6 +5,10 @@ from tenacity import retry, stop_after_attempt
 from app.modules.agent.config import settings
 
 LITELLM_MCP_URL = f"{settings.LITELLM_BASE_URL.removesuffix('/v1')}/mcp/"
+ENABLED_TOOL_NAMES = {
+    "firecrawl-firecrawl_search",
+    "firecrawl-firecrawl_scrape",
+}
 _cached_tools: tuple[BaseTool, ...] | None = None
 
 
@@ -29,7 +33,11 @@ async def load_litellm_mcp_tools() -> list[BaseTool]:
         }
     )
 
-    tools = await client.get_tools()
+    tools = [
+        tool
+        for tool in await client.get_tools()
+        if tool.name in ENABLED_TOOL_NAMES
+    ]
 
     _cached_tools = tuple(tools)
 
