@@ -124,13 +124,13 @@ export function KnowledgeDocumentImport({
       } else {
         toast.success(`文件已上传 ${results.length} 个，正在处理`);
       }
+
+      onDocumentsChanged();
     },
 
     onError: () => {
       toast.error("文件上传失败，请重试");
     },
-
-    onSettled: onDocumentsChanged,
   });
 
   function submitUpload(event: FormEvent<HTMLFormElement>): void {

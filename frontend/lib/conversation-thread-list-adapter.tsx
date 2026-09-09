@@ -43,25 +43,28 @@ export function createConversationThreadListAdapter(
 ): RemoteThreadListAdapter {
   return {
     async list() {
-      const { data } = await agentReadConversations({
-        query: { limit: PAGE_SIZE },
-        throwOnError: true,
-      }).catch((error: unknown) => {
+      try {
+        const { data } = await agentReadConversations({
+          query: { limit: PAGE_SIZE },
+          throwOnError: true,
+        });
+
+        return {
+          threads: data.data.map((conversation) => ({
+            remoteId: conversation.id,
+            status: conversation.archived ? "archived" : "regular",
+            title: conversation.title,
+            lastMessageAt: new Date(conversation.updatedAt),
+            custom: { kind: conversation.kind },
+          })),
+        };
+      } catch (error) {
         toast.error(getApiErrorMessage(error, "会话列表加载失败，请稍后再试"), {
           id: "conversation-list-load",
         });
-        throw error;
-      });
 
-      return {
-        threads: data.data.map((conversation) => ({
-          remoteId: conversation.id,
-          status: conversation.archived ? "archived" : "regular",
-          title: conversation.title,
-          lastMessageAt: new Date(conversation.updatedAt),
-          custom: { kind: conversation.kind },
-        })),
-      };
+        return { threads: [] };
+      }
     },
 
     async initialize() {
