@@ -12,15 +12,9 @@ import { getApiErrorMessage } from "@/lib/api-error";
 
 export function QueryProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => {
-    const notifiedQueries = new WeakSet();
-
     return new QueryClient({
       queryCache: new QueryCache({
         onError: (error, query) => {
-          if (notifiedQueries.has(query)) return;
-
-          notifiedQueries.add(query);
-
           const isRefresh = query.state.data !== undefined;
 
           toast.error(
@@ -30,9 +24,6 @@ export function QueryProvider({ children }: { children: ReactNode }) {
             ),
             { id: isRefresh ? "query-refresh-error" : "query-load-error" },
           );
-        },
-        onSuccess: (_, query) => {
-          notifiedQueries.delete(query);
         },
       }),
     });
