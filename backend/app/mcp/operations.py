@@ -9,6 +9,8 @@ INTERNAL_OPERATIONS = {
     "knowledge-bases-move_folder": "knowledge_folder_move",
     "knowledge-bases-read_directory": "knowledge_directory_list",
     "knowledge-bases-delete_directory_entries": "knowledge_entries_delete",
+    "knowledge-bases-create_document_upload": "knowledge_document_upload_create",
+    "knowledge-documents-complete_document_upload": "knowledge_document_upload_complete",
     "knowledge-bases-create_webpage_document": "knowledge_webpage_import",
     "knowledge-bases-search_knowledge_base": "knowledge_search",
     "brand-marketing-read_regional_data": "regional_data_query",

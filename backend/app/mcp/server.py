@@ -17,6 +17,7 @@ from app.modules.content_operations.router import router as content_operations_r
 from app.modules.influencer_marketing.router import (
     router as influencer_marketing_router,
 )
+from app.modules.knowledge.router import document_router as knowledge_document_router
 from app.modules.knowledge.router import router as knowledge_router
 
 
@@ -46,6 +47,7 @@ def _create_internal_api() -> FastAPI:
     app.dependency_overrides[get_current_active_superuser] = get_internal_mcp_user
 
     app.include_router(knowledge_router, prefix=API_V1_PREFIX)
+    app.include_router(knowledge_document_router, prefix=API_V1_PREFIX)
     app.include_router(brand_marketing_router, prefix=API_V1_PREFIX)
     app.include_router(content_operations_router, prefix=API_V1_PREFIX)
     app.include_router(influencer_marketing_router, prefix=API_V1_PREFIX)

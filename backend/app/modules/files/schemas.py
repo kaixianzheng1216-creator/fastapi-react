@@ -7,9 +7,22 @@ MAX_FILE_SIZE = 100 * 1024 * 1024
 
 
 class FileUploadRequest(BaseModel):
-    filename: str = Field(min_length=1, max_length=255)
-    content_type: str = Field(alias="contentType", min_length=1, max_length=255)
-    size: int = Field(gt=0, le=MAX_FILE_SIZE)
+    filename: str = Field(
+        min_length=1,
+        max_length=255,
+        description="包含扩展名的文件名，例如 report.pdf",
+    )
+    content_type: str = Field(
+        alias="contentType",
+        min_length=1,
+        max_length=255,
+        description="文件 MIME 类型，例如 application/pdf",
+    )
+    size: int = Field(
+        gt=0,
+        le=MAX_FILE_SIZE,
+        description="文件字节数，必须与实际上传内容长度一致",
+    )
 
     @field_validator("filename")
     @classmethod

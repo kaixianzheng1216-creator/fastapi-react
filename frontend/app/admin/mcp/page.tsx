@@ -62,6 +62,8 @@ const INTERNAL_TOOLS: McpTool[] = [
   ["knowledge_folder_move", "移动知识库文件夹", "写入"],
   ["knowledge_directory_list", "查询知识库目录中的文件夹和文档", "查询"],
   ["knowledge_entries_delete", "批量删除知识库文件夹和文档", "写入"],
+  ["knowledge_document_upload_create", "获取知识库文档上传地址", "写入"],
+  ["knowledge_document_upload_complete", "确认知识库文档上传", "写入"],
   ["knowledge_webpage_import", "从网页导入知识库文档", "写入"],
   ["knowledge_search", "检索知识库内容", "查询"],
   ...BUSINESS_QUERY_TOOLS,

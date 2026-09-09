@@ -358,7 +358,11 @@ def create_document_upload(
     ] = None,
     body: FileUploadRequest,
 ) -> KnowledgeDocumentUploadPublic:
-    """创建知识库文档上传凭证。"""
+    """创建知识库文档上传凭证。
+
+    使用返回的 uploadUrl 和 uploadHeaders 通过 HTTP PUT 上传完整文件内容，
+    然后调用 knowledge_document_upload_complete 确认上传。
+    """
     return service.create_document_upload(
         session=session,
         current_user=current_user,
@@ -380,9 +384,13 @@ def create_document_upload(
 )
 async def complete_document_upload(
     session: SessionDep,
-    document_id: uuid.UUID,
+    document_id: Annotated[uuid.UUID, Path(description="待确认上传的文档 ID")],
 ) -> KnowledgeDocumentPublic:
-    """确认知识库文档上传。"""
+    """确认知识库文档上传。
+
+    仅在文件已通过 knowledge_document_upload_create 返回的 uploadUrl 上传后调用。
+    确认成功后，文档进入处理流程。
+    """
     return await documents.complete_upload(
         session=session,
         document_id=document_id,

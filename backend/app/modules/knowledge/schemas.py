@@ -122,9 +122,15 @@ class KnowledgeDocumentMove(SQLModel):
 
 
 class KnowledgeDocumentUploadPublic(SQLModel):
-    id: uuid.UUID
-    upload_url: str = Field(serialization_alias="uploadUrl")
-    upload_headers: dict[str, str] = Field(serialization_alias="uploadHeaders")
+    id: uuid.UUID = Field(description="文档 ID，上传完成后用于确认")
+    upload_url: str = Field(
+        serialization_alias="uploadUrl",
+        description="用于上传文件内容的临时 HTTP PUT 地址",
+    )
+    upload_headers: dict[str, str] = Field(
+        serialization_alias="uploadHeaders",
+        description="上传文件时必须原样携带的 HTTP 请求头",
+    )
 
 
 class KnowledgeDocumentPublic(SQLModel):
