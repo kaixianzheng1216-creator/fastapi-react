@@ -13,6 +13,9 @@ import { getApiErrorMessage } from "@/lib/api-error";
 export function QueryProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => {
     return new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
       queryCache: new QueryCache({
         onError: (error, query) => {
           const isRefresh = query.state.data !== undefined;

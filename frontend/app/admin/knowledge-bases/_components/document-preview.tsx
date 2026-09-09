@@ -71,7 +71,6 @@ export function KnowledgeDocumentPreview({
 
       return data;
     },
-    retry: false,
   });
 
   const viewParameter = searchParams.get("view");
@@ -110,7 +109,6 @@ export function KnowledgeDocumentPreview({
       return data;
     },
     enabled: activeView === "markdown",
-    retry: false,
     staleTime: PREVIEW_STALE_TIME_MS,
   });
 
@@ -124,7 +122,7 @@ export function KnowledgeDocumentPreview({
     return `${getPaginationHref(documentPath, page, parameters, "chunkPage")}#${CHUNKS_ANCHOR}`;
   }
 
-  const downloadDocument = useMutation({
+  const downloadDocumentMutation = useMutation({
     mutationFn: (format: "original" | "markdown") =>
       format === "original"
         ? downloadOriginalKnowledgeDocument(documentId)
@@ -163,8 +161,8 @@ export function KnowledgeDocumentPreview({
                   variant="outline"
                   size="sm"
                   aria-label="下载原文件"
-                  disabled={downloadDocument.isPending}
-                  onClick={() => downloadDocument.mutate("original")}
+                  disabled={downloadDocumentMutation.isPending}
+                  onClick={() => downloadDocumentMutation.mutate("original")}
                 >
                   <DownloadIcon data-icon="inline-start" aria-hidden="true" />
                   <span className="hidden sm:inline">下载原文件</span>
@@ -175,8 +173,8 @@ export function KnowledgeDocumentPreview({
                   variant="outline"
                   size="sm"
                   aria-label="下载 Markdown"
-                  disabled={downloadDocument.isPending}
-                  onClick={() => downloadDocument.mutate("markdown")}
+                  disabled={downloadDocumentMutation.isPending}
+                  onClick={() => downloadDocumentMutation.mutate("markdown")}
                 >
                   <FileTextIcon data-icon="inline-start" aria-hidden="true" />
                   <span className="hidden sm:inline">下载 Markdown</span>
@@ -267,7 +265,6 @@ function DocumentChunksView({
       return data;
     },
     placeholderData: keepPreviousData,
-    retry: false,
     staleTime: PREVIEW_STALE_TIME_MS,
   });
 

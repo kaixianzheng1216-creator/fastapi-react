@@ -193,7 +193,6 @@ export function PlatformRankings() {
     },
     enabled: platform === "bilibili",
     placeholderData: keepPreviousData,
-    retry: false,
   });
 
   const ranking = rankingQuery.data;

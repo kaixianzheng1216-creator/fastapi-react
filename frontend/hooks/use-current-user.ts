@@ -16,7 +16,6 @@ export function useCurrentUserQuery() {
 
       return data;
     },
-    retry: false,
     staleTime: Infinity,
   });
 }

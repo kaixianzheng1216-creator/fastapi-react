@@ -260,7 +260,7 @@ const AttachmentUI: FC = () => {
 const AttachmentRemove: FC = () => {
   const aui = useAui();
 
-  const remove = useMutation({
+  const removeMutation = useMutation({
     mutationFn: () => aui.attachment.remove(),
     onError: () => {
       toast.error("移除附件失败，请重试");
@@ -272,9 +272,9 @@ const AttachmentRemove: FC = () => {
       asChild
       onClick={(event) => {
         event.preventDefault();
-        if (!remove.isPending) remove.mutate();
+        if (!removeMutation.isPending) removeMutation.mutate();
       }}
-      disabled={remove.isPending}
+      disabled={removeMutation.isPending}
     >
       <TooltipIconButton
         tooltip="删除附件"

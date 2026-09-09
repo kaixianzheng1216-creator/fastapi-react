@@ -68,7 +68,7 @@ export function UserCreateDialog({
     },
   });
 
-  const createUser = useMutation({
+  const createUserMutation = useMutation({
     mutationFn: async (values: UserValues): Promise<void> => {
       await usersCreateUser({
         body: {
@@ -95,7 +95,7 @@ export function UserCreateDialog({
   });
 
   function handleOpenChange(nextOpen: boolean): void {
-    if (!nextOpen && createUser.isPending) {
+    if (!nextOpen && createUserMutation.isPending) {
       return;
     }
 
@@ -108,7 +108,7 @@ export function UserCreateDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent showCloseButton={!createUser.isPending}>
+      <DialogContent showCloseButton={!createUserMutation.isPending}>
         <DialogHeader>
           <DialogTitle>创建用户</DialogTitle>
           <DialogDescription>创建可以登录系统的新账户。</DialogDescription>
@@ -116,13 +116,15 @@ export function UserCreateDialog({
 
         <form
           noValidate
-          onSubmit={form.handleSubmit((values) => createUser.mutate(values))}
+          onSubmit={form.handleSubmit((values) =>
+            createUserMutation.mutate(values),
+          )}
         >
           <FieldGroup>
             <Field data-invalid={!!form.formState.errors.username}>
               <FieldLabel htmlFor="new-user-username">用户名</FieldLabel>
               <Input
-                disabled={createUser.isPending}
+                disabled={createUserMutation.isPending}
                 id="new-user-username"
                 autoComplete="off"
                 autoCapitalize="none"
@@ -136,7 +138,7 @@ export function UserCreateDialog({
             <Field data-invalid={!!form.formState.errors.fullName}>
               <FieldLabel htmlFor="new-user-full-name">姓名</FieldLabel>
               <Input
-                disabled={createUser.isPending}
+                disabled={createUserMutation.isPending}
                 id="new-user-full-name"
                 autoComplete="off"
                 aria-invalid={!!form.formState.errors.fullName}
@@ -148,7 +150,7 @@ export function UserCreateDialog({
             <Field data-invalid={!!form.formState.errors.password}>
               <FieldLabel htmlFor="new-user-password">密码</FieldLabel>
               <Input
-                disabled={createUser.isPending}
+                disabled={createUserMutation.isPending}
                 id="new-user-password"
                 type="password"
                 autoComplete="new-password"
@@ -168,7 +170,7 @@ export function UserCreateDialog({
                     <FieldDescription>允许该用户登录系统。</FieldDescription>
                   </FieldContent>
                   <Switch
-                    disabled={createUser.isPending}
+                    disabled={createUserMutation.isPending}
                     id="new-user-active"
                     checked={field.value}
                     onCheckedChange={field.onChange}
@@ -187,7 +189,7 @@ export function UserCreateDialog({
                     <FieldDescription>允许访问管理后台。</FieldDescription>
                   </FieldContent>
                   <Switch
-                    disabled={createUser.isPending}
+                    disabled={createUserMutation.isPending}
                     id="new-user-superuser"
                     checked={field.value}
                     onCheckedChange={field.onChange}
@@ -200,13 +202,15 @@ export function UserCreateDialog({
               <Button
                 type="button"
                 variant="outline"
-                disabled={createUser.isPending}
+                disabled={createUserMutation.isPending}
                 onClick={() => handleOpenChange(false)}
               >
                 取消
               </Button>
-              <Button type="submit" disabled={createUser.isPending}>
-                {createUser.isPending && <Spinner data-icon="inline-start" />}
+              <Button type="submit" disabled={createUserMutation.isPending}>
+                {createUserMutation.isPending && (
+                  <Spinner data-icon="inline-start" />
+                )}
                 创建用户
               </Button>
             </DialogFooter>

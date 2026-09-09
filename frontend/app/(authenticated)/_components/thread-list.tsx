@@ -334,18 +334,20 @@ export const ThreadListSearchResults: FC<{
   const router = useRouter();
   const [debouncedSearchQuery] = useDebounce(searchQuery, SEARCH_DEBOUNCE_MS);
 
-  const { data: results, isFetching } = useQuery({
+  const conversationsQuery = useQuery({
     queryKey: ["conversations", "search", debouncedSearchQuery, archived],
     queryFn: ({ signal }) =>
       searchConversations(debouncedSearchQuery || undefined, archived, signal),
-    retry: false,
   });
 
-  if (searchQuery !== debouncedSearchQuery || (isFetching && !results)) {
+  if (
+    searchQuery !== debouncedSearchQuery ||
+    (conversationsQuery.isFetching && !conversationsQuery.data)
+  ) {
     return <ThreadListSkeleton />;
   }
 
-  if (!results?.length) {
+  if (!conversationsQuery.data?.length) {
     return <CommandEmpty>暂无可显示内容</CommandEmpty>;
   }
 
@@ -356,7 +358,7 @@ export const ThreadListSearchResults: FC<{
           searchQuery ? "搜索结果" : archived ? "已归档对话" : "最近对话"
         }
       >
-        {results.map((conversation) => (
+        {conversationsQuery.data.map((conversation) => (
           <CommandItem
             key={conversation.id}
             className="group"
@@ -526,7 +528,7 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
   const item = useAuiState((state) => state.threadListItem);
   const refreshConversations = () => aui.threads.reload();
 
-  const rename = useMutation({
+  const renameMutation = useMutation({
     mutationFn: (title: string) =>
       agentRenameConversation({
         path: { conversation_id: item.remoteId! },
@@ -537,14 +539,14 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
       toast.success("会话已重命名");
       setRenameOpen(false);
 
-      return refreshConversations();
+      void refreshConversations();
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "重命名失败，请重试"));
     },
   });
 
-  const archive = useMutation({
+  const archiveMutation = useMutation({
     mutationFn: () =>
       agentArchiveConversation({
         path: { conversation_id: item.remoteId! },
@@ -555,14 +557,14 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
       if (aui.threads.getState().mainThreadId === item.id)
         aui.threads.switchToNewThread();
 
-      return refreshConversations();
+      void refreshConversations();
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "归档失败，请重试"));
     },
   });
 
-  const deleteConversation = useMutation({
+  const deleteConversationMutation = useMutation({
     mutationFn: () =>
       agentDeleteConversation({
         path: { conversation_id: item.remoteId! },
@@ -574,7 +576,7 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
       if (aui.threads.getState().mainThreadId === item.id)
         aui.threads.switchToNewThread();
 
-      return refreshConversations();
+      void refreshConversations();
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "删除会话失败，请重试"));
@@ -582,7 +584,9 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
   });
 
   const isPending =
-    rename.isPending || archive.isPending || deleteConversation.isPending;
+    renameMutation.isPending ||
+    archiveMutation.isPending ||
+    deleteConversationMutation.isPending;
 
   const renameConversation = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -590,7 +594,7 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
     const title = newTitle.trim();
     if (!title || isPending) return;
 
-    rename.mutate(title);
+    renameMutation.mutate(title);
   };
 
   return (
@@ -632,7 +636,7 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
 
         <ThreadListItemMorePrimitive.Item
           disabled={isPending}
-          onSelect={() => archive.mutate()}
+          onSelect={() => archiveMutation.mutate()}
           data-slot="aui_thread-list-item-more-item"
           className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm outline-none select-none"
         >
@@ -672,7 +676,7 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
             />
             <DialogFooter className="mt-4">
               <Button type="submit" disabled={isPending || !newTitle.trim()}>
-                {rename.isPending ? "保存中…" : "保存"}
+                {renameMutation.isPending ? "保存中…" : "保存"}
               </Button>
             </DialogFooter>
           </form>
@@ -699,10 +703,10 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
               disabled={isPending}
               onClick={(event) => {
                 event.preventDefault();
-                deleteConversation.mutate();
+                deleteConversationMutation.mutate();
               }}
             >
-              {deleteConversation.isPending ? "删除中…" : "删除"}
+              {deleteConversationMutation.isPending ? "删除中…" : "删除"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -186,7 +186,6 @@ export function RegionalData() {
       return data;
     },
     placeholderData: keepPreviousData,
-    retry: false,
   });
 
   const regionalData = regionalDataQuery.data;

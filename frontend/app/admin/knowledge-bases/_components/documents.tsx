@@ -85,7 +85,6 @@ export function KnowledgeDocuments({
       return data;
     },
     enabled: activeView === "documents",
-    retry: false,
   });
 
   const folders = foldersQuery.data?.data ?? EMPTY_FOLDERS;
@@ -124,7 +123,6 @@ export function KnowledgeDocuments({
       return hasProcessingDocument ? DOCUMENT_POLL_INTERVAL_MS : false;
     },
     enabled: activeView === "documents",
-    retry: false,
   });
 
   const directoryEntries = directoryQuery.data?.data ?? EMPTY_DIRECTORY_ENTRIES;
@@ -135,24 +133,20 @@ export function KnowledgeDocuments({
   const directoryPending = foldersQuery.isPending || directoryQuery.isPending;
   const hasDirectoryEntries = directoryEntries.length > 0;
 
-  async function refreshDocuments(): Promise<void> {
-    await Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: [...KNOWLEDGE_DIRECTORY_QUERY_KEY, knowledgeBaseId],
-      }),
-      queryClient.invalidateQueries({
-        queryKey: [...KNOWLEDGE_SEARCH_QUERY_KEY, knowledgeBaseId],
-      }),
-    ]);
+  function invalidateDocuments(): void {
+    void queryClient.invalidateQueries({
+      queryKey: [...KNOWLEDGE_DIRECTORY_QUERY_KEY, knowledgeBaseId],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: [...KNOWLEDGE_SEARCH_QUERY_KEY, knowledgeBaseId],
+    });
   }
 
-  async function refreshFolders(): Promise<void> {
-    await Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: [...KNOWLEDGE_FOLDERS_QUERY_KEY, knowledgeBaseId],
-      }),
-      refreshDocuments(),
-    ]);
+  function invalidateFolders(): void {
+    void queryClient.invalidateQueries({
+      queryKey: [...KNOWLEDGE_FOLDERS_QUERY_KEY, knowledgeBaseId],
+    });
+    invalidateDocuments();
   }
 
   function navigateAfterRemovingEntries(removedCount: number): void {
@@ -186,14 +180,14 @@ export function KnowledgeDocuments({
     setDirectorySelection({ scope: selectionScope, keys });
   }
 
-  async function handleDirectoryChange(change: DirectoryChange): Promise<void> {
+  function handleDirectoryChange(change: DirectoryChange): void {
     switch (change.type) {
       case "documents":
-        await refreshDocuments();
+        invalidateDocuments();
         break;
 
       case "folders":
-        await refreshFolders();
+        invalidateFolders();
         break;
 
       case "moved":
@@ -207,9 +201,11 @@ export function KnowledgeDocuments({
           navigateAfterRemovingEntries(1);
         }
 
-        await (change.entry.type === "folder"
-          ? refreshFolders()
-          : refreshDocuments());
+        if (change.entry.type === "folder") {
+          invalidateFolders();
+        } else {
+          invalidateDocuments();
+        }
         break;
 
       case "deleted": {
@@ -231,7 +227,7 @@ export function KnowledgeDocuments({
 
         setDirectorySelection({ scope: selectionScope, keys: new Set() });
 
-        await refreshFolders();
+        invalidateFolders();
         break;
       }
     }
@@ -253,7 +249,7 @@ export function KnowledgeDocuments({
       <KnowledgeDocumentImport
         knowledgeBaseId={knowledgeBaseId}
         folderId={currentFolderId}
-        onDocumentsChanged={refreshDocuments}
+        onDocumentsChanged={invalidateDocuments}
       />
 
       {directoryPending ? (

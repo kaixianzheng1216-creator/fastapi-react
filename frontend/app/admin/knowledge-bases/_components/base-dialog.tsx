@@ -65,7 +65,7 @@ export function KnowledgeBaseDialog({
     },
   });
 
-  const saveKnowledgeBase = useMutation({
+  const saveKnowledgeBaseMutation = useMutation({
     mutationFn: async (values: KnowledgeBaseValues): Promise<void> => {
       if (knowledgeBase) {
         await knowledgeBasesUpdateKnowledgeBase({
@@ -102,7 +102,7 @@ export function KnowledgeBaseDialog({
   });
 
   function handleOpenChange(nextOpen: boolean): void {
-    if (!nextOpen && saveKnowledgeBase.isPending) {
+    if (!nextOpen && saveKnowledgeBaseMutation.isPending) {
       return;
     }
 
@@ -115,7 +115,7 @@ export function KnowledgeBaseDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent showCloseButton={!saveKnowledgeBase.isPending}>
+      <DialogContent showCloseButton={!saveKnowledgeBaseMutation.isPending}>
         <DialogHeader>
           <DialogTitle>{isEditing ? "编辑知识库" : "创建知识库"}</DialogTitle>
           <DialogDescription>
@@ -127,13 +127,15 @@ export function KnowledgeBaseDialog({
 
         <form
           noValidate
-          onSubmit={form.handleSubmit((values) => saveKnowledgeBase.mutate(values))}
+          onSubmit={form.handleSubmit((values) =>
+            saveKnowledgeBaseMutation.mutate(values),
+          )}
         >
           <FieldGroup>
             <Field data-invalid={!!form.formState.errors.name}>
               <FieldLabel htmlFor="knowledge-base-name">名称</FieldLabel>
               <Input
-                disabled={saveKnowledgeBase.isPending}
+                disabled={saveKnowledgeBaseMutation.isPending}
                 id="knowledge-base-name"
                 autoComplete="off"
                 aria-invalid={!!form.formState.errors.name}
@@ -145,7 +147,7 @@ export function KnowledgeBaseDialog({
             <Field data-invalid={!!form.formState.errors.description}>
               <FieldLabel htmlFor="knowledge-base-description">描述</FieldLabel>
               <Textarea
-                disabled={saveKnowledgeBase.isPending}
+                disabled={saveKnowledgeBaseMutation.isPending}
                 id="knowledge-base-description"
                 aria-invalid={!!form.formState.errors.description}
                 {...form.register("description")}
@@ -157,13 +159,16 @@ export function KnowledgeBaseDialog({
               <Button
                 type="button"
                 variant="outline"
-                disabled={saveKnowledgeBase.isPending}
+                disabled={saveKnowledgeBaseMutation.isPending}
                 onClick={() => handleOpenChange(false)}
               >
                 取消
               </Button>
-              <Button type="submit" disabled={saveKnowledgeBase.isPending}>
-                {saveKnowledgeBase.isPending && (
+              <Button
+                type="submit"
+                disabled={saveKnowledgeBaseMutation.isPending}
+              >
+                {saveKnowledgeBaseMutation.isPending && (
                   <Spinner data-icon="inline-start" />
                 )}
                 {isEditing ? "保存" : "创建知识库"}

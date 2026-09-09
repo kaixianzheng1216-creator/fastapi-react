@@ -119,7 +119,6 @@ export function InfluencerResourceManager() {
       return data;
     },
     placeholderData: keepPreviousData,
-    retry: false,
   });
 
   const columns = useMemo(

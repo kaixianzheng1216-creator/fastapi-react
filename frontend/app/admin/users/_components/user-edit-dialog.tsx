@@ -63,7 +63,7 @@ export function UserEditDialog({
     },
   });
 
-  const updateUser = useMutation({
+  const updateUserMutation = useMutation({
     mutationFn: async (values: UserValues): Promise<void> => {
       await usersUpdateUser({
         path: { user_id: user.id },
@@ -88,7 +88,7 @@ export function UserEditDialog({
   });
 
   function handleOpenChange(open: boolean): void {
-    if (!open && updateUser.isPending) {
+    if (!open && updateUserMutation.isPending) {
       return;
     }
 
@@ -97,7 +97,7 @@ export function UserEditDialog({
 
   return (
     <Dialog open onOpenChange={handleOpenChange}>
-      <DialogContent showCloseButton={!updateUser.isPending}>
+      <DialogContent showCloseButton={!updateUserMutation.isPending}>
         <DialogHeader>
           <DialogTitle>编辑用户</DialogTitle>
           <DialogDescription>更新账户资料和权限。</DialogDescription>
@@ -105,13 +105,15 @@ export function UserEditDialog({
 
         <form
           noValidate
-          onSubmit={form.handleSubmit((values) => updateUser.mutate(values))}
+          onSubmit={form.handleSubmit((values) =>
+            updateUserMutation.mutate(values),
+          )}
         >
           <FieldGroup>
             <Field data-invalid={!!form.formState.errors.username}>
               <FieldLabel htmlFor="edit-user-username">用户名</FieldLabel>
               <Input
-                disabled={updateUser.isPending}
+                disabled={updateUserMutation.isPending}
                 id="edit-user-username"
                 autoComplete="off"
                 autoCapitalize="none"
@@ -125,7 +127,7 @@ export function UserEditDialog({
             <Field data-invalid={!!form.formState.errors.fullName}>
               <FieldLabel htmlFor="edit-user-full-name">姓名</FieldLabel>
               <Input
-                disabled={updateUser.isPending}
+                disabled={updateUserMutation.isPending}
                 id="edit-user-full-name"
                 autoComplete="off"
                 aria-invalid={!!form.formState.errors.fullName}
@@ -140,7 +142,7 @@ export function UserEditDialog({
               render={({ field }) => (
                 <Field
                   orientation="horizontal"
-                  data-disabled={!canChangeRole || updateUser.isPending}
+                  data-disabled={!canChangeRole || updateUserMutation.isPending}
                 >
                   <FieldContent>
                     <FieldLabel htmlFor="edit-user-superuser">
@@ -156,7 +158,7 @@ export function UserEditDialog({
                     id="edit-user-superuser"
                     checked={field.value}
                     onCheckedChange={field.onChange}
-                    disabled={!canChangeRole || updateUser.isPending}
+                    disabled={!canChangeRole || updateUserMutation.isPending}
                   />
                 </Field>
               )}
@@ -166,13 +168,15 @@ export function UserEditDialog({
               <Button
                 type="button"
                 variant="outline"
-                disabled={updateUser.isPending}
+                disabled={updateUserMutation.isPending}
                 onClick={() => handleOpenChange(false)}
               >
                 取消
               </Button>
-              <Button type="submit" disabled={updateUser.isPending}>
-                {updateUser.isPending && <Spinner data-icon="inline-start" />}
+              <Button type="submit" disabled={updateUserMutation.isPending}>
+                {updateUserMutation.isPending && (
+                  <Spinner data-icon="inline-start" />
+                )}
                 保存
               </Button>
             </DialogFooter>

@@ -50,13 +50,13 @@ export function KnowledgeDocumentImport({
 }: {
   knowledgeBaseId: string;
   folderId?: string;
-  onDocumentsChanged: () => Promise<void>;
+  onDocumentsChanged: () => void;
 }) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadResults, setUploadResults] = useState<UploadResult[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadDocument = useMutation({
+  const uploadDocumentMutation = useMutation({
     mutationKey: [...KNOWLEDGE_DOCUMENT_UPLOAD_KEY, knowledgeBaseId],
     mutationFn: async (files: File[]): Promise<UploadResult[]> => {
       const outcomes: UploadResult[] = [];
@@ -139,14 +139,14 @@ export function KnowledgeDocumentImport({
   function submitUpload(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
 
-    if (!uploadDocument.isPending && selectedFiles.length > 0) {
-      uploadDocument.mutate(selectedFiles);
+    if (!uploadDocumentMutation.isPending && selectedFiles.length > 0) {
+      uploadDocumentMutation.mutate(selectedFiles);
     }
   }
 
   const [webpageUrl, setWebpageUrl] = useState("");
 
-  const createWebpage = useMutation({
+  const createWebpageMutation = useMutation({
     mutationFn: (url: string) =>
       knowledgeBasesCreateWebpageDocument({
         path: { knowledge_base_id: knowledgeBaseId },
@@ -157,7 +157,7 @@ export function KnowledgeDocumentImport({
     onSuccess: () => {
       toast.success("网页已添加，正在处理");
       setWebpageUrl("");
-      return onDocumentsChanged();
+      onDocumentsChanged();
     },
 
     onError: (error) => {
@@ -168,9 +168,9 @@ export function KnowledgeDocumentImport({
   function submitWebpage(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
 
-    if (createWebpage.isPending) return;
+    if (createWebpageMutation.isPending) return;
 
-    createWebpage.mutate(webpageUrl);
+    createWebpageMutation.mutate(webpageUrl);
   }
 
   return (
@@ -206,7 +206,7 @@ export function KnowledgeDocumentImport({
                     name="document"
                     type="file"
                     accept={DOCUMENT_ACCEPT}
-                    disabled={uploadDocument.isPending}
+                    disabled={uploadDocumentMutation.isPending}
                     multiple
                     onChange={(event) => {
                       setUploadResults([]);
@@ -226,15 +226,15 @@ export function KnowledgeDocumentImport({
                   type="submit"
                   className="self-end"
                   disabled={
-                    uploadDocument.isPending || selectedFiles.length === 0
+                    uploadDocumentMutation.isPending || selectedFiles.length === 0
                   }
                 >
-                  {uploadDocument.isPending ? (
+                  {uploadDocumentMutation.isPending ? (
                     <Spinner data-icon="inline-start" />
                   ) : (
                     <UploadIcon data-icon="inline-start" aria-hidden="true" />
                   )}
-                  {uploadDocument.isPending
+                  {uploadDocumentMutation.isPending
                     ? "上传中…"
                     : selectedFiles.length > 0
                       ? `上传 ${selectedFiles.length} 个文件`
@@ -260,7 +260,7 @@ export function KnowledgeDocumentImport({
                     type="url"
                     placeholder="https://example.com/article"
                     value={webpageUrl}
-                    disabled={createWebpage.isPending}
+                    disabled={createWebpageMutation.isPending}
                     onChange={(event) =>
                       setWebpageUrl(event.currentTarget.value)
                     }
@@ -270,14 +270,16 @@ export function KnowledgeDocumentImport({
                 <Button
                   type="submit"
                   className="self-end"
-                  disabled={createWebpage.isPending || !webpageUrl.trim()}
+                  disabled={
+                    createWebpageMutation.isPending || !webpageUrl.trim()
+                  }
                 >
-                  {createWebpage.isPending ? (
+                  {createWebpageMutation.isPending ? (
                     <Spinner data-icon="inline-start" />
                   ) : (
                     <GlobeIcon data-icon="inline-start" aria-hidden="true" />
                   )}
-                  {createWebpage.isPending ? "抓取中…" : "添加网页"}
+                  {createWebpageMutation.isPending ? "抓取中…" : "添加网页"}
                 </Button>
               </FieldGroup>
             </form>

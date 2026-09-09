@@ -227,7 +227,7 @@ export function StopButton(props: ComponentProps<typeof Button>) {
     (state) => (state.thread.state as ApplicationState | null)?.runId,
   );
 
-  const stop = useMutation({
+  const stopMutation = useMutation({
     mutationFn: (runId: string) =>
       agentCancelAgentRun({
         path: { run_id: runId },
@@ -250,12 +250,12 @@ export function StopButton(props: ComponentProps<typeof Button>) {
   return (
     <Button
       {...props}
-      disabled={!runId || stop.isPending}
-      aria-busy={stop.isPending}
+      disabled={!runId || stopMutation.isPending}
+      aria-busy={stopMutation.isPending}
       onClick={() => {
-        if (!runId || stop.isPending) return;
+        if (!runId || stopMutation.isPending) return;
 
-        stop.mutate(runId);
+        stopMutation.mutate(runId);
       }}
     />
   );

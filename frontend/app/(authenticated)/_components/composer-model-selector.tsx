@@ -11,7 +11,7 @@ const THINKING_OPTIONS = [
 ] as const;
 
 export function ComposerModelSelector() {
-  const { data: models, isPending } = useQuery({
+  const modelsQuery = useQuery({
     queryKey: ["models"],
     queryFn: async () => {
       const { data } = await agentReadModels({
@@ -20,11 +20,10 @@ export function ComposerModelSelector() {
 
       return data;
     },
-    retry: false,
     staleTime: Infinity,
   });
 
-  if (isPending) {
+  if (modelsQuery.isPending) {
     return (
       <Skeleton
         role="status"
@@ -34,19 +33,19 @@ export function ComposerModelSelector() {
     );
   }
 
-  if (!models?.data.length)
+  if (!modelsQuery.data?.data.length)
     return (
       <span className="text-muted-foreground text-xs">暂无可显示内容</span>
     );
 
   return (
     <ModelSelector
-      models={models.data.map(({ id, supportsThinking }) => ({
+      models={modelsQuery.data.data.map(({ id, supportsThinking }) => ({
         id,
         name: id,
         efforts: supportsThinking ? THINKING_OPTIONS : undefined,
       }))}
-      defaultValue={models.defaultModel}
+      defaultValue={modelsQuery.data.defaultModel}
       defaultEffort="disabled"
       variant="ghost"
       size="sm"

@@ -120,7 +120,6 @@ export function KnowledgeBaseManager() {
       return data;
     },
     placeholderData: keepPreviousData,
-    retry: false,
   });
 
   const knowledgeBases =
@@ -142,8 +141,8 @@ export function KnowledgeBaseManager() {
     }
   }
 
-  async function refreshKnowledgeBases(): Promise<void> {
-    await queryClient.invalidateQueries({
+  function invalidateKnowledgeBases(): void {
+    void queryClient.invalidateQueries({
       queryKey: KNOWLEDGE_BASES_QUERY_KEY,
     });
   }
@@ -153,7 +152,7 @@ export function KnowledgeBaseManager() {
   const [knowledgeBaseToEdit, setKnowledgeBaseToEdit] =
     useState<KnowledgeBasePublic>();
 
-  const updateStatus = useMutation({
+  const updateStatusMutation = useMutation({
     mutationFn: async (knowledgeBase: KnowledgeBasePublic): Promise<void> => {
       await knowledgeBasesUpdateKnowledgeBase({
         path: { knowledge_base_id: knowledgeBase.id },
@@ -161,28 +160,28 @@ export function KnowledgeBaseManager() {
         throwOnError: true,
       });
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       toast.success("状态已更新");
-      await refreshKnowledgeBases();
+      invalidateKnowledgeBases();
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "更新状态失败，请重试"));
     },
   });
 
-  const changeKnowledgeBaseStatus = updateStatus.mutate;
+  const changeKnowledgeBaseStatus = updateStatusMutation.mutate;
 
   const [knowledgeBaseToDelete, setKnowledgeBaseToDelete] =
     useState<KnowledgeBasePublic>();
 
-  const deleteKnowledgeBase = useMutation({
+  const deleteKnowledgeBaseMutation = useMutation({
     mutationFn: async (knowledgeBaseId: string): Promise<void> => {
       await knowledgeBasesDeleteKnowledgeBase({
         path: { knowledge_base_id: knowledgeBaseId },
         throwOnError: true,
       });
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       toast.success("已删除");
       if (knowledgeBasesQuery.data?.data.length === 1 && currentPage > 1) {
         router.replace(getKnowledgeBasesHref(currentPage - 1, search, status));
@@ -190,7 +189,7 @@ export function KnowledgeBaseManager() {
 
       setKnowledgeBaseToDelete(undefined);
 
-      await refreshKnowledgeBases();
+      invalidateKnowledgeBases();
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "删除失败，请重试"));
@@ -198,7 +197,7 @@ export function KnowledgeBaseManager() {
   });
 
   function closeDeleteDialog(open: boolean): void {
-    if (!open && !deleteKnowledgeBase.isPending) {
+    if (!open && !deleteKnowledgeBaseMutation.isPending) {
       setKnowledgeBaseToDelete(undefined);
     }
   }
@@ -259,7 +258,7 @@ export function KnowledgeBaseManager() {
                     编辑
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    disabled={updateStatus.isPending}
+                    disabled={updateStatusMutation.isPending}
                     onSelect={() => changeKnowledgeBaseStatus(row.original)}
                   >
                     {row.original.is_enabled ? (
@@ -284,7 +283,7 @@ export function KnowledgeBaseManager() {
           ),
         }),
       ]),
-    [changeKnowledgeBaseStatus, updateStatus.isPending],
+    [changeKnowledgeBaseStatus, updateStatusMutation.isPending],
   );
 
   const table = useTable({
@@ -400,7 +399,7 @@ export function KnowledgeBaseManager() {
       <KnowledgeBaseDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onSaved={refreshKnowledgeBases}
+        onSaved={invalidateKnowledgeBases}
       />
 
       {knowledgeBaseToEdit && (
@@ -412,7 +411,7 @@ export function KnowledgeBaseManager() {
               setKnowledgeBaseToEdit(undefined);
             }
           }}
-          onSaved={refreshKnowledgeBases}
+          onSaved={invalidateKnowledgeBases}
         />
       )}
 
@@ -429,21 +428,23 @@ export function KnowledgeBaseManager() {
           </AlertDialogHeader>
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteKnowledgeBase.isPending}>
+            <AlertDialogCancel
+              disabled={deleteKnowledgeBaseMutation.isPending}
+            >
               取消
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              disabled={deleteKnowledgeBase.isPending}
+              disabled={deleteKnowledgeBaseMutation.isPending}
               onClick={(event) => {
                 event.preventDefault();
 
                 if (knowledgeBaseToDelete) {
-                  deleteKnowledgeBase.mutate(knowledgeBaseToDelete.id);
+                  deleteKnowledgeBaseMutation.mutate(knowledgeBaseToDelete.id);
                 }
               }}
             >
-              {deleteKnowledgeBase.isPending && (
+              {deleteKnowledgeBaseMutation.isPending && (
                 <Spinner data-icon="inline-start" />
               )}
               删除

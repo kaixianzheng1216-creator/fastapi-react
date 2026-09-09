@@ -40,7 +40,7 @@ export function KnowledgeSearch({
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q")?.trim() ?? "";
 
-  const searchKnowledge = useQuery({
+  const knowledgeSearchQuery = useQuery({
     queryKey: [...KNOWLEDGE_SEARCH_QUERY_KEY, knowledgeBaseId, searchQuery],
     queryFn: async ({ signal }) => {
       const { data } = await knowledgeBasesSearchKnowledgeBase({
@@ -54,10 +54,9 @@ export function KnowledgeSearch({
     },
     enabled: Boolean(searchQuery),
     placeholderData: keepPreviousData,
-    retry: false,
   });
 
-  const searchResults = searchKnowledge.data?.data;
+  const searchResults = knowledgeSearchQuery.data?.data;
 
   function submitSearch(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -67,7 +66,7 @@ export function KnowledgeSearch({
 
     if (query) {
       if (query === searchQuery) {
-        void searchKnowledge.refetch();
+        void knowledgeSearchQuery.refetch();
       } else {
         router.push(
           getKnowledgeSearchHref(knowledgeBaseId, query, searchParams),
@@ -107,9 +106,9 @@ export function KnowledgeSearch({
               <Button
                 type="submit"
                 className="self-end"
-                disabled={searchKnowledge.isFetching}
+                disabled={knowledgeSearchQuery.isFetching}
               >
-                {searchKnowledge.isFetching ? (
+                {knowledgeSearchQuery.isFetching ? (
                   <Spinner data-icon="inline-start" />
                 ) : (
                   <SearchIcon data-icon="inline-start" aria-hidden="true" />
@@ -121,13 +120,15 @@ export function KnowledgeSearch({
         </CardContent>
       </Card>
 
-      {searchQuery && !searchKnowledge.isPending && !searchResults?.length && (
+      {searchQuery &&
+        !knowledgeSearchQuery.isPending &&
+        !searchResults?.length && (
         <Empty>
           <EmptyHeader>
             <EmptyTitle>暂无可显示内容</EmptyTitle>
           </EmptyHeader>
         </Empty>
-      )}
+        )}
       {searchResults?.map((result) => (
         <Card
           key={`${result.document_id}-${result.chunk_index}`}

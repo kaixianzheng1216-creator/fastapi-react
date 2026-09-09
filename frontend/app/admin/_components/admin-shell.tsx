@@ -44,9 +44,9 @@ function AdminShellState({
 }
 
 export function AdminShell({ children }: { children: ReactNode }) {
-  const { data: user, isPending } = useCurrentUserQuery();
+  const currentUserQuery = useCurrentUserQuery();
 
-  if (isPending) {
+  if (currentUserQuery.isPending) {
     return (
       <div className="flex h-svh items-center justify-center">
         <Spinner aria-label="正在加载页面" />
@@ -54,11 +54,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!user) {
+  if (!currentUserQuery.data) {
     return <AdminShellState title="暂无可显示内容" />;
   }
 
-  if (!user.is_superuser) {
+  if (!currentUserQuery.data.is_superuser) {
     return (
       <AdminShellState
         title="无权访问管理后台"
@@ -69,7 +69,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider className="h-svh overflow-hidden">
-      <AdminSidebar user={user} />
+      <AdminSidebar user={currentUserQuery.data} />
       <SidebarInset className="min-h-0">{children}</SidebarInset>
     </SidebarProvider>
   );

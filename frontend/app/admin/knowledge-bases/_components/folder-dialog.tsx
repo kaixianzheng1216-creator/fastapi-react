@@ -38,13 +38,13 @@ export function KnowledgeFolderEditorDialog({
   knowledgeBaseId: string;
   parentFolderId?: string;
   folder?: KnowledgeFolderPublic;
-  onSaved: () => Promise<void>;
+  onSaved: () => void;
   onClose: () => void;
   onCloseAutoFocus: (event: Event) => void;
 }) {
   const [folderName, setFolderName] = useState(folder?.name ?? "");
 
-  const saveFolder = useMutation({
+  const saveFolderMutation = useMutation({
     mutationFn: async (name: string): Promise<void> => {
       if (folder) {
         await knowledgeBasesUpdateFolder({
@@ -67,7 +67,7 @@ export function KnowledgeFolderEditorDialog({
     },
     onSuccess: () => {
       toast.success(folder ? "文件夹已重命名" : "文件夹已创建");
-      void onSaved();
+      onSaved();
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "保存文件夹失败，请重试"));
@@ -77,20 +77,20 @@ export function KnowledgeFolderEditorDialog({
   function submitFolder(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
 
-    if (saveFolder.isPending || !folderName.trim()) return;
+    if (saveFolderMutation.isPending || !folderName.trim()) return;
 
-    saveFolder.mutate(folderName.trim());
+    saveFolderMutation.mutate(folderName.trim());
   }
 
   return (
     <Dialog
       open
       onOpenChange={(open) => {
-        if (!open && !saveFolder.isPending) onClose();
+        if (!open && !saveFolderMutation.isPending) onClose();
       }}
     >
       <DialogContent
-        showCloseButton={!saveFolder.isPending}
+        showCloseButton={!saveFolderMutation.isPending}
         onCloseAutoFocus={onCloseAutoFocus}
       >
         <DialogHeader>
@@ -101,7 +101,7 @@ export function KnowledgeFolderEditorDialog({
         </DialogHeader>
         <form onSubmit={submitFolder}>
           <FieldGroup>
-            <Field data-disabled={saveFolder.isPending}>
+            <Field data-disabled={saveFolderMutation.isPending}>
               <FieldLabel htmlFor="knowledge-folder-name">名称</FieldLabel>
               <Input
                 id="knowledge-folder-name"
@@ -111,7 +111,7 @@ export function KnowledgeFolderEditorDialog({
                 required
                 autoComplete="off"
                 autoFocus
-                disabled={saveFolder.isPending}
+                disabled={saveFolderMutation.isPending}
                 onChange={(event) => setFolderName(event.currentTarget.value)}
               />
             </Field>
@@ -119,16 +119,16 @@ export function KnowledgeFolderEditorDialog({
               <Button
                 type="button"
                 variant="outline"
-                disabled={saveFolder.isPending}
+                disabled={saveFolderMutation.isPending}
                 onClick={onClose}
               >
                 取消
               </Button>
               <Button
                 type="submit"
-                disabled={saveFolder.isPending || !folderName.trim()}
+                disabled={saveFolderMutation.isPending || !folderName.trim()}
               >
-                {saveFolder.isPending ? (
+                {saveFolderMutation.isPending ? (
                   <Spinner data-icon="inline-start" />
                 ) : null}
                 保存

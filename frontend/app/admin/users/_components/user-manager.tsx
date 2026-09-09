@@ -133,10 +133,9 @@ export function UserManager() {
       return data;
     },
     placeholderData: keepPreviousData,
-    retry: false,
   });
 
-  const updateStatus = useMutation({
+  const updateStatusMutation = useMutation({
     mutationFn: async (user: UserPublic): Promise<void> => {
       await usersUpdateUser({
         path: { user_id: user.id },
@@ -144,23 +143,23 @@ export function UserManager() {
         throwOnError: true,
       });
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       toast.success("状态已更新");
-      await queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
+      invalidateUsers();
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "更新状态失败，请重试"));
     },
   });
 
-  const deleteUser = useMutation({
+  const deleteUserMutation = useMutation({
     mutationFn: async (userId: string): Promise<void> => {
       await usersDeleteUser({
         path: { user_id: userId },
         throwOnError: true,
       });
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       toast.success("已删除");
       if (usersQuery.data?.data.length === 1 && currentPage > 1) {
         router.replace(getUsersHref(currentPage - 1, search, role, status));
@@ -168,14 +167,14 @@ export function UserManager() {
 
       setUserToDelete(undefined);
 
-      await queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
+      invalidateUsers();
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "删除失败，请重试"));
     },
   });
 
-  const changeUserStatus = updateStatus.mutate;
+  const changeUserStatus = updateStatusMutation.mutate;
 
   const columns = useMemo(
     () =>
@@ -245,7 +244,7 @@ export function UserManager() {
                   {row.original.id !== currentUser?.id && (
                     <>
                       <DropdownMenuItem
-                        disabled={updateStatus.isPending}
+                        disabled={updateStatusMutation.isPending}
                         onSelect={() => changeUserStatus(row.original)}
                       >
                         {row.original.is_active ? (
@@ -272,7 +271,7 @@ export function UserManager() {
           ),
         }),
       ]),
-    [changeUserStatus, currentUser?.id, updateStatus.isPending],
+    [changeUserStatus, currentUser?.id, updateStatusMutation.isPending],
   );
 
   const table = useTable({
@@ -294,20 +293,20 @@ export function UserManager() {
   const rows = table.getRowModel().rows;
   const pageOutOfRange = (usersQuery.data?.count ?? 0) > 0 && rows.length === 0;
 
-  async function refreshUsers(): Promise<void> {
-    await queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
+  function invalidateUsers(): void {
+    void queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
   }
 
-  async function refreshUpdatedUser(userId: string): Promise<void> {
-    await refreshUsers();
+  function invalidateUpdatedUser(userId: string): void {
+    invalidateUsers();
 
     if (userId === currentUser?.id) {
-      await queryClient.invalidateQueries({ queryKey: CURRENT_USER_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: CURRENT_USER_QUERY_KEY });
     }
   }
 
   function closeDeleteDialog(open: boolean): void {
-    if (!open && !deleteUser.isPending) {
+    if (!open && !deleteUserMutation.isPending) {
       setUserToDelete(undefined);
     }
   }
@@ -447,7 +446,7 @@ export function UserManager() {
       <UserCreateDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onCreated={refreshUsers}
+        onCreated={invalidateUsers}
       />
 
       {userToEdit && (
@@ -459,7 +458,7 @@ export function UserManager() {
               setUserToEdit(undefined);
             }
           }}
-          onUpdated={() => refreshUpdatedUser(userToEdit.id)}
+          onUpdated={() => invalidateUpdatedUser(userToEdit.id)}
         />
       )}
 
@@ -473,20 +472,22 @@ export function UserManager() {
           </AlertDialogHeader>
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteUser.isPending}>
+            <AlertDialogCancel disabled={deleteUserMutation.isPending}>
               取消
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              disabled={deleteUser.isPending}
+              disabled={deleteUserMutation.isPending}
               onClick={(event) => {
                 event.preventDefault();
                 if (userToDelete) {
-                  deleteUser.mutate(userToDelete.id);
+                  deleteUserMutation.mutate(userToDelete.id);
                 }
               }}
             >
-              {deleteUser.isPending && <Spinner data-icon="inline-start" />}
+              {deleteUserMutation.isPending && (
+                <Spinner data-icon="inline-start" />
+              )}
               删除
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -39,7 +39,6 @@ export function KnowledgeBaseDetail({
 
       return data;
     },
-    retry: false,
   });
 
   const activeView =

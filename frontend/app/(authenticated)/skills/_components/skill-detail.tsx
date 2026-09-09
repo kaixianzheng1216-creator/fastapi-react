@@ -1,9 +1,6 @@
 "use client";
 
-import { toast } from "sonner";
-import { getApiErrorMessage } from "@/lib/api-error";
-
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
@@ -54,7 +51,7 @@ export function SkillDetail({ skillName }: SkillDetailProps) {
   const activeView =
     searchParams.get("view") === "files" ? "files" : "overview";
 
-  const { data: detail, isPending: detailLoading } = useQuery({
+  const detailQuery = useQuery({
     queryKey: ["skills", "detail", skillName],
     queryFn: async ({ signal }) => {
       const { data } = await skillsReadSkill({
@@ -65,9 +62,9 @@ export function SkillDetail({ skillName }: SkillDetailProps) {
 
       return data;
     },
-    retry: false,
   });
 
+  const detail = detailQuery.data;
   const description = detail?.frontmatter.description;
 
   function changeView(view: string): void {
@@ -100,9 +97,9 @@ export function SkillDetail({ skillName }: SkillDetailProps) {
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
         <div className="mx-auto flex min-h-full max-w-6xl flex-col gap-6">
-          {detailLoading && <SkillDetailSkeleton />}
+          {detailQuery.isPending && <SkillDetailSkeleton />}
 
-          {!detailLoading && !detail && (
+          {!detailQuery.isPending && !detail && (
             <Empty>
               <EmptyHeader>
                 <EmptyTitle>暂无可显示内容</EmptyTitle>
@@ -179,80 +176,52 @@ function SkillFileBrowser({
   nodes: SkillFileNodePublic[];
 }) {
   const [selectedPath, setSelectedPath] = useState<string>();
-  const [filePreview, setFilePreview] = useState<FilePreview>();
-  const [fileLoading, setFileLoading] = useState(false);
-  const fileRequest = useRef<AbortController | null>(null);
+  const fileQuery = useQuery({
+    queryKey: ["skills", "file", skillName, selectedPath],
+    queryFn: async ({ signal }) => {
+      if (!selectedPath) return undefined;
 
-  useEffect(() => {
-    return () => {
-      fileRequest.current?.abort();
-    };
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (filePreview?.kind === "image" || filePreview?.kind === "download") {
-        URL.revokeObjectURL(filePreview.url);
-      }
-    };
-  }, [filePreview]);
-
-  async function readFile(path: string): Promise<void> {
-    fileRequest.current?.abort();
-    const controller = new AbortController();
-    fileRequest.current = controller;
-
-    setSelectedPath(path);
-    setFilePreview(undefined);
-    setFileLoading(true);
-
-    try {
       const { data } = await skillsReadSkillFile({
-        path: { skill_name: skillName, file_path: path },
-        signal: controller.signal,
+        path: { skill_name: skillName, file_path: selectedPath },
+        signal,
         throwOnError: true,
       });
 
-      if (controller.signal.aborted) {
-        return;
-      }
+      return data;
+    },
+    enabled: Boolean(selectedPath),
+  });
 
-      if (typeof data === "string") {
-        setFilePreview({ kind: "text", content: data });
+  const [fileObjectUrl, setFileObjectUrl] = useState<{
+    data: Blob;
+    url: string;
+  }>();
 
-        return;
-      }
+  useEffect(() => {
+    const fileData = fileQuery.data;
 
-      if (data instanceof Blob) {
-        const url = URL.createObjectURL(data);
+    if (!(fileData instanceof Blob)) return;
 
-        if (data.type.startsWith("image/")) {
-          setFilePreview({ kind: "image", url });
-        } else {
-          setFilePreview({
-            kind: "download",
-            url,
-            contentType: data.type,
-          });
-        }
+    const url = URL.createObjectURL(fileData);
+    setFileObjectUrl({ data: fileData, url });
 
-        return;
-      }
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [fileQuery.data]);
 
-      setFilePreview({
-        kind: "text",
-        content: JSON.stringify(data, null, 2) ?? String(data),
-      });
-    } catch (error) {
-      if (!controller.signal.aborted) {
-        toast.error(getApiErrorMessage(error, "文件加载失败，请稍后再试"));
-      }
-    } finally {
-      if (!controller.signal.aborted) {
-        setFileLoading(false);
-      }
-    }
+  function readFile(path: string): void {
+    setSelectedPath(path);
   }
+
+  const fileUrl =
+    fileObjectUrl && fileObjectUrl.data === fileQuery.data
+      ? fileObjectUrl.url
+      : undefined;
+  const filePreview = getFilePreview(fileQuery.data, fileUrl);
+  const fileLoading =
+    Boolean(selectedPath) &&
+    (fileQuery.isPending || (fileQuery.data instanceof Blob && !fileUrl));
 
   return (
     <div className="grid gap-4 md:grid-cols-[16rem_minmax(0,1fr)]">
@@ -356,6 +325,30 @@ function SkillFileTreeNode({
       </CollapsibleContent>
     </Collapsible>
   );
+}
+
+function getFilePreview(
+  data: unknown,
+  fileUrl?: string,
+): FilePreview | undefined {
+  if (typeof data === "string") {
+    return { kind: "text", content: data };
+  }
+
+  if (data instanceof Blob) {
+    if (!fileUrl) return undefined;
+
+    return data.type.startsWith("image/")
+      ? { kind: "image", url: fileUrl }
+      : { kind: "download", url: fileUrl, contentType: data.type };
+  }
+
+  if (data === undefined) return undefined;
+
+  return {
+    kind: "text",
+    content: JSON.stringify(data, null, 2) ?? String(data),
+  };
 }
 
 function FilePreviewContent({

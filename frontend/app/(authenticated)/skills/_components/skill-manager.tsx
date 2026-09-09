@@ -1,6 +1,6 @@
 "use client";
 
-import { type SubmitEvent, useEffect, useState } from "react";
+import { type FormEvent, useState } from "react";
 import {
   keepPreviousData,
   useMutation,
@@ -73,13 +73,7 @@ export function SkillManager() {
   const searchQuery = searchParams.get("search")?.trim() || undefined;
   const offset = (currentPage - 1) * PAGE_SIZE;
 
-  const [searchDraft, setSearchDraft] = useState(searchQuery ?? "");
-
-  useEffect(() => {
-    setSearchDraft(searchQuery ?? "");
-  }, [searchQuery]);
-
-  const { data: skillsResponse, isPending: isLoading } = useQuery({
+  const skillsQuery = useQuery({
     queryKey: [...SKILLS_QUERY_KEY, offset, searchQuery],
     queryFn: async ({ signal }) => {
       const { data } = await skillsReadSkills({
@@ -91,25 +85,21 @@ export function SkillManager() {
       return data;
     },
     placeholderData: keepPreviousData,
-    retry: false,
   });
 
   function invalidateSkills(): void {
     void queryClient.invalidateQueries({ queryKey: SKILLS_QUERY_KEY });
   }
 
-  const skills = skillsResponse?.data ?? [];
-  const count = skillsResponse?.count ?? 0;
+  const skills = skillsQuery.data?.data ?? [];
+  const count = skillsQuery.data?.count ?? 0;
   const totalPages = Math.ceil(count / PAGE_SIZE);
   const pageOutOfRange = count > 0 && skills.length === 0;
 
   const [createOpen, setCreateOpen] = useState(false);
   const [skillToDelete, setSkillToDelete] = useState<SkillSummaryPublic>();
 
-  const {
-    isPending: deleting,
-    mutate: deleteSkill,
-  } = useMutation({
+  const deleteSkillMutation = useMutation({
     mutationFn: async (skillName: string) => {
       await skillsDeleteSkill({
         path: { skill_name: skillName },
@@ -130,15 +120,15 @@ export function SkillManager() {
     },
   });
 
-  function searchSkills(event: SubmitEvent<HTMLFormElement>): void {
+  function searchSkills(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
-    const nextSearchQuery = searchDraft.trim();
+    const formData = new FormData(event.currentTarget);
+    const nextSearchQuery = String(formData.get("search") ?? "").trim();
 
     router.push(getSkillsHref(1, nextSearchQuery || undefined));
   }
 
   function clearSearch(): void {
-    setSearchDraft("");
     router.push("/skills");
   }
 
@@ -152,7 +142,7 @@ export function SkillManager() {
       return;
     }
 
-    deleteSkill(skillToDelete.name);
+    deleteSkillMutation.mutate(skillToDelete.name);
   }
 
   return (
@@ -175,23 +165,13 @@ export function SkillManager() {
             label="搜索技能"
             placeholder="搜索名称或描述…"
             onSubmit={searchSkills}
-            value={searchDraft}
-            onChange={(event) => {
-              const value = event.target.value;
-
-              if (value) {
-                setSearchDraft(value);
-
-                return;
-              }
-
-              clearSearch();
-            }}
+            key={searchQuery}
+            defaultValue={searchQuery}
             maxLength={100}
           />
 
-          {isLoading && <SkillGridSkeleton />}
-          {!isLoading &&
+          {skillsQuery.isPending && <SkillGridSkeleton />}
+          {!skillsQuery.isPending &&
             skills.length === 0 &&
             (pageOutOfRange ? (
               <PageOutOfRange href={getSkillsHref(1, searchQuery)} />
@@ -203,7 +183,7 @@ export function SkillManager() {
               </Empty>
             ))}
 
-          {!isLoading && skills.length > 0 && (
+          {!skillsQuery.isPending && skills.length > 0 && (
             <>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {skills.map((skill) => (
@@ -270,7 +250,7 @@ export function SkillManager() {
       <AlertDialog
         open={skillToDelete !== undefined}
         onOpenChange={(open) => {
-          if (!open && !deleting) {
+          if (!open && !deleteSkillMutation.isPending) {
             setSkillToDelete(undefined);
           }
         }}
@@ -284,16 +264,20 @@ export function SkillManager() {
           </AlertDialogHeader>
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>取消</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteSkillMutation.isPending}>
+              取消
+            </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              disabled={deleting}
+              disabled={deleteSkillMutation.isPending}
               onClick={(event) => {
                 event.preventDefault();
                 confirmDelete();
               }}
             >
-              {deleting && <Spinner data-icon="inline-start" />}
+              {deleteSkillMutation.isPending && (
+                <Spinner data-icon="inline-start" />
+              )}
               删除技能
             </AlertDialogAction>
           </AlertDialogFooter>

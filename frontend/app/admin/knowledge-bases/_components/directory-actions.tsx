@@ -16,14 +16,15 @@ import {
 import {
   useRef,
   useState,
+  type ReactEventHandler,
   type RefObject,
   type SyntheticEvent,
-  type ReactEventHandler,
 } from "react";
+import { toast } from "sonner";
 
 import {
-  type DirectoryEntry,
   type DirectoryChange,
+  type DirectoryEntry,
   KNOWLEDGE_DOCUMENT_UPLOAD_KEY,
 } from "@/app/admin/knowledge-bases/_lib/directory";
 import { KnowledgeFolderEditorDialog } from "@/app/admin/knowledge-bases/_components/folder-dialog";
@@ -61,7 +62,6 @@ import {
   downloadMarkdownKnowledgeDocument,
   downloadOriginalKnowledgeDocument,
 } from "@/lib/knowledge-document-download";
-import { toast } from "sonner";
 
 type DirectoryDeleteTarget = {
   entries: DirectoryEntry[];
@@ -71,7 +71,7 @@ type DirectoryDeleteTarget = {
 type UseDirectoryActionsOptions = {
   knowledgeBaseId: string;
   focusFallbackRef: RefObject<HTMLElement | null>;
-  onChanged: (change: DirectoryChange) => Promise<void>;
+  onChanged: (change: DirectoryChange) => void;
 };
 
 export function useDirectoryActions({
@@ -101,7 +101,7 @@ export function useDirectoryActions({
       mutationKey: [...KNOWLEDGE_DOCUMENT_UPLOAD_KEY, knowledgeBaseId],
     }) > 0;
 
-  const completeDocument = useMutation({
+  const completeDocumentMutation = useMutation({
     mutationFn: (documentId: string) =>
       knowledgeDocumentsCompleteDocumentUpload({
         path: { document_id: documentId },
@@ -109,14 +109,14 @@ export function useDirectoryActions({
       }),
     onSuccess: () => {
       toast.success("上传已确认");
-      void onChanged({ type: "documents" });
+      onChanged({ type: "documents" });
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "文档操作失败，请重试"));
     },
   });
 
-  const retryDocument = useMutation({
+  const retryDocumentMutation = useMutation({
     mutationFn: (documentId: string) =>
       knowledgeDocumentsRetryDocument({
         path: { document_id: documentId },
@@ -124,14 +124,14 @@ export function useDirectoryActions({
       }),
     onSuccess: () => {
       toast.success("已提交重新解析");
-      void onChanged({ type: "documents" });
+      onChanged({ type: "documents" });
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "文档操作失败，请重试"));
     },
   });
 
-  const downloadOriginal = useMutation({
+  const downloadOriginalMutation = useMutation({
     mutationFn: downloadOriginalKnowledgeDocument,
     onSuccess: () => {
       toast.success("已开始下载");
@@ -141,7 +141,7 @@ export function useDirectoryActions({
     },
   });
 
-  const downloadMarkdown = useMutation({
+  const downloadMarkdownMutation = useMutation({
     mutationFn: downloadMarkdownKnowledgeDocument,
     onSuccess: () => {
       toast.success("已开始下载");
@@ -153,10 +153,9 @@ export function useDirectoryActions({
 
   const [folderToEdit, setFolderToEdit] =
     useState<KnowledgeFolderPublic | null>();
-
   const [entryToMove, setEntryToMove] = useState<DirectoryEntry>();
 
-  const moveEntry = useMutation({
+  const moveEntryMutation = useMutation({
     mutationFn: async ({
       entry,
       folderId,
@@ -178,25 +177,20 @@ export function useDirectoryActions({
         });
       }
     },
-    onSuccess: async (_, { entry }) => {
+    onSuccess: (_, { entry }) => {
       toast.success("已移动");
       actionTriggerRef.current = null;
       setEntryToMove(undefined);
-
-      await onChanged({ type: "moved", entry });
+      onChanged({ type: "moved", entry });
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "移动失败，请重试"));
     },
   });
 
-  function openMoveEntry(entry: DirectoryEntry): void {
-    setEntryToMove(entry);
-  }
-
   const [deleteTarget, setDeleteTarget] = useState<DirectoryDeleteTarget>();
 
-  const deleteEntries = useMutation({
+  const deleteEntriesMutation = useMutation({
     mutationFn: (target: DirectoryDeleteTarget) =>
       knowledgeBasesDeleteDirectoryEntries({
         path: { knowledge_base_id: knowledgeBaseId },
@@ -210,12 +204,11 @@ export function useDirectoryActions({
         },
         throwOnError: true,
       }),
-    onSuccess: async (_, target) => {
+    onSuccess: (_, target) => {
       toast.success("已删除");
       actionTriggerRef.current = null;
       setDeleteTarget(undefined);
-
-      await onChanged({ type: "deleted", entries: target.entries });
+      onChanged({ type: "deleted", entries: target.entries });
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "删除失败，请重试"));
@@ -223,58 +216,45 @@ export function useDirectoryActions({
   });
 
   function openDeleteEntry(entry: DirectoryEntry): void {
-    openDeleteEntries(
-      [entry],
-      entry.type === "folder" ? entry.name : entry.filename,
-    );
-  }
-
-  function openDeleteEntries(entries: DirectoryEntry[], label?: string): void {
-
-    setDeleteTarget({ entries, label });
+    setDeleteTarget({
+      entries: [entry],
+      label: entry.type === "folder" ? entry.name : entry.filename,
+    });
   }
 
   function closeDelete(): void {
-    if (deleteEntries.isPending) return;
-
-    setDeleteTarget(undefined);
+    if (!deleteEntriesMutation.isPending) setDeleteTarget(undefined);
   }
 
   function closeMove(): void {
-    if (moveEntry.isPending) return;
-
-    setEntryToMove(undefined);
+    if (!moveEntryMutation.isPending) setEntryToMove(undefined);
   }
 
-  async function onFolderSaved(): Promise<void> {
+  function onFolderSaved(): void {
     setFolderToEdit(undefined);
-
-    await onChanged({ type: "folders" });
+    onChanged({ type: "folders" });
   }
 
   return {
     rememberActionTrigger,
     restoreActionFocus,
-
     isUploading,
-    completeDocument,
-    retryDocument,
-    downloadOriginal,
-    downloadMarkdown,
-
+    completeDocumentMutation,
+    retryDocumentMutation,
+    downloadOriginalMutation,
+    downloadMarkdownMutation,
     folderToEdit,
     editFolder: setFolderToEdit,
     onFolderSaved,
-
     entryToMove,
-    moveEntry,
-    openMoveEntry,
+    moveEntryMutation,
+    openMoveEntry: setEntryToMove,
     closeMove,
-
     deleteTarget,
-    deleteEntries,
+    deleteEntriesMutation,
     openDeleteEntry,
-    openDeleteEntries,
+    openDeleteEntries: (entries: DirectoryEntry[]) =>
+      setDeleteTarget({ entries }),
     closeDelete,
   };
 }
@@ -291,10 +271,10 @@ export function DirectoryEntryActions({
   const {
     rememberActionTrigger,
     isUploading,
-    completeDocument,
-    retryDocument,
-    downloadOriginal,
-    downloadMarkdown,
+    completeDocumentMutation,
+    retryDocumentMutation,
+    downloadOriginalMutation,
+    downloadMarkdownMutation,
     openMoveEntry,
     editFolder,
     openDeleteEntry,
@@ -326,8 +306,8 @@ export function DirectoryEntryActions({
         <DropdownMenuGroup>
           {entry.status === "pending" && !entry.uploaded ? (
             <DropdownMenuItem
-              disabled={isUploading || completeDocument.isPending}
-              onSelect={() => completeDocument.mutate(entry.id)}
+              disabled={isUploading || completeDocumentMutation.isPending}
+              onSelect={() => completeDocumentMutation.mutate(entry.id)}
             >
               <UploadIcon aria-hidden="true" />
               确认上传
@@ -335,8 +315,8 @@ export function DirectoryEntryActions({
           ) : null}
           {entry.uploaded ? (
             <DropdownMenuItem
-              disabled={downloadOriginal.isPending}
-              onSelect={() => downloadOriginal.mutate(entry.id)}
+              disabled={downloadOriginalMutation.isPending}
+              onSelect={() => downloadOriginalMutation.mutate(entry.id)}
             >
               <DownloadIcon aria-hidden="true" />
               下载原文件
@@ -352,8 +332,8 @@ export function DirectoryEntryActions({
           ) : null}
           {entry.status === "ready" ? (
             <DropdownMenuItem
-              disabled={downloadMarkdown.isPending}
-              onSelect={() => downloadMarkdown.mutate(entry.id)}
+              disabled={downloadMarkdownMutation.isPending}
+              onSelect={() => downloadMarkdownMutation.mutate(entry.id)}
             >
               <FileTextIcon aria-hidden="true" />
               下载 Markdown
@@ -361,8 +341,8 @@ export function DirectoryEntryActions({
           ) : null}
           {entry.status === "failed" || entry.status === "timed_out" ? (
             <DropdownMenuItem
-              disabled={retryDocument.isPending}
-              onSelect={() => retryDocument.mutate(entry.id)}
+              disabled={retryDocumentMutation.isPending}
+              onSelect={() => retryDocumentMutation.mutate(entry.id)}
             >
               <RefreshCwIcon aria-hidden="true" />
               重试
@@ -395,7 +375,7 @@ export function DirectoryToolbar({
   selectedEntries: DirectoryEntry[];
 }) {
   const {
-    deleteEntries,
+    deleteEntriesMutation,
     rememberActionTrigger,
     openDeleteEntries,
     openDeleteEntry,
@@ -414,7 +394,7 @@ export function DirectoryToolbar({
           <Button
             variant="destructive"
             size="sm"
-            disabled={deleteEntries.isPending}
+            disabled={deleteEntriesMutation.isPending}
             onFocus={rememberActionTrigger}
             onPointerDown={rememberActionTrigger}
             onClick={() => openDeleteEntries(selectedEntries)}
@@ -465,10 +445,10 @@ export function DirectoryActionDialogs({
     onFolderSaved,
     restoreActionFocus,
     deleteTarget,
-    deleteEntries,
+    deleteEntriesMutation,
     closeDelete,
     entryToMove,
-    moveEntry,
+    moveEntryMutation,
     closeMove,
   } = actions;
   const deleteTargetCount = deleteTarget?.entries.length ?? 0;
@@ -512,21 +492,21 @@ export function DirectoryActionDialogs({
           </AlertDialogHeader>
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteEntries.isPending}>
+            <AlertDialogCancel disabled={deleteEntriesMutation.isPending}>
               取消
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              disabled={deleteEntries.isPending}
+              disabled={deleteEntriesMutation.isPending}
               onClick={(event) => {
                 event.preventDefault();
 
                 if (deleteTarget) {
-                  deleteEntries.mutate(deleteTarget);
+                  deleteEntriesMutation.mutate(deleteTarget);
                 }
               }}
             >
-              {deleteEntries.isPending ? (
+              {deleteEntriesMutation.isPending ? (
                 <Spinner data-icon="inline-start" />
               ) : null}
               删除
@@ -550,9 +530,9 @@ export function DirectoryActionDialogs({
           }
           title={entryToMove.type === "folder" ? "移动文件夹" : "移动文档"}
           description={`选择“${entryToMove.type === "folder" ? entryToMove.name : entryToMove.filename}”的新位置。`}
-          isPending={moveEntry.isPending}
+          isPending={moveEntryMutation.isPending}
           onMove={(folderId) =>
-            moveEntry.mutate({ entry: entryToMove, folderId })
+            moveEntryMutation.mutate({ entry: entryToMove, folderId })
           }
         />
       )}

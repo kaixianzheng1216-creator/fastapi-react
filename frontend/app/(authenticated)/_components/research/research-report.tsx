@@ -72,7 +72,7 @@ export function ResearchReport({ report }: { report: string }) {
   const conversationId = useAuiState((state) => state.threadListItem.remoteId)!;
   const reportTitle = getReportTitle(report);
 
-  const pdfDownload = useMutation({
+  const pdfDownloadMutation = useMutation({
     mutationFn: async () => {
       const { data: pdfBlob } = await agentDownloadConversationReportPdf({
         path: { conversation_id: conversationId },
@@ -105,16 +105,16 @@ export function ResearchReport({ report }: { report: string }) {
     <Button
       variant="outline"
       size="sm"
-      disabled={pdfDownload.isPending}
-      aria-busy={pdfDownload.isPending}
-      onClick={() => pdfDownload.mutate()}
+      disabled={pdfDownloadMutation.isPending}
+      aria-busy={pdfDownloadMutation.isPending}
+      onClick={() => pdfDownloadMutation.mutate()}
     >
-      {pdfDownload.isPending ? (
+      {pdfDownloadMutation.isPending ? (
         <Spinner data-icon="inline-start" />
       ) : (
         <DownloadIcon data-icon="inline-start" aria-hidden="true" />
       )}
-      {pdfDownload.isPending ? "正在下载…" : "下载 PDF"}
+      {pdfDownloadMutation.isPending ? "正在下载…" : "下载 PDF"}
     </Button>
   );
 
