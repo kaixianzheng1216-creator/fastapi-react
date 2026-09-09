@@ -3,6 +3,10 @@
   margin: 16mm;
 }
 
+.report {
+  width: 178mm;
+}
+
 .report :global(h1),
 .report :global(h2),
 .report :global(h3),

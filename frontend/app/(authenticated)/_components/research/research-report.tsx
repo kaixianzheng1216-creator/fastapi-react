@@ -13,8 +13,6 @@ import {
 } from "@/components/ui/card";
 import {
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -110,10 +108,7 @@ export function ResearchReport({ report }: { report: string }) {
       onClick={() => pdfDownloadMutation.mutate()}
     >
       {pdfDownloadMutation.isPending ? (
-        <Spinner
-          data-icon="inline-start"
-          className="block origin-center [transform-box:fill-box]"
-        />
+        <Spinner data-icon="inline-start" />
       ) : (
         <DownloadIcon data-icon="inline-start" aria-hidden="true" />
       )}
@@ -327,24 +322,23 @@ function ResearchPieChart({ chart }: { chart: ChartData }) {
   );
 
   return (
-    <ChartContainer config={chartConfig}>
-      <PieChart>
-        <ChartTooltip
-          content={<ChartTooltipContent nameKey="categoryKey" hideLabel />}
-        />
-        <ChartLegend
-          content={
-            <ChartLegendContent nameKey="categoryKey" className="flex-wrap" />
-          }
-        />
-        <Pie
-          data={pieData}
-          dataKey="value"
-          nameKey="categoryKey"
-          isAnimationActive={false}
-        />
-      </PieChart>
-    </ChartContainer>
+    <div className="flex flex-col gap-3">
+      <ChartContainer config={chartConfig}>
+        <PieChart>
+          <ChartTooltip
+            content={<ChartTooltipContent nameKey="categoryKey" hideLabel />}
+          />
+          <Pie
+            data={pieData}
+            dataKey="value"
+            nameKey="categoryKey"
+            isAnimationActive={false}
+          />
+        </PieChart>
+      </ChartContainer>
+
+      <ResearchChartLegend labels={chart.categories} />
+    </div>
   );
 }
 
@@ -372,53 +366,75 @@ function ResearchCartesianChart({ chart }: { chart: ChartData }) {
   );
 
   return (
-    <ChartContainer config={chartConfig}>
-      <ComposedChart data={chartData}>
-        <CartesianGrid vertical={false} />
-        <XAxis dataKey="category" tickLine={false} axisLine={false} />
-        <YAxis tickLine={false} axisLine={false} />
-        <ChartTooltip content={<ChartTooltipContent />} />
-        <ChartLegend content={<ChartLegendContent className="flex-wrap" />} />
+    <div className="flex flex-col gap-3">
+      <ChartContainer config={chartConfig}>
+        <ComposedChart data={chartData}>
+          <CartesianGrid vertical={false} />
+          <XAxis dataKey="category" tickLine={false} axisLine={false} />
+          <YAxis tickLine={false} axisLine={false} />
+          <ChartTooltip content={<ChartTooltipContent />} />
 
-        {series.map((seriesItem) => {
-          const color = `var(--color-${seriesItem.key})`;
+          {series.map((seriesItem) => {
+            const color = `var(--color-${seriesItem.key})`;
 
-          if (chart.type === "line") {
+            if (chart.type === "line") {
+              return (
+                <Line
+                  key={seriesItem.key}
+                  type="monotone"
+                  dataKey={seriesItem.key}
+                  stroke={color}
+                  isAnimationActive={false}
+                />
+              );
+            }
+
+            if (chart.type === "area") {
+              return (
+                <Area
+                  key={seriesItem.key}
+                  type="monotone"
+                  dataKey={seriesItem.key}
+                  stroke={color}
+                  fill={color}
+                  isAnimationActive={false}
+                />
+              );
+            }
+
             return (
-              <Line
+              <Bar
                 key={seriesItem.key}
-                type="monotone"
                 dataKey={seriesItem.key}
-                stroke={color}
-                isAnimationActive={false}
-              />
-            );
-          }
-
-          if (chart.type === "area") {
-            return (
-              <Area
-                key={seriesItem.key}
-                type="monotone"
-                dataKey={seriesItem.key}
-                stroke={color}
                 fill={color}
                 isAnimationActive={false}
               />
             );
-          }
+          })}
+        </ComposedChart>
+      </ChartContainer>
 
-          return (
-            <Bar
-              key={seriesItem.key}
-              dataKey={seriesItem.key}
-              fill={color}
-              isAnimationActive={false}
-            />
-          );
-        })}
-      </ComposedChart>
-    </ChartContainer>
+      <ResearchChartLegend labels={series.map((seriesItem) => seriesItem.name)} />
+    </div>
+  );
+}
+
+function ResearchChartLegend({ labels }: { labels: string[] }) {
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs">
+      {labels.map((label, index) => (
+        <div key={`${label}-${index}`} className="flex items-center gap-1.5">
+          <span
+            className="size-2 shrink-0 rounded-[2px]"
+            style={{
+              backgroundColor: CHART_COLORS[index % CHART_COLORS.length],
+            }}
+            aria-hidden="true"
+          />
+          {label}
+        </div>
+      ))}
+    </div>
   );
 }
 
