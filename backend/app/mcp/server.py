@@ -14,6 +14,8 @@ from app.modules.auth.dependencies import (
 )
 from app.modules.brand_marketing.router import router as brand_marketing_router
 from app.modules.content_operations.router import router as content_operations_router
+from app.modules.file_library.router import document_router as library_document_router
+from app.modules.file_library.router import router as file_library_router
 from app.modules.influencer_marketing.router import (
     router as influencer_marketing_router,
 )
@@ -46,6 +48,8 @@ def _create_internal_api() -> FastAPI:
     app.dependency_overrides[get_current_user] = get_internal_mcp_user
     app.dependency_overrides[get_current_active_superuser] = get_internal_mcp_user
 
+    app.include_router(file_library_router, prefix=API_V1_PREFIX)
+    app.include_router(library_document_router, prefix=API_V1_PREFIX)
     app.include_router(knowledge_router, prefix=API_V1_PREFIX)
     app.include_router(knowledge_document_router, prefix=API_V1_PREFIX)
     app.include_router(brand_marketing_router, prefix=API_V1_PREFIX)

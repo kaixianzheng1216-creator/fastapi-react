@@ -14,11 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Field,
-  FieldGroup,
-  FieldTitle,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldTitle } from "@/components/ui/field";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Table,
@@ -36,13 +32,18 @@ type McpTool = readonly [
   access: "查询" | "写入",
 ];
 
+type McpToolGroup = {
+  title: string;
+  tools: readonly McpTool[];
+};
+
 type ConnectionGuideProps = {
   name: string;
   serverId: string;
   description: string;
   endpoint: string;
   keyPlaceholder: string;
-  tools: readonly McpTool[];
+  toolGroups: readonly McpToolGroup[];
 };
 
 const BUSINESS_QUERY_TOOLS: McpTool[] = [
@@ -51,28 +52,51 @@ const BUSINESS_QUERY_TOOLS: McpTool[] = [
   ["influencer_accounts_query", "查询达人账号数据", "查询"],
 ];
 
-const INTERNAL_TOOLS: McpTool[] = [
-  ["knowledge_bases_list", "查询知识库列表", "查询"],
-  ["knowledge_base_create", "创建知识库", "写入"],
-  ["knowledge_base_update", "更新知识库名称、描述或启用状态", "写入"],
-  ["knowledge_base_delete", "删除知识库", "写入"],
-  ["knowledge_folders_list", "查询知识库文件夹列表", "查询"],
-  ["knowledge_folder_create", "创建知识库文件夹", "写入"],
-  ["knowledge_folder_rename", "重命名知识库文件夹", "写入"],
-  ["knowledge_folder_move", "移动知识库文件夹", "写入"],
-  ["knowledge_directory_list", "查询知识库目录中的文件夹和文档", "查询"],
-  ["knowledge_entries_delete", "批量删除知识库文件夹和文档", "写入"],
-  ["knowledge_document_upload_create", "获取知识库文档上传地址", "写入"],
-  ["knowledge_document_upload_complete", "确认知识库文档上传", "写入"],
-  ["knowledge_webpage_import", "从网页导入知识库文档", "写入"],
-  ["knowledge_search", "检索知识库内容", "查询"],
-  ...BUSINESS_QUERY_TOOLS,
+const INTERNAL_TOOL_GROUPS: McpToolGroup[] = [
+  {
+    title: "文件库",
+    tools: [
+      ["file_libraries_list", "查询文件库列表", "查询"],
+      ["file_library_create", "创建文件库", "写入"],
+      ["library_folder_create", "创建文件库文件夹", "写入"],
+      ["library_folder_move", "移动文件库文件夹", "写入"],
+      ["library_directory_list", "查询文件库目录中的文件夹和文件", "查询"],
+      ["library_entries_delete", "批量删除文件库文件夹和文件", "写入"],
+      ["library_document_upload_create", "获取文件库文件上传地址", "写入"],
+      ["library_document_upload_complete", "确认文件库文件上传", "写入"],
+      ["library_document_download", "获取文件库原文件下载地址", "查询"],
+      ["library_document_move", "移动文件库文件", "写入"],
+    ],
+  },
+  {
+    title: "知识库",
+    tools: [
+      ["knowledge_bases_list", "查询知识库列表", "查询"],
+      ["knowledge_base_create", "创建知识库", "写入"],
+      ["knowledge_folder_create", "创建知识库文件夹", "写入"],
+      ["knowledge_folder_move", "移动知识库文件夹", "写入"],
+      ["knowledge_directory_list", "查询知识库目录中的文件夹和文档", "查询"],
+      ["knowledge_entries_delete", "批量删除知识库文件夹和文档", "写入"],
+      ["knowledge_document_upload_create", "获取知识库文档上传地址", "写入"],
+      ["knowledge_document_upload_complete", "确认知识库文档上传", "写入"],
+      ["knowledge_document_download", "获取知识库原文件下载地址", "查询"],
+      ["knowledge_document_move", "移动知识库文档", "写入"],
+      ["knowledge_webpage_import", "从网页导入知识库文档", "写入"],
+      ["knowledge_search", "检索知识库内容", "查询"],
+    ],
+  },
+  { title: "业务数据", tools: BUSINESS_QUERY_TOOLS },
 ];
 
-const EXTERNAL_TOOLS: McpTool[] = [
-  ["knowledge_bases_list", "查询已启用的知识库列表", "查询"],
-  ["knowledge_search", "检索已启用的知识库内容", "查询"],
-  ...BUSINESS_QUERY_TOOLS,
+const EXTERNAL_TOOL_GROUPS: McpToolGroup[] = [
+  {
+    title: "知识库",
+    tools: [
+      ["knowledge_bases_list", "查询已启用的知识库列表", "查询"],
+      ["knowledge_search", "检索已启用的知识库内容", "查询"],
+    ],
+  },
+  { title: "业务数据", tools: BUSINESS_QUERY_TOOLS },
 ];
 
 function ConnectionGuide({
@@ -81,7 +105,7 @@ function ConnectionGuide({
   description,
   endpoint,
   keyPlaceholder,
-  tools,
+  toolGroups,
 }: ConnectionGuideProps) {
   const config = JSON.stringify(
     {
@@ -129,38 +153,61 @@ function ConnectionGuide({
             </pre>
           </Field>
 
-          <Field>
-            <FieldTitle>可用工具</FieldTitle>
+          <section
+            className="flex min-w-0 flex-col gap-5"
+            aria-label="可用工具"
+          >
+            <h2 className="text-base font-semibold">可用工具</h2>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>工具名称</TableHead>
-                  <TableHead>用途</TableHead>
-                  <TableHead className="w-20">权限</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tools.map(([name, description, access]) => (
-                  <TableRow key={name}>
-                    <TableCell>
-                      <code>{name}</code>
-                    </TableCell>
-                    <TableCell className="whitespace-normal">
-                      {description}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={access === "查询" ? "secondary" : "outline"}
-                      >
-                        {access}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Field>
+            {toolGroups.map(({ title, tools }) => (
+              <section
+                key={title}
+                className="min-w-0 overflow-hidden rounded-lg border"
+                aria-label={`${title}工具`}
+              >
+                <h3 className="flex items-center justify-between gap-2 border-b bg-muted/50 px-4 py-3 text-sm font-semibold">
+                  {title}
+                  <Badge variant="outline">{tools.length} 个工具</Badge>
+                </h3>
+                <Table className="min-w-[640px] table-fixed">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-1/2 px-4 text-muted-foreground">
+                        工具名称
+                      </TableHead>
+                      <TableHead className="px-4 text-muted-foreground">
+                        用途
+                      </TableHead>
+                      <TableHead className="w-20 px-4 text-muted-foreground">
+                        权限
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {tools.map(([name, description, access]) => (
+                      <TableRow key={name}>
+                        <TableCell className="px-4 py-3">
+                          <code>{name}</code>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 whitespace-normal">
+                          {description}
+                        </TableCell>
+                        <TableCell className="px-4 py-3">
+                          <Badge
+                            variant={
+                              access === "查询" ? "secondary" : "outline"
+                            }
+                          >
+                            {access}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </section>
+            ))}
+          </section>
         </FieldGroup>
       </CardContent>
     </Card>
@@ -190,7 +237,7 @@ export default function McpPage() {
                 description="可查询和管理数据。"
                 endpoint="<服务地址>/mcp/internal/"
                 keyPlaceholder="内部访问密钥"
-                tools={INTERNAL_TOOLS}
+                toolGroups={INTERNAL_TOOL_GROUPS}
               />
             </TabsContent>
 
@@ -201,7 +248,7 @@ export default function McpPage() {
                 description="仅可查询数据。"
                 endpoint="<服务地址>/mcp/external/"
                 keyPlaceholder="外部访问密钥"
-                tools={EXTERNAL_TOOLS}
+                toolGroups={EXTERNAL_TOOL_GROUPS}
               />
             </TabsContent>
           </Tabs>

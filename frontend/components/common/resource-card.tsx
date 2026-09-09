@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const SKELETON_COUNT = 6;
+const SKELETON_COUNT = 2;
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium" });
 
 type ResourceCardProps = {
@@ -99,21 +99,33 @@ export function ResourceCard({
   );
 }
 
-export function ResourceCardsSkeleton() {
+export function ResourceCardsSkeleton({
+  showMetadata = false,
+}: {
+  showMetadata?: boolean;
+}) {
   return (
     <div role="status" aria-label="正在加载列表…">
       <span className="sr-only">正在加载列表…</span>
       <CardGrid label="加载占位">
         {Array.from({ length: SKELETON_COUNT }, (_, index) => (
           <li key={index} aria-hidden="true">
-            <Card className="gap-3 py-5 shadow-none">
-              <CardHeader className="flex items-start gap-3 px-5">
-                <Skeleton className="size-10 shrink-0 rounded-lg" />
-                <div className="flex flex-1 flex-col gap-2">
-                  <Skeleton className="h-5 w-2/3" />
-                  <Skeleton className="h-4 w-full" />
-                </div>
-              </CardHeader>
+            <Card className="relative h-full min-w-0 gap-0 py-0 shadow-none">
+              <div className="flex flex-1 flex-col gap-3 py-5">
+                <CardHeader className="flex min-w-0 items-start gap-3 px-5">
+                  <Skeleton className="size-10 shrink-0 rounded-lg" />
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <Skeleton className="h-5 w-2/3" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                </CardHeader>
+                {showMetadata ? (
+                  <CardFooter className="mt-auto px-5 pl-[4.5rem]">
+                    <Skeleton className="h-4 w-28" />
+                  </CardFooter>
+                ) : null}
+              </div>
+              <Skeleton className="absolute top-5 right-5 size-4 rounded-sm" />
             </Card>
           </li>
         ))}

@@ -156,7 +156,7 @@ export function FileLibraryManager() {
           </div>
 
           {fileLibrariesQuery.isPending ? (
-            <ResourceCardsSkeleton />
+            <ResourceCardsSkeleton showMetadata />
           ) : fileLibrariesQuery.isError &&
             fileLibrariesQuery.data === undefined ? (
             <LoadError

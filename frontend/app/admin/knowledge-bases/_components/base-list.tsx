@@ -212,7 +212,7 @@ export function KnowledgeBaseManager() {
           </div>
 
           {knowledgeBasesQuery.isPending ? (
-            <ResourceCardsSkeleton />
+            <ResourceCardsSkeleton showMetadata />
           ) : knowledgeBasesQuery.isError &&
             knowledgeBasesQuery.data === undefined ? (
             <LoadError
