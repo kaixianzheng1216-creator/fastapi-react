@@ -41,12 +41,14 @@ type ThreadShellProps = PropsWithChildren<{
   isEmpty: boolean;
   maxWidth: string;
   footer: ReactNode;
+  scrollToBottomOnLoad?: boolean;
 }>;
 
 export const ThreadShell: FC<ThreadShellProps> = ({
   isEmpty,
   maxWidth,
   footer,
+  scrollToBottomOnLoad = true,
   children,
 }) => (
   <ThreadPrimitive.Root
@@ -61,6 +63,8 @@ export const ThreadShell: FC<ThreadShellProps> = ({
   >
     <ThreadPrimitive.Viewport
       turnAnchor="top"
+      scrollToBottomOnInitialize={scrollToBottomOnLoad}
+      scrollToBottomOnThreadSwitch={scrollToBottomOnLoad}
       data-slot="aui_thread-viewport"
       className="relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth 2xl:[scrollbar-width:none] 2xl:[&::-webkit-scrollbar]:hidden"
     >

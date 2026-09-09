@@ -1,6 +1,10 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useRef, useState } from "react";
@@ -125,6 +129,7 @@ export function KnowledgeDocuments({
       return hasProcessingDocument ? DOCUMENT_POLL_INTERVAL_MS : false;
     },
     enabled: activeView === "documents",
+    placeholderData: keepPreviousData,
   });
 
   const directoryEntries = directoryQuery.data?.data ?? EMPTY_DIRECTORY_ENTRIES;
@@ -311,23 +316,28 @@ export function KnowledgeDocuments({
           </div>
 
           {directoryEntries.length > 0 ? (
-            <KnowledgeDirectoryTable
-              knowledgeBaseId={knowledgeBaseId}
-              entries={directoryEntries}
-              selectedEntryKeys={selectedEntryKeys}
-              onSelectionChange={selectEntries}
-              getDocumentHref={(documentId) =>
-                getKnowledgeDocumentHref(
-                  knowledgeBaseId,
-                  documentId,
-                  currentPage,
-                  currentFolderId,
-                )
-              }
-              renderActions={(entry) => (
-                <DirectoryEntryActions entry={entry} actions={actions} />
-              )}
-            />
+            <div
+              aria-busy={directoryQuery.isPlaceholderData}
+              className="transition-opacity aria-busy:pointer-events-none aria-busy:opacity-60"
+            >
+              <KnowledgeDirectoryTable
+                knowledgeBaseId={knowledgeBaseId}
+                entries={directoryEntries}
+                selectedEntryKeys={selectedEntryKeys}
+                onSelectionChange={selectEntries}
+                getDocumentHref={(documentId) =>
+                  getKnowledgeDocumentHref(
+                    knowledgeBaseId,
+                    documentId,
+                    currentPage,
+                    currentFolderId,
+                  )
+                }
+                renderActions={(entry) => (
+                  <DirectoryEntryActions entry={entry} actions={actions} />
+                )}
+              />
+            </div>
           ) : null}
         </section>
       )}

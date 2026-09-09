@@ -232,7 +232,7 @@ export function InfluencerResourceManager() {
           </div>
 
           <Tabs
-            className="gap-6"
+            className="flex-1 gap-6"
             value={platform}
             onValueChange={(value) =>
               router.push(
@@ -360,6 +360,7 @@ export function InfluencerResourceManager() {
                     )}
 
                     <PagePagination
+                      className="mt-auto"
                       ariaLabel={`${platformName}达人分页`}
                       currentPage={currentPage}
                       pageCount={pageCount}

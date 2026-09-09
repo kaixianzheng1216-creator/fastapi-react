@@ -58,6 +58,14 @@ const PAGE_SIZE = 20;
 const DEFAULT_SORT_BY: RegionalIndicatorCode = "resident_population";
 const DEFAULT_SORT_ORDER: RegionalSortOrder = "desc";
 const REGIONAL_DATA_QUERY_KEY = ["brand-marketing-regional-data"] as const;
+const REGIONAL_INDICATOR_CODES = new Set<RegionalIndicatorCode>([
+  "resident_population",
+  "urbanization_rate",
+  "per_capita_gdp",
+  "disposable_income",
+  "consumption_expenditure",
+  "retail_sales",
+]);
 
 const EMPTY_REGIONS: ProvinceAnnualDataPublic[] = [];
 const EMPTY_INDICATORS: RegionalIndicatorPublic[] = [];
@@ -419,11 +427,17 @@ function ChangeBadge({
 }
 
 function getYear(value: string | null): number | undefined {
-  return value === null ? undefined : Number(value);
+  if (value === null) return undefined;
+
+  const year = Number(value);
+
+  return Number.isInteger(year) && year > 0 ? year : undefined;
 }
 
 function getSortBy(value: string | null): RegionalIndicatorCode {
-  return (value ?? DEFAULT_SORT_BY) as RegionalIndicatorCode;
+  return REGIONAL_INDICATOR_CODES.has(value as RegionalIndicatorCode)
+    ? (value as RegionalIndicatorCode)
+    : DEFAULT_SORT_BY;
 }
 
 function getYoyCode(code: RegionalIndicatorCode): RegionalIndicatorYoyCode {
@@ -431,7 +445,7 @@ function getYoyCode(code: RegionalIndicatorCode): RegionalIndicatorYoyCode {
 }
 
 function getSortOrder(value: string | null): RegionalSortOrder {
-  return (value ?? DEFAULT_SORT_ORDER) as RegionalSortOrder;
+  return value === "asc" ? "asc" : DEFAULT_SORT_ORDER;
 }
 
 function getRegionalDataHref(

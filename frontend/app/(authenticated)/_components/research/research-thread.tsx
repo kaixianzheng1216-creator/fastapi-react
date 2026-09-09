@@ -34,7 +34,8 @@ export function ResearchThread() {
   return (
     <ThreadShell
       isEmpty={isEmpty && !isLoading}
-      maxWidth={isEmpty ? "52rem" : "68rem"}
+      maxWidth={isEmpty && !isLoading ? "52rem" : "68rem"}
+      scrollToBottomOnLoad={false}
       footer={
         isLoading ? null : isEmpty ? (
           <>
