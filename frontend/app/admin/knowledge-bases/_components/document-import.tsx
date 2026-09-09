@@ -10,13 +10,13 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
@@ -53,7 +53,7 @@ export function KnowledgeDocumentImport({
   onDocumentsChanged: () => void;
 }) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [uploadResults, setUploadResults] = useState<UploadResult[]>([]);
+  const [uploadFailures, setUploadFailures] = useState<UploadResult[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadDocumentMutation = useMutation({
@@ -98,14 +98,9 @@ export function KnowledgeDocumentImport({
     },
 
     onSuccess: (results) => {
-      setUploadResults((previous) => [
-        ...previous.filter(
-          (item) => !results.some((result) => result.file === item.file),
-        ),
-        ...results,
-      ]);
-
       const failures = results.filter((result) => result.error);
+
+      setUploadFailures(failures);
       setSelectedFiles(failures.map((result) => result.file));
 
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -114,7 +109,7 @@ export function KnowledgeDocumentImport({
         toast.error(
           `文件上传成功 ${results.length - failures.length} 个，失败 ${failures.length} 个`,
           {
-            description: "请查看添加文档区域中的处理结果",
+            description: "失败文件已保留，可直接重试",
           },
         );
       } else {
@@ -204,7 +199,7 @@ export function KnowledgeDocumentImport({
                     disabled={uploadDocumentMutation.isPending}
                     multiple
                     onChange={(event) => {
-                      setUploadResults([]);
+                      setUploadFailures([]);
                       setSelectedFiles(
                         Array.from(event.currentTarget.files ?? []),
                       );
@@ -216,6 +211,11 @@ export function KnowledgeDocumentImport({
                       {selectedFiles.map((file) => file.name).join("、")}
                     </FieldDescription>
                   )}
+                  <FieldError
+                    errors={uploadFailures.map((result) => ({
+                      message: `${result.file.name}：${result.error}`,
+                    }))}
+                  />
                 </Field>
                 <Button
                   type="submit"
@@ -279,27 +279,6 @@ export function KnowledgeDocumentImport({
           </TabsContent>
         </Tabs>
       </CardContent>
-      {uploadResults.length > 0 && (
-        <CardFooter className="block">
-          <details open={uploadResults.some((result) => result.error)}>
-            <summary className="cursor-pointer text-sm">
-              本次成功 {uploadResults.filter((result) => !result.error).length}{" "}
-              个， 失败 {uploadResults.filter((result) => result.error).length}{" "}
-              个
-            </summary>
-            <ul className="mt-2 flex flex-col gap-2 text-sm">
-              {uploadResults.map((result, index) => (
-                <li
-                  key={`${result.file.name}-${index}`}
-                  className="break-words"
-                >
-                  {result.file.name}：{result.error ?? "已上传，等待处理"}
-                </li>
-              ))}
-            </ul>
-          </details>
-        </CardFooter>
-      )}
     </Card>
   );
 }
