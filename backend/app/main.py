@@ -3,20 +3,17 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from fastapi.routing import APIRoute
+from fastmcp.utilities.lifespan import combine_lifespans
 from scalar_fastapi import get_scalar_api_reference
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.exception_handlers import add_exception_handlers
+from app.api.openapi import custom_generate_unique_id
 from app.api.router import api_router
 from app.core.config import API_V1_PREFIX, PROJECT_NAME, settings
+from app.mcp.server import create_mcp_servers
 from app.modules.agent.resources import open_agent_resources
 from app.modules.agent.run_stream import AgentRunStream
-
-
-def custom_generate_unique_id(route: APIRoute) -> str:
-    tag = route.tags[0] if route.tags else route.name
-    return f"{tag}-{route.name}"
 
 
 @asynccontextmanager
@@ -66,3 +63,16 @@ if settings.all_cors_origins:
     )
 
 app.include_router(api_router, prefix=API_V1_PREFIX)
+
+internal_mcp, external_mcp = create_mcp_servers()
+internal_mcp_app = internal_mcp.http_app(path="/", stateless_http=True)
+external_mcp_app = external_mcp.http_app(path="/", stateless_http=True)
+
+app.router.lifespan_context = combine_lifespans(
+    lifespan,
+    internal_mcp_app.lifespan,
+    external_mcp_app.lifespan,
+)
+
+app.mount("/mcp/internal", internal_mcp_app)
+app.mount("/mcp/external", external_mcp_app)

@@ -59,6 +59,17 @@ class KnowledgeBasesPublic(SQLModel):
     count: int
 
 
+class KnowledgeBaseSummaryPublic(SQLModel):
+    id: uuid.UUID
+    name: str
+    description: str | None
+
+
+class KnowledgeBaseSummariesPublic(SQLModel):
+    data: list[KnowledgeBaseSummaryPublic]
+    count: int
+
+
 class KnowledgeFolderCreate(SQLModel):
     name: KnowledgeFolderName
     parent_id: uuid.UUID | None = None

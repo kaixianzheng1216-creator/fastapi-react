@@ -92,6 +92,8 @@ class Settings(BaseSettings):
     COS_BUCKET: str
     DOCLING_BASE_URL: AnyHttpUrl
     FIRECRAWL_API_KEY: SecretStr
+    MCP_INTERNAL_API_KEY: str
+    MCP_EXTERNAL_API_KEY: str
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
@@ -111,6 +113,9 @@ class Settings(BaseSettings):
         self._check_default_secret(
             "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
         )
+
+        if self.MCP_INTERNAL_API_KEY == self.MCP_EXTERNAL_API_KEY:
+            raise ValueError("MCP_INTERNAL_API_KEY 和 MCP_EXTERNAL_API_KEY 必须不同")
 
         return self
 
