@@ -23,7 +23,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { usersCreateUser } from "@/lib/client";
@@ -208,9 +207,6 @@ export function UserCreateDialog({
                 取消
               </Button>
               <Button type="submit" disabled={createUserMutation.isPending}>
-                {createUserMutation.isPending && (
-                  <Spinner data-icon="inline-start" />
-                )}
                 创建用户
               </Button>
             </DialogFooter>

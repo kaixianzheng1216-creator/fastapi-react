@@ -48,7 +48,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Spinner } from "@/components/ui/spinner";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   type KnowledgeFolderPublic,
@@ -502,9 +501,6 @@ export function DirectoryActionDialogs({
                 }
               }}
             >
-              {deleteEntriesMutation.isPending ? (
-                <Spinner data-icon="inline-start" />
-              ) : null}
               删除
             </AlertDialogAction>
           </AlertDialogFooter>

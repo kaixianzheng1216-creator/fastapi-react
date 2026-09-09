@@ -23,7 +23,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { type UserPublic, usersUpdateUser } from "@/lib/client";
@@ -174,9 +173,6 @@ export function UserEditDialog({
                 取消
               </Button>
               <Button type="submit" disabled={updateUserMutation.isPending}>
-                {updateUserMutation.isPending && (
-                  <Spinner data-icon="inline-start" />
-                )}
                 保存
               </Button>
             </DialogFooter>

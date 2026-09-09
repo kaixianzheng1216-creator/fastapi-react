@@ -16,7 +16,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { loginLoginAccessToken } from "@/lib/client";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { saveAccessToken } from "@/lib/auth";
@@ -109,7 +108,6 @@ export function LoginForm({
 
           <Field>
             <Button disabled={loginMutation.isPending} type="submit">
-              {loginMutation.isPending && <Spinner data-icon="inline-start" />}
               登录
             </Button>
           </Field>

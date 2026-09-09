@@ -50,7 +50,6 @@ import {
 import { AppHeader } from "@/components/layout/app-header";
 import { ThreadListPopover } from "@/app/(authenticated)/_components/thread-list-popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { getPaginationHref, parsePage } from "@/lib/pagination";
 import {
@@ -278,9 +277,6 @@ export function SkillManager() {
                 confirmDelete();
               }}
             >
-              {deleteSkillMutation.isPending && (
-                <Spinner data-icon="inline-start" />
-              )}
               删除技能
             </AlertDialogAction>
           </AlertDialogFooter>

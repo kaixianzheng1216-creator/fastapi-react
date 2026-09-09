@@ -17,7 +17,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { usersRegisterUser } from "@/lib/client";
 import { cn } from "@/lib/utils";
@@ -136,7 +135,6 @@ export function SignupForm({
 
           <Field>
             <Button disabled={signupMutation.isPending} type="submit">
-              {signupMutation.isPending && <Spinner data-icon="inline-start" />}
               注册
             </Button>
           </Field>

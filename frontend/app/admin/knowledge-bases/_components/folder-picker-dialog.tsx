@@ -26,7 +26,6 @@ import {
 import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import type { KnowledgeFolderPublic } from "@/lib/client";
 import { getFolderAncestors } from "@/lib/knowledge-folders";
 
@@ -222,7 +221,6 @@ export function KnowledgeFolderPickerDialog({
             disabled={isPending || !canMove}
             onClick={() => onMove(selectedFolderId)}
           >
-            {isPending ? <Spinner data-icon="inline-start" /> : null}
             移动
           </Button>
         </DialogFooter>

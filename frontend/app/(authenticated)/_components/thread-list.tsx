@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
 import { SidebarItemButton } from "@/app/(authenticated)/_components/sidebar-item-button";
 import {
   type ConversationKind,
@@ -680,9 +679,6 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
             />
             <DialogFooter className="mt-4">
               <Button type="submit" disabled={isPending || !newTitle.trim()}>
-                {renameMutation.isPending && (
-                  <Spinner data-icon="inline-start" />
-                )}
                 保存
               </Button>
             </DialogFooter>
@@ -713,9 +709,6 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
                 deleteConversationMutation.mutate();
               }}
             >
-              {deleteConversationMutation.isPending && (
-                <Spinner data-icon="inline-start" />
-              )}
               删除
             </AlertDialogAction>
           </AlertDialogFooter>

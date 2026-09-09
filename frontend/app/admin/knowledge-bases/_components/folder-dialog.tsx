@@ -18,7 +18,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   type KnowledgeFolderPublic,
@@ -128,9 +127,6 @@ export function KnowledgeFolderEditorDialog({
                 type="submit"
                 disabled={saveFolderMutation.isPending || !folderName.trim()}
               >
-                {saveFolderMutation.isPending ? (
-                  <Spinner data-icon="inline-start" />
-                ) : null}
                 保存
               </Button>
             </DialogFooter>

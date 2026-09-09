@@ -52,7 +52,6 @@ import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldTitle } from "@/components/ui/field";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
-import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -447,9 +446,6 @@ export function KnowledgeBaseManager() {
                 }
               }}
             >
-              {deleteKnowledgeBaseMutation.isPending && (
-                <Spinner data-icon="inline-start" />
-              )}
               删除
             </AlertDialogAction>
           </AlertDialogFooter>

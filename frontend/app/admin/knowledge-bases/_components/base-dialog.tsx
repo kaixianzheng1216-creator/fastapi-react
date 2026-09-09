@@ -21,7 +21,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
@@ -168,9 +167,6 @@ export function KnowledgeBaseDialog({
                 type="submit"
                 disabled={saveKnowledgeBaseMutation.isPending}
               >
-                {saveKnowledgeBaseMutation.isPending && (
-                  <Spinner data-icon="inline-start" />
-                )}
                 {isEditing ? "保存" : "创建知识库"}
               </Button>
             </DialogFooter>

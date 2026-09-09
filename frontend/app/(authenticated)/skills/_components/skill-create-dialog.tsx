@@ -23,7 +23,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { getApiErrorMessage } from "@/lib/api-error";
@@ -217,9 +216,6 @@ export function SkillCreateDialog({
                     </Button>
                   </DialogClose>
                   <Button type="submit" disabled={isSubmitting}>
-                    {createMarkdownMutation.isPending && (
-                      <Spinner data-icon="inline-start" />
-                    )}
                     创建技能
                   </Button>
                 </DialogFooter>
@@ -262,9 +258,6 @@ export function SkillCreateDialog({
                     </Button>
                   </DialogClose>
                   <Button type="submit" disabled={isSubmitting}>
-                    {createZipMutation.isPending && (
-                      <Spinner data-icon="inline-start" />
-                    )}
                     上传技能
                   </Button>
                 </DialogFooter>

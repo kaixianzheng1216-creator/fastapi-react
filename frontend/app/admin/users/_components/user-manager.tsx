@@ -52,7 +52,6 @@ import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { FieldLegend, FieldSet } from "@/components/ui/field";
 import { TableSkeleton } from "@/components/shared/table-skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -488,9 +487,6 @@ export function UserManager() {
                 }
               }}
             >
-              {deleteUserMutation.isPending && (
-                <Spinner data-icon="inline-start" />
-              )}
               删除
             </AlertDialogAction>
           </AlertDialogFooter>
