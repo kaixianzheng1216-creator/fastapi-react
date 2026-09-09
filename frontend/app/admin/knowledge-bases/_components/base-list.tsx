@@ -356,7 +356,7 @@ export function KnowledgeBaseManager() {
               <Empty>
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
-                    <BookOpenIcon />
+                    <BookOpenIcon aria-hidden="true" />
                   </EmptyMedia>
                   <EmptyTitle>
                     {search || status !== "all"

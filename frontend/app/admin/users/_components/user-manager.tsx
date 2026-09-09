@@ -401,7 +401,7 @@ export function UserManager() {
               <Empty>
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
-                    <UsersIcon />
+                    <UsersIcon aria-hidden="true" />
                   </EmptyMedia>
                   <EmptyTitle>
                     {search || role !== "all" || status !== "all"

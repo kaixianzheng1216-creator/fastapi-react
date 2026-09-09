@@ -33,7 +33,7 @@ function AdminShellState({
       <Empty role="status">
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <CircleAlertIcon />
+            <CircleAlertIcon aria-hidden="true" />
           </EmptyMedia>
           <EmptyTitle>{title}</EmptyTitle>
           {description && <EmptyDescription>{description}</EmptyDescription>}

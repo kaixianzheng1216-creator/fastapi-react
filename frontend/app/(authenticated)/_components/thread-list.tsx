@@ -242,7 +242,7 @@ export const ThreadListItems: FC<ComponentPropsWithoutRef<"div">> = ({
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <MessageCircleIcon />
+              <MessageCircleIcon aria-hidden="true" />
             </EmptyMedia>
             <EmptyTitle>暂无会话</EmptyTitle>
           </EmptyHeader>

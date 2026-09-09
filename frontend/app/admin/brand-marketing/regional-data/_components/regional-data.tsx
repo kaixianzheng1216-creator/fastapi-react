@@ -313,7 +313,7 @@ export function RegionalData() {
               <Empty>
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
-                    <MapIcon />
+                    <MapIcon aria-hidden="true" />
                   </EmptyMedia>
                   <EmptyTitle>暂无区域数据</EmptyTitle>
                 </EmptyHeader>

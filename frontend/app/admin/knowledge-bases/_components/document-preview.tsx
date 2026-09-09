@@ -216,7 +216,7 @@ export function KnowledgeDocumentPreview({
                 <Empty>
                   <EmptyHeader>
                     <EmptyMedia variant="icon">
-                      <FileTextIcon />
+                      <FileTextIcon aria-hidden="true" />
                     </EmptyMedia>
                     <EmptyTitle>暂无文档内容</EmptyTitle>
                   </EmptyHeader>
@@ -301,7 +301,7 @@ function DocumentChunksView({
       <Empty>
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <LayersIcon />
+            <LayersIcon aria-hidden="true" />
           </EmptyMedia>
           <EmptyTitle>暂无文档切片</EmptyTitle>
         </EmptyHeader>

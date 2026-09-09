@@ -193,7 +193,7 @@ export function KnowledgeFolderPickerDialog({
           <Empty>
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <FolderOpenIcon />
+                <FolderOpenIcon aria-hidden="true" />
               </EmptyMedia>
               <EmptyTitle>未找到文件夹</EmptyTitle>
             </EmptyHeader>

@@ -80,7 +80,7 @@ export function KnowledgeBaseDetail({
           <Empty className="mx-auto min-h-full max-w-6xl">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <BookOpenIcon />
+                <BookOpenIcon aria-hidden="true" />
               </EmptyMedia>
               <EmptyTitle>暂无知识库信息</EmptyTitle>
             </EmptyHeader>

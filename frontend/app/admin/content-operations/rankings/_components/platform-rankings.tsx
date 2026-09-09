@@ -263,7 +263,7 @@ export function PlatformRankings() {
                   <Empty>
                     <EmptyHeader>
                       <EmptyMedia variant="icon">
-                        <ChartNoAxesColumnIcon />
+                        <ChartNoAxesColumnIcon aria-hidden="true" />
                       </EmptyMedia>
                       <EmptyTitle>暂无{item.name}榜单数据</EmptyTitle>
                     </EmptyHeader>
@@ -337,7 +337,7 @@ export function PlatformRankings() {
                         <Empty>
                           <EmptyHeader>
                             <EmptyMedia variant="icon">
-                              <ChartNoAxesColumnIcon />
+                              <ChartNoAxesColumnIcon aria-hidden="true" />
                             </EmptyMedia>
                             <EmptyTitle>暂无榜单数据</EmptyTitle>
                           </EmptyHeader>

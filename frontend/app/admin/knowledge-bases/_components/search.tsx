@@ -126,7 +126,7 @@ export function KnowledgeSearch({
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <SearchIcon />
+              <SearchIcon aria-hidden="true" />
             </EmptyMedia>
             <EmptyTitle>未找到相关内容</EmptyTitle>
           </EmptyHeader>

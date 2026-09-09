@@ -310,7 +310,7 @@ export function InfluencerResourceManager() {
                         <Empty>
                           <EmptyHeader>
                             <EmptyMedia variant="icon">
-                              <UsersIcon />
+                              <UsersIcon aria-hidden="true" />
                             </EmptyMedia>
                             <EmptyTitle>
                               {search

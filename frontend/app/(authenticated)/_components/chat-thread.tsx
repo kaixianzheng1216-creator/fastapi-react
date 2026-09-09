@@ -73,7 +73,7 @@ export const ChatThread: FC = () => {
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <MessageCircleIcon />
+              <MessageCircleIcon aria-hidden="true" />
             </EmptyMedia>
             <EmptyTitle>会话中暂无消息</EmptyTitle>
           </EmptyHeader>

@@ -104,7 +104,7 @@ export function SkillDetail({ skillName }: SkillDetailProps) {
             <Empty>
               <EmptyHeader>
                 <EmptyMedia variant="icon">
-                  <PuzzleIcon />
+                  <PuzzleIcon aria-hidden="true" />
                 </EmptyMedia>
                 <EmptyTitle>暂无技能信息</EmptyTitle>
               </EmptyHeader>
@@ -272,7 +272,7 @@ function SkillFileTree({
       <Empty className="p-4 md:p-4">
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <FileIcon />
+            <FileIcon aria-hidden="true" />
           </EmptyMedia>
           <EmptyTitle>暂无文件</EmptyTitle>
         </EmptyHeader>
@@ -398,7 +398,7 @@ function FilePreviewContent({
       <Empty>
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <FileIcon />
+            <FileIcon aria-hidden="true" />
           </EmptyMedia>
           <EmptyTitle>暂无文件内容</EmptyTitle>
         </EmptyHeader>
@@ -428,7 +428,7 @@ function FilePreviewContent({
       <Empty>
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <DownloadIcon />
+            <DownloadIcon aria-hidden="true" />
           </EmptyMedia>
           <EmptyTitle>{path}</EmptyTitle>
           <EmptyDescription>{preview.contentType}</EmptyDescription>
@@ -447,7 +447,7 @@ function FilePreviewContent({
     <Empty>
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <ImageIcon />
+          <ImageIcon aria-hidden="true" />
         </EmptyMedia>
         <EmptyTitle>选择文件</EmptyTitle>
         <EmptyDescription>从左侧列表中选择要预览的文件。</EmptyDescription>

@@ -180,7 +180,7 @@ export function SkillManager() {
               <Empty>
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
-                    <PuzzleIcon />
+                    <PuzzleIcon aria-hidden="true" />
                   </EmptyMedia>
                   <EmptyTitle>
                     {searchQuery ? "未找到相关技能" : "暂无技能"}

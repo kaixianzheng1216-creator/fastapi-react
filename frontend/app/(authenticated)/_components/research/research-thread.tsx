@@ -54,7 +54,7 @@ export function ResearchThread() {
           <Empty>
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <SearchIcon />
+                <SearchIcon aria-hidden="true" />
               </EmptyMedia>
               <EmptyTitle>暂无调研内容</EmptyTitle>
             </EmptyHeader>
