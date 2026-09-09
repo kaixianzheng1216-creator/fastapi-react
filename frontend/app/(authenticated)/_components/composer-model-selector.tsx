@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { ModelSelector } from "@/app/(authenticated)/_components/model-selector";
+import { Skeleton } from "@/components/ui/skeleton";
 import { agentReadModels } from "@/lib/client";
 
 const THINKING_OPTIONS = [
@@ -23,12 +24,16 @@ export function ComposerModelSelector() {
     staleTime: Infinity,
   });
 
-  if (isPending)
+  if (isPending) {
     return (
-      <span role="status" className="text-muted-foreground text-xs">
-        正在加载模型…
-      </span>
+      <Skeleton
+        role="status"
+        aria-label="正在加载模型"
+        className="h-8 w-24 rounded-md"
+      />
     );
+  }
+
   if (!models?.data.length)
     return (
       <span className="text-muted-foreground text-xs">暂无可显示内容</span>

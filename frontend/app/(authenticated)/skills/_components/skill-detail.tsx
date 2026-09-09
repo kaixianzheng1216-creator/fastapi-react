@@ -153,9 +153,20 @@ function SkillDetailSkeleton() {
       className="flex flex-col gap-4"
       aria-label="正在加载技能详情"
     >
-      <Skeleton className="h-9 w-40" />
-      <Skeleton className="h-48 w-full" />
-      <Skeleton className="h-64 w-full" />
+      <Skeleton className="h-4 w-2/3 max-w-xl" />
+      <div className="flex gap-2">
+        <Skeleton className="h-9 w-20" />
+        <Skeleton className="h-9 w-20" />
+      </div>
+      <div className="flex max-w-4xl flex-col gap-3">
+        <Skeleton className="h-7 w-2/5" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-11/12" />
+        <Skeleton className="h-4 w-4/5" />
+        <Skeleton className="mt-3 h-6 w-1/3" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
     </div>
   );
 }
@@ -358,11 +369,17 @@ function FilePreviewContent({
 }) {
   if (loading) {
     return (
-      <Skeleton
+      <div
         role="status"
-        className="h-full w-full"
         aria-label="正在加载文件"
-      />
+        className="flex h-full w-full flex-col gap-3"
+      >
+        <Skeleton className="h-5 w-1/3" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-11/12" />
+        <Skeleton className="h-4 w-4/5" />
+        <Skeleton className="h-4 w-2/3" />
+      </div>
     );
   }
 

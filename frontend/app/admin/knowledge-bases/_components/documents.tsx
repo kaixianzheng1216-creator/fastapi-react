@@ -41,6 +41,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TableSkeleton } from "@/components/shared/table-skeleton";
 import {
   type KnowledgeFolderPublic,
   knowledgeBasesReadDirectory,
@@ -256,7 +257,13 @@ export function KnowledgeDocuments({
       />
 
       {directoryPending ? (
-        <Skeleton className="h-20" role="status" aria-label="正在加载目录" />
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-8 w-28" />
+          </div>
+          <TableSkeleton columns={5} />
+        </div>
       ) : (
         <section className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-3">

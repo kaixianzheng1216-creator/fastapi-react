@@ -50,7 +50,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { FieldLegend, FieldSet } from "@/components/ui/field";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TableSkeleton } from "@/components/shared/table-skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -394,7 +394,7 @@ export function UserManager() {
           </div>
 
           {usersQuery.isPending ? (
-            <Skeleton className="h-64" />
+            <TableSkeleton columns={6} />
           ) : rows.length === 0 ? (
             pageOutOfRange ? (
               <PageOutOfRange href={getUsersHref(1, search, role, status)} />

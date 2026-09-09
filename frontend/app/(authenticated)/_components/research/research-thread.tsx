@@ -2,6 +2,8 @@
 
 import {
   Composer,
+  ComposerSkeleton,
+  ConversationSkeleton,
   StopButton,
   ThreadShell,
   ThreadStarterSuggestions,
@@ -32,10 +34,12 @@ export function ResearchThread() {
 
   return (
     <ThreadShell
-      isEmpty={isEmpty}
+      isEmpty={isEmpty && !isLoading}
       maxWidth={isEmpty ? "52rem" : "68rem"}
       footer={
-        isLoading ? null : isEmpty ? (
+        isLoading ? (
+          <ComposerSkeleton />
+        ) : isEmpty ? (
           <>
             <Composer />
             <ThreadStarterSuggestions />
@@ -45,11 +49,7 @@ export function ResearchThread() {
         )
       }
     >
-      {isLoading && (
-        <p role="status" className="text-muted-foreground text-sm">
-          正在加载会话…
-        </p>
-      )}
+      {isLoading && <ConversationSkeleton />}
       {isEmpty &&
         !isLoading &&
         (isExisting ? (

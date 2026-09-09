@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TableSkeleton } from "@/components/shared/table-skeleton";
 import {
   Table,
   TableBody,
@@ -319,7 +319,7 @@ export function PlatformRankings() {
                     </div>
 
                     {rankingQuery.isPending ? (
-                      <Skeleton className="h-96" />
+                      <TableSkeleton columns={7} rows={8} />
                     ) : rows.length === 0 ? (
                       pageOutOfRange ? (
                         <PageOutOfRange

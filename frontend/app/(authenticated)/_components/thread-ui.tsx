@@ -9,6 +9,7 @@ import { ComposerModelSelector } from "@/app/(authenticated)/_components/compose
 import { selectIsNewConversation } from "@/app/(authenticated)/_components/conversation-selectors";
 import { TooltipIconButton } from "@/app/(authenticated)/_components/tooltip-icon-button";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
   AuiIf,
@@ -104,6 +105,34 @@ export const ThreadWelcome: FC<ThreadWelcomeProps> = ({ title }) => (
       {title}
     </h1>
   </div>
+);
+
+export const ConversationSkeleton: FC = () => (
+  <div
+    role="status"
+    aria-label="正在加载会话"
+    className="flex flex-col gap-8 py-6"
+  >
+    <div className="flex max-w-[85%] flex-col gap-3">
+      <Skeleton className="h-4 w-4/5" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-3/5" />
+    </div>
+    <Skeleton className="ms-auto h-10 w-2/5 rounded-xl" />
+    <div className="flex max-w-[85%] flex-col gap-3">
+      <Skeleton className="h-4 w-2/3" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-3/4" />
+      <Skeleton className="h-4 w-1/2" />
+    </div>
+  </div>
+);
+
+export const ComposerSkeleton: FC = () => (
+  <Skeleton
+    aria-hidden="true"
+    className="h-16 w-full rounded-(--composer-radius)"
+  />
 );
 
 export const ThreadStarterSuggestions: FC = () => (

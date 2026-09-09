@@ -11,6 +11,8 @@ import {
 import { ToolFallback } from "@/app/(authenticated)/_components/tool-fallback";
 import {
   Composer,
+  ComposerSkeleton,
+  ConversationSkeleton,
   ThreadShell,
   ThreadStarterSuggestions,
   ThreadWelcome,
@@ -51,10 +53,12 @@ export const ChatThread: FC = () => {
 
   return (
     <ThreadShell
-      isEmpty={isEmpty}
+      isEmpty={isEmpty && !isLoading}
       maxWidth="52rem"
       footer={
-        !isLoading && (
+        isLoading ? (
+          <ComposerSkeleton />
+        ) : (
           <>
             <Composer />
             <ThreadStarterSuggestions />
@@ -62,11 +66,7 @@ export const ChatThread: FC = () => {
         )
       }
     >
-      {isLoading && (
-        <p role="status" className="text-muted-foreground text-sm">
-          正在加载会话…
-        </p>
-      )}
+      {isLoading && <ConversationSkeleton />}
 
       {isEmpty && !isLoading && isExisting && (
         <Empty>

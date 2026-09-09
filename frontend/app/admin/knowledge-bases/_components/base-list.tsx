@@ -51,7 +51,7 @@ import {
 import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldTitle } from "@/components/ui/field";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TableSkeleton } from "@/components/shared/table-skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
@@ -349,7 +349,7 @@ export function KnowledgeBaseManager() {
           </div>
 
           {knowledgeBasesQuery.isPending ? (
-            <Skeleton className="h-64" />
+            <TableSkeleton columns={5} />
           ) : rows.length === 0 ? (
             pageOutOfRange ? (
               <PageOutOfRange href={getKnowledgeBasesHref(1, search, status)} />

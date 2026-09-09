@@ -27,7 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TableSkeleton } from "@/components/shared/table-skeleton";
 import {
   Table,
   TableBody,
@@ -289,7 +289,7 @@ export function InfluencerResourceManager() {
                     </div>
 
                     {accountsQuery.isPending ? (
-                      <Skeleton className="h-80" />
+                      <TableSkeleton columns={7} rows={7} />
                     ) : rows.length === 0 ? (
                       pageOutOfRange ? (
                         <PageOutOfRange

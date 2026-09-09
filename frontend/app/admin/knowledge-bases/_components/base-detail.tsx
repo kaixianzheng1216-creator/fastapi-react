@@ -13,6 +13,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TableSkeleton } from "@/components/shared/table-skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { knowledgeBasesReadKnowledgeBase } from "@/lib/client";
 import { cn } from "@/lib/utils";
@@ -74,11 +75,7 @@ export function KnowledgeBaseDetail({
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
         {knowledgeBaseQuery.isPending ? (
-          <Skeleton
-            role="status"
-            aria-label="正在加载知识库详情"
-            className="mx-auto h-64 max-w-6xl"
-          />
+          <KnowledgeBaseDetailSkeleton />
         ) : !knowledgeBaseQuery.data ? (
           <Empty className="mx-auto min-h-full max-w-6xl">
             <EmptyHeader>
@@ -120,5 +117,25 @@ export function KnowledgeBaseDetail({
           )}
       </div>
     </>
+  );
+}
+
+function KnowledgeBaseDetailSkeleton() {
+  return (
+    <div
+      className="mx-auto flex max-w-6xl flex-col gap-6"
+    >
+      <Skeleton className="h-9 w-32" />
+      <div className="flex flex-col gap-4 rounded-xl border p-6">
+        <Skeleton className="h-5 w-36" />
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-9 w-28" />
+      </div>
+      <div className="flex items-center justify-between gap-3">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-8 w-28" />
+      </div>
+      <TableSkeleton columns={5} rows={5} />
+    </div>
   );
 }
