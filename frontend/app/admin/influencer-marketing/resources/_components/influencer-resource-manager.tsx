@@ -21,6 +21,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useMemo } from "react";
 
 import { AppHeader } from "@/components/layout/app-header";
+import { LoadError } from "@/components/shared/load-error";
 import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
 import { SearchToolbar } from "@/components/shared/search-toolbar";
@@ -96,6 +97,7 @@ export function InfluencerResourceManager() {
   );
 
   const accountsQuery = useQuery({
+    meta: { handlesInitialError: true },
     queryKey: [
       "influencer-accounts",
       platform,
@@ -270,7 +272,8 @@ export function InfluencerResourceManager() {
                         <h3 className="font-medium">{platformName}达人</h3>
                         {accountsQuery.isPending ? (
                           <Skeleton className="h-4 w-48" />
-                        ) : (
+                        ) : accountsQuery.isError &&
+                          accountsQuery.data === undefined ? null : (
                           <p
                             className="text-sm text-muted-foreground"
                             aria-live="polite"
@@ -295,6 +298,13 @@ export function InfluencerResourceManager() {
 
                     {accountsQuery.isPending ? (
                       <TableSkeleton columns={4} rows={7} />
+                    ) : accountsQuery.isError &&
+                      accountsQuery.data === undefined ? (
+                      <LoadError
+                        title="达人数据加载失败"
+                        isRetrying={accountsQuery.isFetching}
+                        onRetry={() => void accountsQuery.refetch()}
+                      />
                     ) : rows.length === 0 ? (
                       pageOutOfRange ? (
                         <PageOutOfRange

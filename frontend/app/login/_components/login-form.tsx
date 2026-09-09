@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import { ButtonLoading } from "@/components/shared/button-loading";
 import {
   Field,
   FieldDescription,
@@ -107,8 +108,15 @@ export function LoginForm({
           <FieldError errors={[loginForm.formState.errors.root]} />
 
           <Field>
-            <Button disabled={loginMutation.isPending} type="submit">
-              登录
+            <Button
+              className="relative"
+              disabled={loginMutation.isPending}
+              aria-busy={loginMutation.isPending}
+              type="submit"
+            >
+              <ButtonLoading loading={loginMutation.isPending}>
+                登录
+              </ButtonLoading>
             </Button>
           </Field>
         </FieldGroup>

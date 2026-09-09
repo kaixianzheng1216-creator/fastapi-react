@@ -275,13 +275,21 @@ const AttachmentRemove: FC = () => {
         if (!removeMutation.isPending) removeMutation.mutate();
       }}
       disabled={removeMutation.isPending}
+      aria-busy={removeMutation.isPending}
     >
       <TooltipIconButton
         tooltip="删除附件"
         className="aui-attachment-tile-remove text-muted-foreground hover:[&_svg]:text-destructive absolute end-1.5 top-1.5 size-3.5 rounded-full bg-white opacity-100 shadow-sm hover:bg-white! [&_svg]:text-black"
         side="top"
       >
-        <XIcon className="aui-attachment-remove-icon size-3 dark:stroke-[2.5px]" />
+        {removeMutation.isPending ? (
+          <Loader2Icon
+            className="size-3 animate-spin"
+            aria-hidden="true"
+          />
+        ) : (
+          <XIcon className="aui-attachment-remove-icon size-3 dark:stroke-[2.5px]" />
+        )}
       </TooltipIconButton>
     </AttachmentPrimitive.Remove>
   );

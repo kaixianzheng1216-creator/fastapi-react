@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/app-header";
+import { LoadError } from "@/components/shared/load-error";
 import { MarkdownContent } from "@/components/shared/markdown-content";
 import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
@@ -29,6 +30,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
@@ -99,6 +101,7 @@ export function KnowledgeDocumentPreview({
   }
 
   const previewQuery = useQuery({
+    meta: { handlesInitialError: true },
     queryKey: ["knowledge-document-preview", documentId],
     queryFn: async ({ signal }) => {
       const { data } = await knowledgeDocumentsReadDocumentPreview({
@@ -163,9 +166,18 @@ export function KnowledgeDocumentPreview({
                   size="sm"
                   aria-label="下载原文件"
                   disabled={downloadDocumentMutation.isPending}
+                  aria-busy={
+                    downloadDocumentMutation.isPending &&
+                    downloadDocumentMutation.variables === "original"
+                  }
                   onClick={() => downloadDocumentMutation.mutate("original")}
                 >
-                  <DownloadIcon data-icon="inline-start" aria-hidden="true" />
+                  {downloadDocumentMutation.isPending &&
+                  downloadDocumentMutation.variables === "original" ? (
+                    <Spinner data-icon="inline-start" aria-hidden="true" />
+                  ) : (
+                    <DownloadIcon data-icon="inline-start" aria-hidden="true" />
+                  )}
                   <span className="hidden sm:inline">下载原文件</span>
                 </Button>
               )}
@@ -175,9 +187,18 @@ export function KnowledgeDocumentPreview({
                   size="sm"
                   aria-label="下载 Markdown"
                   disabled={downloadDocumentMutation.isPending}
+                  aria-busy={
+                    downloadDocumentMutation.isPending &&
+                    downloadDocumentMutation.variables === "markdown"
+                  }
                   onClick={() => downloadDocumentMutation.mutate("markdown")}
                 >
-                  <FileTextIcon data-icon="inline-start" aria-hidden="true" />
+                  {downloadDocumentMutation.isPending &&
+                  downloadDocumentMutation.variables === "markdown" ? (
+                    <Spinner data-icon="inline-start" aria-hidden="true" />
+                  ) : (
+                    <FileTextIcon data-icon="inline-start" aria-hidden="true" />
+                  )}
                   <span className="hidden sm:inline">下载 Markdown</span>
                 </Button>
               )}
@@ -212,6 +233,12 @@ export function KnowledgeDocumentPreview({
                   <Skeleton className="h-4" />
                   <Skeleton className="h-4 w-4/5" />
                 </div>
+              ) : previewQuery.isError && previewQuery.data === undefined ? (
+                <LoadError
+                  title="文档内容加载失败"
+                  isRetrying={previewQuery.isFetching}
+                  onRetry={() => void previewQuery.refetch()}
+                />
               ) : !previewQuery.data ? (
                 <Empty>
                   <EmptyHeader>
@@ -254,6 +281,7 @@ function DocumentChunksView({
   getPageHref: (page: number) => string;
 }) {
   const chunksQuery = useQuery({
+    meta: { handlesInitialError: true },
     queryKey: ["knowledge-document-chunks", documentId, page],
     queryFn: async ({ signal }) => {
       const { data } = await knowledgeDocumentsReadDocumentChunks({
@@ -293,6 +321,16 @@ function DocumentChunksView({
           </Card>
         ))}
       </div>
+    );
+  }
+
+  if (chunksQuery.isError && chunksQuery.data === undefined) {
+    return (
+      <LoadError
+        title="文档切片加载失败"
+        isRetrying={chunksQuery.isFetching}
+        onRetry={() => void chunksQuery.refetch()}
+      />
     );
   }
 

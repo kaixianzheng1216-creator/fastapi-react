@@ -28,6 +28,12 @@ const statusIcon = {
   pending: CircleIcon,
 };
 
+const statusLabel = {
+  completed: "已完成",
+  in_progress: "进行中",
+  pending: "待处理",
+};
+
 export function TodoList() {
   const todoState = useAuiState(
     (state) => state.thread.state,
@@ -39,7 +45,10 @@ export function TodoList() {
       <CardHeader>
         <CollapsibleTrigger className="group flex w-full items-center justify-between">
           <CardTitle className="font-normal">待办</CardTitle>
-          <ChevronDownIcon className="size-4 -rotate-90 transition-transform group-data-[state=open]:rotate-0" />
+          <ChevronDownIcon
+            aria-hidden="true"
+            className="size-4 -rotate-90 transition-transform motion-reduce:transition-none group-data-[state=open]:rotate-0"
+          />
         </CollapsibleTrigger>
       </CardHeader>
       <CollapsibleContent>
@@ -65,11 +74,14 @@ function TodoItem({ todo }: { todo: TodoPublic }) {
   return (
     <li className="flex items-start gap-2">
       <Icon
+        aria-hidden="true"
         className={cn(
           "mt-0.5 size-4 shrink-0",
-          todo.status === "in_progress" && "animate-spin",
+          todo.status === "in_progress" &&
+            "animate-spin motion-reduce:animate-none",
         )}
       />
+      <span className="sr-only">{statusLabel[todo.status]}：</span>
       <span
         className={todo.status === "completed" ? "line-through" : undefined}
       >

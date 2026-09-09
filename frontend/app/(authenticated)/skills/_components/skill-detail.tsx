@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/layout/app-header";
+import { LoadError } from "@/components/shared/load-error";
 import { MarkdownContent } from "@/components/shared/markdown-content";
 import {
   skillsReadSkill,
@@ -53,6 +54,7 @@ export function SkillDetail({ skillName }: SkillDetailProps) {
     searchParams.get("view") === "files" ? "files" : "overview";
 
   const detailQuery = useQuery({
+    meta: { handlesInitialError: true },
     queryKey: ["skills", "detail", skillName],
     queryFn: async ({ signal }) => {
       const { data } = await skillsReadSkill({
@@ -100,7 +102,15 @@ export function SkillDetail({ skillName }: SkillDetailProps) {
         <div className="mx-auto flex min-h-full max-w-6xl flex-col gap-6">
           {detailQuery.isPending && <SkillDetailSkeleton />}
 
-          {!detailQuery.isPending && !detail && (
+          {detailQuery.isError && detail === undefined && (
+            <LoadError
+              title="技能加载失败"
+              isRetrying={detailQuery.isFetching}
+              onRetry={() => void detailQuery.refetch()}
+            />
+          )}
+
+          {!detailQuery.isPending && !detailQuery.isError && !detail && (
             <Empty>
               <EmptyHeader>
                 <EmptyMedia variant="icon">
@@ -181,6 +191,7 @@ function SkillFileBrowser({
 }) {
   const [selectedPath, setSelectedPath] = useState<string>();
   const fileQuery = useQuery({
+    meta: { handlesInitialError: true },
     queryKey: ["skills", "file", skillName, selectedPath],
     queryFn: async ({ signal }) => {
       if (!selectedPath) return undefined;
@@ -251,6 +262,9 @@ function SkillFileBrowser({
             path={selectedPath}
             preview={filePreview}
             loading={fileLoading}
+            error={fileQuery.isError && fileQuery.data === undefined}
+            retrying={fileQuery.isFetching}
+            onRetry={() => void fileQuery.refetch()}
           />
         </CardContent>
       </Card>
@@ -372,10 +386,16 @@ function FilePreviewContent({
   path,
   preview,
   loading,
+  error,
+  retrying,
+  onRetry,
 }: {
   path: string | undefined;
   preview: FilePreview | undefined;
   loading: boolean;
+  error: boolean;
+  retrying: boolean;
+  onRetry: () => void;
 }) {
   if (loading) {
     return (
@@ -390,6 +410,16 @@ function FilePreviewContent({
         <Skeleton className="h-4 w-4/5" />
         <Skeleton className="h-4 w-2/3" />
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <LoadError
+        title="文件加载失败"
+        isRetrying={retrying}
+        onRetry={onRetry}
+      />
     );
   }
 

@@ -10,6 +10,7 @@ import {
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ButtonLoading } from "@/components/shared/button-loading";
 import {
   Collapsible,
   CollapsibleContent,
@@ -221,10 +222,14 @@ export function KnowledgeFolderPickerDialog({
           </Button>
           <Button
             type="button"
+            className="relative"
             disabled={isPending || !canMove}
+            aria-busy={isPending}
             onClick={() => onMove(selectedFolderId)}
           >
-            移动
+            <ButtonLoading loading={isPending}>
+              移动
+            </ButtonLoading>
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -26,7 +26,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useMemo, useState } from "react";
 
 import { AppHeader } from "@/components/layout/app-header";
+import { ButtonLoading } from "@/components/shared/button-loading";
 import { KnowledgeBaseDialog } from "@/app/admin/knowledge-bases/_components/base-dialog";
+import { LoadError } from "@/components/shared/load-error";
 import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { SearchToolbar } from "@/components/shared/search-toolbar";
 import { PagePagination } from "@/components/shared/page-pagination";
@@ -104,6 +106,7 @@ export function KnowledgeBaseManager() {
   const status = getStatusFilter(searchParams.get("status"));
 
   const knowledgeBasesQuery = useQuery({
+    meta: { handlesInitialError: true },
     queryKey: [...KNOWLEDGE_BASES_QUERY_KEY, pageIndex, search, status],
     queryFn: async ({ signal }) => {
       const { data } = await knowledgeBasesReadKnowledgeBases({
@@ -349,6 +352,13 @@ export function KnowledgeBaseManager() {
 
           {knowledgeBasesQuery.isPending ? (
             <TableSkeleton columns={4} />
+          ) : knowledgeBasesQuery.isError &&
+            knowledgeBasesQuery.data === undefined ? (
+            <LoadError
+              title="知识库加载失败"
+              isRetrying={knowledgeBasesQuery.isFetching}
+              onRetry={() => void knowledgeBasesQuery.refetch()}
+            />
           ) : rows.length === 0 ? (
             pageOutOfRange ? (
               <PageOutOfRange href={getKnowledgeBasesHref(1, search, status)} />
@@ -445,7 +455,9 @@ export function KnowledgeBaseManager() {
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
+              className="relative"
               disabled={deleteKnowledgeBaseMutation.isPending}
+              aria-busy={deleteKnowledgeBaseMutation.isPending}
               onClick={(event) => {
                 event.preventDefault();
 
@@ -454,7 +466,9 @@ export function KnowledgeBaseManager() {
                 }
               }}
             >
-              删除
+              <ButtonLoading loading={deleteKnowledgeBaseMutation.isPending}>
+                删除
+              </ButtonLoading>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

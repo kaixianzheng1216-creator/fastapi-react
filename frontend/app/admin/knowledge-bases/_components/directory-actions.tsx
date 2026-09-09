@@ -29,6 +29,7 @@ import {
 } from "@/app/admin/knowledge-bases/_lib/directory";
 import { KnowledgeFolderEditorDialog } from "@/app/admin/knowledge-bases/_components/folder-dialog";
 import { KnowledgeFolderPickerDialog } from "@/app/admin/knowledge-bases/_components/folder-picker-dialog";
+import { ButtonLoading } from "@/components/shared/button-loading";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -492,7 +493,9 @@ export function DirectoryActionDialogs({
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
+              className="relative"
               disabled={deleteEntriesMutation.isPending}
+              aria-busy={deleteEntriesMutation.isPending}
               onClick={(event) => {
                 event.preventDefault();
 
@@ -501,7 +504,9 @@ export function DirectoryActionDialogs({
                 }
               }}
             >
-              删除
+              <ButtonLoading loading={deleteEntriesMutation.isPending}>
+                删除
+              </ButtonLoading>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -26,6 +26,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { ButtonLoading } from "@/components/shared/button-loading";
+import { LoadError } from "@/components/shared/load-error";
 import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
 import { SearchToolbar } from "@/components/shared/search-toolbar";
@@ -75,6 +77,7 @@ export function SkillManager() {
   const offset = (currentPage - 1) * PAGE_SIZE;
 
   const skillsQuery = useQuery({
+    meta: { handlesInitialError: true },
     queryKey: [...SKILLS_QUERY_KEY, offset, searchQuery],
     queryFn: async ({ signal }) => {
       const { data } = await skillsReadSkills({
@@ -172,7 +175,15 @@ export function SkillManager() {
           />
 
           {skillsQuery.isPending && <SkillGridSkeleton />}
+          {skillsQuery.isError && skillsQuery.data === undefined && (
+            <LoadError
+              title="技能加载失败"
+              isRetrying={skillsQuery.isFetching}
+              onRetry={() => void skillsQuery.refetch()}
+            />
+          )}
           {!skillsQuery.isPending &&
+            (!skillsQuery.isError || skillsQuery.data !== undefined) &&
             skills.length === 0 &&
             (pageOutOfRange ? (
               <PageOutOfRange href={getSkillsHref(1, searchQuery)} />
@@ -278,13 +289,17 @@ export function SkillManager() {
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
+              className="relative"
               disabled={deleteSkillMutation.isPending}
+              aria-busy={deleteSkillMutation.isPending}
               onClick={(event) => {
                 event.preventDefault();
                 confirmDelete();
               }}
             >
-              删除技能
+              <ButtonLoading loading={deleteSkillMutation.isPending}>
+                删除技能
+              </ButtonLoading>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

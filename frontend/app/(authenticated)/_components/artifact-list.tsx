@@ -27,7 +27,10 @@ export function ArtifactList() {
       <CardHeader>
         <CollapsibleTrigger className="group flex w-full items-center justify-between">
           <CardTitle className="font-normal">产物</CardTitle>
-          <ChevronDownIcon className="size-4 -rotate-90 transition-transform group-data-[state=open]:rotate-0" />
+          <ChevronDownIcon
+            aria-hidden="true"
+            className="size-4 -rotate-90 transition-transform motion-reduce:transition-none group-data-[state=open]:rotate-0"
+          />
         </CollapsibleTrigger>
       </CardHeader>
       <CollapsibleContent>
@@ -37,7 +40,10 @@ export function ArtifactList() {
           ) : (
             <ul className="flex flex-col gap-3 text-sm">
               {artifacts.map((artifact, index) => (
-                <ArtifactItem key={`${artifact.url}-${index}`} artifact={artifact} />
+                <ArtifactItem
+                  key={`${artifact.url}-${index}`}
+                  artifact={artifact}
+                />
               ))}
             </ul>
           )}
@@ -56,7 +62,7 @@ function ArtifactItem({ artifact }: { artifact: ArtifactPublic }) {
         rel="noreferrer"
         target="_blank"
       >
-        <FileIcon className="size-4 shrink-0" />
+        <FileIcon aria-hidden="true" className="size-4 shrink-0" />
         <span className="min-w-0 flex-1 truncate">{artifact.name}</span>
       </a>
     </li>

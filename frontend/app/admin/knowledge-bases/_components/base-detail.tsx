@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/app-header";
+import { LoadError } from "@/components/shared/load-error";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -30,6 +31,7 @@ export function KnowledgeBaseDetail({
   const searchParams = useSearchParams();
 
   const knowledgeBaseQuery = useQuery({
+    meta: { handlesInitialError: true },
     queryKey: ["knowledge-base", knowledgeBaseId],
     queryFn: async ({ signal }) => {
       const { data } = await knowledgeBasesReadKnowledgeBase({
@@ -76,6 +78,14 @@ export function KnowledgeBaseDetail({
       <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
         {knowledgeBaseQuery.isPending ? (
           <KnowledgeBaseDetailSkeleton />
+        ) : knowledgeBaseQuery.isError &&
+          knowledgeBaseQuery.data === undefined ? (
+          <LoadError
+            title="知识库加载失败"
+            isRetrying={knowledgeBaseQuery.isFetching}
+            onRetry={() => void knowledgeBaseQuery.refetch()}
+            className="mx-auto min-h-full max-w-6xl"
+          />
         ) : !knowledgeBaseQuery.data ? (
           <Empty className="mx-auto min-h-full max-w-6xl">
             <EmptyHeader>

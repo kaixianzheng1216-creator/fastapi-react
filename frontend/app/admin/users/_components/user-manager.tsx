@@ -27,6 +27,8 @@ import { type FormEvent, useMemo, useState } from "react";
 import { UserCreateDialog } from "@/app/admin/users/_components/user-create-dialog";
 import { UserEditDialog } from "@/app/admin/users/_components/user-edit-dialog";
 import { AppHeader } from "@/components/layout/app-header";
+import { ButtonLoading } from "@/components/shared/button-loading";
+import { LoadError } from "@/components/shared/load-error";
 import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
 import { SearchToolbar } from "@/components/shared/search-toolbar";
@@ -116,6 +118,7 @@ export function UserManager() {
   const [userToDelete, setUserToDelete] = useState<UserPublic>();
 
   const usersQuery = useQuery({
+    meta: { handlesInitialError: true },
     queryKey: [...USERS_QUERY_KEY, pageIndex, search, role, status],
     queryFn: async ({ signal }) => {
       const { data } = await usersReadUsers({
@@ -394,6 +397,12 @@ export function UserManager() {
 
           {usersQuery.isPending ? (
             <TableSkeleton columns={5} />
+          ) : usersQuery.isError && usersQuery.data === undefined ? (
+            <LoadError
+              title="用户加载失败"
+              isRetrying={usersQuery.isFetching}
+              onRetry={() => void usersQuery.refetch()}
+            />
           ) : rows.length === 0 ? (
             pageOutOfRange ? (
               <PageOutOfRange href={getUsersHref(1, search, role, status)} />
@@ -487,7 +496,9 @@ export function UserManager() {
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
+              className="relative"
               disabled={deleteUserMutation.isPending}
+              aria-busy={deleteUserMutation.isPending}
               onClick={(event) => {
                 event.preventDefault();
                 if (userToDelete) {
@@ -495,7 +506,9 @@ export function UserManager() {
                 }
               }}
             >
-              删除
+              <ButtonLoading loading={deleteUserMutation.isPending}>
+                删除
+              </ButtonLoading>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

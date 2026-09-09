@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import { ButtonLoading } from "@/components/shared/button-loading";
 import {
   Dialog,
   DialogClose,
@@ -215,8 +216,15 @@ export function SkillCreateDialog({
                       取消
                     </Button>
                   </DialogClose>
-                  <Button type="submit" disabled={isSubmitting}>
-                    创建技能
+                  <Button
+                    type="submit"
+                    className="relative"
+                    disabled={isSubmitting}
+                    aria-busy={isSubmitting}
+                  >
+                    <ButtonLoading loading={isSubmitting}>
+                      创建技能
+                    </ButtonLoading>
                   </Button>
                 </DialogFooter>
               </FieldGroup>
@@ -257,8 +265,15 @@ export function SkillCreateDialog({
                       取消
                     </Button>
                   </DialogClose>
-                  <Button type="submit" disabled={isSubmitting}>
-                    上传技能
+                  <Button
+                    type="submit"
+                    className="relative"
+                    disabled={isSubmitting}
+                    aria-busy={isSubmitting}
+                  >
+                    <ButtonLoading loading={isSubmitting}>
+                      上传技能
+                    </ButtonLoading>
                   </Button>
                 </DialogFooter>
               </FieldGroup>

@@ -2,6 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { ModelSelector } from "@/app/(authenticated)/_components/model-selector";
+import { ButtonLoading } from "@/components/shared/button-loading";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { agentReadModels } from "@/lib/client";
 
@@ -12,6 +14,7 @@ const THINKING_OPTIONS = [
 
 export function ComposerModelSelector() {
   const modelsQuery = useQuery({
+    meta: { handlesInitialError: true },
     queryKey: ["models"],
     queryFn: async () => {
       const { data } = await agentReadModels({
@@ -33,10 +36,26 @@ export function ComposerModelSelector() {
     );
   }
 
-  if (!modelsQuery.data?.data.length)
+  if (modelsQuery.isError && modelsQuery.data === undefined) {
     return (
-      <span className="text-muted-foreground text-xs">暂无可用模型</span>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="relative text-muted-foreground"
+        disabled={modelsQuery.isFetching}
+        aria-busy={modelsQuery.isFetching}
+        onClick={() => void modelsQuery.refetch()}
+      >
+        <ButtonLoading loading={modelsQuery.isFetching}>
+          模型加载失败，重试
+        </ButtonLoading>
+      </Button>
     );
+  }
+
+  if (!modelsQuery.data?.data.length)
+    return <span className="text-muted-foreground text-xs">暂无可用模型</span>;
 
   return (
     <ModelSelector

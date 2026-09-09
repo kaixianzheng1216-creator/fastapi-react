@@ -22,6 +22,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
 import { AppHeader } from "@/components/layout/app-header";
+import { LoadError } from "@/components/shared/load-error";
 import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
 import { Badge } from "@/components/ui/badge";
@@ -178,6 +179,7 @@ export function RegionalData() {
   );
 
   const regionalDataQuery = useQuery({
+    meta: { handlesInitialError: true },
     queryKey: [...REGIONAL_DATA_QUERY_KEY, year, pageIndex, sortBy, sortOrder],
     queryFn: async ({ signal }) => {
       const { data } = await brandMarketingReadRegionalData({
@@ -304,6 +306,13 @@ export function RegionalData() {
 
           {regionalDataQuery.isPending ? (
             <TableSkeleton columns={7} rows={8} />
+          ) : regionalDataQuery.isError &&
+            regionalDataQuery.data === undefined ? (
+            <LoadError
+              title="区域数据加载失败"
+              isRetrying={regionalDataQuery.isFetching}
+              onRetry={() => void regionalDataQuery.refetch()}
+            />
           ) : rows.length === 0 ? (
             pageOutOfRange ? (
               <PageOutOfRange

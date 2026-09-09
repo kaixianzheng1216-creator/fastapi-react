@@ -6,6 +6,7 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import { ButtonLoading } from "@/components/shared/button-loading";
 import {
   Dialog,
   DialogContent,
@@ -206,8 +207,15 @@ export function UserCreateDialog({
               >
                 取消
               </Button>
-              <Button type="submit" disabled={createUserMutation.isPending}>
-                创建用户
+              <Button
+                type="submit"
+                className="relative"
+                disabled={createUserMutation.isPending}
+                aria-busy={createUserMutation.isPending}
+              >
+                <ButtonLoading loading={createUserMutation.isPending}>
+                  创建用户
+                </ButtonLoading>
               </Button>
             </DialogFooter>
           </FieldGroup>

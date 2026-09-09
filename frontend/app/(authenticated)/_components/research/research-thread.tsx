@@ -11,21 +11,18 @@ import {
 } from "@/app/(authenticated)/_components/thread-ui";
 import { selectIsNewConversation } from "@/app/(authenticated)/_components/conversation-selectors";
 import type { ResearchState } from "@/lib/conversation-state";
-import {
-  ThreadPrimitive,
-  useAuiState,
-} from "@assistant-ui/react";
-import { SearchIcon, SquareIcon } from "lucide-react";
+import { ThreadPrimitive, useAuiState } from "@assistant-ui/react";
+import { SquareIcon } from "lucide-react";
 
 import { ResearchProgress } from "./research-progress";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 
 export function ResearchThread() {
   const isEmpty = useAuiState(selectIsNewConversation);
   const isExisting = useAuiState(
-    (s) =>
-      !!s.threads.threadItems.find((item) => item.id === s.threads.mainThreadId)
-        ?.remoteId,
+    (state) =>
+      !!state.threads.threadItems.find(
+        (item) => item.id === state.threads.mainThreadId,
+      )?.remoteId,
   );
   const isLoading = useAuiState(
     (s) => !!(s.thread.state as ResearchState | null)?.isLoading,
@@ -48,20 +45,9 @@ export function ResearchThread() {
       }
     >
       {isLoading && <ResearchConversationSkeleton />}
-      {isEmpty &&
-        !isLoading &&
-        (isExisting ? (
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <SearchIcon aria-hidden="true" />
-              </EmptyMedia>
-              <EmptyTitle>暂无调研内容</EmptyTitle>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <ThreadWelcome title="开始一项新调研" />
-        ))}
+      {isEmpty && !isLoading && !isExisting && (
+        <ThreadWelcome title="开始一项新调研" />
+      )}
 
       <div className="mb-6 flex flex-col gap-y-6 empty:hidden">
         <ThreadPrimitive.Messages>
@@ -89,7 +75,11 @@ function ResearchCancel() {
   if (!isRunning) return null;
 
   return (
-    <StopButton type="button" variant="outline" className="mx-auto rounded-full">
+    <StopButton
+      type="button"
+      variant="outline"
+      className="mx-auto rounded-full"
+    >
       <SquareIcon
         data-icon="inline-start"
         className="fill-current"

@@ -17,7 +17,14 @@ export function QueryProvider({ children }: { children: ReactNode }) {
         queries: { retry: false },
       },
       queryCache: new QueryCache({
-        onError: (error) => {
+        onError: (error, query) => {
+          if (
+            query.meta?.handlesInitialError === true &&
+            query.state.data === undefined
+          ) {
+            return;
+          }
+
           toast.error(
             getApiErrorMessage(error, "数据请求失败，请稍后再试"),
             { id: "query-error" },

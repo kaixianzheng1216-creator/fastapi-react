@@ -58,7 +58,6 @@ import {
   type FC,
   type SubmitEvent,
 } from "react";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,6 +68,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ButtonLoading } from "@/components/shared/button-loading";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   agentArchiveConversation,
@@ -185,15 +185,11 @@ export const ThreadListSearch: FC<{
             <CommandList className="max-h-[calc(80dvh-3rem)]">
               {!archived && !search && (
                 <CommandGroup heading="快捷创建">
-                  <CommandItem
-                    onSelect={() => createNewThread("chat")}
-                  >
+                  <CommandItem onSelect={() => createNewThread("chat")}>
                     <SquarePenIcon />
                     新对话
                   </CommandItem>
-                  <CommandItem
-                    onSelect={() => createNewThread("research")}
-                  >
+                  <CommandItem onSelect={() => createNewThread("research")}>
                     <SearchIcon />
                     新调研
                   </CommandItem>
@@ -234,20 +230,6 @@ export const ThreadListItems: FC<ComponentPropsWithoutRef<"div">> = ({
       className={cn("flex flex-col gap-0.5", className)}
       {...props}
     >
-      <AuiIf
-        condition={(s) =>
-          !s.threads.isLoading && s.threads.threadIds.length === 0
-        }
-      >
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <MessageCircleIcon aria-hidden="true" />
-            </EmptyMedia>
-            <EmptyTitle>暂无会话</EmptyTitle>
-          </EmptyHeader>
-        </Empty>
-      </AuiIf>
       <AuiIf
         condition={(s) =>
           s.threads.isLoading && s.threads.threadIds.length === 0
@@ -338,6 +320,7 @@ export const ThreadListSearchResults: FC<{
   const [debouncedSearchQuery] = useDebounce(searchQuery, SEARCH_DEBOUNCE_MS);
 
   const conversationsQuery = useQuery({
+    meta: { handlesInitialError: true },
     queryKey: ["conversations", "search", debouncedSearchQuery, archived],
     queryFn: ({ signal }) =>
       searchConversations(debouncedSearchQuery || undefined, archived, signal),
@@ -348,6 +331,22 @@ export const ThreadListSearchResults: FC<{
     (conversationsQuery.isFetching && !conversationsQuery.data)
   ) {
     return <ThreadListSkeleton />;
+  }
+
+  if (conversationsQuery.isError && conversationsQuery.data === undefined) {
+    return (
+      <CommandEmpty>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={conversationsQuery.isFetching}
+          onClick={() => void conversationsQuery.refetch()}
+        >
+          加载失败，重试
+        </Button>
+      </CommandEmpty>
+    );
   }
 
   if (!conversationsQuery.data?.length) {
@@ -399,9 +398,7 @@ export const ThreadListSearchResults: FC<{
   );
 };
 
-type ThreadListNewProps = ComponentPropsWithoutRef<
-  typeof SidebarItemButton
-> & {
+type ThreadListNewProps = ComponentPropsWithoutRef<typeof SidebarItemButton> & {
   kind?: ConversationKind;
 };
 
@@ -689,8 +686,15 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
               onChange={(event) => setNewTitle(event.target.value)}
             />
             <DialogFooter className="mt-4">
-              <Button type="submit" disabled={isPending || !newTitle.trim()}>
-                保存
+              <Button
+                type="submit"
+                className="relative"
+                disabled={isPending || !newTitle.trim()}
+                aria-busy={renameMutation.isPending}
+              >
+                <ButtonLoading loading={renameMutation.isPending}>
+                  保存
+                </ButtonLoading>
               </Button>
             </DialogFooter>
           </form>
@@ -714,13 +718,17 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
             <AlertDialogCancel disabled={isPending}>取消</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
+              className="relative"
               disabled={isPending}
+              aria-busy={deleteConversationMutation.isPending}
               onClick={(event) => {
                 event.preventDefault();
                 deleteConversationMutation.mutate();
               }}
             >
-              删除
+              <ButtonLoading loading={deleteConversationMutation.isPending}>
+                删除
+              </ButtonLoading>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

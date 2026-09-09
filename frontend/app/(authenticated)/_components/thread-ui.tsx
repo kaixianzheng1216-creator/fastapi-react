@@ -8,6 +8,7 @@ import {
 import { ComposerModelSelector } from "@/app/(authenticated)/_components/composer-model-selector";
 import { selectIsNewConversation } from "@/app/(authenticated)/_components/conversation-selectors";
 import { TooltipIconButton } from "@/app/(authenticated)/_components/tooltip-icon-button";
+import { ButtonLoading } from "@/components/shared/button-loading";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -20,11 +21,7 @@ import {
   SuggestionPrimitive,
   ThreadPrimitive,
 } from "@assistant-ui/react";
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  SquareIcon,
-} from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, SquareIcon } from "lucide-react";
 import type { ComponentProps, FC, PropsWithChildren, ReactNode } from "react";
 
 import { useMutation } from "@tanstack/react-query";
@@ -66,7 +63,7 @@ export const ThreadShell: FC<ThreadShellProps> = ({
       scrollToBottomOnInitialize={scrollToBottomOnLoad}
       scrollToBottomOnThreadSwitch={scrollToBottomOnLoad}
       data-slot="aui_thread-viewport"
-      className="relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth 2xl:[scrollbar-width:none] 2xl:[&::-webkit-scrollbar]:hidden"
+      className="relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth motion-reduce:scroll-auto 2xl:[scrollbar-width:none] 2xl:[&::-webkit-scrollbar]:hidden"
     >
       <div
         className={cn(
@@ -79,8 +76,7 @@ export const ThreadShell: FC<ThreadShellProps> = ({
         <ThreadPrimitive.ViewportFooter
           className={cn(
             "aui-thread-viewport-footer bg-background flex flex-col gap-4 overflow-visible pb-4 md:pb-6",
-            !isEmpty &&
-              "sticky bottom-0 mt-auto rounded-t-(--composer-radius)",
+            !isEmpty && "sticky bottom-0 mt-auto rounded-t-(--composer-radius)",
           )}
         >
           <ThreadScrollToBottom />
@@ -150,14 +146,9 @@ export const ResearchConversationSkeleton: FC = () => (
       <div className="flex flex-col">
         {["plan", "research", "outline", "draft", "finalize"].map(
           (stage, index) => (
-            <div
-              key={stage}
-              className="flex h-14 items-center gap-3 border-b"
-            >
+            <div key={stage} className="flex h-14 items-center gap-3 border-b">
               <Skeleton className="size-4 rounded-sm" />
-              <Skeleton
-                className={index === 1 ? "h-4 w-24" : "h-4 w-20"}
-              />
+              <Skeleton className={index === 1 ? "h-4 w-24" : "h-4 w-20"} />
               <Skeleton className="ms-auto h-5 w-14 rounded-full" />
             </div>
           ),
@@ -260,7 +251,11 @@ const ComposerAction: FC = () => (
   </div>
 );
 
-export function StopButton(props: ComponentProps<typeof Button>) {
+export function StopButton({
+  children,
+  className,
+  ...props
+}: ComponentProps<typeof Button>) {
   const aui = useAui();
   const runId = useAuiState(
     (state) => (state.thread.state as ApplicationState | null)?.runId,
@@ -274,7 +269,10 @@ export function StopButton(props: ComponentProps<typeof Button>) {
       }),
 
     onSuccess: (_, runId) => {
-      if ((aui.thread.getState().state as ApplicationState | null)?.runId === runId) {
+      if (
+        (aui.thread.getState().state as ApplicationState | null)?.runId ===
+        runId
+      ) {
         aui.thread.cancelRun();
       }
 
@@ -289,6 +287,7 @@ export function StopButton(props: ComponentProps<typeof Button>) {
   return (
     <Button
       {...props}
+      className={cn("relative", className)}
       disabled={!runId || stopMutation.isPending}
       aria-busy={stopMutation.isPending}
       onClick={() => {
@@ -296,7 +295,11 @@ export function StopButton(props: ComponentProps<typeof Button>) {
 
         stopMutation.mutate(runId);
       }}
-    />
+    >
+      <ButtonLoading loading={stopMutation.isPending}>
+        {children}
+      </ButtonLoading>
+    </Button>
   );
 }
 

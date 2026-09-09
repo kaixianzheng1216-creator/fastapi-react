@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SearchIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent } from "react";
+import { LoadError } from "@/components/shared/load-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +43,7 @@ export function KnowledgeSearch({
   const searchQuery = searchParams.get("q")?.trim() ?? "";
 
   const knowledgeSearchQuery = useQuery({
+    meta: { handlesInitialError: true },
     queryKey: [...KNOWLEDGE_SEARCH_QUERY_KEY, knowledgeBaseId, searchQuery],
     queryFn: async ({ signal }) => {
       const { data } = await knowledgeBasesSearchKnowledgeBase({
@@ -120,8 +122,19 @@ export function KnowledgeSearch({
         </CardContent>
       </Card>
 
+      {knowledgeSearchQuery.isError &&
+        knowledgeSearchQuery.data === undefined && (
+          <LoadError
+            title="搜索失败"
+            isRetrying={knowledgeSearchQuery.isFetching}
+            onRetry={() => void knowledgeSearchQuery.refetch()}
+          />
+        )}
+
       {searchQuery &&
         !knowledgeSearchQuery.isPending &&
+        (!knowledgeSearchQuery.isError ||
+          knowledgeSearchQuery.data !== undefined) &&
         !searchResults?.length && (
         <Empty>
           <EmptyHeader>

@@ -1,6 +1,9 @@
 "use client";
 
-import { MarkdownText, useCopyToClipboard } from "@/app/(authenticated)/_components/markdown-text";
+import {
+  MarkdownText,
+  useCopyToClipboard,
+} from "@/app/(authenticated)/_components/markdown-text";
 import {
   Reasoning,
   ReasoningContent,
@@ -34,19 +37,18 @@ import {
   CheckIcon,
   CopyIcon,
   DownloadIcon,
-  MessageCircleIcon,
   MoreHorizontalIcon,
 } from "lucide-react";
 import type { FC } from "react";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import type { ApplicationState } from "@/lib/conversation-state";
 
 export const ChatThread: FC = () => {
   const isEmpty = useAuiState(selectIsNewConversation);
   const isExisting = useAuiState(
-    (s) =>
-      !!s.threads.threadItems.find((item) => item.id === s.threads.mainThreadId)
-        ?.remoteId,
+    (state) =>
+      !!state.threads.threadItems.find(
+        (item) => item.id === state.threads.mainThreadId,
+      )?.remoteId,
   );
   const isLoading = useAuiState(
     (s) => !!(s.thread.state as ApplicationState | null)?.isLoading,
@@ -69,16 +71,6 @@ export const ChatThread: FC = () => {
     >
       {isLoading && <ChatConversationSkeleton />}
 
-      {isEmpty && !isLoading && isExisting && (
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <MessageCircleIcon aria-hidden="true" />
-            </EmptyMedia>
-            <EmptyTitle>会话中暂无消息</EmptyTitle>
-          </EmptyHeader>
-        </Empty>
-      )}
       {isEmpty && !isLoading && !isExisting ? (
         <ThreadWelcome title="今天有什么可以帮你？" />
       ) : null}

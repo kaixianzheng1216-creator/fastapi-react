@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import { ButtonLoading } from "@/components/shared/button-loading";
 import {
   Dialog,
   DialogContent,
@@ -165,9 +166,13 @@ export function KnowledgeBaseDialog({
               </Button>
               <Button
                 type="submit"
+                className="relative"
                 disabled={saveKnowledgeBaseMutation.isPending}
+                aria-busy={saveKnowledgeBaseMutation.isPending}
               >
-                {isEditing ? "保存" : "创建知识库"}
+                <ButtonLoading loading={saveKnowledgeBaseMutation.isPending}>
+                  {isEditing ? "保存" : "创建知识库"}
+                </ButtonLoading>
               </Button>
             </DialogFooter>
           </FieldGroup>

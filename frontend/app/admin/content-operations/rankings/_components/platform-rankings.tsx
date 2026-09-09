@@ -13,6 +13,7 @@ import { ChartNoAxesColumnIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/app-header";
+import { LoadError } from "@/components/shared/load-error";
 import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
@@ -179,6 +180,7 @@ export function PlatformRankings() {
   const pageIndex = currentPage - 1;
 
   const rankingQuery = useQuery({
+    meta: { handlesInitialError: true },
     queryKey: [...BILIBILI_QUERY_KEY, category, pageIndex],
     queryFn: async ({ signal }) => {
       const { data } = await contentOperationsReadBilibiliRanking({
@@ -277,7 +279,8 @@ export function PlatformRankings() {
                         </h3>
                         {rankingQuery.isPending ? (
                           <Skeleton className="h-4 w-48" />
-                        ) : (
+                        ) : rankingQuery.isError &&
+                          rankingQuery.data === undefined ? null : (
                           <p
                             className="text-sm text-muted-foreground"
                             aria-live="polite"
@@ -328,6 +331,13 @@ export function PlatformRankings() {
 
                     {rankingQuery.isPending ? (
                       <TableSkeleton columns={7} rows={8} />
+                    ) : rankingQuery.isError &&
+                      rankingQuery.data === undefined ? (
+                      <LoadError
+                        title="榜单加载失败"
+                        isRetrying={rankingQuery.isFetching}
+                        onRetry={() => void rankingQuery.refetch()}
+                      />
                     ) : rows.length === 0 ? (
                       pageOutOfRange ? (
                         <PageOutOfRange

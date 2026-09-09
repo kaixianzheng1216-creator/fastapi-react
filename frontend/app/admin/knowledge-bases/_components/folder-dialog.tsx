@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { ButtonLoading } from "@/components/shared/button-loading";
 import {
   Dialog,
   DialogContent,
@@ -125,9 +126,13 @@ export function KnowledgeFolderEditorDialog({
               </Button>
               <Button
                 type="submit"
+                className="relative"
                 disabled={saveFolderMutation.isPending || !folderName.trim()}
+                aria-busy={saveFolderMutation.isPending}
               >
-                保存
+                <ButtonLoading loading={saveFolderMutation.isPending}>
+                  保存
+                </ButtonLoading>
               </Button>
             </DialogFooter>
           </FieldGroup>

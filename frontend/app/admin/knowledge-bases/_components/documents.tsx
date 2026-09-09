@@ -26,6 +26,7 @@ import {
   getKnowledgeDocumentHref,
 } from "@/app/admin/knowledge-bases/_lib/navigation";
 import { KnowledgeDocumentImport } from "@/app/admin/knowledge-bases/_components/document-import";
+import { LoadError } from "@/components/shared/load-error";
 import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
 import {
@@ -77,6 +78,7 @@ export function KnowledgeDocuments({
     searchParams.get("view") === "search" ? "search" : "documents";
 
   const foldersQuery = useQuery({
+    meta: { handlesInitialError: true },
     queryKey: [...KNOWLEDGE_FOLDERS_QUERY_KEY, knowledgeBaseId],
     queryFn: async ({ signal }) => {
       const { data } = await knowledgeBasesReadFolders({
@@ -95,6 +97,7 @@ export function KnowledgeDocuments({
   const currentPath = getFolderAncestors(folderById, currentFolderId);
 
   const directoryQuery = useQuery({
+    meta: { handlesInitialError: true },
     queryKey: [
       ...KNOWLEDGE_DIRECTORY_QUERY_KEY,
       knowledgeBaseId,
@@ -144,6 +147,9 @@ export function KnowledgeDocuments({
   const pageOutOfRange = totalEntryCount > 0 && directoryEntries.length === 0;
 
   const directoryPending = foldersQuery.isPending || directoryQuery.isPending;
+  const directoryLoadFailed =
+    (foldersQuery.isError && foldersQuery.data === undefined) ||
+    (directoryQuery.isError && directoryQuery.data === undefined);
   const hasDirectoryEntries = directoryEntries.length > 0;
 
   function invalidateDocuments(): void {
@@ -273,6 +279,15 @@ export function KnowledgeDocuments({
           </div>
           <TableSkeleton columns={6} />
         </div>
+      ) : directoryLoadFailed ? (
+        <LoadError
+          title="文档列表加载失败"
+          isRetrying={foldersQuery.isFetching || directoryQuery.isFetching}
+          onRetry={() => {
+            void foldersQuery.refetch();
+            void directoryQuery.refetch();
+          }}
+        />
       ) : (
         <section className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -349,6 +364,7 @@ export function KnowledgeDocuments({
       )}
 
       {!directoryPending &&
+        !directoryLoadFailed &&
         !hasDirectoryEntries &&
         (pageOutOfRange ? (
           <PageOutOfRange
