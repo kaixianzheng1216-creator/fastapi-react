@@ -1,5 +1,7 @@
 "use client";
 
+import { CollectionContent } from "@/components/common/collection-content";
+
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
@@ -11,10 +13,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/app-header";
-import { LoadError } from "@/components/shared/load-error";
-import { MarkdownContent } from "@/components/shared/markdown-content";
-import { PageOutOfRange } from "@/components/shared/page-out-of-range";
-import { PagePagination } from "@/components/shared/page-pagination";
+import { LoadError } from "@/components/common/load-error";
+import { MarkdownContent } from "@/components/common/markdown-content";
+import { PageOutOfRange } from "@/components/common/page-out-of-range";
+import { PagePagination } from "@/components/common/page-pagination";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -354,9 +356,9 @@ function DocumentChunksView({
   const pageCount = Math.ceil(chunksQuery.data.count / CHUNK_PAGE_SIZE);
 
   return (
-    <div
-      aria-busy={chunksQuery.isFetching}
-      className="flex flex-col gap-4 transition-opacity aria-busy:pointer-events-none aria-busy:opacity-60"
+    <CollectionContent
+      busy={chunksQuery.isFetching}
+      className="flex flex-col gap-4"
     >
       {chunksQuery.data.data.map((chunk) => (
         <Card key={chunk.chunk_index} className="wrap-anywhere">
@@ -392,7 +394,7 @@ function DocumentChunksView({
         pageCount={pageCount}
         getPageHref={getPageHref}
       />
-    </div>
+    </CollectionContent>
   );
 }
 

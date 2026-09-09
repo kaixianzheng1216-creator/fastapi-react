@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { ButtonLoading } from "@/components/shared/button-loading";
+import { ButtonLoading } from "@/components/common/button-loading";
 import {
   Dialog,
   DialogContent,
@@ -25,84 +25,87 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
-  type KnowledgeBasePublic,
+  fileLibrariesCreateFileLibrary,
+  fileLibrariesUpdateFileLibrary,
   knowledgeBasesCreateKnowledgeBase,
   knowledgeBasesUpdateKnowledgeBase,
 } from "@/lib/client";
 import { toast } from "sonner";
 
-const knowledgeBaseSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, "请输入知识库名称")
-    .max(100, "知识库名称最多 100 个字符"),
+const librarySchema = z.object({
+  name: z.string().trim().min(1, "请输入名称").max(100, "名称最多 100 个字符"),
   description: z.string().trim().max(500, "描述最多 500 个字符"),
 });
 
-type KnowledgeBaseValues = z.infer<typeof knowledgeBaseSchema>;
+type LibraryValues = z.infer<typeof librarySchema>;
 
-type KnowledgeBaseDialogProps = {
+type LibraryDialogProps = {
   open: boolean;
-  knowledgeBase?: KnowledgeBasePublic;
+  kind: "file" | "knowledge";
+  library?: { id: string; name: string; description: string | null };
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
 };
 
-export function KnowledgeBaseDialog({
+export function LibraryDialog({
   open,
-  knowledgeBase,
+  kind,
+  library,
   onOpenChange,
   onSaved,
-}: KnowledgeBaseDialogProps) {
-  const isEditing = knowledgeBase !== undefined;
+}: LibraryDialogProps) {
+  const label = kind === "file" ? "文件库" : "知识库";
+  const isEditing = library !== undefined;
 
-  const form = useForm<KnowledgeBaseValues>({
-    resolver: zodResolver(knowledgeBaseSchema),
+  const form = useForm<LibraryValues>({
+    resolver: zodResolver(librarySchema),
     defaultValues: {
-      name: knowledgeBase?.name ?? "",
-      description: knowledgeBase?.description ?? "",
+      name: library?.name ?? "",
+      description: library?.description ?? "",
     },
   });
 
-  const saveKnowledgeBaseMutation = useMutation({
-    mutationFn: async (values: KnowledgeBaseValues): Promise<void> => {
-      if (knowledgeBase) {
+  const saveLibraryMutation = useMutation({
+    mutationFn: async (values: LibraryValues): Promise<void> => {
+      const body = {
+        name: values.name,
+        description: values.description || null,
+      };
+      if (kind === "file") {
+        if (library) {
+          await fileLibrariesUpdateFileLibrary({
+            path: { file_library_id: library.id },
+            body,
+            throwOnError: true,
+          });
+        } else {
+          await fileLibrariesCreateFileLibrary({ body, throwOnError: true });
+        }
+      } else if (library) {
         await knowledgeBasesUpdateKnowledgeBase({
-          path: { knowledge_base_id: knowledgeBase.id },
-          body: {
-            name: values.name,
-            description: values.description || null,
-          },
+          path: { knowledge_base_id: library.id },
+          body,
           throwOnError: true,
         });
-
-        return;
+      } else {
+        await knowledgeBasesCreateKnowledgeBase({ body, throwOnError: true });
       }
-
-      await knowledgeBasesCreateKnowledgeBase({
-        body: {
-          name: values.name,
-          description: values.description || null,
-        },
-        throwOnError: true,
-      });
     },
 
     onSuccess: () => {
-      toast.success("知识库已保存");
+      toast.success(`${label}已保存`);
       form.reset();
       onOpenChange(false);
       onSaved();
     },
 
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "知识库保存失败，请重试"));
+      toast.error(getApiErrorMessage(error, `${label}保存失败，请重试`));
     },
   });
 
   function handleOpenChange(nextOpen: boolean): void {
-    if (!nextOpen && saveKnowledgeBaseMutation.isPending) {
+    if (!nextOpen && saveLibraryMutation.isPending) {
       return;
     }
 
@@ -115,28 +118,30 @@ export function KnowledgeBaseDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent showCloseButton={!saveKnowledgeBaseMutation.isPending}>
+      <DialogContent showCloseButton={!saveLibraryMutation.isPending}>
         <DialogHeader>
-          <DialogTitle>{isEditing ? "编辑知识库" : "创建知识库"}</DialogTitle>
+          <DialogTitle>{`${isEditing ? "编辑" : "创建"}${label}`}</DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "更新知识库名称和描述。"
-              : "新知识库创建后默认为停用状态。"}
+              ? `更新${label}名称和描述。`
+              : kind === "knowledge"
+                ? "新知识库创建后默认为停用状态。"
+                : "设置文件库名称和描述，创建后即可上传文件。"}
           </DialogDescription>
         </DialogHeader>
 
         <form
           noValidate
           onSubmit={form.handleSubmit((values) =>
-            saveKnowledgeBaseMutation.mutate(values),
+            saveLibraryMutation.mutate(values),
           )}
         >
           <FieldGroup>
             <Field data-invalid={!!form.formState.errors.name}>
-              <FieldLabel htmlFor="knowledge-base-name">名称</FieldLabel>
+              <FieldLabel htmlFor="library-base-name">名称</FieldLabel>
               <Input
-                disabled={saveKnowledgeBaseMutation.isPending}
-                id="knowledge-base-name"
+                disabled={saveLibraryMutation.isPending}
+                id="library-base-name"
                 autoComplete="off"
                 aria-invalid={!!form.formState.errors.name}
                 {...form.register("name")}
@@ -145,10 +150,10 @@ export function KnowledgeBaseDialog({
             </Field>
 
             <Field data-invalid={!!form.formState.errors.description}>
-              <FieldLabel htmlFor="knowledge-base-description">描述</FieldLabel>
+              <FieldLabel htmlFor="library-base-description">描述</FieldLabel>
               <Textarea
-                disabled={saveKnowledgeBaseMutation.isPending}
-                id="knowledge-base-description"
+                disabled={saveLibraryMutation.isPending}
+                id="library-base-description"
                 aria-invalid={!!form.formState.errors.description}
                 {...form.register("description")}
               />
@@ -159,7 +164,7 @@ export function KnowledgeBaseDialog({
               <Button
                 type="button"
                 variant="outline"
-                disabled={saveKnowledgeBaseMutation.isPending}
+                disabled={saveLibraryMutation.isPending}
                 onClick={() => handleOpenChange(false)}
               >
                 取消
@@ -167,11 +172,11 @@ export function KnowledgeBaseDialog({
               <Button
                 type="submit"
                 className="relative"
-                disabled={saveKnowledgeBaseMutation.isPending}
-                aria-busy={saveKnowledgeBaseMutation.isPending}
+                disabled={saveLibraryMutation.isPending}
+                aria-busy={saveLibraryMutation.isPending}
               >
-                <ButtonLoading loading={saveKnowledgeBaseMutation.isPending}>
-                  {isEditing ? "保存" : "创建知识库"}
+                <ButtonLoading loading={saveLibraryMutation.isPending}>
+                  {isEditing ? "保存" : `创建${label}`}
                 </ButtonLoading>
               </Button>
             </DialogFooter>

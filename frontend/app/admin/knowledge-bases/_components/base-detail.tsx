@@ -1,21 +1,15 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftIcon, BookOpenIcon } from "lucide-react";
+import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/app-header";
-import { LoadError } from "@/components/shared/load-error";
+import { LoadError } from "@/components/common/load-error";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TableSkeleton } from "@/components/shared/table-skeleton";
+import { TableSkeleton } from "@/components/common/table-skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { knowledgeBasesReadKnowledgeBase } from "@/lib/client";
 import { cn } from "@/lib/utils";
@@ -86,48 +80,38 @@ export function KnowledgeBaseDetail({
             onRetry={() => void knowledgeBaseQuery.refetch()}
             className="mx-auto min-h-full max-w-6xl"
           />
-        ) : !knowledgeBaseQuery.data ? (
-          <Empty className="mx-auto min-h-full max-w-6xl">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <BookOpenIcon aria-hidden="true" />
-              </EmptyMedia>
-              <EmptyTitle>暂无知识库信息</EmptyTitle>
-            </EmptyHeader>
-          </Empty>
         ) : null}
 
-        {
-          (knowledgeBaseQuery.isPending || knowledgeBaseQuery.data) && (
-            <Tabs
-              value={activeView}
-              className={cn(
-                "mx-auto min-h-full max-w-6xl gap-6",
-                knowledgeBaseQuery.isPending && "hidden",
-              )}
-              onValueChange={changeView}
+        {(knowledgeBaseQuery.isPending || knowledgeBaseQuery.data) && (
+          <Tabs
+            value={activeView}
+            className={cn(
+              "mx-auto min-h-full max-w-6xl gap-6",
+              knowledgeBaseQuery.isPending && "hidden",
+            )}
+            onValueChange={changeView}
+          >
+            <TabsList>
+              <TabsTrigger value="documents">文档</TabsTrigger>
+              <TabsTrigger value="search">搜索</TabsTrigger>
+            </TabsList>
+
+            <TabsContent
+              value="documents"
+              forceMount
+              className="flex flex-col data-[state=inactive]:hidden"
             >
-              <TabsList>
-                <TabsTrigger value="documents">文档</TabsTrigger>
-                <TabsTrigger value="search">搜索</TabsTrigger>
-              </TabsList>
+              <KnowledgeDocuments
+                key={knowledgeBaseId}
+                knowledgeBaseId={knowledgeBaseId}
+              />
+            </TabsContent>
 
-              <TabsContent
-                value="documents"
-                forceMount
-                className="data-[state=inactive]:hidden"
-              >
-                <KnowledgeDocuments
-                  key={knowledgeBaseId}
-                  knowledgeBaseId={knowledgeBaseId}
-                />
-              </TabsContent>
-
-              <TabsContent value="search" className="flex flex-col gap-6">
-                <KnowledgeSearch knowledgeBaseId={knowledgeBaseId} />
-              </TabsContent>
-            </Tabs>
-          )}
+            <TabsContent value="search" className="flex flex-col gap-6">
+              <KnowledgeSearch knowledgeBaseId={knowledgeBaseId} />
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
     </>
   );
@@ -135,9 +119,7 @@ export function KnowledgeBaseDetail({
 
 function KnowledgeBaseDetailSkeleton() {
   return (
-    <div
-      className="mx-auto flex max-w-6xl flex-col gap-6"
-    >
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <Skeleton className="h-9 w-32" />
       <div className="flex flex-col gap-4 rounded-xl border p-6">
         <Skeleton className="h-5 w-36" />

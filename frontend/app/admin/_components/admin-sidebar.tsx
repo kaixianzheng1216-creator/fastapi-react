@@ -2,6 +2,7 @@
 
 import {
   BookOpenIcon,
+  FolderOpenIcon,
   ChevronRightIcon,
   FileTextIcon,
   GlobeIcon,
@@ -112,6 +113,18 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
                   <Link href="/admin/users">
                     <UserIcon aria-hidden="true" />
                     <span>用户</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname.startsWith("/admin/file-libraries")}
+                  tooltip="文件库"
+                >
+                  <Link href="/admin/file-libraries">
+                    <FolderOpenIcon aria-hidden="true" />
+                    <span>文件库</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { ButtonLoading } from "@/components/shared/button-loading";
+import { ButtonLoading } from "@/components/common/button-loading";
 import {
   Field,
   FieldDescription,

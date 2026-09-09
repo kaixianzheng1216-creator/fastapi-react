@@ -2,11 +2,8 @@
 
 import { useIsMutating, useMutation } from "@tanstack/react-query";
 import {
-  FileTextIcon,
   UploadIcon,
   DownloadIcon,
-  ExternalLinkIcon,
-  RefreshCwIcon,
   FolderInputIcon,
   FolderPlusIcon,
   MoreHorizontalIcon,
@@ -25,8 +22,8 @@ import { toast } from "sonner";
 import {
   type DirectoryChange,
   type DirectoryEntry,
-  KNOWLEDGE_DOCUMENT_UPLOAD_KEY,
-} from "@/app/admin/knowledge-bases/_lib/directory";
+  LIBRARY_DOCUMENT_UPLOAD_KEY,
+} from "@/app/admin/file-libraries/_lib/directory";
 import { FolderEditorDialog } from "@/components/common/folder-editor-dialog";
 import { FolderPickerDialog } from "@/components/common/folder-picker-dialog";
 import { DeleteDialog } from "@/components/common/delete-dialog";
@@ -41,17 +38,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
-  type KnowledgeFolderPublic,
-  knowledgeBasesDeleteDirectoryEntries,
-  knowledgeBasesMoveFolder,
-  knowledgeDocumentsCompleteDocumentUpload,
-  knowledgeDocumentsMoveDocument,
-  knowledgeDocumentsRetryDocument,
+  type LibraryFolderPublic,
+  fileLibrariesDeleteDirectoryEntries,
+  fileLibrariesMoveFolder,
+  libraryDocumentsCompleteDocumentUpload,
+  libraryDocumentsMoveDocument,
 } from "@/lib/client";
-import {
-  downloadMarkdownKnowledgeDocument,
-  downloadOriginalKnowledgeDocument,
-} from "@/lib/knowledge-document-download";
+import { downloadOriginalLibraryDocument } from "@/lib/library-document-download";
 
 type DirectoryDeleteTarget = {
   entries: DirectoryEntry[];
@@ -59,21 +52,21 @@ type DirectoryDeleteTarget = {
 };
 
 type UseDirectoryActionsOptions = {
-  knowledgeBaseId: string;
+  fileLibraryId: string;
   focusFallbackRef: RefObject<HTMLElement | null>;
   onChanged: (change: DirectoryChange) => void;
 };
 
 function showDocumentActionError(error: Error): void {
-  toast.error(getApiErrorMessage(error, "文档操作失败，请重试"));
+  toast.error(getApiErrorMessage(error, "文件操作失败，请重试"));
 }
 
 function showDownloadStarted(): void {
-  toast.success("文档已开始下载");
+  toast.success("文件已开始下载");
 }
 
 export function useDirectoryActions({
-  knowledgeBaseId,
+  fileLibraryId,
   focusFallbackRef,
   onChanged,
 }: UseDirectoryActionsOptions) {
@@ -96,49 +89,30 @@ export function useDirectoryActions({
 
   const isUploading =
     useIsMutating({
-      mutationKey: [...KNOWLEDGE_DOCUMENT_UPLOAD_KEY, knowledgeBaseId],
+      mutationKey: [...LIBRARY_DOCUMENT_UPLOAD_KEY, fileLibraryId],
     }) > 0;
 
   const completeDocumentMutation = useMutation({
     mutationFn: (documentId: string) =>
-      knowledgeDocumentsCompleteDocumentUpload({
+      libraryDocumentsCompleteDocumentUpload({
         path: { document_id: documentId },
         throwOnError: true,
       }),
     onSuccess: () => {
-      toast.success("文档上传已确认");
-      onChanged({ type: "documents" });
-    },
-    onError: showDocumentActionError,
-  });
-
-  const retryDocumentMutation = useMutation({
-    mutationFn: (documentId: string) =>
-      knowledgeDocumentsRetryDocument({
-        path: { document_id: documentId },
-        throwOnError: true,
-      }),
-    onSuccess: () => {
-      toast.success("文档已提交重新解析");
+      toast.success("文件上传已确认");
       onChanged({ type: "documents" });
     },
     onError: showDocumentActionError,
   });
 
   const downloadOriginalMutation = useMutation({
-    mutationFn: downloadOriginalKnowledgeDocument,
-    onSuccess: showDownloadStarted,
-    onError: showDocumentActionError,
-  });
-
-  const downloadMarkdownMutation = useMutation({
-    mutationFn: downloadMarkdownKnowledgeDocument,
+    mutationFn: downloadOriginalLibraryDocument,
     onSuccess: showDownloadStarted,
     onError: showDocumentActionError,
   });
 
   const [folderToEdit, setFolderToEdit] =
-    useState<KnowledgeFolderPublic | null>();
+    useState<LibraryFolderPublic | null>();
   const [entryToMove, setEntryToMove] = useState<DirectoryEntry>();
 
   const moveEntryMutation = useMutation({
@@ -150,13 +124,13 @@ export function useDirectoryActions({
       folderId: string | null;
     }) => {
       if (entry.type === "folder") {
-        await knowledgeBasesMoveFolder({
-          path: { knowledge_base_id: knowledgeBaseId, folder_id: entry.id },
+        await fileLibrariesMoveFolder({
+          path: { file_library_id: fileLibraryId, folder_id: entry.id },
           body: { parent_id: folderId },
           throwOnError: true,
         });
       } else {
-        await knowledgeDocumentsMoveDocument({
+        await libraryDocumentsMoveDocument({
           path: { document_id: entry.id },
           body: { folder_id: folderId },
           throwOnError: true,
@@ -178,8 +152,8 @@ export function useDirectoryActions({
 
   const deleteEntriesMutation = useMutation({
     mutationFn: (target: DirectoryDeleteTarget) =>
-      knowledgeBasesDeleteDirectoryEntries({
-        path: { knowledge_base_id: knowledgeBaseId },
+      fileLibrariesDeleteDirectoryEntries({
+        path: { file_library_id: fileLibraryId },
         body: {
           folder_ids: target.entries
             .filter((entry) => entry.type === "folder")
@@ -226,9 +200,7 @@ export function useDirectoryActions({
     restoreActionFocus,
     isUploading,
     completeDocumentMutation,
-    retryDocumentMutation,
     downloadOriginalMutation,
-    downloadMarkdownMutation,
     folderToEdit,
     editFolder: setFolderToEdit,
     onFolderSaved,
@@ -258,9 +230,7 @@ export function DirectoryEntryActions({
     rememberActionTrigger,
     isUploading,
     completeDocumentMutation,
-    retryDocumentMutation,
     downloadOriginalMutation,
-    downloadMarkdownMutation,
     openMoveEntry,
     editFolder,
     openDeleteEntry,
@@ -290,7 +260,7 @@ export function DirectoryEntryActions({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuGroup>
-          {entry.status === "pending" && !entry.uploaded ? (
+          {!entry.uploaded ? (
             <DropdownMenuItem
               disabled={isUploading || completeDocumentMutation.isPending}
               onSelect={() => completeDocumentMutation.mutate(entry.id)}
@@ -306,32 +276,6 @@ export function DirectoryEntryActions({
             >
               <DownloadIcon aria-hidden="true" />
               下载原文件
-            </DropdownMenuItem>
-          ) : null}
-          {entry.source_url ? (
-            <DropdownMenuItem asChild>
-              <a href={entry.source_url} target="_blank" rel="noreferrer">
-                <ExternalLinkIcon aria-hidden="true" />
-                访问原网页
-              </a>
-            </DropdownMenuItem>
-          ) : null}
-          {entry.status === "ready" ? (
-            <DropdownMenuItem
-              disabled={downloadMarkdownMutation.isPending}
-              onSelect={() => downloadMarkdownMutation.mutate(entry.id)}
-            >
-              <FileTextIcon aria-hidden="true" />
-              下载 Markdown
-            </DropdownMenuItem>
-          ) : null}
-          {entry.status === "failed" || entry.status === "timed_out" ? (
-            <DropdownMenuItem
-              disabled={retryDocumentMutation.isPending}
-              onSelect={() => retryDocumentMutation.mutate(entry.id)}
-            >
-              <RefreshCwIcon aria-hidden="true" />
-              重试
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuItem onSelect={() => openMoveEntry(entry)}>
@@ -357,7 +301,7 @@ export function DirectoryToolbar({
   selectedEntries,
 }: {
   actions: DirectoryActions;
-  currentFolder?: KnowledgeFolderPublic;
+  currentFolder?: LibraryFolderPublic;
   selectedEntries: DirectoryEntry[];
 }) {
   const {
@@ -416,14 +360,14 @@ export function DirectoryToolbar({
 
 export function DirectoryActionDialogs({
   actions,
-  knowledgeBaseId,
+  fileLibraryId,
   currentFolderId,
   folders,
 }: {
   actions: DirectoryActions;
-  knowledgeBaseId: string;
+  fileLibraryId: string;
   currentFolderId?: string;
-  folders: KnowledgeFolderPublic[];
+  folders: LibraryFolderPublic[];
 }) {
   const {
     folderToEdit,
@@ -443,8 +387,8 @@ export function DirectoryActionDialogs({
     <>
       {folderToEdit !== undefined && (
         <FolderEditorDialog
-          kind="knowledge"
-          libraryId={knowledgeBaseId}
+          kind="file"
+          libraryId={fileLibraryId}
           parentFolderId={currentFolderId}
           folder={folderToEdit ?? undefined}
           onClose={() => editFolder(undefined)}
@@ -474,9 +418,9 @@ export function DirectoryActionDialogs({
           : "确定删除选中的项目吗？"}
         {deleteTarget &&
         deleteTarget.entries.some((entry) => entry.type === "folder")
-          ? "文件夹内的子文件夹和文档也会删除。"
+          ? "文件夹内的子文件夹和文件也会删除。"
           : null}
-        文档原文件、解析产物和检索索引都会删除。
+        原文件也会删除，此操作无法撤销。
       </DeleteDialog>
 
       {entryToMove && (
@@ -492,7 +436,7 @@ export function DirectoryActionDialogs({
           excludedFolderId={
             entryToMove.type === "folder" ? entryToMove.id : undefined
           }
-          title={entryToMove.type === "folder" ? "移动文件夹" : "移动文档"}
+          title={entryToMove.type === "folder" ? "移动文件夹" : "移动文件"}
           description={`选择“${entryToMove.type === "folder" ? entryToMove.name : entryToMove.filename}”的新位置。`}
           isPending={moveEntryMutation.isPending}
           onMove={(folderId) =>

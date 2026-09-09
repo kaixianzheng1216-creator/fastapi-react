@@ -1,10 +1,10 @@
-import type { KnowledgeFolderPublic } from "@/lib/client";
+export type Folder = { id: string; name: string; parent_id: string | null };
 
-export function getFolderAncestors(
-  folderById: ReadonlyMap<string, KnowledgeFolderPublic>,
+export function getFolderAncestors<FolderType extends Folder>(
+  folderById: ReadonlyMap<string, FolderType>,
   folderId?: string,
-): KnowledgeFolderPublic[] {
-  const ancestors: KnowledgeFolderPublic[] = [];
+): FolderType[] {
+  const ancestors: FolderType[] = [];
 
   let folder = folderId ? folderById.get(folderId) : undefined;
 

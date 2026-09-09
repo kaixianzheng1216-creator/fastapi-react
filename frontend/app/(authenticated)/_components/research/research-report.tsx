@@ -2,7 +2,7 @@
 
 import { useAuiState } from "@assistant-ui/react";
 import { useMutation } from "@tanstack/react-query";
-import { MarkdownContent } from "@/components/shared/markdown-content";
+import { MarkdownContent } from "@/components/common/markdown-content";
 import { Button } from "@/components/ui/button";
 import {
   Card,

@@ -472,6 +472,82 @@ export type FileCompletePublic = {
 };
 
 /**
+ * FileLibrariesPublic
+ */
+export type FileLibrariesPublic = {
+    /**
+     * Data
+     */
+    data: Array<FileLibraryPublic>;
+    /**
+     * Count
+     */
+    count: number;
+};
+
+/**
+ * FileLibraryCreate
+ */
+export type FileLibraryCreate = {
+    /**
+     * Name
+     *
+     * 文件库名称
+     */
+    name: string;
+    /**
+     * Description
+     *
+     * 文件库描述
+     */
+    description?: string | null;
+};
+
+/**
+ * FileLibraryPublic
+ */
+export type FileLibraryPublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * FileLibraryUpdate
+ */
+export type FileLibraryUpdate = {
+    /**
+     * Name
+     *
+     * 文件库名称
+     */
+    name?: string | null;
+    /**
+     * Description
+     *
+     * 文件库描述
+     */
+    description?: string | null;
+};
+
+/**
  * FileMessagePart
  */
 export type FileMessagePart = {
@@ -519,14 +595,20 @@ export type FileUploadPublic = {
 export type FileUploadRequest = {
     /**
      * Filename
+     *
+     * 包含扩展名的文件名，例如 report.pdf
      */
     filename: string;
     /**
      * Contenttype
+     *
+     * 文件 MIME 类型，例如 application/pdf
      */
     contentType: string;
     /**
      * Size
+     *
+     * 文件字节数，必须与实际上传内容长度一致
      */
     size: number;
 };
@@ -638,10 +720,14 @@ export type JsonValue = unknown;
 export type KnowledgeBaseCreate = {
     /**
      * Name
+     *
+     * 知识库名称
      */
     name: string;
     /**
      * Description
+     *
+     * 知识库描述
      */
     description?: string | null;
 };
@@ -682,14 +768,20 @@ export type KnowledgeBasePublic = {
 export type KnowledgeBaseUpdate = {
     /**
      * Name
+     *
+     * 知识库名称
      */
     name?: string | null;
     /**
      * Description
+     *
+     * 知识库描述
      */
     description?: string | null;
     /**
      * Is Enabled
+     *
+     * 是否启用知识库：true=启用，false=停用
      */
     is_enabled?: boolean | null;
 };
@@ -714,10 +806,14 @@ export type KnowledgeBasesPublic = {
 export type KnowledgeDirectoryDelete = {
     /**
      * Folder Ids
+     *
+     * 需要删除的文件夹 ID 列表
      */
     folder_ids?: Array<string>;
     /**
      * Document Ids
+     *
+     * 需要删除的文档 ID 列表
      */
     document_ids?: Array<string>;
 };
@@ -917,14 +1013,20 @@ export type KnowledgeDocumentStatus = 'pending' | 'processing' | 'ready' | 'fail
 export type KnowledgeDocumentUploadPublic = {
     /**
      * Id
+     *
+     * 文档 ID，上传完成后用于确认
      */
     id: string;
     /**
      * Uploadurl
+     *
+     * 用于上传文件内容的临时 HTTP PUT 地址
      */
     uploadUrl: string;
     /**
      * Uploadheaders
+     *
+     * 上传文件时必须原样携带的 HTTP 请求头
      */
     uploadHeaders: {
         [key: string]: string;
@@ -937,10 +1039,14 @@ export type KnowledgeDocumentUploadPublic = {
 export type KnowledgeFolderCreate = {
     /**
      * Name
+     *
+     * 文件夹名称
      */
     name: string;
     /**
      * Parent Id
+     *
+     * 父文件夹 ID；不传表示创建在根目录
      */
     parent_id?: string | null;
 };
@@ -985,6 +1091,8 @@ export type KnowledgeFolderEntryPublic = {
 export type KnowledgeFolderMove = {
     /**
      * Parent Id
+     *
+     * 目标父文件夹 ID；传 null 表示移动到根目录
      */
     parent_id: string | null;
 };
@@ -1025,6 +1133,8 @@ export type KnowledgeFolderPublic = {
 export type KnowledgeFolderUpdate = {
     /**
      * Name
+     *
+     * 新的文件夹名称
      */
     name: string;
 };
@@ -1049,6 +1159,8 @@ export type KnowledgeFoldersPublic = {
 export type KnowledgeSearchRequest = {
     /**
      * Query
+     *
+     * 用于知识库语义检索的问题
      */
     query: string;
 };
@@ -1115,8 +1227,286 @@ export type KnowledgeSearchResultsPublic = {
 export type KnowledgeWebpageCreate = {
     /**
      * Url
+     *
+     * 需要导入的网页 URL
      */
     url: string;
+};
+
+/**
+ * LibraryDirectoryDelete
+ */
+export type LibraryDirectoryDelete = {
+    /**
+     * Folder Ids
+     *
+     * 需要删除的文件夹 ID 列表
+     */
+    folder_ids?: Array<string>;
+    /**
+     * Document Ids
+     *
+     * 需要删除的文件 ID 列表
+     */
+    document_ids?: Array<string>;
+};
+
+/**
+ * LibraryDirectoryPublic
+ */
+export type LibraryDirectoryPublic = {
+    /**
+     * Data
+     */
+    data: Array<LibraryFolderEntryPublic | LibraryDocumentEntryPublic>;
+    /**
+     * Count
+     */
+    count: number;
+};
+
+/**
+ * LibraryDocumentEntryPublic
+ */
+export type LibraryDocumentEntryPublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * File Library Id
+     */
+    file_library_id: string;
+    /**
+     * Folder Id
+     */
+    folder_id: string | null;
+    /**
+     * Filename
+     */
+    filename: string;
+    /**
+     * Content Type
+     */
+    content_type: string;
+    /**
+     * Size
+     */
+    size: number;
+    /**
+     * Uploaded
+     */
+    uploaded: boolean;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+    /**
+     * Type
+     */
+    type: 'document';
+};
+
+/**
+ * LibraryDocumentMove
+ */
+export type LibraryDocumentMove = {
+    /**
+     * Folder Id
+     */
+    folder_id: string | null;
+};
+
+/**
+ * LibraryDocumentPublic
+ */
+export type LibraryDocumentPublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * File Library Id
+     */
+    file_library_id: string;
+    /**
+     * Folder Id
+     */
+    folder_id: string | null;
+    /**
+     * Filename
+     */
+    filename: string;
+    /**
+     * Content Type
+     */
+    content_type: string;
+    /**
+     * Size
+     */
+    size: number;
+    /**
+     * Uploaded
+     */
+    uploaded: boolean;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * LibraryDocumentUploadPublic
+ */
+export type LibraryDocumentUploadPublic = {
+    /**
+     * Id
+     *
+     * 文件 ID，上传完成后用于确认
+     */
+    id: string;
+    /**
+     * Uploadurl
+     *
+     * 用于上传文件内容的临时 HTTP PUT 地址
+     */
+    uploadUrl: string;
+    /**
+     * Uploadheaders
+     *
+     * 上传文件时必须原样携带的 HTTP 请求头
+     */
+    uploadHeaders: {
+        [key: string]: string;
+    };
+};
+
+/**
+ * LibraryFolderCreate
+ */
+export type LibraryFolderCreate = {
+    /**
+     * Name
+     *
+     * 文件夹名称
+     */
+    name: string;
+    /**
+     * Parent Id
+     *
+     * 父文件夹 ID；不传表示创建在根目录
+     */
+    parent_id?: string | null;
+};
+
+/**
+ * LibraryFolderEntryPublic
+ */
+export type LibraryFolderEntryPublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * File Library Id
+     */
+    file_library_id: string;
+    /**
+     * Parent Id
+     */
+    parent_id: string | null;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+    /**
+     * Type
+     */
+    type: 'folder';
+};
+
+/**
+ * LibraryFolderMove
+ */
+export type LibraryFolderMove = {
+    /**
+     * Parent Id
+     *
+     * 目标父文件夹 ID；传 null 表示移动到根目录
+     */
+    parent_id: string | null;
+};
+
+/**
+ * LibraryFolderPublic
+ */
+export type LibraryFolderPublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * File Library Id
+     */
+    file_library_id: string;
+    /**
+     * Parent Id
+     */
+    parent_id: string | null;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * LibraryFolderUpdate
+ */
+export type LibraryFolderUpdate = {
+    /**
+     * Name
+     *
+     * 新的文件夹名称
+     */
+    name: string;
+};
+
+/**
+ * LibraryFoldersPublic
+ */
+export type LibraryFoldersPublic = {
+    /**
+     * Data
+     */
+    data: Array<LibraryFolderPublic>;
+    /**
+     * Count
+     */
+    count: number;
 };
 
 /**
@@ -2085,17 +2475,29 @@ export type BrandMarketingReadRegionalDataData = {
     query?: {
         /**
          * Year
+         *
+         * 统计年份；不传则使用最新年份
          */
         year?: number | null;
         /**
          * Skip
+         *
+         * 跳过的记录数
          */
         skip?: number;
         /**
          * Limit
+         *
+         * 返回的最大记录数
          */
         limit?: number;
+        /**
+         * 排序指标。可选值：resident_population=年末常住人口，urbanization_rate=城镇化率，per_capita_gdp=人均地区生产总值，disposable_income=人均可支配收入，consumption_expenditure=人均消费支出，retail_sales=社会消费品零售总额；默认值：resident_population
+         */
         sort_by?: RegionalIndicatorCode;
+        /**
+         * 排序方向。可选值：asc=升序，desc=降序；默认值：desc
+         */
         sort_order?: RegionalSortOrder;
     };
     url: '/api/v1/admin/brand-marketing/regional-data';
@@ -2137,18 +2539,26 @@ export type KnowledgeBasesReadKnowledgeBasesData = {
     query?: {
         /**
          * Skip
+         *
+         * 跳过的记录数
          */
         skip?: number;
         /**
          * Limit
+         *
+         * 返回的最大记录数
          */
         limit?: number;
         /**
          * Search
+         *
+         * 按知识库名称搜索
          */
         search?: string | null;
         /**
          * Is Enabled
+         *
+         * 按启用状态筛选：true=启用，false=停用；不传则返回全部
          */
         is_enabled?: boolean | null;
     };
@@ -2231,6 +2641,8 @@ export type KnowledgeBasesDeleteKnowledgeBaseData = {
     path: {
         /**
          * Knowledge Base Id
+         *
+         * 知识库 ID
          */
         knowledge_base_id: string;
     };
@@ -2323,6 +2735,8 @@ export type KnowledgeBasesUpdateKnowledgeBaseData = {
     path: {
         /**
          * Knowledge Base Id
+         *
+         * 知识库 ID
          */
         knowledge_base_id: string;
     };
@@ -2373,6 +2787,8 @@ export type KnowledgeBasesReadFoldersData = {
     path: {
         /**
          * Knowledge Base Id
+         *
+         * 知识库 ID
          */
         knowledge_base_id: string;
     };
@@ -2419,6 +2835,8 @@ export type KnowledgeBasesCreateFolderData = {
     path: {
         /**
          * Knowledge Base Id
+         *
+         * 知识库 ID
          */
         knowledge_base_id: string;
     };
@@ -2469,10 +2887,14 @@ export type KnowledgeBasesUpdateFolderData = {
     path: {
         /**
          * Knowledge Base Id
+         *
+         * 知识库 ID
          */
         knowledge_base_id: string;
         /**
          * Folder Id
+         *
+         * 文件夹 ID
          */
         folder_id: string;
     };
@@ -2523,10 +2945,14 @@ export type KnowledgeBasesMoveFolderData = {
     path: {
         /**
          * Knowledge Base Id
+         *
+         * 知识库 ID
          */
         knowledge_base_id: string;
         /**
          * Folder Id
+         *
+         * 文件夹 ID
          */
         folder_id: string;
     };
@@ -2577,20 +3003,28 @@ export type KnowledgeBasesReadDirectoryData = {
     path: {
         /**
          * Knowledge Base Id
+         *
+         * 知识库 ID
          */
         knowledge_base_id: string;
     };
     query?: {
         /**
          * Folder Id
+         *
+         * 文件夹 ID；不传表示根目录
          */
         folder_id?: string | null;
         /**
          * Skip
+         *
+         * 跳过的记录数
          */
         skip?: number;
         /**
          * Limit
+         *
+         * 返回的最大记录数
          */
         limit?: number;
     };
@@ -2636,6 +3070,8 @@ export type KnowledgeBasesDeleteDirectoryEntriesData = {
     path: {
         /**
          * Knowledge Base Id
+         *
+         * 知识库 ID
          */
         knowledge_base_id: string;
     };
@@ -2682,12 +3118,16 @@ export type KnowledgeBasesCreateDocumentUploadData = {
     path: {
         /**
          * Knowledge Base Id
+         *
+         * 知识库 ID
          */
         knowledge_base_id: string;
     };
     query?: {
         /**
          * Folder Id
+         *
+         * 导入到的文件夹 ID；不传表示根目录
          */
         folder_id?: string | null;
     };
@@ -2737,12 +3177,16 @@ export type KnowledgeBasesCreateWebpageDocumentData = {
     path: {
         /**
          * Knowledge Base Id
+         *
+         * 知识库 ID
          */
         knowledge_base_id: string;
     };
     query?: {
         /**
          * Folder Id
+         *
+         * 导入到的文件夹 ID；不传表示根目录
          */
         folder_id?: string | null;
     };
@@ -2796,6 +3240,8 @@ export type KnowledgeBasesSearchKnowledgeBaseData = {
     path: {
         /**
          * Knowledge Base Id
+         *
+         * 知识库 ID
          */
         knowledge_base_id: string;
     };
@@ -2846,6 +3292,8 @@ export type KnowledgeDocumentsCompleteDocumentUploadData = {
     path: {
         /**
          * Document Id
+         *
+         * 待确认上传的文档 ID
          */
         document_id: string;
     };
@@ -3641,13 +4089,20 @@ export type ContentOperationsReadBilibiliRankingData = {
     body?: never;
     path?: never;
     query?: {
+        /**
+         * B 站排行榜分区。可选值：all=全部，animation=动画，game=游戏，kichiku=鬼畜，music=音乐，dance=舞蹈，cinephile=影视，entertainment=娱乐，knowledge=知识，tech=科技数码，food=美食，car=汽车，fashion=时尚美妆，sports=体育运动；默认值：all
+         */
         category?: BilibiliRankingCategoryCode;
         /**
          * Skip
+         *
+         * 跳过的记录数
          */
         skip?: number;
         /**
          * Limit
+         *
+         * 返回的最大记录数
          */
         limit?: number;
     };
@@ -3688,20 +4143,35 @@ export type InfluencerMarketingReadInfluencerAccountsData = {
     body?: never;
     path?: never;
     query?: {
+        /**
+         * 达人所属平台。可选值：douyin=抖音，xiaohongshu=小红书；默认值：douyin
+         */
         platform?: InfluencerPlatformCode;
         /**
          * Skip
+         *
+         * 跳过的记录数
          */
         skip?: number;
         /**
          * Limit
+         *
+         * 返回的最大记录数
          */
         limit?: number;
         /**
          * Search
+         *
+         * 按达人名称或账号搜索
          */
         search?: string | null;
+        /**
+         * 排序字段。可选值：followers=粉丝数，engagement_count=互动数；默认值：followers
+         */
         sort_by?: InfluencerAccountSortBy;
+        /**
+         * 排序方向。可选值：asc=升序，desc=降序；默认值：desc
+         */
         sort_order?: InfluencerSortOrder;
     };
     url: '/api/v1/admin/influencer-marketing/accounts';
@@ -4392,3 +4862,884 @@ export type AgentCancelAgentRunResponses = {
 };
 
 export type AgentCancelAgentRunResponse = AgentCancelAgentRunResponses[keyof AgentCancelAgentRunResponses];
+
+export type FileLibrariesReadFileLibrariesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Skip
+         *
+         * 跳过的记录数
+         */
+        skip?: number;
+        /**
+         * Limit
+         *
+         * 返回的最大记录数
+         */
+        limit?: number;
+        /**
+         * Search
+         *
+         * 按文件库名称搜索
+         */
+        search?: string | null;
+    };
+    url: '/api/v1/admin/file-libraries';
+};
+
+export type FileLibrariesReadFileLibrariesErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FileLibrariesReadFileLibrariesError = FileLibrariesReadFileLibrariesErrors[keyof FileLibrariesReadFileLibrariesErrors];
+
+export type FileLibrariesReadFileLibrariesResponses = {
+    /**
+     * Successful Response
+     */
+    200: FileLibrariesPublic;
+};
+
+export type FileLibrariesReadFileLibrariesResponse = FileLibrariesReadFileLibrariesResponses[keyof FileLibrariesReadFileLibrariesResponses];
+
+export type FileLibrariesCreateFileLibraryData = {
+    body: FileLibraryCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/file-libraries';
+};
+
+export type FileLibrariesCreateFileLibraryErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FileLibrariesCreateFileLibraryError = FileLibrariesCreateFileLibraryErrors[keyof FileLibrariesCreateFileLibraryErrors];
+
+export type FileLibrariesCreateFileLibraryResponses = {
+    /**
+     * Successful Response
+     */
+    201: FileLibraryPublic;
+};
+
+export type FileLibrariesCreateFileLibraryResponse = FileLibrariesCreateFileLibraryResponses[keyof FileLibrariesCreateFileLibraryResponses];
+
+export type FileLibrariesDeleteFileLibraryData = {
+    body?: never;
+    path: {
+        /**
+         * File Library Id
+         *
+         * 文件库 ID
+         */
+        file_library_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/file-libraries/{file_library_id}';
+};
+
+export type FileLibrariesDeleteFileLibraryErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FileLibrariesDeleteFileLibraryError = FileLibrariesDeleteFileLibraryErrors[keyof FileLibrariesDeleteFileLibraryErrors];
+
+export type FileLibrariesDeleteFileLibraryResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type FileLibrariesDeleteFileLibraryResponse = FileLibrariesDeleteFileLibraryResponses[keyof FileLibrariesDeleteFileLibraryResponses];
+
+export type FileLibrariesReadFileLibraryData = {
+    body?: never;
+    path: {
+        /**
+         * File Library Id
+         */
+        file_library_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/file-libraries/{file_library_id}';
+};
+
+export type FileLibrariesReadFileLibraryErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FileLibrariesReadFileLibraryError = FileLibrariesReadFileLibraryErrors[keyof FileLibrariesReadFileLibraryErrors];
+
+export type FileLibrariesReadFileLibraryResponses = {
+    /**
+     * Successful Response
+     */
+    200: FileLibraryPublic;
+};
+
+export type FileLibrariesReadFileLibraryResponse = FileLibrariesReadFileLibraryResponses[keyof FileLibrariesReadFileLibraryResponses];
+
+export type FileLibrariesUpdateFileLibraryData = {
+    body: FileLibraryUpdate;
+    path: {
+        /**
+         * File Library Id
+         *
+         * 文件库 ID
+         */
+        file_library_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/file-libraries/{file_library_id}';
+};
+
+export type FileLibrariesUpdateFileLibraryErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FileLibrariesUpdateFileLibraryError = FileLibrariesUpdateFileLibraryErrors[keyof FileLibrariesUpdateFileLibraryErrors];
+
+export type FileLibrariesUpdateFileLibraryResponses = {
+    /**
+     * Successful Response
+     */
+    200: FileLibraryPublic;
+};
+
+export type FileLibrariesUpdateFileLibraryResponse = FileLibrariesUpdateFileLibraryResponses[keyof FileLibrariesUpdateFileLibraryResponses];
+
+export type FileLibrariesReadFoldersData = {
+    body?: never;
+    path: {
+        /**
+         * File Library Id
+         *
+         * 文件库 ID
+         */
+        file_library_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/file-libraries/{file_library_id}/folders';
+};
+
+export type FileLibrariesReadFoldersErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FileLibrariesReadFoldersError = FileLibrariesReadFoldersErrors[keyof FileLibrariesReadFoldersErrors];
+
+export type FileLibrariesReadFoldersResponses = {
+    /**
+     * Successful Response
+     */
+    200: LibraryFoldersPublic;
+};
+
+export type FileLibrariesReadFoldersResponse = FileLibrariesReadFoldersResponses[keyof FileLibrariesReadFoldersResponses];
+
+export type FileLibrariesCreateFolderData = {
+    body: LibraryFolderCreate;
+    path: {
+        /**
+         * File Library Id
+         *
+         * 文件库 ID
+         */
+        file_library_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/file-libraries/{file_library_id}/folders';
+};
+
+export type FileLibrariesCreateFolderErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FileLibrariesCreateFolderError = FileLibrariesCreateFolderErrors[keyof FileLibrariesCreateFolderErrors];
+
+export type FileLibrariesCreateFolderResponses = {
+    /**
+     * Successful Response
+     */
+    201: LibraryFolderPublic;
+};
+
+export type FileLibrariesCreateFolderResponse = FileLibrariesCreateFolderResponses[keyof FileLibrariesCreateFolderResponses];
+
+export type FileLibrariesUpdateFolderData = {
+    body: LibraryFolderUpdate;
+    path: {
+        /**
+         * File Library Id
+         *
+         * 文件库 ID
+         */
+        file_library_id: string;
+        /**
+         * Folder Id
+         *
+         * 文件夹 ID
+         */
+        folder_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/file-libraries/{file_library_id}/folders/{folder_id}';
+};
+
+export type FileLibrariesUpdateFolderErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FileLibrariesUpdateFolderError = FileLibrariesUpdateFolderErrors[keyof FileLibrariesUpdateFolderErrors];
+
+export type FileLibrariesUpdateFolderResponses = {
+    /**
+     * Successful Response
+     */
+    200: LibraryFolderPublic;
+};
+
+export type FileLibrariesUpdateFolderResponse = FileLibrariesUpdateFolderResponses[keyof FileLibrariesUpdateFolderResponses];
+
+export type FileLibrariesMoveFolderData = {
+    body: LibraryFolderMove;
+    path: {
+        /**
+         * File Library Id
+         *
+         * 文件库 ID
+         */
+        file_library_id: string;
+        /**
+         * Folder Id
+         *
+         * 文件夹 ID
+         */
+        folder_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/file-libraries/{file_library_id}/folders/{folder_id}/parent';
+};
+
+export type FileLibrariesMoveFolderErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FileLibrariesMoveFolderError = FileLibrariesMoveFolderErrors[keyof FileLibrariesMoveFolderErrors];
+
+export type FileLibrariesMoveFolderResponses = {
+    /**
+     * Successful Response
+     */
+    200: LibraryFolderPublic;
+};
+
+export type FileLibrariesMoveFolderResponse = FileLibrariesMoveFolderResponses[keyof FileLibrariesMoveFolderResponses];
+
+export type FileLibrariesReadDirectoryData = {
+    body?: never;
+    path: {
+        /**
+         * File Library Id
+         *
+         * 文件库 ID
+         */
+        file_library_id: string;
+    };
+    query?: {
+        /**
+         * Folder Id
+         *
+         * 文件夹 ID；不传表示根目录
+         */
+        folder_id?: string | null;
+        /**
+         * Skip
+         *
+         * 跳过的记录数
+         */
+        skip?: number;
+        /**
+         * Limit
+         *
+         * 返回的最大记录数
+         */
+        limit?: number;
+    };
+    url: '/api/v1/admin/file-libraries/{file_library_id}/entries';
+};
+
+export type FileLibrariesReadDirectoryErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FileLibrariesReadDirectoryError = FileLibrariesReadDirectoryErrors[keyof FileLibrariesReadDirectoryErrors];
+
+export type FileLibrariesReadDirectoryResponses = {
+    /**
+     * Successful Response
+     */
+    200: LibraryDirectoryPublic;
+};
+
+export type FileLibrariesReadDirectoryResponse = FileLibrariesReadDirectoryResponses[keyof FileLibrariesReadDirectoryResponses];
+
+export type FileLibrariesDeleteDirectoryEntriesData = {
+    body: LibraryDirectoryDelete;
+    path: {
+        /**
+         * File Library Id
+         *
+         * 文件库 ID
+         */
+        file_library_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/file-libraries/{file_library_id}/directory/batch-delete';
+};
+
+export type FileLibrariesDeleteDirectoryEntriesErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type FileLibrariesDeleteDirectoryEntriesError = FileLibrariesDeleteDirectoryEntriesErrors[keyof FileLibrariesDeleteDirectoryEntriesErrors];
+
+export type FileLibrariesDeleteDirectoryEntriesResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type FileLibrariesDeleteDirectoryEntriesResponse = FileLibrariesDeleteDirectoryEntriesResponses[keyof FileLibrariesDeleteDirectoryEntriesResponses];
+
+export type FileLibrariesCreateDocumentUploadData = {
+    body: FileUploadRequest;
+    path: {
+        /**
+         * File Library Id
+         *
+         * 文件库 ID
+         */
+        file_library_id: string;
+    };
+    query?: {
+        /**
+         * Folder Id
+         *
+         * 导入到的文件夹 ID；不传表示根目录
+         */
+        folder_id?: string | null;
+    };
+    url: '/api/v1/admin/file-libraries/{file_library_id}/documents/uploads';
+};
+
+export type FileLibrariesCreateDocumentUploadErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponse;
+};
+
+export type FileLibrariesCreateDocumentUploadError = FileLibrariesCreateDocumentUploadErrors[keyof FileLibrariesCreateDocumentUploadErrors];
+
+export type FileLibrariesCreateDocumentUploadResponses = {
+    /**
+     * Successful Response
+     */
+    201: LibraryDocumentUploadPublic;
+};
+
+export type FileLibrariesCreateDocumentUploadResponse = FileLibrariesCreateDocumentUploadResponses[keyof FileLibrariesCreateDocumentUploadResponses];
+
+export type LibraryDocumentsCompleteDocumentUploadData = {
+    body?: never;
+    path: {
+        /**
+         * Document Id
+         *
+         * 待确认上传的文件 ID
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/library-documents/{document_id}/complete';
+};
+
+export type LibraryDocumentsCompleteDocumentUploadErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponse;
+};
+
+export type LibraryDocumentsCompleteDocumentUploadError = LibraryDocumentsCompleteDocumentUploadErrors[keyof LibraryDocumentsCompleteDocumentUploadErrors];
+
+export type LibraryDocumentsCompleteDocumentUploadResponses = {
+    /**
+     * Successful Response
+     */
+    200: LibraryDocumentPublic;
+};
+
+export type LibraryDocumentsCompleteDocumentUploadResponse = LibraryDocumentsCompleteDocumentUploadResponses[keyof LibraryDocumentsCompleteDocumentUploadResponses];
+
+export type LibraryDocumentsDeleteDocumentData = {
+    body?: never;
+    path: {
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/library-documents/{document_id}';
+};
+
+export type LibraryDocumentsDeleteDocumentErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type LibraryDocumentsDeleteDocumentError = LibraryDocumentsDeleteDocumentErrors[keyof LibraryDocumentsDeleteDocumentErrors];
+
+export type LibraryDocumentsDeleteDocumentResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type LibraryDocumentsDeleteDocumentResponse = LibraryDocumentsDeleteDocumentResponses[keyof LibraryDocumentsDeleteDocumentResponses];
+
+export type LibraryDocumentsReadDocumentData = {
+    body?: never;
+    path: {
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/library-documents/{document_id}';
+};
+
+export type LibraryDocumentsReadDocumentErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type LibraryDocumentsReadDocumentError = LibraryDocumentsReadDocumentErrors[keyof LibraryDocumentsReadDocumentErrors];
+
+export type LibraryDocumentsReadDocumentResponses = {
+    /**
+     * Successful Response
+     */
+    200: LibraryDocumentPublic;
+};
+
+export type LibraryDocumentsReadDocumentResponse = LibraryDocumentsReadDocumentResponses[keyof LibraryDocumentsReadDocumentResponses];
+
+export type LibraryDocumentsDownloadOriginalDocumentData = {
+    body?: never;
+    path: {
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/library-documents/{document_id}/download';
+};
+
+export type LibraryDocumentsDownloadOriginalDocumentErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponse;
+};
+
+export type LibraryDocumentsDownloadOriginalDocumentError = LibraryDocumentsDownloadOriginalDocumentErrors[keyof LibraryDocumentsDownloadOriginalDocumentErrors];
+
+export type LibraryDocumentsDownloadOriginalDocumentResponses = {
+    /**
+     * Successful Response
+     */
+    200: FileCompletePublic;
+};
+
+export type LibraryDocumentsDownloadOriginalDocumentResponse = LibraryDocumentsDownloadOriginalDocumentResponses[keyof LibraryDocumentsDownloadOriginalDocumentResponses];
+
+export type LibraryDocumentsMoveDocumentData = {
+    body: LibraryDocumentMove;
+    path: {
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/library-documents/{document_id}/folder';
+};
+
+export type LibraryDocumentsMoveDocumentErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type LibraryDocumentsMoveDocumentError = LibraryDocumentsMoveDocumentErrors[keyof LibraryDocumentsMoveDocumentErrors];
+
+export type LibraryDocumentsMoveDocumentResponses = {
+    /**
+     * Successful Response
+     */
+    200: LibraryDocumentPublic;
+};
+
+export type LibraryDocumentsMoveDocumentResponse = LibraryDocumentsMoveDocumentResponses[keyof LibraryDocumentsMoveDocumentResponses];

@@ -9,13 +9,12 @@ import {
   FileIcon,
   FolderIcon,
   ImageIcon,
-  PuzzleIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/layout/app-header";
-import { LoadError } from "@/components/shared/load-error";
-import { MarkdownContent } from "@/components/shared/markdown-content";
+import { LoadError } from "@/components/common/load-error";
+import { MarkdownContent } from "@/components/common/markdown-content";
 import {
   skillsReadSkill,
   skillsReadSkillFile,
@@ -110,16 +109,6 @@ export function SkillDetail({ skillName }: SkillDetailProps) {
             />
           )}
 
-          {!detailQuery.isPending && !detailQuery.isError && !detail && (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PuzzleIcon aria-hidden="true" />
-                </EmptyMedia>
-                <EmptyTitle>暂无技能信息</EmptyTitle>
-              </EmptyHeader>
-            </Empty>
-          )}
           {detail && (
             <>
               {typeof description === "string" && (
@@ -415,11 +404,7 @@ function FilePreviewContent({
 
   if (error) {
     return (
-      <LoadError
-        title="文件加载失败"
-        isRetrying={retrying}
-        onRetry={onRetry}
-      />
+      <LoadError title="文件加载失败" isRetrying={retrying} onRetry={onRetry} />
     );
   }
 

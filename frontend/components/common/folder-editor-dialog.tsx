@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { ButtonLoading } from "@/components/shared/button-loading";
+import { ButtonLoading } from "@/components/common/button-loading";
 import {
   Dialog,
   DialogContent,
@@ -13,31 +13,30 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
-  type KnowledgeFolderPublic,
+  fileLibrariesCreateFolder,
+  fileLibrariesUpdateFolder,
   knowledgeBasesCreateFolder,
   knowledgeBasesUpdateFolder,
 } from "@/lib/client";
 import { toast } from "sonner";
 
-export function KnowledgeFolderEditorDialog({
-  knowledgeBaseId,
+export function FolderEditorDialog({
+  kind,
+  libraryId,
   parentFolderId,
   folder,
   onSaved,
   onClose,
   onCloseAutoFocus,
 }: {
-  knowledgeBaseId: string;
+  kind: "file" | "knowledge";
+  libraryId: string;
   parentFolderId?: string;
-  folder?: KnowledgeFolderPublic;
+  folder?: { id: string; name: string };
   onSaved: () => void;
   onClose: () => void;
   onCloseAutoFocus: (event: Event) => void;
@@ -46,24 +45,33 @@ export function KnowledgeFolderEditorDialog({
 
   const saveFolderMutation = useMutation({
     mutationFn: async (name: string): Promise<void> => {
-      if (folder) {
+      if (kind === "file") {
+        if (folder) {
+          await fileLibrariesUpdateFolder({
+            path: { file_library_id: libraryId, folder_id: folder.id },
+            body: { name },
+            throwOnError: true,
+          });
+        } else {
+          await fileLibrariesCreateFolder({
+            path: { file_library_id: libraryId },
+            body: { name, parent_id: parentFolderId ?? null },
+            throwOnError: true,
+          });
+        }
+      } else if (folder) {
         await knowledgeBasesUpdateFolder({
-          path: {
-            knowledge_base_id: knowledgeBaseId,
-            folder_id: folder.id,
-          },
+          path: { knowledge_base_id: libraryId, folder_id: folder.id },
           body: { name },
           throwOnError: true,
         });
-
-        return;
+      } else {
+        await knowledgeBasesCreateFolder({
+          path: { knowledge_base_id: libraryId },
+          body: { name, parent_id: parentFolderId ?? null },
+          throwOnError: true,
+        });
       }
-
-      await knowledgeBasesCreateFolder({
-        path: { knowledge_base_id: knowledgeBaseId },
-        body: { name, parent_id: parentFolderId ?? null },
-        throwOnError: true,
-      });
     },
     onSuccess: () => {
       toast.success(folder ? "文件夹已重命名" : "文件夹已创建");
@@ -95,16 +103,14 @@ export function KnowledgeFolderEditorDialog({
       >
         <DialogHeader>
           <DialogTitle>{folder ? "重命名文件夹" : "新建文件夹"}</DialogTitle>
-          <DialogDescription>
-            文件夹用于整理当前知识库中的文档。
-          </DialogDescription>
+          <DialogDescription>文件夹用于整理当前库中的文件。</DialogDescription>
         </DialogHeader>
         <form onSubmit={submitFolder}>
           <FieldGroup>
             <Field data-disabled={saveFolderMutation.isPending}>
-              <FieldLabel htmlFor="knowledge-folder-name">名称</FieldLabel>
+              <FieldLabel htmlFor="library-folder-name">名称</FieldLabel>
               <Input
-                id="knowledge-folder-name"
+                id="library-folder-name"
                 name="name"
                 value={folderName}
                 maxLength={100}
@@ -131,7 +137,7 @@ export function KnowledgeFolderEditorDialog({
                 aria-busy={saveFolderMutation.isPending}
               >
                 <ButtonLoading loading={saveFolderMutation.isPending}>
-                  保存
+                  {folder ? "保存" : "创建文件夹"}
                 </ButtonLoading>
               </Button>
             </DialogFooter>

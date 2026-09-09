@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SearchIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent } from "react";
-import { LoadError } from "@/components/shared/load-error";
+import { LoadError } from "@/components/common/load-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

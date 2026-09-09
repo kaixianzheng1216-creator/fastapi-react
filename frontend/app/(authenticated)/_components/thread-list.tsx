@@ -58,17 +58,8 @@ import {
   type FC,
   type SubmitEvent,
 } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { ButtonLoading } from "@/components/shared/button-loading";
+import { DeleteDialog } from "@/components/common/delete-dialog";
+import { ButtonLoading } from "@/components/common/button-loading";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   agentArchiveConversation,
@@ -701,38 +692,15 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
         </DialogContent>
       </Dialog>
 
-      <AlertDialog
+      <DeleteDialog
         open={isDeleteOpen}
-        onOpenChange={(open) => {
-          if (!isPending) setDeleteOpen(open);
-        }}
+        pending={isPending}
+        title="删除会话"
+        onOpenChange={setDeleteOpen}
+        onConfirm={() => deleteConversationMutation.mutate()}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>删除会话？</AlertDialogTitle>
-            <AlertDialogDescription>
-              将永久删除“{currentTitle || "未命名会话"}”，此操作无法撤销。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>取消</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              className="relative"
-              disabled={isPending}
-              aria-busy={deleteConversationMutation.isPending}
-              onClick={(event) => {
-                event.preventDefault();
-                deleteConversationMutation.mutate();
-              }}
-            >
-              <ButtonLoading loading={deleteConversationMutation.isPending}>
-                删除
-              </ButtonLoading>
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        将永久删除“{currentTitle || "未命名会话"}”，此操作无法撤销。
+      </DeleteDialog>
     </ThreadListItemMorePrimitive.Root>
   );
 };

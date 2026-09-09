@@ -1,6 +1,6 @@
 "use client";
 
-import { MarkdownContent } from "@/components/shared/markdown-content";
+import { MarkdownContent } from "@/components/common/markdown-content";
 import {
   Accordion,
   AccordionContent,

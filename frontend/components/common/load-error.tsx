@@ -1,6 +1,6 @@
 import { CircleAlertIcon } from "lucide-react";
 
-import { ButtonLoading } from "@/components/shared/button-loading";
+import { ButtonLoading } from "@/components/common/button-loading";
 import { Button } from "@/components/ui/button";
 import {
   Empty,

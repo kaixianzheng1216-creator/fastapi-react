@@ -1,5 +1,7 @@
 "use client";
 
+import { CollectionContent } from "@/components/common/collection-content";
+
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   createColumnHelper,
@@ -13,10 +15,15 @@ import { ChartNoAxesColumnIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/app-header";
-import { LoadError } from "@/components/shared/load-error";
-import { PageOutOfRange } from "@/components/shared/page-out-of-range";
-import { PagePagination } from "@/components/shared/page-pagination";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { LoadError } from "@/components/common/load-error";
+import { PageOutOfRange } from "@/components/common/page-out-of-range";
+import { PagePagination } from "@/components/common/page-pagination";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -28,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TableSkeleton } from "@/components/shared/table-skeleton";
+import { TableSkeleton } from "@/components/common/table-skeleton";
 import {
   Table,
   TableBody,
@@ -354,45 +361,44 @@ export function PlatformRankings() {
                         </Empty>
                       )
                     ) : (
-                      <Table
-                        aria-busy={rankingQuery.isFetching}
-                        className="table-fixed tabular-nums transition-opacity aria-busy:pointer-events-none aria-busy:opacity-60"
-                      >
-                        <TableHeader>
-                          {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
-                              {headerGroup.headers.map((header) => (
-                                <TableHead
-                                  key={header.id}
-                                  className={
-                                    header.column.columnDef.meta?.className
-                                  }
-                                >
-                                  {header.isPlaceholder ? null : (
-                                    <table.FlexRender header={header} />
-                                  )}
-                                </TableHead>
-                              ))}
-                            </TableRow>
-                          ))}
-                        </TableHeader>
-                        <TableBody>
-                          {rows.map((row) => (
-                            <TableRow key={row.id}>
-                              {row.getAllCells().map((cell) => (
-                                <TableCell
-                                  key={cell.id}
-                                  className={
-                                    cell.column.columnDef.meta?.className
-                                  }
-                                >
-                                  <table.FlexRender cell={cell} />
-                                </TableCell>
-                              ))}
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                      <CollectionContent busy={rankingQuery.isFetching}>
+                        <Table className="table-fixed tabular-nums">
+                          <TableHeader>
+                            {table.getHeaderGroups().map((headerGroup) => (
+                              <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => (
+                                  <TableHead
+                                    key={header.id}
+                                    className={
+                                      header.column.columnDef.meta?.className
+                                    }
+                                  >
+                                    {header.isPlaceholder ? null : (
+                                      <table.FlexRender header={header} />
+                                    )}
+                                  </TableHead>
+                                ))}
+                              </TableRow>
+                            ))}
+                          </TableHeader>
+                          <TableBody>
+                            {rows.map((row) => (
+                              <TableRow key={row.id}>
+                                {row.getAllCells().map((cell) => (
+                                  <TableCell
+                                    key={cell.id}
+                                    className={
+                                      cell.column.columnDef.meta?.className
+                                    }
+                                  >
+                                    <table.FlexRender cell={cell} />
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </CollectionContent>
                     )}
 
                     <PagePagination

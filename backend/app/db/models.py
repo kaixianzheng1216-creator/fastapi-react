@@ -26,4 +26,6 @@ from app.modules.influencer_marketing.models import (  # noqa: F401
     InfluencerAccountSnapshot,
 )
 
+from app.modules.file_library.models import FileLibrary, LibraryFolder, LibraryDocument  # noqa: F401
+
 metadata = SQLModel.metadata

@@ -13,21 +13,17 @@ import {
   DirectoryEntryActions,
   DirectoryToolbar,
   useDirectoryActions,
-} from "@/app/admin/knowledge-bases/_components/directory-actions";
-import { KnowledgeDirectoryTable } from "@/app/admin/knowledge-bases/_components/directory-table";
+} from "@/app/admin/file-libraries/_components/directory-actions";
+import { LibraryDirectoryTable } from "@/app/admin/file-libraries/_components/directory-table";
 import {
   getDirectoryEntryKey,
   type DirectoryEntry,
   type DirectoryChange,
-  KNOWLEDGE_FOLDERS_QUERY_KEY,
-  KNOWLEDGE_DIRECTORY_QUERY_KEY,
-  KNOWLEDGE_SEARCH_QUERY_KEY,
-} from "@/app/admin/knowledge-bases/_lib/directory";
-import {
-  getKnowledgeDirectoryHref,
-  getKnowledgeDocumentHref,
-} from "@/app/admin/knowledge-bases/_lib/navigation";
-import { KnowledgeDocumentImport } from "@/app/admin/knowledge-bases/_components/document-import";
+  LIBRARY_FOLDERS_QUERY_KEY,
+  LIBRARY_DIRECTORY_QUERY_KEY,
+} from "@/app/admin/file-libraries/_lib/directory";
+import { getLibraryDirectoryHref } from "@/app/admin/file-libraries/_lib/navigation";
+import { LibraryDocumentImport } from "@/app/admin/file-libraries/_components/document-import";
 import { LoadError } from "@/components/common/load-error";
 import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
@@ -49,25 +45,20 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableSkeleton } from "@/components/common/table-skeleton";
 import {
-  type KnowledgeFolderPublic,
-  knowledgeBasesReadDirectory,
-  knowledgeBasesReadFolders,
+  type LibraryFolderPublic,
+  fileLibrariesReadDirectory,
+  fileLibrariesReadFolders,
 } from "@/lib/client";
 import { getFolderAncestors } from "@/lib/folders";
 import { parsePage } from "@/lib/pagination";
 
 const PAGE_SIZE = 20;
-const DOCUMENT_POLL_INTERVAL_MS = 3000;
 
 const EMPTY_DIRECTORY_ENTRIES: DirectoryEntry[] = [];
-const EMPTY_FOLDERS: KnowledgeFolderPublic[] = [];
+const EMPTY_FOLDERS: LibraryFolderPublic[] = [];
 const EMPTY_ENTRY_KEYS = new Set<string>();
 
-export function KnowledgeDocuments({
-  knowledgeBaseId,
-}: {
-  knowledgeBaseId: string;
-}) {
+export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -76,22 +67,18 @@ export function KnowledgeDocuments({
   const currentPage = parsePage(searchParams.get("page"));
   const currentFolderId = searchParams.get("folder") ?? undefined;
   const pageIndex = currentPage - 1;
-  const activeView =
-    searchParams.get("view") === "search" ? "search" : "documents";
-
   const foldersQuery = useQuery({
     meta: { handlesInitialError: true },
-    queryKey: [...KNOWLEDGE_FOLDERS_QUERY_KEY, knowledgeBaseId],
+    queryKey: [...LIBRARY_FOLDERS_QUERY_KEY, fileLibraryId],
     queryFn: async ({ signal }) => {
-      const { data } = await knowledgeBasesReadFolders({
-        path: { knowledge_base_id: knowledgeBaseId },
+      const { data } = await fileLibrariesReadFolders({
+        path: { file_library_id: fileLibraryId },
         signal,
         throwOnError: true,
       });
 
       return data;
     },
-    enabled: activeView === "documents",
   });
 
   const folders = foldersQuery.data?.data ?? EMPTY_FOLDERS;
@@ -101,14 +88,14 @@ export function KnowledgeDocuments({
   const directoryQuery = useQuery({
     meta: { handlesInitialError: true },
     queryKey: [
-      ...KNOWLEDGE_DIRECTORY_QUERY_KEY,
-      knowledgeBaseId,
+      ...LIBRARY_DIRECTORY_QUERY_KEY,
+      fileLibraryId,
       currentFolderId,
       pageIndex,
     ],
     queryFn: async ({ signal }) => {
-      const { data } = await knowledgeBasesReadDirectory({
-        path: { knowledge_base_id: knowledgeBaseId },
+      const { data } = await fileLibrariesReadDirectory({
+        path: { file_library_id: fileLibraryId },
         query: {
           folder_id: currentFolderId,
           skip: pageIndex * PAGE_SIZE,
@@ -120,23 +107,10 @@ export function KnowledgeDocuments({
 
       return data;
     },
-    refetchInterval: (query) => {
-      if (query.state.status === "error") return false;
-
-      const hasProcessingDocument = query.state.data?.data.some(
-        (entry) =>
-          entry.type === "document" &&
-          (entry.status === "processing" ||
-            (entry.status === "pending" && entry.uploaded)),
-      );
-
-      return hasProcessingDocument ? DOCUMENT_POLL_INTERVAL_MS : false;
-    },
-    enabled: activeView === "documents",
     placeholderData: (previousData, previousQuery) => {
       const previousQueryKey = previousQuery?.queryKey;
 
-      return previousQueryKey?.at(-3) === knowledgeBaseId &&
+      return previousQueryKey?.at(-3) === fileLibraryId &&
         previousQueryKey.at(-2) === currentFolderId
         ? previousData
         : undefined;
@@ -156,16 +130,13 @@ export function KnowledgeDocuments({
 
   function invalidateDocuments(): void {
     void queryClient.invalidateQueries({
-      queryKey: [...KNOWLEDGE_DIRECTORY_QUERY_KEY, knowledgeBaseId],
-    });
-    void queryClient.invalidateQueries({
-      queryKey: [...KNOWLEDGE_SEARCH_QUERY_KEY, knowledgeBaseId],
+      queryKey: [...LIBRARY_DIRECTORY_QUERY_KEY, fileLibraryId],
     });
   }
 
   function invalidateFolders(): void {
     void queryClient.invalidateQueries({
-      queryKey: [...KNOWLEDGE_FOLDERS_QUERY_KEY, knowledgeBaseId],
+      queryKey: [...LIBRARY_FOLDERS_QUERY_KEY, fileLibraryId],
     });
     invalidateDocuments();
   }
@@ -173,8 +144,8 @@ export function KnowledgeDocuments({
   function navigateAfterRemovingEntries(removedCount: number): void {
     if (directoryEntries.length <= removedCount && currentPage > 1) {
       router.replace(
-        getKnowledgeDirectoryHref(
-          knowledgeBaseId,
+        getLibraryDirectoryHref(
+          fileLibraryId,
           currentPage - 1,
           currentFolderId,
         ),
@@ -182,7 +153,7 @@ export function KnowledgeDocuments({
     }
   }
 
-  const selectionScope = `${knowledgeBaseId}:${currentFolderId ?? "root"}:${currentPage}`;
+  const selectionScope = `${fileLibraryId}:${currentFolderId ?? "root"}:${currentPage}`;
   const [directorySelection, setDirectorySelection] = useState<{
     scope: string;
     keys: Set<string>;
@@ -236,8 +207,8 @@ export function KnowledgeDocuments({
 
         if (deletedCurrentFolder?.type === "folder") {
           router.replace(
-            getKnowledgeDirectoryHref(
-              knowledgeBaseId,
+            getLibraryDirectoryHref(
+              fileLibraryId,
               1,
               deletedCurrentFolder.parent_id ?? undefined,
             ),
@@ -255,7 +226,7 @@ export function KnowledgeDocuments({
   }
 
   const actions = useDirectoryActions({
-    knowledgeBaseId,
+    fileLibraryId,
     focusFallbackRef: documentsRef,
     onChanged: handleDirectoryChange,
   });
@@ -264,11 +235,12 @@ export function KnowledgeDocuments({
     <section
       ref={documentsRef}
       tabIndex={-1}
-      aria-label="知识库文档"
+      aria-label="文件库文件"
       className="flex flex-1 flex-col gap-6"
     >
-      <KnowledgeDocumentImport
-        knowledgeBaseId={knowledgeBaseId}
+      <LibraryDocumentImport
+        key={currentFolderId ?? "root"}
+        fileLibraryId={fileLibraryId}
         folderId={currentFolderId}
         onDocumentsChanged={invalidateDocuments}
       />
@@ -283,7 +255,7 @@ export function KnowledgeDocuments({
         </div>
       ) : directoryLoadFailed ? (
         <LoadError
-          title="文档列表加载失败"
+          title="文件列表加载失败"
           isRetrying={foldersQuery.isFetching || directoryQuery.isFetching}
           onRetry={() => {
             void foldersQuery.refetch();
@@ -298,12 +270,12 @@ export function KnowledgeDocuments({
                 <BreadcrumbItem>
                   {currentPath.length > 0 ? (
                     <BreadcrumbLink asChild>
-                      <Link href={getKnowledgeDirectoryHref(knowledgeBaseId)}>
-                        全部文档
+                      <Link href={getLibraryDirectoryHref(fileLibraryId)}>
+                        全部文件
                       </Link>
                     </BreadcrumbLink>
                   ) : (
-                    <BreadcrumbPage>全部文档</BreadcrumbPage>
+                    <BreadcrumbPage>全部文件</BreadcrumbPage>
                   )}
                 </BreadcrumbItem>
                 {currentPath.map((folder, index) => (
@@ -315,8 +287,8 @@ export function KnowledgeDocuments({
                       ) : (
                         <BreadcrumbLink asChild>
                           <Link
-                            href={getKnowledgeDirectoryHref(
-                              knowledgeBaseId,
+                            href={getLibraryDirectoryHref(
+                              fileLibraryId,
                               1,
                               folder.id,
                             )}
@@ -340,19 +312,11 @@ export function KnowledgeDocuments({
 
           {directoryEntries.length > 0 ? (
             <CollectionContent busy={directoryQuery.isPlaceholderData}>
-              <KnowledgeDirectoryTable
-                knowledgeBaseId={knowledgeBaseId}
+              <LibraryDirectoryTable
+                fileLibraryId={fileLibraryId}
                 entries={directoryEntries}
                 selectedEntryKeys={selectedEntryKeys}
                 onSelectionChange={selectEntries}
-                getDocumentHref={(documentId) =>
-                  getKnowledgeDocumentHref(
-                    knowledgeBaseId,
-                    documentId,
-                    currentPage,
-                    currentFolderId,
-                  )
-                }
                 renderActions={(entry) => (
                   <DirectoryEntryActions entry={entry} actions={actions} />
                 )}
@@ -367,11 +331,7 @@ export function KnowledgeDocuments({
         !hasDirectoryEntries &&
         (pageOutOfRange ? (
           <PageOutOfRange
-            href={getKnowledgeDirectoryHref(
-              knowledgeBaseId,
-              1,
-              currentFolderId,
-            )}
+            href={getLibraryDirectoryHref(fileLibraryId, 1, currentFolderId)}
           />
         ) : (
           <Empty>
@@ -380,25 +340,23 @@ export function KnowledgeDocuments({
                 <FolderOpenIcon aria-hidden="true" />
               </EmptyMedia>
               <EmptyTitle>此文件夹为空</EmptyTitle>
-              <EmptyDescription>
-                上传文件、添加网页或新建文件夹。
-              </EmptyDescription>
+              <EmptyDescription>上传文件或新建文件夹。</EmptyDescription>
             </EmptyHeader>
           </Empty>
         ))}
       <PagePagination
         className="mt-auto"
-        ariaLabel="知识库目录分页"
+        ariaLabel="文件库目录分页"
         currentPage={currentPage}
         pageCount={pageCount}
         getPageHref={(page) =>
-          getKnowledgeDirectoryHref(knowledgeBaseId, page, currentFolderId)
+          getLibraryDirectoryHref(fileLibraryId, page, currentFolderId)
         }
       />
 
       <DirectoryActionDialogs
         actions={actions}
-        knowledgeBaseId={knowledgeBaseId}
+        fileLibraryId={fileLibraryId}
         currentFolderId={currentFolderId}
         folders={folders}
       />

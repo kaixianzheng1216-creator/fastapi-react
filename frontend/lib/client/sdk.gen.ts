@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AgentArchiveConversationData, AgentArchiveConversationErrors, AgentArchiveConversationResponses, AgentCancelAgentRunData, AgentCancelAgentRunErrors, AgentCancelAgentRunResponses, AgentCreateAgentRunData, AgentCreateAgentRunErrors, AgentCreateAgentRunResponses, AgentCreateConversationData, AgentCreateConversationErrors, AgentCreateConversationResponses, AgentDeleteConversationData, AgentDeleteConversationErrors, AgentDeleteConversationResponses, AgentDownloadConversationReportPdfData, AgentDownloadConversationReportPdfErrors, AgentDownloadConversationReportPdfResponses, AgentGenerateConversationTitleData, AgentGenerateConversationTitleErrors, AgentGenerateConversationTitleResponses, AgentReadAgentRunResumeStateData, AgentReadAgentRunResumeStateErrors, AgentReadAgentRunResumeStateResponses, AgentReadConversationData, AgentReadConversationErrors, AgentReadConversationResponses, AgentReadConversationsData, AgentReadConversationsErrors, AgentReadConversationsResponses, AgentReadModelsData, AgentReadModelsErrors, AgentReadModelsResponses, AgentRenameConversationData, AgentRenameConversationErrors, AgentRenameConversationResponses, AgentResumeAgentRunData, AgentResumeAgentRunErrors, AgentResumeAgentRunResponses, AgentUnarchiveConversationData, AgentUnarchiveConversationErrors, AgentUnarchiveConversationResponses, BrandMarketingReadRegionalDataData, BrandMarketingReadRegionalDataErrors, BrandMarketingReadRegionalDataResponses, ContentOperationsReadBilibiliRankingData, ContentOperationsReadBilibiliRankingErrors, ContentOperationsReadBilibiliRankingResponses, FilesCompleteFileUploadData, FilesCompleteFileUploadErrors, FilesCompleteFileUploadResponses, FilesCreateFileUploadData, FilesCreateFileUploadErrors, FilesCreateFileUploadResponses, FilesDeleteUnreferencedFileData, FilesDeleteUnreferencedFileErrors, FilesDeleteUnreferencedFileResponses, FilesGetFileDownloadUrlData, FilesGetFileDownloadUrlErrors, FilesGetFileDownloadUrlResponses, InfluencerMarketingReadInfluencerAccountsData, InfluencerMarketingReadInfluencerAccountsErrors, InfluencerMarketingReadInfluencerAccountsResponses, KnowledgeBasesCreateDocumentUploadData, KnowledgeBasesCreateDocumentUploadErrors, KnowledgeBasesCreateDocumentUploadResponses, KnowledgeBasesCreateFolderData, KnowledgeBasesCreateFolderErrors, KnowledgeBasesCreateFolderResponses, KnowledgeBasesCreateKnowledgeBaseData, KnowledgeBasesCreateKnowledgeBaseErrors, KnowledgeBasesCreateKnowledgeBaseResponses, KnowledgeBasesCreateWebpageDocumentData, KnowledgeBasesCreateWebpageDocumentErrors, KnowledgeBasesCreateWebpageDocumentResponses, KnowledgeBasesDeleteDirectoryEntriesData, KnowledgeBasesDeleteDirectoryEntriesErrors, KnowledgeBasesDeleteDirectoryEntriesResponses, KnowledgeBasesDeleteKnowledgeBaseData, KnowledgeBasesDeleteKnowledgeBaseErrors, KnowledgeBasesDeleteKnowledgeBaseResponses, KnowledgeBasesMoveFolderData, KnowledgeBasesMoveFolderErrors, KnowledgeBasesMoveFolderResponses, KnowledgeBasesReadDirectoryData, KnowledgeBasesReadDirectoryErrors, KnowledgeBasesReadDirectoryResponses, KnowledgeBasesReadFoldersData, KnowledgeBasesReadFoldersErrors, KnowledgeBasesReadFoldersResponses, KnowledgeBasesReadKnowledgeBaseData, KnowledgeBasesReadKnowledgeBaseErrors, KnowledgeBasesReadKnowledgeBaseResponses, KnowledgeBasesReadKnowledgeBasesData, KnowledgeBasesReadKnowledgeBasesErrors, KnowledgeBasesReadKnowledgeBasesResponses, KnowledgeBasesSearchKnowledgeBaseData, KnowledgeBasesSearchKnowledgeBaseErrors, KnowledgeBasesSearchKnowledgeBaseResponses, KnowledgeBasesUpdateFolderData, KnowledgeBasesUpdateFolderErrors, KnowledgeBasesUpdateFolderResponses, KnowledgeBasesUpdateKnowledgeBaseData, KnowledgeBasesUpdateKnowledgeBaseErrors, KnowledgeBasesUpdateKnowledgeBaseResponses, KnowledgeDocumentsCompleteDocumentUploadData, KnowledgeDocumentsCompleteDocumentUploadErrors, KnowledgeDocumentsCompleteDocumentUploadResponses, KnowledgeDocumentsDeleteDocumentData, KnowledgeDocumentsDeleteDocumentErrors, KnowledgeDocumentsDeleteDocumentResponses, KnowledgeDocumentsDownloadOriginalDocumentData, KnowledgeDocumentsDownloadOriginalDocumentErrors, KnowledgeDocumentsDownloadOriginalDocumentResponses, KnowledgeDocumentsMoveDocumentData, KnowledgeDocumentsMoveDocumentErrors, KnowledgeDocumentsMoveDocumentResponses, KnowledgeDocumentsReadDocumentChunksData, KnowledgeDocumentsReadDocumentChunksErrors, KnowledgeDocumentsReadDocumentChunksResponses, KnowledgeDocumentsReadDocumentData, KnowledgeDocumentsReadDocumentErrors, KnowledgeDocumentsReadDocumentPreviewData, KnowledgeDocumentsReadDocumentPreviewErrors, KnowledgeDocumentsReadDocumentPreviewResponses, KnowledgeDocumentsReadDocumentResponses, KnowledgeDocumentsRetryDocumentData, KnowledgeDocumentsRetryDocumentErrors, KnowledgeDocumentsRetryDocumentResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginTestTokenData, LoginTestTokenErrors, LoginTestTokenResponses, SkillsCreateMdSkillData, SkillsCreateMdSkillErrors, SkillsCreateMdSkillResponses, SkillsCreateZipSkillData, SkillsCreateZipSkillErrors, SkillsCreateZipSkillResponses, SkillsDeleteSkillData, SkillsDeleteSkillErrors, SkillsDeleteSkillResponses, SkillsReadSkillData, SkillsReadSkillErrors, SkillsReadSkillFileData, SkillsReadSkillFileErrors, SkillsReadSkillFileResponses, SkillsReadSkillResponses, SkillsReadSkillsData, SkillsReadSkillsErrors, SkillsReadSkillsResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeErrors, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeErrors, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
+import type { AgentArchiveConversationData, AgentArchiveConversationErrors, AgentArchiveConversationResponses, AgentCancelAgentRunData, AgentCancelAgentRunErrors, AgentCancelAgentRunResponses, AgentCreateAgentRunData, AgentCreateAgentRunErrors, AgentCreateAgentRunResponses, AgentCreateConversationData, AgentCreateConversationErrors, AgentCreateConversationResponses, AgentDeleteConversationData, AgentDeleteConversationErrors, AgentDeleteConversationResponses, AgentDownloadConversationReportPdfData, AgentDownloadConversationReportPdfErrors, AgentDownloadConversationReportPdfResponses, AgentGenerateConversationTitleData, AgentGenerateConversationTitleErrors, AgentGenerateConversationTitleResponses, AgentReadAgentRunResumeStateData, AgentReadAgentRunResumeStateErrors, AgentReadAgentRunResumeStateResponses, AgentReadConversationData, AgentReadConversationErrors, AgentReadConversationResponses, AgentReadConversationsData, AgentReadConversationsErrors, AgentReadConversationsResponses, AgentReadModelsData, AgentReadModelsErrors, AgentReadModelsResponses, AgentRenameConversationData, AgentRenameConversationErrors, AgentRenameConversationResponses, AgentResumeAgentRunData, AgentResumeAgentRunErrors, AgentResumeAgentRunResponses, AgentUnarchiveConversationData, AgentUnarchiveConversationErrors, AgentUnarchiveConversationResponses, BrandMarketingReadRegionalDataData, BrandMarketingReadRegionalDataErrors, BrandMarketingReadRegionalDataResponses, ContentOperationsReadBilibiliRankingData, ContentOperationsReadBilibiliRankingErrors, ContentOperationsReadBilibiliRankingResponses, FileLibrariesCreateDocumentUploadData, FileLibrariesCreateDocumentUploadErrors, FileLibrariesCreateDocumentUploadResponses, FileLibrariesCreateFileLibraryData, FileLibrariesCreateFileLibraryErrors, FileLibrariesCreateFileLibraryResponses, FileLibrariesCreateFolderData, FileLibrariesCreateFolderErrors, FileLibrariesCreateFolderResponses, FileLibrariesDeleteDirectoryEntriesData, FileLibrariesDeleteDirectoryEntriesErrors, FileLibrariesDeleteDirectoryEntriesResponses, FileLibrariesDeleteFileLibraryData, FileLibrariesDeleteFileLibraryErrors, FileLibrariesDeleteFileLibraryResponses, FileLibrariesMoveFolderData, FileLibrariesMoveFolderErrors, FileLibrariesMoveFolderResponses, FileLibrariesReadDirectoryData, FileLibrariesReadDirectoryErrors, FileLibrariesReadDirectoryResponses, FileLibrariesReadFileLibrariesData, FileLibrariesReadFileLibrariesErrors, FileLibrariesReadFileLibrariesResponses, FileLibrariesReadFileLibraryData, FileLibrariesReadFileLibraryErrors, FileLibrariesReadFileLibraryResponses, FileLibrariesReadFoldersData, FileLibrariesReadFoldersErrors, FileLibrariesReadFoldersResponses, FileLibrariesUpdateFileLibraryData, FileLibrariesUpdateFileLibraryErrors, FileLibrariesUpdateFileLibraryResponses, FileLibrariesUpdateFolderData, FileLibrariesUpdateFolderErrors, FileLibrariesUpdateFolderResponses, FilesCompleteFileUploadData, FilesCompleteFileUploadErrors, FilesCompleteFileUploadResponses, FilesCreateFileUploadData, FilesCreateFileUploadErrors, FilesCreateFileUploadResponses, FilesDeleteUnreferencedFileData, FilesDeleteUnreferencedFileErrors, FilesDeleteUnreferencedFileResponses, FilesGetFileDownloadUrlData, FilesGetFileDownloadUrlErrors, FilesGetFileDownloadUrlResponses, InfluencerMarketingReadInfluencerAccountsData, InfluencerMarketingReadInfluencerAccountsErrors, InfluencerMarketingReadInfluencerAccountsResponses, KnowledgeBasesCreateDocumentUploadData, KnowledgeBasesCreateDocumentUploadErrors, KnowledgeBasesCreateDocumentUploadResponses, KnowledgeBasesCreateFolderData, KnowledgeBasesCreateFolderErrors, KnowledgeBasesCreateFolderResponses, KnowledgeBasesCreateKnowledgeBaseData, KnowledgeBasesCreateKnowledgeBaseErrors, KnowledgeBasesCreateKnowledgeBaseResponses, KnowledgeBasesCreateWebpageDocumentData, KnowledgeBasesCreateWebpageDocumentErrors, KnowledgeBasesCreateWebpageDocumentResponses, KnowledgeBasesDeleteDirectoryEntriesData, KnowledgeBasesDeleteDirectoryEntriesErrors, KnowledgeBasesDeleteDirectoryEntriesResponses, KnowledgeBasesDeleteKnowledgeBaseData, KnowledgeBasesDeleteKnowledgeBaseErrors, KnowledgeBasesDeleteKnowledgeBaseResponses, KnowledgeBasesMoveFolderData, KnowledgeBasesMoveFolderErrors, KnowledgeBasesMoveFolderResponses, KnowledgeBasesReadDirectoryData, KnowledgeBasesReadDirectoryErrors, KnowledgeBasesReadDirectoryResponses, KnowledgeBasesReadFoldersData, KnowledgeBasesReadFoldersErrors, KnowledgeBasesReadFoldersResponses, KnowledgeBasesReadKnowledgeBaseData, KnowledgeBasesReadKnowledgeBaseErrors, KnowledgeBasesReadKnowledgeBaseResponses, KnowledgeBasesReadKnowledgeBasesData, KnowledgeBasesReadKnowledgeBasesErrors, KnowledgeBasesReadKnowledgeBasesResponses, KnowledgeBasesSearchKnowledgeBaseData, KnowledgeBasesSearchKnowledgeBaseErrors, KnowledgeBasesSearchKnowledgeBaseResponses, KnowledgeBasesUpdateFolderData, KnowledgeBasesUpdateFolderErrors, KnowledgeBasesUpdateFolderResponses, KnowledgeBasesUpdateKnowledgeBaseData, KnowledgeBasesUpdateKnowledgeBaseErrors, KnowledgeBasesUpdateKnowledgeBaseResponses, KnowledgeDocumentsCompleteDocumentUploadData, KnowledgeDocumentsCompleteDocumentUploadErrors, KnowledgeDocumentsCompleteDocumentUploadResponses, KnowledgeDocumentsDeleteDocumentData, KnowledgeDocumentsDeleteDocumentErrors, KnowledgeDocumentsDeleteDocumentResponses, KnowledgeDocumentsDownloadOriginalDocumentData, KnowledgeDocumentsDownloadOriginalDocumentErrors, KnowledgeDocumentsDownloadOriginalDocumentResponses, KnowledgeDocumentsMoveDocumentData, KnowledgeDocumentsMoveDocumentErrors, KnowledgeDocumentsMoveDocumentResponses, KnowledgeDocumentsReadDocumentChunksData, KnowledgeDocumentsReadDocumentChunksErrors, KnowledgeDocumentsReadDocumentChunksResponses, KnowledgeDocumentsReadDocumentData, KnowledgeDocumentsReadDocumentErrors, KnowledgeDocumentsReadDocumentPreviewData, KnowledgeDocumentsReadDocumentPreviewErrors, KnowledgeDocumentsReadDocumentPreviewResponses, KnowledgeDocumentsReadDocumentResponses, KnowledgeDocumentsRetryDocumentData, KnowledgeDocumentsRetryDocumentErrors, KnowledgeDocumentsRetryDocumentResponses, LibraryDocumentsCompleteDocumentUploadData, LibraryDocumentsCompleteDocumentUploadErrors, LibraryDocumentsCompleteDocumentUploadResponses, LibraryDocumentsDeleteDocumentData, LibraryDocumentsDeleteDocumentErrors, LibraryDocumentsDeleteDocumentResponses, LibraryDocumentsDownloadOriginalDocumentData, LibraryDocumentsDownloadOriginalDocumentErrors, LibraryDocumentsDownloadOriginalDocumentResponses, LibraryDocumentsMoveDocumentData, LibraryDocumentsMoveDocumentErrors, LibraryDocumentsMoveDocumentResponses, LibraryDocumentsReadDocumentData, LibraryDocumentsReadDocumentErrors, LibraryDocumentsReadDocumentResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginTestTokenData, LoginTestTokenErrors, LoginTestTokenResponses, SkillsCreateMdSkillData, SkillsCreateMdSkillErrors, SkillsCreateMdSkillResponses, SkillsCreateZipSkillData, SkillsCreateZipSkillErrors, SkillsCreateZipSkillResponses, SkillsDeleteSkillData, SkillsDeleteSkillErrors, SkillsDeleteSkillResponses, SkillsReadSkillData, SkillsReadSkillErrors, SkillsReadSkillFileData, SkillsReadSkillFileErrors, SkillsReadSkillFileResponses, SkillsReadSkillResponses, SkillsReadSkillsData, SkillsReadSkillsErrors, SkillsReadSkillsResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeErrors, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeErrors, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -183,7 +183,7 @@ export const usersCreateUser = <ThrowOnError extends boolean = false>(options: O
 /**
  * Read Regional Data
  *
- * 获取品牌营销区域数据。
+ * 查询品牌营销区域数据。
  */
 export const brandMarketingReadRegionalData = <ThrowOnError extends boolean = false>(options?: Options<BrandMarketingReadRegionalDataData, ThrowOnError>): RequestResult<BrandMarketingReadRegionalDataResponses, BrandMarketingReadRegionalDataErrors, ThrowOnError> => (options?.client ?? client).get<BrandMarketingReadRegionalDataResponses, BrandMarketingReadRegionalDataErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -194,7 +194,7 @@ export const brandMarketingReadRegionalData = <ThrowOnError extends boolean = fa
 /**
  * Read Knowledge Bases
  *
- * 获取知识库列表。
+ * 查询知识库列表。
  */
 export const knowledgeBasesReadKnowledgeBases = <ThrowOnError extends boolean = false>(options?: Options<KnowledgeBasesReadKnowledgeBasesData, ThrowOnError>): RequestResult<KnowledgeBasesReadKnowledgeBasesResponses, KnowledgeBasesReadKnowledgeBasesErrors, ThrowOnError> => (options?.client ?? client).get<KnowledgeBasesReadKnowledgeBasesResponses, KnowledgeBasesReadKnowledgeBasesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -257,7 +257,7 @@ export const knowledgeBasesUpdateKnowledgeBase = <ThrowOnError extends boolean =
 /**
  * Read Folders
  *
- * 获取知识库文件夹。
+ * 查询知识库文件夹列表。
  */
 export const knowledgeBasesReadFolders = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesReadFoldersData, ThrowOnError>): RequestResult<KnowledgeBasesReadFoldersResponses, KnowledgeBasesReadFoldersErrors, ThrowOnError> => (options.client ?? client).get<KnowledgeBasesReadFoldersResponses, KnowledgeBasesReadFoldersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -313,7 +313,7 @@ export const knowledgeBasesMoveFolder = <ThrowOnError extends boolean = false>(o
 /**
  * Read Directory
  *
- * 获取文件夹优先排列的知识库目录。
+ * 查询知识库目录，文件夹优先排列。
  */
 export const knowledgeBasesReadDirectory = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesReadDirectoryData, ThrowOnError>): RequestResult<KnowledgeBasesReadDirectoryResponses, KnowledgeBasesReadDirectoryErrors, ThrowOnError> => (options.client ?? client).get<KnowledgeBasesReadDirectoryResponses, KnowledgeBasesReadDirectoryErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -340,6 +340,9 @@ export const knowledgeBasesDeleteDirectoryEntries = <ThrowOnError extends boolea
  * Create Document Upload
  *
  * 创建知识库文档上传凭证。
+ *
+ * 使用返回的 uploadUrl 和 uploadHeaders 通过 HTTP PUT 上传完整文件内容，
+ * 然后调用 knowledge_document_upload_complete 确认上传。
  */
 export const knowledgeBasesCreateDocumentUpload = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesCreateDocumentUploadData, ThrowOnError>): RequestResult<KnowledgeBasesCreateDocumentUploadResponses, KnowledgeBasesCreateDocumentUploadErrors, ThrowOnError> => (options.client ?? client).post<KnowledgeBasesCreateDocumentUploadResponses, KnowledgeBasesCreateDocumentUploadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -354,7 +357,7 @@ export const knowledgeBasesCreateDocumentUpload = <ThrowOnError extends boolean 
 /**
  * Create Webpage Document
  *
- * 抓取网页并创建知识库文档。
+ * 从网页导入知识库文档。
  */
 export const knowledgeBasesCreateWebpageDocument = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesCreateWebpageDocumentData, ThrowOnError>): RequestResult<KnowledgeBasesCreateWebpageDocumentResponses, KnowledgeBasesCreateWebpageDocumentErrors, ThrowOnError> => (options.client ?? client).post<KnowledgeBasesCreateWebpageDocumentResponses, KnowledgeBasesCreateWebpageDocumentErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -369,7 +372,7 @@ export const knowledgeBasesCreateWebpageDocument = <ThrowOnError extends boolean
 /**
  * Search Knowledge Base
  *
- * 检索知识库。
+ * 检索知识库内容。
  */
 export const knowledgeBasesSearchKnowledgeBase = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesSearchKnowledgeBaseData, ThrowOnError>): RequestResult<KnowledgeBasesSearchKnowledgeBaseResponses, KnowledgeBasesSearchKnowledgeBaseErrors, ThrowOnError> => (options.client ?? client).post<KnowledgeBasesSearchKnowledgeBaseResponses, KnowledgeBasesSearchKnowledgeBaseErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -385,6 +388,9 @@ export const knowledgeBasesSearchKnowledgeBase = <ThrowOnError extends boolean =
  * Complete Document Upload
  *
  * 确认知识库文档上传。
+ *
+ * 仅在文件已通过 knowledge_document_upload_create 返回的 uploadUrl 上传后调用。
+ * 确认成功后，文档进入处理流程。
  */
 export const knowledgeDocumentsCompleteDocumentUpload = <ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentsCompleteDocumentUploadData, ThrowOnError>): RequestResult<KnowledgeDocumentsCompleteDocumentUploadResponses, KnowledgeDocumentsCompleteDocumentUploadErrors, ThrowOnError> => (options.client ?? client).post<KnowledgeDocumentsCompleteDocumentUploadResponses, KnowledgeDocumentsCompleteDocumentUploadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -587,7 +593,7 @@ export const agentUnarchiveConversation = <ThrowOnError extends boolean = false>
 /**
  * Read Bilibili Ranking
  *
- * 获取最近一次 B 站分区排行榜。
+ * 查询最近一次 B 站分区排行榜。
  */
 export const contentOperationsReadBilibiliRanking = <ThrowOnError extends boolean = false>(options?: Options<ContentOperationsReadBilibiliRankingData, ThrowOnError>): RequestResult<ContentOperationsReadBilibiliRankingResponses, ContentOperationsReadBilibiliRankingErrors, ThrowOnError> => (options?.client ?? client).get<ContentOperationsReadBilibiliRankingResponses, ContentOperationsReadBilibiliRankingErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -598,7 +604,7 @@ export const contentOperationsReadBilibiliRanking = <ThrowOnError extends boolea
 /**
  * Read Influencer Accounts
  *
- * 获取指定平台的达人资源。
+ * 查询指定平台的达人资源。
  */
 export const influencerMarketingReadInfluencerAccounts = <ThrowOnError extends boolean = false>(options?: Options<InfluencerMarketingReadInfluencerAccountsData, ThrowOnError>): RequestResult<InfluencerMarketingReadInfluencerAccountsResponses, InfluencerMarketingReadInfluencerAccountsErrors, ThrowOnError> => (options?.client ?? client).get<InfluencerMarketingReadInfluencerAccountsResponses, InfluencerMarketingReadInfluencerAccountsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -790,4 +796,229 @@ export const agentCancelAgentRun = <ThrowOnError extends boolean = false>(option
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/agent/runs/{run_id}/cancel',
     ...options
+});
+
+/**
+ * Read File Libraries
+ *
+ * 查询文件库列表。
+ */
+export const fileLibrariesReadFileLibraries = <ThrowOnError extends boolean = false>(options?: Options<FileLibrariesReadFileLibrariesData, ThrowOnError>): RequestResult<FileLibrariesReadFileLibrariesResponses, FileLibrariesReadFileLibrariesErrors, ThrowOnError> => (options?.client ?? client).get<FileLibrariesReadFileLibrariesResponses, FileLibrariesReadFileLibrariesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/file-libraries',
+    ...options
+});
+
+/**
+ * Create File Library
+ *
+ * 创建文件库。
+ */
+export const fileLibrariesCreateFileLibrary = <ThrowOnError extends boolean = false>(options: Options<FileLibrariesCreateFileLibraryData, ThrowOnError>): RequestResult<FileLibrariesCreateFileLibraryResponses, FileLibrariesCreateFileLibraryErrors, ThrowOnError> => (options.client ?? client).post<FileLibrariesCreateFileLibraryResponses, FileLibrariesCreateFileLibraryErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/file-libraries',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete File Library
+ *
+ * 删除文件库。
+ */
+export const fileLibrariesDeleteFileLibrary = <ThrowOnError extends boolean = false>(options: Options<FileLibrariesDeleteFileLibraryData, ThrowOnError>): RequestResult<FileLibrariesDeleteFileLibraryResponses, FileLibrariesDeleteFileLibraryErrors, ThrowOnError> => (options.client ?? client).delete<FileLibrariesDeleteFileLibraryResponses, FileLibrariesDeleteFileLibraryErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/file-libraries/{file_library_id}',
+    ...options
+});
+
+/**
+ * Read File Library
+ *
+ * 根据 ID 获取指定文件库。
+ */
+export const fileLibrariesReadFileLibrary = <ThrowOnError extends boolean = false>(options: Options<FileLibrariesReadFileLibraryData, ThrowOnError>): RequestResult<FileLibrariesReadFileLibraryResponses, FileLibrariesReadFileLibraryErrors, ThrowOnError> => (options.client ?? client).get<FileLibrariesReadFileLibraryResponses, FileLibrariesReadFileLibraryErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/file-libraries/{file_library_id}',
+    ...options
+});
+
+/**
+ * Update File Library
+ *
+ * 更新文件库。
+ */
+export const fileLibrariesUpdateFileLibrary = <ThrowOnError extends boolean = false>(options: Options<FileLibrariesUpdateFileLibraryData, ThrowOnError>): RequestResult<FileLibrariesUpdateFileLibraryResponses, FileLibrariesUpdateFileLibraryErrors, ThrowOnError> => (options.client ?? client).patch<FileLibrariesUpdateFileLibraryResponses, FileLibrariesUpdateFileLibraryErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/file-libraries/{file_library_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Read Folders
+ *
+ * 查询文件库文件夹列表。
+ */
+export const fileLibrariesReadFolders = <ThrowOnError extends boolean = false>(options: Options<FileLibrariesReadFoldersData, ThrowOnError>): RequestResult<FileLibrariesReadFoldersResponses, FileLibrariesReadFoldersErrors, ThrowOnError> => (options.client ?? client).get<FileLibrariesReadFoldersResponses, FileLibrariesReadFoldersErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/file-libraries/{file_library_id}/folders',
+    ...options
+});
+
+/**
+ * Create Folder
+ *
+ * 创建文件库文件夹。
+ */
+export const fileLibrariesCreateFolder = <ThrowOnError extends boolean = false>(options: Options<FileLibrariesCreateFolderData, ThrowOnError>): RequestResult<FileLibrariesCreateFolderResponses, FileLibrariesCreateFolderErrors, ThrowOnError> => (options.client ?? client).post<FileLibrariesCreateFolderResponses, FileLibrariesCreateFolderErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/file-libraries/{file_library_id}/folders',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Update Folder
+ *
+ * 重命名文件库文件夹。
+ */
+export const fileLibrariesUpdateFolder = <ThrowOnError extends boolean = false>(options: Options<FileLibrariesUpdateFolderData, ThrowOnError>): RequestResult<FileLibrariesUpdateFolderResponses, FileLibrariesUpdateFolderErrors, ThrowOnError> => (options.client ?? client).patch<FileLibrariesUpdateFolderResponses, FileLibrariesUpdateFolderErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/file-libraries/{file_library_id}/folders/{folder_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Move Folder
+ *
+ * 移动文件库文件夹。
+ */
+export const fileLibrariesMoveFolder = <ThrowOnError extends boolean = false>(options: Options<FileLibrariesMoveFolderData, ThrowOnError>): RequestResult<FileLibrariesMoveFolderResponses, FileLibrariesMoveFolderErrors, ThrowOnError> => (options.client ?? client).patch<FileLibrariesMoveFolderResponses, FileLibrariesMoveFolderErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/file-libraries/{file_library_id}/folders/{folder_id}/parent',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Read Directory
+ *
+ * 查询文件库目录，文件夹优先排列。
+ */
+export const fileLibrariesReadDirectory = <ThrowOnError extends boolean = false>(options: Options<FileLibrariesReadDirectoryData, ThrowOnError>): RequestResult<FileLibrariesReadDirectoryResponses, FileLibrariesReadDirectoryErrors, ThrowOnError> => (options.client ?? client).get<FileLibrariesReadDirectoryResponses, FileLibrariesReadDirectoryErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/file-libraries/{file_library_id}/entries',
+    ...options
+});
+
+/**
+ * Delete Directory Entries
+ *
+ * 批量删除文件库文件夹和文件。
+ */
+export const fileLibrariesDeleteDirectoryEntries = <ThrowOnError extends boolean = false>(options: Options<FileLibrariesDeleteDirectoryEntriesData, ThrowOnError>): RequestResult<FileLibrariesDeleteDirectoryEntriesResponses, FileLibrariesDeleteDirectoryEntriesErrors, ThrowOnError> => (options.client ?? client).post<FileLibrariesDeleteDirectoryEntriesResponses, FileLibrariesDeleteDirectoryEntriesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/file-libraries/{file_library_id}/directory/batch-delete',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Create Document Upload
+ *
+ * 创建文件库文件上传凭证。
+ *
+ * 使用返回的 uploadUrl 和 uploadHeaders 通过 HTTP PUT 上传完整文件内容，
+ * 然后调用 library_document_upload_complete 确认上传。
+ */
+export const fileLibrariesCreateDocumentUpload = <ThrowOnError extends boolean = false>(options: Options<FileLibrariesCreateDocumentUploadData, ThrowOnError>): RequestResult<FileLibrariesCreateDocumentUploadResponses, FileLibrariesCreateDocumentUploadErrors, ThrowOnError> => (options.client ?? client).post<FileLibrariesCreateDocumentUploadResponses, FileLibrariesCreateDocumentUploadErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/file-libraries/{file_library_id}/documents/uploads',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Complete Document Upload
+ *
+ * 确认文件库文件上传。
+ *
+ * 仅在文件已通过 library_document_upload_create 返回的 uploadUrl 上传后调用。
+ * 确认成功后，原文件可供下载。
+ */
+export const libraryDocumentsCompleteDocumentUpload = <ThrowOnError extends boolean = false>(options: Options<LibraryDocumentsCompleteDocumentUploadData, ThrowOnError>): RequestResult<LibraryDocumentsCompleteDocumentUploadResponses, LibraryDocumentsCompleteDocumentUploadErrors, ThrowOnError> => (options.client ?? client).post<LibraryDocumentsCompleteDocumentUploadResponses, LibraryDocumentsCompleteDocumentUploadErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/library-documents/{document_id}/complete',
+    ...options
+});
+
+/**
+ * Delete Document
+ *
+ * 删除文件库文件。
+ */
+export const libraryDocumentsDeleteDocument = <ThrowOnError extends boolean = false>(options: Options<LibraryDocumentsDeleteDocumentData, ThrowOnError>): RequestResult<LibraryDocumentsDeleteDocumentResponses, LibraryDocumentsDeleteDocumentErrors, ThrowOnError> => (options.client ?? client).delete<LibraryDocumentsDeleteDocumentResponses, LibraryDocumentsDeleteDocumentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/library-documents/{document_id}',
+    ...options
+});
+
+/**
+ * Read Document
+ *
+ * 根据 ID 获取指定文件库文件。
+ */
+export const libraryDocumentsReadDocument = <ThrowOnError extends boolean = false>(options: Options<LibraryDocumentsReadDocumentData, ThrowOnError>): RequestResult<LibraryDocumentsReadDocumentResponses, LibraryDocumentsReadDocumentErrors, ThrowOnError> => (options.client ?? client).get<LibraryDocumentsReadDocumentResponses, LibraryDocumentsReadDocumentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/library-documents/{document_id}',
+    ...options
+});
+
+/**
+ * Download Original Document
+ *
+ * 获取文件库文件原文件下载地址。
+ */
+export const libraryDocumentsDownloadOriginalDocument = <ThrowOnError extends boolean = false>(options: Options<LibraryDocumentsDownloadOriginalDocumentData, ThrowOnError>): RequestResult<LibraryDocumentsDownloadOriginalDocumentResponses, LibraryDocumentsDownloadOriginalDocumentErrors, ThrowOnError> => (options.client ?? client).get<LibraryDocumentsDownloadOriginalDocumentResponses, LibraryDocumentsDownloadOriginalDocumentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/library-documents/{document_id}/download',
+    ...options
+});
+
+/**
+ * Move Document
+ *
+ * 移动文件库文件。
+ */
+export const libraryDocumentsMoveDocument = <ThrowOnError extends boolean = false>(options: Options<LibraryDocumentsMoveDocumentData, ThrowOnError>): RequestResult<LibraryDocumentsMoveDocumentResponses, LibraryDocumentsMoveDocumentErrors, ThrowOnError> => (options.client ?? client).patch<LibraryDocumentsMoveDocumentResponses, LibraryDocumentsMoveDocumentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/library-documents/{document_id}/folder',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });

@@ -1,5 +1,7 @@
 "use client";
 
+import { CollectionContent } from "@/components/common/collection-content";
+
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   createColumnHelper,
@@ -22,12 +24,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
 import { AppHeader } from "@/components/layout/app-header";
-import { LoadError } from "@/components/shared/load-error";
-import { PageOutOfRange } from "@/components/shared/page-out-of-range";
-import { PagePagination } from "@/components/shared/page-pagination";
+import { LoadError } from "@/components/common/load-error";
+import { PageOutOfRange } from "@/components/common/page-out-of-range";
+import { PagePagination } from "@/components/common/page-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Select,
@@ -38,7 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { TableSkeleton } from "@/components/shared/table-skeleton";
+import { TableSkeleton } from "@/components/common/table-skeleton";
 import {
   Table,
   TableBody,
@@ -329,61 +336,60 @@ export function RegionalData() {
               </Empty>
             )
           ) : (
-            <Table
-              aria-busy={regionalDataQuery.isFetching}
-              className="tabular-nums transition-opacity aria-busy:pointer-events-none aria-busy:opacity-60"
-            >
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      const sortDirection = header.column.getIsSorted();
+            <CollectionContent busy={regionalDataQuery.isFetching}>
+              <Table className="tabular-nums">
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => {
+                        const sortDirection = header.column.getIsSorted();
 
-                      return (
-                        <TableHead
-                          key={header.id}
-                          className={
-                            header.column.id === "province_name"
-                              ? "w-44 min-w-44 max-w-44"
-                              : undefined
-                          }
-                          aria-sort={
-                            sortDirection === "asc"
-                              ? "ascending"
-                              : sortDirection === "desc"
-                                ? "descending"
+                        return (
+                          <TableHead
+                            key={header.id}
+                            className={
+                              header.column.id === "province_name"
+                                ? "w-44 min-w-44 max-w-44"
                                 : undefined
+                            }
+                            aria-sort={
+                              sortDirection === "asc"
+                                ? "ascending"
+                                : sortDirection === "desc"
+                                  ? "descending"
+                                  : undefined
+                            }
+                          >
+                            {header.isPlaceholder ? null : (
+                              <table.FlexRender header={header} />
+                            )}
+                          </TableHead>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+
+                <TableBody>
+                  {rows.map((row) => (
+                    <TableRow key={row.id}>
+                      {row.getAllCells().map((cell) => (
+                        <TableCell
+                          key={cell.id}
+                          className={
+                            cell.column.id === "province_name"
+                              ? "w-44 min-w-44 max-w-44"
+                              : "text-right"
                           }
                         >
-                          {header.isPlaceholder ? null : (
-                            <table.FlexRender header={header} />
-                          )}
-                        </TableHead>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-
-              <TableBody>
-                {rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getAllCells().map((cell) => (
-                      <TableCell
-                        key={cell.id}
-                        className={
-                          cell.column.id === "province_name"
-                            ? "w-44 min-w-44 max-w-44"
-                            : "text-right"
-                        }
-                      >
-                        <table.FlexRender cell={cell} />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                          <table.FlexRender cell={cell} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CollectionContent>
           )}
 
           <PagePagination

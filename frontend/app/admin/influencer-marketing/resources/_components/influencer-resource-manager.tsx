@@ -1,5 +1,7 @@
 "use client";
 
+import { CollectionContent } from "@/components/common/collection-content";
+
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   createColumnHelper,
@@ -21,16 +23,21 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useMemo } from "react";
 
 import { AppHeader } from "@/components/layout/app-header";
-import { LoadError } from "@/components/shared/load-error";
-import { PageOutOfRange } from "@/components/shared/page-out-of-range";
-import { PagePagination } from "@/components/shared/page-pagination";
-import { SearchToolbar } from "@/components/shared/search-toolbar";
+import { LoadError } from "@/components/common/load-error";
+import { PageOutOfRange } from "@/components/common/page-out-of-range";
+import { PagePagination } from "@/components/common/page-pagination";
+import { SearchToolbar } from "@/components/common/search-toolbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { TableSkeleton } from "@/components/shared/table-skeleton";
+import { TableSkeleton } from "@/components/common/table-skeleton";
 import {
   Table,
   TableBody,
@@ -323,63 +330,60 @@ export function InfluencerResourceManager() {
                               <UsersIcon aria-hidden="true" />
                             </EmptyMedia>
                             <EmptyTitle>
-                              {search
-                                ? "未找到符合条件的达人"
-                                : "暂无达人数据"}
+                              {search ? "未找到符合条件的达人" : "暂无达人数据"}
                             </EmptyTitle>
                           </EmptyHeader>
                         </Empty>
                       )
                     ) : (
-                      <Table
-                        aria-busy={accountsQuery.isFetching}
-                        className="table-fixed tabular-nums transition-opacity aria-busy:pointer-events-none aria-busy:opacity-60"
-                      >
-                        <TableHeader>
-                          {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
-                              {headerGroup.headers.map((header) => {
-                                const sortDirection =
-                                  header.column.getIsSorted();
+                      <CollectionContent busy={accountsQuery.isFetching}>
+                        <Table className="table-fixed tabular-nums">
+                          <TableHeader>
+                            {table.getHeaderGroups().map((headerGroup) => (
+                              <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => {
+                                  const sortDirection =
+                                    header.column.getIsSorted();
 
-                                return (
-                                  <TableHead
-                                    key={header.id}
+                                  return (
+                                    <TableHead
+                                      key={header.id}
+                                      className={
+                                        header.column.columnDef.meta?.className
+                                      }
+                                      aria-sort={
+                                        sortDirection === "asc"
+                                          ? "ascending"
+                                          : sortDirection === "desc"
+                                            ? "descending"
+                                            : undefined
+                                      }
+                                    >
+                                      <table.FlexRender header={header} />
+                                    </TableHead>
+                                  );
+                                })}
+                              </TableRow>
+                            ))}
+                          </TableHeader>
+                          <TableBody>
+                            {rows.map((row) => (
+                              <TableRow key={row.id}>
+                                {row.getAllCells().map((cell) => (
+                                  <TableCell
+                                    key={cell.id}
                                     className={
-                                      header.column.columnDef.meta?.className
-                                    }
-                                    aria-sort={
-                                      sortDirection === "asc"
-                                        ? "ascending"
-                                        : sortDirection === "desc"
-                                          ? "descending"
-                                          : undefined
+                                      cell.column.columnDef.meta?.className
                                     }
                                   >
-                                    <table.FlexRender header={header} />
-                                  </TableHead>
-                                );
-                              })}
-                            </TableRow>
-                          ))}
-                        </TableHeader>
-                        <TableBody>
-                          {rows.map((row) => (
-                            <TableRow key={row.id}>
-                              {row.getAllCells().map((cell) => (
-                                <TableCell
-                                  key={cell.id}
-                                  className={
-                                    cell.column.columnDef.meta?.className
-                                  }
-                                >
-                                  <table.FlexRender cell={cell} />
-                                </TableCell>
-                              ))}
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                                    <table.FlexRender cell={cell} />
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </CollectionContent>
                     )}
 
                     <PagePagination
@@ -468,7 +472,9 @@ function InfluencerIdentity({
           {platformName}号：{account.public_account_id}
         </p>
         {account.bio ? (
-          <p className="truncate text-sm text-muted-foreground">{account.bio}</p>
+          <p className="truncate text-sm text-muted-foreground">
+            {account.bio}
+          </p>
         ) : null}
       </div>
     </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { CollectionContent } from "@/components/common/collection-content";
+
 import {
   keepPreviousData,
   useMutation,
@@ -27,21 +29,11 @@ import { type FormEvent, useMemo, useState } from "react";
 import { UserCreateDialog } from "@/app/admin/users/_components/user-create-dialog";
 import { UserEditDialog } from "@/app/admin/users/_components/user-edit-dialog";
 import { AppHeader } from "@/components/layout/app-header";
-import { ButtonLoading } from "@/components/shared/button-loading";
-import { LoadError } from "@/components/shared/load-error";
-import { PageOutOfRange } from "@/components/shared/page-out-of-range";
-import { PagePagination } from "@/components/shared/page-pagination";
-import { SearchToolbar } from "@/components/shared/search-toolbar";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { LoadError } from "@/components/common/load-error";
+import { PageOutOfRange } from "@/components/common/page-out-of-range";
+import { PagePagination } from "@/components/common/page-pagination";
+import { SearchToolbar } from "@/components/common/search-toolbar";
+import { DeleteDialog } from "@/components/common/delete-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,9 +43,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { FieldLegend, FieldSet } from "@/components/ui/field";
-import { TableSkeleton } from "@/components/shared/table-skeleton";
+import { TableSkeleton } from "@/components/common/table-skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Table,
@@ -63,10 +60,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   CURRENT_USER_QUERY_KEY,
   useCurrentUser,
@@ -308,12 +302,6 @@ export function UserManager() {
     }
   }
 
-  function closeDeleteDialog(open: boolean): void {
-    if (!open && !deleteUserMutation.isPending) {
-      setUserToDelete(undefined);
-    }
-  }
-
   function submitSearch(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -421,35 +409,34 @@ export function UserManager() {
               </Empty>
             )
           ) : (
-            <Table
-              aria-busy={usersQuery.isFetching}
-              className="transition-opacity aria-busy:pointer-events-none aria-busy:opacity-60"
-            >
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder ? null : (
-                          <table.FlexRender header={header} />
-                        )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getAllCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        <table.FlexRender cell={cell} />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <CollectionContent busy={usersQuery.isFetching}>
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <TableHead key={header.id}>
+                          {header.isPlaceholder ? null : (
+                            <table.FlexRender header={header} />
+                          )}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {rows.map((row) => (
+                    <TableRow key={row.id}>
+                      {row.getAllCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          <table.FlexRender cell={cell} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CollectionContent>
           )}
 
           <PagePagination
@@ -481,38 +468,19 @@ export function UserManager() {
         />
       )}
 
-      <AlertDialog open={!!userToDelete} onOpenChange={closeDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>删除用户</AlertDialogTitle>
-            <AlertDialogDescription>
-              确定删除“{userToDelete?.username}”吗？此操作无法撤销。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteUserMutation.isPending}>
-              取消
-            </AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              className="relative"
-              disabled={deleteUserMutation.isPending}
-              aria-busy={deleteUserMutation.isPending}
-              onClick={(event) => {
-                event.preventDefault();
-                if (userToDelete) {
-                  deleteUserMutation.mutate(userToDelete.id);
-                }
-              }}
-            >
-              <ButtonLoading loading={deleteUserMutation.isPending}>
-                删除
-              </ButtonLoading>
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteDialog
+        open={userToDelete !== undefined}
+        pending={deleteUserMutation.isPending}
+        title="删除用户"
+        onOpenChange={(open) => {
+          if (!open) setUserToDelete(undefined);
+        }}
+        onConfirm={() => {
+          if (userToDelete) deleteUserMutation.mutate(userToDelete.id);
+        }}
+      >
+        确定删除“{userToDelete?.username}”吗？此操作无法撤销。
+      </DeleteDialog>
     </>
   );
 }

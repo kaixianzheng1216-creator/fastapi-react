@@ -8,6 +8,8 @@ from app.modules.auth.router import public_router as public_auth_router
 from app.modules.brand_marketing.router import router as brand_marketing_router
 from app.modules.content_operations.router import router as content_operations_router
 from app.modules.conversations.router import router as conversations_router
+from app.modules.file_library.router import document_router as library_document_router
+from app.modules.file_library.router import router as file_library_router
 from app.modules.files.router import router as files_router
 from app.modules.influencer_marketing.router import (
     router as influencer_marketing_router,
@@ -39,3 +41,6 @@ api_router.include_router(influencer_marketing_router)
 api_router.include_router(files_router)
 api_router.include_router(skills_router)
 api_router.include_router(agent_router)
+
+api_router.include_router(file_library_router)
+api_router.include_router(library_document_router)

@@ -10,7 +10,7 @@ import {
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ButtonLoading } from "@/components/shared/button-loading";
+import { ButtonLoading } from "@/components/common/button-loading";
 import {
   Collapsible,
   CollapsibleContent,
@@ -24,16 +24,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import type { KnowledgeFolderPublic } from "@/lib/client";
-import { getFolderAncestors } from "@/lib/knowledge-folders";
+import type { Folder } from "@/lib/folders";
+import { getFolderAncestors } from "@/lib/folders";
 
-type KnowledgeFolderPickerDialogProps = {
+type FolderPickerDialogProps = {
   onClose: () => void;
   onCloseAutoFocus: (event: Event) => void;
-  folders: KnowledgeFolderPublic[];
+  folders: Folder[];
   currentFolderId: string | null;
   excludedFolderId?: string;
   title: string;
@@ -61,7 +66,7 @@ type FolderNodeProps = {
   visibleIds?: ReadonlySet<string | null>;
 };
 
-export function KnowledgeFolderPickerDialog({
+export function FolderPickerDialog({
   onClose,
   onCloseAutoFocus,
   folders,
@@ -71,7 +76,7 @@ export function KnowledgeFolderPickerDialog({
   description,
   isPending,
   onMove,
-}: KnowledgeFolderPickerDialogProps) {
+}: FolderPickerDialogProps) {
   const { root, nodes } = useMemo(() => {
     const folderById = new Map(folders.map((folder) => [folder.id, folder]));
 
@@ -84,8 +89,8 @@ export function KnowledgeFolderPickerDialog({
     const root: FolderNode = {
       id: null,
       parentId: null,
-      name: "知识库根目录",
-      path: "知识库根目录",
+      name: "根目录",
+      path: "根目录",
       current: currentFolderId === null,
       disabled: currentFolderId === null,
       defaultOpen: true,
@@ -227,9 +232,7 @@ export function KnowledgeFolderPickerDialog({
             aria-busy={isPending}
             onClick={() => onMove(selectedFolderId)}
           >
-            <ButtonLoading loading={isPending}>
-              移动
-            </ButtonLoading>
+            <ButtonLoading loading={isPending}>移动</ButtonLoading>
           </Button>
         </DialogFooter>
       </DialogContent>

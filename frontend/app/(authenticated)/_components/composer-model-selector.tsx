@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { ModelSelector } from "@/app/(authenticated)/_components/model-selector";
-import { ButtonLoading } from "@/components/shared/button-loading";
+import { ButtonLoading } from "@/components/common/button-loading";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { agentReadModels } from "@/lib/client";
