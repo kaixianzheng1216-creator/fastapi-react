@@ -87,10 +87,7 @@ export function KnowledgeDocumentImport({
             } catch (error) {
               return {
                 file,
-                error: getApiErrorMessage(
-                  error,
-                  error instanceof Error ? error.message : "上传失败",
-                ),
+                error: getApiErrorMessage(error, "文件上传失败"),
               };
             }
           }),
@@ -119,18 +116,18 @@ export function KnowledgeDocumentImport({
 
       if (failures.length) {
         toast.error(
-          `上传成功 ${results.length - failures.length} 个，失败 ${failures.length} 个`,
+          `文件上传成功 ${results.length - failures.length} 个，失败 ${failures.length} 个`,
           {
             description: "请查看添加文档区域中的处理结果",
           },
         );
       } else {
-        toast.success(`已上传 ${results.length} 个文件，正在处理`);
+        toast.success(`文件已上传 ${results.length} 个，正在处理`);
       }
     },
 
     onError: () => {
-      toast.error("上传失败，请重试");
+      toast.error("文件上传失败，请重试");
     },
 
     onSettled: onDocumentsChanged,
@@ -161,7 +158,7 @@ export function KnowledgeDocumentImport({
     },
 
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "添加网页失败，请重试"));
+      toast.error(getApiErrorMessage(error, "网页添加失败，请重试"));
     },
   });
 
@@ -234,11 +231,9 @@ export function KnowledgeDocumentImport({
                   ) : (
                     <UploadIcon data-icon="inline-start" aria-hidden="true" />
                   )}
-                  {uploadDocumentMutation.isPending
-                    ? "上传中…"
-                    : selectedFiles.length > 0
-                      ? `上传 ${selectedFiles.length} 个文件`
-                      : "上传文件"}
+                  {selectedFiles.length > 0
+                    ? `上传 ${selectedFiles.length} 个文件`
+                    : "上传文件"}
                 </Button>
               </FieldGroup>
             </form>
@@ -279,7 +274,7 @@ export function KnowledgeDocumentImport({
                   ) : (
                     <GlobeIcon data-icon="inline-start" aria-hidden="true" />
                   )}
-                  {createWebpageMutation.isPending ? "抓取中…" : "添加网页"}
+                  添加网页
                 </Button>
               </FieldGroup>
             </form>
@@ -344,7 +339,7 @@ async function uploadKnowledgeDocument(
       throwOnError: false,
     });
 
-    const reason = error instanceof Error ? error.message : "文件传输失败";
+    const reason = getApiErrorMessage(error, "文件传输失败");
 
     return {
       file,

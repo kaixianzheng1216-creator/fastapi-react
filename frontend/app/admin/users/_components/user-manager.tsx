@@ -144,11 +144,11 @@ export function UserManager() {
       });
     },
     onSuccess: () => {
-      toast.success("状态已更新");
+      toast.success("用户状态已更新");
       invalidateUsers();
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "更新状态失败，请重试"));
+      toast.error(getApiErrorMessage(error, "用户状态更新失败，请重试"));
     },
   });
 
@@ -170,7 +170,7 @@ export function UserManager() {
       invalidateUsers();
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "删除失败，请重试"));
+      toast.error(getApiErrorMessage(error, "用户删除失败，请重试"));
     },
   });
 

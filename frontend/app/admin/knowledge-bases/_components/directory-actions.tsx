@@ -79,7 +79,7 @@ function showDocumentActionError(error: Error): void {
 }
 
 function showDownloadStarted(): void {
-  toast.success("已开始下载");
+  toast.success("文档已开始下载");
 }
 
 export function useDirectoryActions({
@@ -116,7 +116,7 @@ export function useDirectoryActions({
         throwOnError: true,
       }),
     onSuccess: () => {
-      toast.success("上传已确认");
+      toast.success("文档上传已确认");
       onChanged({ type: "documents" });
     },
     onError: showDocumentActionError,
@@ -129,7 +129,7 @@ export function useDirectoryActions({
         throwOnError: true,
       }),
     onSuccess: () => {
-      toast.success("已提交重新解析");
+      toast.success("文档已提交重新解析");
       onChanged({ type: "documents" });
     },
     onError: showDocumentActionError,
@@ -174,13 +174,13 @@ export function useDirectoryActions({
       }
     },
     onSuccess: (_, { entry }) => {
-      toast.success("已移动");
+      toast.success("项目已移动");
       actionTriggerRef.current = null;
       setEntryToMove(undefined);
       onChanged({ type: "moved", entry });
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "移动失败，请重试"));
+      toast.error(getApiErrorMessage(error, "项目移动失败，请重试"));
     },
   });
 
@@ -207,7 +207,7 @@ export function useDirectoryActions({
       onChanged({ type: "deleted", entries: target.entries });
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "删除失败，请重试"));
+      toast.error(getApiErrorMessage(error, "项目删除失败，请重试"));
     },
   });
 

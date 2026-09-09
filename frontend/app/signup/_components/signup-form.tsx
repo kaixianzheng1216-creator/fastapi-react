@@ -59,13 +59,13 @@ export function SignupForm({
         throwOnError: true,
       }),
     onSuccess: () => {
-      toast.success("注册成功，请登录");
+      toast.success("账号注册成功，请登录");
       router.replace("/login");
     },
 
     onError: (error) => {
       signupForm.setError("root", {
-        message: getApiErrorMessage(error, "注册失败，请稍后重试"),
+        message: getApiErrorMessage(error, "账号注册失败，请稍后重试"),
       });
     },
   });

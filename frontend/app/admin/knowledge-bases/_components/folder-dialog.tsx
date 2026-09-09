@@ -70,7 +70,7 @@ export function KnowledgeFolderEditorDialog({
       onSaved();
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "保存文件夹失败，请重试"));
+      toast.error(getApiErrorMessage(error, "文件夹保存失败，请重试"));
     },
   });
 

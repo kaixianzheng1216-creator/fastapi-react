@@ -83,7 +83,7 @@ export function UserEditDialog({
     },
 
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "更新用户失败，请重试"));
+      toast.error(getApiErrorMessage(error, "用户更新失败，请重试"));
     },
   });
 

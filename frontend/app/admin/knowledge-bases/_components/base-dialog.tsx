@@ -97,7 +97,7 @@ export function KnowledgeBaseDialog({
     },
 
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "保存知识库失败，请重试"));
+      toast.error(getApiErrorMessage(error, "知识库保存失败，请重试"));
     },
   });
 

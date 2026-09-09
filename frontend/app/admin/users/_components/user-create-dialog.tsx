@@ -90,7 +90,7 @@ export function UserCreateDialog({
     },
 
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "创建用户失败，请重试"));
+      toast.error(getApiErrorMessage(error, "用户创建失败，请重试"));
     },
   });
 

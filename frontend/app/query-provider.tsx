@@ -19,7 +19,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       queryCache: new QueryCache({
         onError: (error) => {
           toast.error(
-            getApiErrorMessage(error, "请求失败，请稍后再试"),
+            getApiErrorMessage(error, "数据请求失败，请稍后再试"),
             { id: "query-error" },
           );
         },

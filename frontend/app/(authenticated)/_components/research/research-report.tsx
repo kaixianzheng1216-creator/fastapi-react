@@ -94,10 +94,10 @@ export function ResearchReport({ report }: { report: string }) {
       setTimeout(() => URL.revokeObjectURL(downloadUrl), 0);
     },
     onSuccess: () => {
-      toast.success("已开始下载");
+      toast.success("调研报告已开始下载");
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "PDF 导出失败，请重试"));
+      toast.error(getApiErrorMessage(error, "调研报告导出失败，请重试"));
     },
   });
 
@@ -114,7 +114,7 @@ export function ResearchReport({ report }: { report: string }) {
       ) : (
         <DownloadIcon data-icon="inline-start" aria-hidden="true" />
       )}
-      {pdfDownloadMutation.isPending ? "正在下载…" : "下载 PDF"}
+      下载 PDF
     </Button>
   );
 

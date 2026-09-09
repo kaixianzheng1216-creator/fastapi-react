@@ -63,7 +63,7 @@ export const useCopyToClipboard = ({
 
   const copyToClipboard = (value: string) => {
     if (!value || typeof navigator === "undefined" || !navigator.clipboard) {
-      toast.error("无法访问剪贴板，请手动选择并复制文本");
+      toast.error("消息复制失败，请手动选择并复制文本");
       return;
     }
 
@@ -73,7 +73,7 @@ export const useCopyToClipboard = ({
         setTimeout(() => setIsCopied(false), copiedDuration);
       },
       () => {
-        toast.error("复制失败，请手动选择并复制文本");
+        toast.error("消息复制失败，请手动选择并复制文本");
       },
     );
   };

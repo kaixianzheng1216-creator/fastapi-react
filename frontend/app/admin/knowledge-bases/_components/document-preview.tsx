@@ -128,10 +128,10 @@ export function KnowledgeDocumentPreview({
         ? downloadOriginalKnowledgeDocument(documentId)
         : downloadMarkdownKnowledgeDocument(documentId),
     onSuccess: () => {
-      toast.success("已开始下载");
+      toast.success("文档已开始下载");
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "下载失败，请重试"));
+      toast.error(getApiErrorMessage(error, "文档下载失败，请重试"));
     },
   });
 

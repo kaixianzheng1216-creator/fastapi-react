@@ -546,7 +546,7 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
       void refreshConversations();
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "重命名失败，请重试"));
+      toast.error(getApiErrorMessage(error, "会话重命名失败，请重试"));
     },
   });
 
@@ -564,7 +564,7 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
       void refreshConversations();
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "归档失败，请重试"));
+      toast.error(getApiErrorMessage(error, "会话归档失败，请重试"));
     },
   });
 
@@ -583,7 +583,7 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
       void refreshConversations();
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "删除会话失败，请重试"));
+      toast.error(getApiErrorMessage(error, "会话删除失败，请重试"));
     },
   });
 

@@ -55,7 +55,7 @@ export function LoginForm({
 
     onError: (error) => {
       loginForm.setError("root", {
-        message: getApiErrorMessage(error, "登录失败，请稍后重试"),
+        message: getApiErrorMessage(error, "账号登录失败，请稍后重试"),
       });
     },
   });

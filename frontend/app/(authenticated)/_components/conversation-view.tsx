@@ -4,6 +4,12 @@ import dynamic from "next/dynamic";
 import type { PropsWithChildren, ReactNode } from "react";
 
 import { selectIsNewConversation } from "@/app/(authenticated)/_components/conversation-selectors";
+import {
+  ChatConversationSkeleton,
+  ComposerSkeleton,
+  ResearchConversationSkeleton,
+  ThreadShell,
+} from "@/app/(authenticated)/_components/thread-ui";
 import { useConversationKind } from "@/app/conversation-kind";
 import { cn } from "@/lib/utils";
 import {
@@ -14,10 +20,12 @@ import {
   useAuiState,
 } from "@assistant-ui/react";
 
-const ChatThread = dynamic(() =>
-  import("@/app/(authenticated)/_components/chat-thread").then(
-    (module) => module.ChatThread,
-  ),
+const ChatThread = dynamic(
+  () =>
+    import("@/app/(authenticated)/_components/chat-thread").then(
+      (module) => module.ChatThread,
+    ),
+  { loading: ChatThreadLoading },
 );
 
 const ConversationSidebar = dynamic(() =>
@@ -26,11 +34,39 @@ const ConversationSidebar = dynamic(() =>
   ),
 );
 
-const ResearchThread = dynamic(() =>
-  import("@/app/(authenticated)/_components/research/research-thread").then(
-    (module) => module.ResearchThread,
-  ),
+const ResearchThread = dynamic(
+  () =>
+    import("@/app/(authenticated)/_components/research/research-thread").then(
+      (module) => module.ResearchThread,
+    ),
+  { loading: ResearchThreadLoading },
 );
+
+function ChatThreadLoading() {
+  return (
+    <ThreadShell
+      isEmpty={false}
+      maxWidth="52rem"
+      footer={<ComposerSkeleton />}
+      scrollToBottomOnLoad={false}
+    >
+      <ChatConversationSkeleton />
+    </ThreadShell>
+  );
+}
+
+function ResearchThreadLoading() {
+  return (
+    <ThreadShell
+      isEmpty={false}
+      maxWidth="68rem"
+      footer={null}
+      scrollToBottomOnLoad={false}
+    >
+      <ResearchConversationSkeleton />
+    </ThreadShell>
+  );
+}
 
 const CHAT_AUI_CONFIG = AuiConfig({
   suggestions: Suggestions([

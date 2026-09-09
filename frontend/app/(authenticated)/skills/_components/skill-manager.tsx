@@ -116,7 +116,7 @@ export function SkillManager() {
       }
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "删除技能失败，请重试"));
+      toast.error(getApiErrorMessage(error, "技能删除失败，请重试"));
     },
   });
 

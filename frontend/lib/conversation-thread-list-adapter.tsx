@@ -97,15 +97,23 @@ export function createConversationThreadListAdapter(
       const text = getFirstUserText(messages);
       if (!text) return createAssistantStream(() => {});
 
-      const { data } = await agentGenerateConversationTitle({
-        body: { role: "user", parts: [{ type: "text", text }] },
-        path: { conversation_id: remoteId },
-        throwOnError: true,
-      });
+      try {
+        const { data } = await agentGenerateConversationTitle({
+          body: { role: "user", parts: [{ type: "text", text }] },
+          path: { conversation_id: remoteId },
+          throwOnError: true,
+        });
 
-      return createAssistantStream((controller) => {
-        controller.appendText(data.title);
-      });
+        return createAssistantStream((controller) => {
+          controller.appendText(data.title);
+        });
+      } catch {
+        toast.error("会话标题生成失败，已保留默认标题", {
+          id: `conversation-title-${remoteId}`,
+        });
+
+        return createAssistantStream(() => {});
+      }
     },
 
     async rename(remoteId, newTitle) {

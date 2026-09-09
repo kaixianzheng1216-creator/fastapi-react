@@ -161,11 +161,11 @@ export function KnowledgeBaseManager() {
       });
     },
     onSuccess: () => {
-      toast.success("状态已更新");
+      toast.success("知识库状态已更新");
       invalidateKnowledgeBases();
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "更新状态失败，请重试"));
+      toast.error(getApiErrorMessage(error, "知识库状态更新失败，请重试"));
     },
   });
 
@@ -192,7 +192,7 @@ export function KnowledgeBaseManager() {
       invalidateKnowledgeBases();
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "删除失败，请重试"));
+      toast.error(getApiErrorMessage(error, "知识库删除失败，请重试"));
     },
   });
 

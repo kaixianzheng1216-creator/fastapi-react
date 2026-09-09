@@ -82,7 +82,7 @@ export function SkillCreateDialog({
     onSuccess: handleCreateSuccess,
 
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "创建技能失败，请重试"));
+      toast.error(getApiErrorMessage(error, "技能创建失败，请重试"));
     },
   });
 
@@ -97,7 +97,7 @@ export function SkillCreateDialog({
     onSuccess: handleCreateSuccess,
 
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "导入技能失败，请重试"));
+      toast.error(getApiErrorMessage(error, "技能导入失败，请重试"));
     },
   });
 

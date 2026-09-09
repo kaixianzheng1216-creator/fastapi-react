@@ -58,8 +58,8 @@ export function createFileAttachmentTransport() {
       const contentType = getFileContentType(file);
 
       if (!contentType || !CHAT_CONTENT_TYPES.includes(contentType)) {
-        toast.error("不支持该文件类型");
-        throw new Error("不支持该文件类型");
+        toast.error("附件类型不受支持");
+        throw new Error("附件类型不受支持");
       }
 
       if (file.size > MAX_FILE_SIZE) {
@@ -127,7 +127,7 @@ export function createFileAttachmentTransport() {
         pendingUploadCount -= 1;
 
         if (!uploadId) {
-          toast.error(getApiErrorMessage(error, "添加附件失败，请重试"));
+          toast.error(getApiErrorMessage(error, "附件添加失败，请重试"));
         }
 
         try {

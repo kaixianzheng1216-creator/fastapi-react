@@ -263,7 +263,7 @@ const AttachmentRemove: FC = () => {
   const removeMutation = useMutation({
     mutationFn: () => aui.attachment.remove(),
     onError: () => {
-      toast.error("移除附件失败，请重试");
+      toast.error("附件移除失败，请重试");
     },
   });
 
