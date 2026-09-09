@@ -110,7 +110,10 @@ export function ResearchReport({ report }: { report: string }) {
       onClick={() => pdfDownloadMutation.mutate()}
     >
       {pdfDownloadMutation.isPending ? (
-        <Spinner data-icon="inline-start" />
+        <Spinner
+          data-icon="inline-start"
+          className="block origin-center [transform-box:fill-box]"
+        />
       ) : (
         <DownloadIcon data-icon="inline-start" aria-hidden="true" />
       )}
