@@ -19,14 +19,25 @@ KnowledgeFolderName = Annotated[
 
 
 class KnowledgeBaseCreate(SQLModel):
-    name: KnowledgeBaseName
-    description: str | None = Field(default=None, max_length=500)
+    name: KnowledgeBaseName = Field(description="知识库名称")
+    description: str | None = Field(
+        default=None,
+        max_length=500,
+        description="知识库描述",
+    )
 
 
 class KnowledgeBaseUpdate(SQLModel):
-    name: KnowledgeBaseName | None = None
-    description: str | None = Field(default=None, max_length=500)
-    is_enabled: bool | None = None
+    name: KnowledgeBaseName | None = Field(default=None, description="知识库名称")
+    description: str | None = Field(
+        default=None,
+        max_length=500,
+        description="知识库描述",
+    )
+    is_enabled: bool | None = Field(
+        default=None,
+        description="是否启用知识库：true=启用，false=停用",
+    )
 
     @field_validator("name")
     @classmethod
@@ -71,16 +82,21 @@ class KnowledgeBaseSummariesPublic(SQLModel):
 
 
 class KnowledgeFolderCreate(SQLModel):
-    name: KnowledgeFolderName
-    parent_id: uuid.UUID | None = None
+    name: KnowledgeFolderName = Field(description="文件夹名称")
+    parent_id: uuid.UUID | None = Field(
+        default=None,
+        description="父文件夹 ID；不传表示创建在根目录",
+    )
 
 
 class KnowledgeFolderUpdate(SQLModel):
-    name: KnowledgeFolderName
+    name: KnowledgeFolderName = Field(description="新的文件夹名称")
 
 
 class KnowledgeFolderMove(SQLModel):
-    parent_id: uuid.UUID | None
+    parent_id: uuid.UUID | None = Field(
+        description="目标父文件夹 ID；传 null 表示移动到根目录"
+    )
 
 
 class KnowledgeFolderPublic(SQLModel):
@@ -98,7 +114,7 @@ class KnowledgeFoldersPublic(SQLModel):
 
 
 class KnowledgeWebpageCreate(SQLModel):
-    url: HttpUrl
+    url: HttpUrl = Field(description="需要导入的网页 URL")
 
 
 class KnowledgeDocumentMove(SQLModel):
@@ -141,8 +157,14 @@ KnowledgeDirectoryEntryPublic = Annotated[
 
 
 class KnowledgeDirectoryDelete(SQLModel):
-    folder_ids: set[uuid.UUID] = Field(default_factory=set)
-    document_ids: set[uuid.UUID] = Field(default_factory=set)
+    folder_ids: set[uuid.UUID] = Field(
+        default_factory=set,
+        description="需要删除的文件夹 ID 列表",
+    )
+    document_ids: set[uuid.UUID] = Field(
+        default_factory=set,
+        description="需要删除的文档 ID 列表",
+    )
 
     @model_validator(mode="after")
     def validate_entries(self) -> KnowledgeDirectoryDelete:
@@ -179,7 +201,7 @@ class KnowledgeSearchRequest(SQLModel):
     query: Annotated[
         str,
         StringConstraints(strip_whitespace=True, min_length=1, max_length=1000),
-    ]
+    ] = Field(description="用于知识库语义检索的问题")
 
 
 class KnowledgeSearchResultPublic(SQLModel):

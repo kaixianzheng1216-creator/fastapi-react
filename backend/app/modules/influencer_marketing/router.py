@@ -31,14 +31,35 @@ router = APIRouter(
 @router.get("/accounts", response_model=InfluencerAccountsPublic)
 def read_influencer_accounts(
     session: SessionDep,
-    platform: InfluencerPlatformCode = InfluencerPlatformCode.DOUYIN,
-    skip: Annotated[int, Query(ge=0)] = 0,
-    limit: Annotated[int, Query(ge=1, le=100)] = 20,
-    search: Annotated[str | None, Query(max_length=255)] = None,
-    sort_by: InfluencerAccountSortBy = InfluencerAccountSortBy.FOLLOWERS,
-    sort_order: InfluencerSortOrder = InfluencerSortOrder.DESC,
+    platform: Annotated[
+        InfluencerPlatformCode,
+        Query(
+            description=(
+                "达人所属平台。可选值：douyin=抖音，xiaohongshu=小红书；默认值：douyin"
+            )
+        ),
+    ] = InfluencerPlatformCode.DOUYIN,
+    skip: Annotated[int, Query(ge=0, description="跳过的记录数")] = 0,
+    limit: Annotated[int, Query(ge=1, le=100, description="返回的最大记录数")] = 20,
+    search: Annotated[
+        str | None,
+        Query(max_length=255, description="按达人名称或账号搜索"),
+    ] = None,
+    sort_by: Annotated[
+        InfluencerAccountSortBy,
+        Query(
+            description=(
+                "排序字段。可选值：followers=粉丝数，engagement_count=互动数；"
+                "默认值：followers"
+            )
+        ),
+    ] = InfluencerAccountSortBy.FOLLOWERS,
+    sort_order: Annotated[
+        InfluencerSortOrder,
+        Query(description="排序方向。可选值：asc=升序，desc=降序；默认值：desc"),
+    ] = InfluencerSortOrder.DESC,
 ) -> InfluencerAccountsPublic:
-    """获取指定平台的达人资源。"""
+    """查询指定平台的达人资源。"""
     snapshot, accounts, count = service.list_influencer_accounts(
         session=session,
         platform=platform,

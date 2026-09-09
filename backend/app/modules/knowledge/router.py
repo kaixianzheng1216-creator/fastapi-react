@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Path, Query, status
 
 from app.api.dependencies import SessionDep
 from app.api.responses import error_responses
@@ -94,12 +94,18 @@ def create_knowledge_base(
 @router.get("", response_model=KnowledgeBasesPublic)
 def read_knowledge_bases(
     session: SessionDep,
-    skip: Annotated[int, Query(ge=0)] = 0,
-    limit: Annotated[int, Query(ge=1, le=100)] = 20,
-    search: Annotated[str | None, Query(max_length=100)] = None,
-    is_enabled: bool | None = None,
+    skip: Annotated[int, Query(ge=0, description="跳过的记录数")] = 0,
+    limit: Annotated[int, Query(ge=1, le=100, description="返回的最大记录数")] = 20,
+    search: Annotated[
+        str | None,
+        Query(max_length=100, description="按知识库名称搜索"),
+    ] = None,
+    is_enabled: Annotated[
+        bool | None,
+        Query(description="按启用状态筛选：true=启用，false=停用；不传则返回全部"),
+    ] = None,
 ) -> KnowledgeBasesPublic:
-    """获取知识库列表。"""
+    """查询知识库列表。"""
     knowledge_bases, count = service.list_knowledge_bases(
         session=session,
         skip=skip,
@@ -144,7 +150,7 @@ def read_knowledge_base(
 def update_knowledge_base(
     *,
     session: SessionDep,
-    knowledge_base_id: uuid.UUID,
+    knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
     body: KnowledgeBaseUpdate,
 ) -> KnowledgeBasePublic:
     """更新知识库。"""
@@ -162,7 +168,10 @@ def update_knowledge_base(
     status_code=status.HTTP_204_NO_CONTENT,
     responses=error_responses(KnowledgeBaseNotFoundError),
 )
-def delete_knowledge_base(session: SessionDep, knowledge_base_id: uuid.UUID) -> None:
+def delete_knowledge_base(
+    session: SessionDep,
+    knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
+) -> None:
     """删除知识库。"""
     service.delete_knowledge_base(session=session, knowledge_base_id=knowledge_base_id)
 
@@ -180,7 +189,7 @@ def delete_knowledge_base(session: SessionDep, knowledge_base_id: uuid.UUID) -> 
 def create_folder(
     *,
     session: SessionDep,
-    knowledge_base_id: uuid.UUID,
+    knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
     body: KnowledgeFolderCreate,
 ) -> KnowledgeFolderPublic:
     """创建知识库文件夹。"""
@@ -199,9 +208,10 @@ def create_folder(
     responses=error_responses(KnowledgeBaseNotFoundError),
 )
 def read_folders(
-    session: SessionDep, knowledge_base_id: uuid.UUID
+    session: SessionDep,
+    knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
 ) -> KnowledgeFoldersPublic:
-    """获取知识库文件夹。"""
+    """查询知识库文件夹列表。"""
     folders = service.list_folders(
         session=session,
         knowledge_base_id=knowledge_base_id,
@@ -230,8 +240,8 @@ def read_folders(
 def update_folder(
     *,
     session: SessionDep,
-    knowledge_base_id: uuid.UUID,
-    folder_id: uuid.UUID,
+    knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
+    folder_id: Annotated[uuid.UUID, Path(description="文件夹 ID")],
     body: KnowledgeFolderUpdate,
 ) -> KnowledgeFolderPublic:
     """重命名知识库文件夹。"""
@@ -258,8 +268,8 @@ def update_folder(
 def move_folder(
     *,
     session: SessionDep,
-    knowledge_base_id: uuid.UUID,
-    folder_id: uuid.UUID,
+    knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
+    folder_id: Annotated[uuid.UUID, Path(description="文件夹 ID")],
     body: KnowledgeFolderMove,
 ) -> KnowledgeFolderPublic:
     """移动知识库文件夹。"""
@@ -283,12 +293,15 @@ def move_folder(
 )
 def read_directory(
     session: SessionDep,
-    knowledge_base_id: uuid.UUID,
-    folder_id: uuid.UUID | None = None,
-    skip: Annotated[int, Query(ge=0)] = 0,
-    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
+    folder_id: Annotated[
+        uuid.UUID | None,
+        Query(description="文件夹 ID；不传表示根目录"),
+    ] = None,
+    skip: Annotated[int, Query(ge=0, description="跳过的记录数")] = 0,
+    limit: Annotated[int, Query(ge=1, le=100, description="返回的最大记录数")] = 20,
 ) -> KnowledgeDirectoryPublic:
-    """获取文件夹优先排列的知识库目录。"""
+    """查询知识库目录，文件夹优先排列。"""
     entries, count = service.list_directory(
         session=session,
         knowledge_base_id=knowledge_base_id,
@@ -311,7 +324,7 @@ def read_directory(
 )
 def delete_directory_entries(
     session: SessionDep,
-    knowledge_base_id: uuid.UUID,
+    knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
     body: KnowledgeDirectoryDelete,
 ) -> None:
     """批量删除知识库文件夹和文档。"""
@@ -338,8 +351,11 @@ def create_document_upload(
     *,
     session: SessionDep,
     current_user: CurrentUser,
-    knowledge_base_id: uuid.UUID,
-    folder_id: uuid.UUID | None = None,
+    knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
+    folder_id: Annotated[
+        uuid.UUID | None,
+        Query(description="导入到的文件夹 ID；不传表示根目录"),
+    ] = None,
     body: FileUploadRequest,
 ) -> KnowledgeDocumentUploadPublic:
     """创建知识库文档上传凭证。"""
@@ -390,11 +406,14 @@ async def create_webpage_document(
     *,
     session: SessionDep,
     current_user: CurrentUser,
-    knowledge_base_id: uuid.UUID,
-    folder_id: uuid.UUID | None = None,
+    knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
+    folder_id: Annotated[
+        uuid.UUID | None,
+        Query(description="导入到的文件夹 ID；不传表示根目录"),
+    ] = None,
     body: KnowledgeWebpageCreate,
 ) -> KnowledgeDocumentPublic:
-    """抓取网页并创建知识库文档。"""
+    """从网页导入知识库文档。"""
     return await service.create_webpage_document(
         session=session,
         current_user=current_user,
@@ -543,10 +562,10 @@ def delete_document(session: SessionDep, document_id: uuid.UUID) -> None:
 )
 def search_knowledge_base(
     session: SessionDep,
-    knowledge_base_id: uuid.UUID,
+    knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
     body: KnowledgeSearchRequest,
 ) -> KnowledgeSearchResultsPublic:
-    """检索知识库。"""
+    """检索知识库内容。"""
     search_results = retrieval.search_knowledge_base(
         session=session,
         knowledge_base_id=knowledge_base_id,

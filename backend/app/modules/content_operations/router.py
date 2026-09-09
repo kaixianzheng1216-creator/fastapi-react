@@ -26,11 +26,21 @@ router = APIRouter(
 @router.get("/rankings/bilibili", response_model=BilibiliRankingPublic)
 def read_bilibili_ranking(
     session: SessionDep,
-    category: BilibiliRankingCategoryCode = BilibiliRankingCategoryCode.ALL,
-    skip: Annotated[int, Query(ge=0)] = 0,
-    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    category: Annotated[
+        BilibiliRankingCategoryCode,
+        Query(
+            description=(
+                "B 站排行榜分区。可选值：all=全部，animation=动画，game=游戏，"
+                "kichiku=鬼畜，music=音乐，dance=舞蹈，cinephile=影视，"
+                "entertainment=娱乐，knowledge=知识，tech=科技数码，food=美食，"
+                "car=汽车，fashion=时尚美妆，sports=体育运动；默认值：all"
+            )
+        ),
+    ] = BilibiliRankingCategoryCode.ALL,
+    skip: Annotated[int, Query(ge=0, description="跳过的记录数")] = 0,
+    limit: Annotated[int, Query(ge=1, le=100, description="返回的最大记录数")] = 20,
 ) -> BilibiliRankingPublic:
-    """获取最近一次 B 站分区排行榜。"""
+    """查询最近一次 B 站分区排行榜。"""
     return service.get_bilibili_ranking(
         session=session,
         category=category,
