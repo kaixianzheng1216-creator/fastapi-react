@@ -17,15 +17,10 @@ export function QueryProvider({ children }: { children: ReactNode }) {
         queries: { retry: false },
       },
       queryCache: new QueryCache({
-        onError: (error, query) => {
-          const isRefresh = query.state.data !== undefined;
-
+        onError: (error) => {
           toast.error(
-            getApiErrorMessage(
-              error,
-              isRefresh ? "刷新失败，请稍后再试" : "加载失败，请稍后再试",
-            ),
-            { id: isRefresh ? "query-refresh-error" : "query-load-error" },
+            getApiErrorMessage(error, "请求失败，请稍后再试"),
+            { id: "query-error" },
           );
         },
       }),

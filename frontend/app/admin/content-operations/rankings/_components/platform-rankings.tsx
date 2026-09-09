@@ -332,7 +332,10 @@ export function PlatformRankings() {
                         </Empty>
                       )
                     ) : (
-                      <Table className="table-fixed tabular-nums">
+                      <Table
+                        aria-busy={rankingQuery.isFetching}
+                        className="table-fixed tabular-nums transition-opacity aria-busy:pointer-events-none aria-busy:opacity-60"
+                      >
                         <TableHeader>
                           {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>

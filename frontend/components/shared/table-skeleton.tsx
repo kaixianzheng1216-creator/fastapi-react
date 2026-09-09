@@ -39,7 +39,8 @@ export function TableSkeleton({ columns, rows = 6 }: TableSkeletonProps) {
                   <Skeleton
                     className="h-4"
                     style={{
-                      width: CELL_WIDTHS[(row + column + 1) % CELL_WIDTHS.length],
+                      width:
+                        CELL_WIDTHS[(row + column + 1) % CELL_WIDTHS.length],
                     }}
                   />
                 </TableCell>

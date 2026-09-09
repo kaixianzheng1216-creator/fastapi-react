@@ -77,26 +77,12 @@ const TOOL_LABELS = {
 
 type ResearchToolName = keyof typeof TOOL_LABELS;
 
-type ToolResultContent = readonly [{ type: "text"; text: string }];
-
 type ToolStep = {
   id: string;
   name: ResearchToolName;
   args: LangChainToolCall["args"];
   resultText?: string;
   status?: "success" | "error";
-};
-
-type SearchToolResult = {
-  data: {
-    web: Array<{ title: string; url: string }>;
-  };
-};
-
-type ScrapeToolResult = {
-  metadata: {
-    title?: string;
-  };
 };
 
 const dateTimeFormatter = new Intl.DateTimeFormat("zh-CN", {
@@ -250,7 +236,9 @@ export function ResearchProgress() {
       {runStatus === "failed" && (
         <div role="status" className="my-3 flex flex-col gap-1 text-sm">
           <span className="font-medium">调研失败</span>
-          <p className="text-muted-foreground">{runError}</p>
+          <p className="text-muted-foreground">
+            {runError || "调研失败，请重新提交"}
+          </p>
         </div>
       )}
 
@@ -435,10 +423,20 @@ function getToolSteps(messages: readonly LangChainMessage[]): ToolStep[] {
     }
 
     if (message.type === "tool") {
-      const step = stepsById.get(message.tool_call_id)!;
-      const result = message.content as unknown as ToolResultContent;
+      const step = stepsById.get(message.tool_call_id);
+      const result = Array.isArray(message.content)
+        ? message.content[0]
+        : undefined;
 
-      step.resultText = result[0].text;
+      if (!step) continue;
+
+      if (
+        isRecord(result) &&
+        result.type === "text" &&
+        typeof result.text === "string"
+      ) {
+        step.resultText = result.text;
+      }
       step.status = message.status;
     }
   }
@@ -506,15 +504,18 @@ function ToolDetails({
   }
 
   if (step.name === "firecrawl-firecrawl_search") {
-    const query = step.args.query as string;
-    const result =
-      step.resultText !== undefined
-        ? (JSON.parse(step.resultText) as SearchToolResult)
-        : undefined;
+    const query =
+      typeof step.args.query === "string" ? step.args.query : "当前主题";
 
-    if (!result) return <p>正在搜索“{query}”…</p>;
+    if (step.resultText === undefined) return <p>正在搜索“{query}”…</p>;
 
-    const searchResults = result.data.web;
+    const result = parseJson(step.resultText);
+    const data = isRecord(result) && isRecord(result.data) ? result.data : null;
+    const searchResults = Array.isArray(data?.web)
+      ? data.web.filter(isSearchResult)
+      : null;
+
+    if (!searchResults) return <p>网页搜索结果暂时无法显示。</p>;
 
     return (
       <div className="grid gap-2">
@@ -544,13 +545,21 @@ function ToolDetails({
     );
   }
 
-  const url = step.args.url as string;
-  const result =
-    step.resultText !== undefined
-      ? (JSON.parse(step.resultText) as ScrapeToolResult)
-      : undefined;
+  const url = typeof step.args.url === "string" ? step.args.url : "";
 
-  if (!result) return <p>正在抓取 {url} 正文…</p>;
+  if (step.resultText === undefined) {
+    return <p>正在抓取{url ? ` ${url}` : "网页"}正文…</p>;
+  }
+
+  const result = parseJson(step.resultText);
+  const metadata =
+    isRecord(result) && isRecord(result.metadata) ? result.metadata : null;
+
+  if (!metadata) return <p>网页抓取结果暂时无法显示。</p>;
+
+  const title = typeof metadata.title === "string" ? metadata.title : url;
+
+  if (!url) return <p>网页抓取完成，正文可供报告引用。</p>;
 
   return (
     <p>
@@ -561,9 +570,31 @@ function ToolDetails({
         target="_blank"
         rel="noreferrer"
       >
-        {result.metadata.title ?? url}
+        {title}
       </a>
       正文，可供报告引用。
     </p>
+  );
+}
+
+function parseJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isSearchResult(
+  value: unknown,
+): value is { title: string; url: string } {
+  return (
+    isRecord(value) &&
+    typeof value.title === "string" &&
+    typeof value.url === "string"
   );
 }

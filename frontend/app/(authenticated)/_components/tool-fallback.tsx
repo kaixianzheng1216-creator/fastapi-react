@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 const ANIMATION_DURATION = 200;
 
@@ -268,7 +269,7 @@ function ToolFallbackResult({
       <p className="aui-tool-fallback-result-header text-muted-foreground text-xs font-medium">
         结果：
       </p>
-      <pre className="aui-tool-fallback-result-content bg-muted/50 text-foreground/90 mt-1 rounded-md p-2.5 text-xs whitespace-pre-wrap">
+      <pre className="aui-tool-fallback-result-content bg-muted/50 text-foreground/90 mt-1 max-h-64 overflow-auto rounded-md p-2.5 text-xs whitespace-pre-wrap">
         {typeof result === "string" ? result : JSON.stringify(result, null, 2)}
       </pre>
     </div>
@@ -284,17 +285,12 @@ function ToolFallbackError({
 }) {
   if (status?.type !== "incomplete") return null;
 
-  const error = status.error;
-  const errorText = error
-    ? typeof error === "string"
-      ? error
-      : JSON.stringify(error)
-    : null;
-
-  if (!errorText) return null;
-
   const isCancelled = status.reason === "cancelled";
   const headerText = isCancelled ? "取消原因：" : "错误：";
+  const errorText = getApiErrorMessage(
+    status.error,
+    isCancelled ? "工具调用已取消" : "工具调用失败，请稍后重试",
+  );
 
   return (
     <div

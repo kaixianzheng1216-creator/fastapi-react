@@ -185,7 +185,10 @@ export function SkillManager() {
 
           {!skillsQuery.isPending && skills.length > 0 && (
             <>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div
+                aria-busy={skillsQuery.isFetching}
+                className="grid gap-4 transition-opacity aria-busy:pointer-events-none aria-busy:opacity-60 md:grid-cols-2 xl:grid-cols-3"
+              >
                 {skills.map((skill) => (
                   <Card key={skill.name} className="relative">
                     <Link

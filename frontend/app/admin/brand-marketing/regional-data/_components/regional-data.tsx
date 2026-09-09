@@ -308,7 +308,10 @@ export function RegionalData() {
               </Empty>
             )
           ) : (
-            <Table className="tabular-nums">
+            <Table
+              aria-busy={regionalDataQuery.isFetching}
+              className="tabular-nums transition-opacity aria-busy:pointer-events-none aria-busy:opacity-60"
+            >
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>

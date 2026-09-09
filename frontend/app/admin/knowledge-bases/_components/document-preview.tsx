@@ -309,7 +309,10 @@ function DocumentChunksView({
   const pageCount = Math.ceil(chunksQuery.data.count / CHUNK_PAGE_SIZE);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div
+      aria-busy={chunksQuery.isFetching}
+      className="flex flex-col gap-4 transition-opacity aria-busy:pointer-events-none aria-busy:opacity-60"
+    >
       {chunksQuery.data.data.map((chunk) => (
         <Card key={chunk.chunk_index} className="wrap-anywhere">
           <CardHeader>

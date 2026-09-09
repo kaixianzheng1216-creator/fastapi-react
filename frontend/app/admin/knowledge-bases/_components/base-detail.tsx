@@ -134,7 +134,7 @@ function KnowledgeBaseDetailSkeleton() {
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-8 w-28" />
       </div>
-      <TableSkeleton columns={5} rows={5} />
+      <TableSkeleton columns={6} rows={5} />
     </div>
   );
 }

@@ -348,7 +348,7 @@ export function KnowledgeBaseManager() {
           </div>
 
           {knowledgeBasesQuery.isPending ? (
-            <TableSkeleton columns={5} />
+            <TableSkeleton columns={4} />
           ) : rows.length === 0 ? (
             pageOutOfRange ? (
               <PageOutOfRange href={getKnowledgeBasesHref(1, search, status)} />
@@ -360,7 +360,10 @@ export function KnowledgeBaseManager() {
               </Empty>
             )
           ) : (
-            <Table>
+            <Table
+              aria-busy={knowledgeBasesQuery.isFetching}
+              className="transition-opacity aria-busy:pointer-events-none aria-busy:opacity-60"
+            >
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>

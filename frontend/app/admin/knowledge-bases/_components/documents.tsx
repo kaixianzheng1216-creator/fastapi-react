@@ -113,6 +113,8 @@ export function KnowledgeDocuments({
       return data;
     },
     refetchInterval: (query) => {
+      if (query.state.status === "error") return false;
+
       const hasProcessingDocument = query.state.data?.data.some(
         (entry) =>
           entry.type === "document" &&
@@ -258,7 +260,7 @@ export function KnowledgeDocuments({
             <Skeleton className="h-5 w-40" />
             <Skeleton className="h-8 w-28" />
           </div>
-          <TableSkeleton columns={5} />
+          <TableSkeleton columns={6} />
         </div>
       ) : (
         <section className="flex flex-col gap-3">

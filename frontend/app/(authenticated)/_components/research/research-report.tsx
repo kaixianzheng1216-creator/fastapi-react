@@ -237,10 +237,17 @@ function ResearchCards({ cards }: { cards: string[] }) {
       )}
     >
       {cards.map((cardJson, index) => {
-        const card = JSON.parse(cardJson) as {
-          title: string;
-          content: string;
-        };
+        const card = parseResearchCard(cardJson);
+
+        if (!card) {
+          return (
+            <Card key={index}>
+              <CardContent className="text-muted-foreground pt-6 text-sm">
+                此卡片暂时无法显示。
+              </CardContent>
+            </Card>
+          );
+        }
 
         return (
           <Card key={index}>
@@ -258,7 +265,16 @@ function ResearchCards({ cards }: { cards: string[] }) {
 }
 
 function ResearchChart({ chartJson }: { chartJson: string }) {
-  const chart = JSON.parse(chartJson) as ChartData;
+  const chart = parseResearchChart(chartJson);
+
+  if (!chart) {
+    return (
+      <p className="text-muted-foreground my-8 text-sm">
+        此图表暂时无法显示。
+      </p>
+    );
+  }
+
   const sourceUrl = chart.source ? getExternalUrl(chart.source) : undefined;
 
   return (
@@ -417,4 +433,57 @@ function getExternalUrl(value: string): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+function parseResearchCard(
+  value: string,
+): { title: string; content: string } | undefined {
+  const card = parseJson(value);
+
+  if (
+    !isRecord(card) ||
+    typeof card.title !== "string" ||
+    typeof card.content !== "string"
+  ) {
+    return undefined;
+  }
+
+  return { title: card.title, content: card.content };
+}
+
+function parseResearchChart(value: string): ChartData | undefined {
+  const chart = parseJson(value);
+
+  if (
+    !isRecord(chart) ||
+    !["line", "bar", "area", "pie"].includes(String(chart.type)) ||
+    typeof chart.title !== "string" ||
+    !Array.isArray(chart.categories) ||
+    !chart.categories.every((category) => typeof category === "string") ||
+    !Array.isArray(chart.series) ||
+    chart.series.length === 0 ||
+    !chart.series.every(
+      (series) =>
+        isRecord(series) &&
+        typeof series.name === "string" &&
+        Array.isArray(series.data) &&
+        series.data.every((item) => typeof item === "number"),
+    )
+  ) {
+    return undefined;
+  }
+
+  return chart as ChartData;
+}
+
+function parseJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }

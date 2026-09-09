@@ -288,7 +288,7 @@ export function InfluencerResourceManager() {
                     </div>
 
                     {accountsQuery.isPending ? (
-                      <TableSkeleton columns={7} rows={7} />
+                      <TableSkeleton columns={4} rows={7} />
                     ) : rows.length === 0 ? (
                       pageOutOfRange ? (
                         <PageOutOfRange
@@ -308,20 +308,35 @@ export function InfluencerResourceManager() {
                         </Empty>
                       )
                     ) : (
-                      <Table className="table-fixed tabular-nums">
+                      <Table
+                        aria-busy={accountsQuery.isFetching}
+                        className="table-fixed tabular-nums transition-opacity aria-busy:pointer-events-none aria-busy:opacity-60"
+                      >
                         <TableHeader>
                           {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
-                              {headerGroup.headers.map((header) => (
-                                <TableHead
-                                  key={header.id}
-                                  className={
-                                    header.column.columnDef.meta?.className
-                                  }
-                                >
-                                  <table.FlexRender header={header} />
-                                </TableHead>
-                              ))}
+                              {headerGroup.headers.map((header) => {
+                                const sortDirection =
+                                  header.column.getIsSorted();
+
+                                return (
+                                  <TableHead
+                                    key={header.id}
+                                    className={
+                                      header.column.columnDef.meta?.className
+                                    }
+                                    aria-sort={
+                                      sortDirection === "asc"
+                                        ? "ascending"
+                                        : sortDirection === "desc"
+                                          ? "descending"
+                                          : undefined
+                                    }
+                                  >
+                                    <table.FlexRender header={header} />
+                                  </TableHead>
+                                );
+                              })}
                             </TableRow>
                           ))}
                         </TableHeader>

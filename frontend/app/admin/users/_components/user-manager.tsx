@@ -393,7 +393,7 @@ export function UserManager() {
           </div>
 
           {usersQuery.isPending ? (
-            <TableSkeleton columns={6} />
+            <TableSkeleton columns={5} />
           ) : rows.length === 0 ? (
             pageOutOfRange ? (
               <PageOutOfRange href={getUsersHref(1, search, role, status)} />
@@ -405,7 +405,10 @@ export function UserManager() {
               </Empty>
             )
           ) : (
-            <Table>
+            <Table
+              aria-busy={usersQuery.isFetching}
+              className="transition-opacity aria-busy:pointer-events-none aria-busy:opacity-60"
+            >
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
