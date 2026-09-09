@@ -6,6 +6,7 @@ import {
   FileTextIcon,
   GlobeIcon,
   MessageSquareIcon,
+  PlugIcon,
   TagIcon,
   UserIcon,
   UsersIcon,
@@ -184,6 +185,21 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
       </SidebarContent>
 
       <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname.startsWith("/admin/mcp")}
+              tooltip="MCP 接入"
+            >
+              <Link href="/admin/mcp">
+                <PlugIcon aria-hidden="true" />
+                <span>MCP 接入</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+
         <SidebarSeparator className="mx-0" />
         <SidebarMenu>
           <SidebarAccountMenu user={user}>
