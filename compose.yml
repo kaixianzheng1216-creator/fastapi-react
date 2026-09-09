@@ -127,6 +127,8 @@ services:
     image: backend
     pull_policy: build
     restart: always
+    ports:
+      - "8000:8000"
     depends_on:
       litellm:
         condition: service_healthy
