@@ -12,7 +12,7 @@ import { ToolFallback } from "@/app/(authenticated)/_components/tool-fallback";
 import {
   Composer,
   ComposerSkeleton,
-  ConversationSkeleton,
+  ChatConversationSkeleton,
   ThreadShell,
   ThreadStarterSuggestions,
   ThreadWelcome,
@@ -66,7 +66,7 @@ export const ChatThread: FC = () => {
         )
       }
     >
-      {isLoading && <ConversationSkeleton />}
+      {isLoading && <ChatConversationSkeleton />}
 
       {isEmpty && !isLoading && isExisting && (
         <Empty>

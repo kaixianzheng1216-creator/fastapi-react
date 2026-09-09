@@ -107,18 +107,19 @@ export const ThreadWelcome: FC<ThreadWelcomeProps> = ({ title }) => (
   </div>
 );
 
-export const ConversationSkeleton: FC = () => (
+export const ChatConversationSkeleton: FC = () => (
   <div
     role="status"
     aria-label="正在加载会话"
     className="flex flex-col gap-8 py-6"
   >
+    <Skeleton className="ms-auto h-10 w-2/5 rounded-xl" />
     <div className="flex max-w-[85%] flex-col gap-3">
       <Skeleton className="h-4 w-4/5" />
       <Skeleton className="h-4 w-full" />
       <Skeleton className="h-4 w-3/5" />
     </div>
-    <Skeleton className="ms-auto h-10 w-2/5 rounded-xl" />
+    <Skeleton className="ms-auto h-10 w-1/3 rounded-xl" />
     <div className="flex max-w-[85%] flex-col gap-3">
       <Skeleton className="h-4 w-2/3" />
       <Skeleton className="h-4 w-full" />
