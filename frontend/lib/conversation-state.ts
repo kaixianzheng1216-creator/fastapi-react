@@ -15,7 +15,8 @@ export type ResearchState = {
   runStartedAt?: NonNullable<ConversationStatePublic["runStartedAt"]>;
   runFinishedAt?: NonNullable<ConversationStatePublic["runFinishedAt"]>;
   runError?: NonNullable<ConversationStatePublic["runError"]>;
-  loadError?: string;
+  isLoading?: boolean;
+  runId?: string | null;
   stage?: NonNullable<ConversationStatePublic["stage"]>;
   plan?: NonNullable<ConversationStatePublic["plan"]>;
   researchMessages?: readonly LangChainMessage[];

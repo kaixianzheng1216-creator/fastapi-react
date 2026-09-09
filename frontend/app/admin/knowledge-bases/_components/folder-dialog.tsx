@@ -16,7 +16,6 @@ import {
   Field,
   FieldGroup,
   FieldLabel,
-  FieldError,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -26,6 +25,7 @@ import {
   knowledgeBasesCreateFolder,
   knowledgeBasesUpdateFolder,
 } from "@/lib/client";
+import { toast } from "sonner";
 
 export function KnowledgeFolderEditorDialog({
   knowledgeBaseId,
@@ -65,7 +65,13 @@ export function KnowledgeFolderEditorDialog({
         throwOnError: true,
       });
     },
-    onSuccess: onSaved,
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "保存文件夹失败"));
+    },
+    onSuccess: () => {
+      toast.success(folder ? "文件夹已重命名" : "文件夹已创建");
+      void onSaved();
+    },
   });
 
   function submitFolder(event: FormEvent<HTMLFormElement>): void {
@@ -95,10 +101,7 @@ export function KnowledgeFolderEditorDialog({
         </DialogHeader>
         <form onSubmit={submitFolder}>
           <FieldGroup>
-            <Field
-              data-invalid={saveFolder.isError}
-              data-disabled={saveFolder.isPending}
-            >
+            <Field data-disabled={saveFolder.isPending}>
               <FieldLabel htmlFor="knowledge-folder-name">名称</FieldLabel>
               <Input
                 id="knowledge-folder-name"
@@ -109,28 +112,8 @@ export function KnowledgeFolderEditorDialog({
                 autoComplete="off"
                 autoFocus
                 disabled={saveFolder.isPending}
-                aria-invalid={saveFolder.isError}
-                aria-describedby={
-                  saveFolder.isError ? "knowledge-folder-name-error" : undefined
-                }
-                onChange={(event) => {
-                  if (saveFolder.error) {
-                    saveFolder.reset();
-                  }
-
-                  setFolderName(event.currentTarget.value);
-                }}
+                onChange={(event) => setFolderName(event.currentTarget.value)}
               />
-              {saveFolder.error ? (
-                <FieldError id="knowledge-folder-name-error">
-                  {getApiErrorMessage(
-                    saveFolder.error,
-                    saveFolder.error instanceof Error
-                      ? saveFolder.error.message
-                      : "保存文件夹失败",
-                  )}
-                </FieldError>
-              ) : null}
             </Field>
             <DialogFooter>
               <Button

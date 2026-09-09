@@ -2,7 +2,6 @@
 
 import { GalleryVerticalEnd } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -18,7 +17,6 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { CURRENT_USER_QUERY_KEY } from "@/hooks/use-current-user";
 import { loginLoginAccessToken } from "@/lib/client";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { saveAccessToken } from "@/lib/auth";
@@ -35,33 +33,32 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const router = useRouter();
   const queryClient = useQueryClient();
+
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
 
   const loginMutation = useMutation({
-    mutationFn: async ({
-      username,
-      password,
-    }: LoginFormValues) => {
-      const { data } = await loginLoginAccessToken({
+    mutationFn: ({ username, password }: LoginFormValues) =>
+      loginLoginAccessToken({
         body: { username, password },
         throwOnError: true,
+      }),
+    onError: (error) => {
+      loginForm.setError("root", {
+        message: getApiErrorMessage(error, "登录失败，请稍后重试"),
       });
-
-      return data;
     },
-    onSuccess: (data) => {
+
+    onSuccess: ({ data }) => {
       saveAccessToken(data.access_token);
-      queryClient.removeQueries({ queryKey: CURRENT_USER_QUERY_KEY });
-      router.replace("/");
+
+      queryClient.clear();
+
+      window.location.replace("/");
     },
   });
-  const error = loginMutation.error
-    ? getApiErrorMessage(loginMutation.error, "登录失败")
-    : "";
 
   function submitLogin(values: LoginFormValues): void {
     loginMutation.mutate(values);
@@ -84,6 +81,7 @@ export function LoginForm({
           <Field data-invalid={!!loginForm.formState.errors.username}>
             <FieldLabel htmlFor="username">用户名</FieldLabel>
             <Input
+              disabled={loginMutation.isPending}
               id="username"
               autoComplete="username"
               aria-invalid={!!loginForm.formState.errors.username}
@@ -95,6 +93,7 @@ export function LoginForm({
           <Field data-invalid={!!loginForm.formState.errors.password}>
             <FieldLabel htmlFor="password">密码</FieldLabel>
             <Input
+              disabled={loginMutation.isPending}
               id="password"
               type="password"
               autoComplete="current-password"
@@ -104,7 +103,7 @@ export function LoginForm({
             <FieldError errors={[loginForm.formState.errors.password]} />
           </Field>
 
-          <FieldError>{error}</FieldError>
+          <FieldError errors={[loginForm.formState.errors.root]} />
 
           <Field>
             <Button disabled={loginMutation.isPending} type="submit">

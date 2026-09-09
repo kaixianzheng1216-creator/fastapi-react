@@ -8,22 +8,13 @@ import {
   tableFeatures,
   useTable,
 } from "@tanstack/react-table";
-import { AlertCircleIcon, TrophyIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/app-header";
 import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
-import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
@@ -44,7 +35,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getApiErrorMessage } from "@/lib/api-error";
 import {
   type BilibiliRankingCategoryCode,
   type BilibiliRankingItemPublic,
@@ -207,9 +197,6 @@ export function PlatformRankings() {
   });
 
   const ranking = rankingQuery.data;
-  const loadError = rankingQuery.error
-    ? getApiErrorMessage(rankingQuery.error, "读取 B 站排行榜失败")
-    : "";
 
   const table = useTable({
     features: rankingTableFeatures,
@@ -228,7 +215,6 @@ export function PlatformRankings() {
 
   const rows = table.getRowModel().rows;
   const pageCount = table.getPageCount();
-  const hasSnapshot = ranking?.captured_at != null;
   const pageOutOfRange = (ranking?.count ?? 0) > 0 && rows.length === 0;
 
   return (
@@ -275,13 +261,7 @@ export function PlatformRankings() {
                 {item.code !== "bilibili" ? (
                   <Empty>
                     <EmptyHeader>
-                      <EmptyMedia variant="icon">
-                        <TrophyIcon aria-hidden="true" />
-                      </EmptyMedia>
-                      <EmptyTitle>{item.name}榜单尚未接入</EmptyTitle>
-                      <EmptyDescription>
-                        当前平台暂无榜单数据。
-                      </EmptyDescription>
+                      <EmptyTitle>暂无可显示内容</EmptyTitle>
                     </EmptyHeader>
                   </Empty>
                 ) : (
@@ -340,25 +320,6 @@ export function PlatformRankings() {
 
                     {rankingQuery.isPending ? (
                       <Skeleton className="h-96" />
-                    ) : loadError ? (
-                      <Empty>
-                        <EmptyHeader>
-                          <EmptyMedia variant="icon">
-                            <AlertCircleIcon aria-hidden="true" />
-                          </EmptyMedia>
-                          <EmptyTitle>无法读取 B 站排行榜</EmptyTitle>
-                          <EmptyDescription>{loadError}</EmptyDescription>
-                        </EmptyHeader>
-                        <EmptyContent>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => rankingQuery.refetch()}
-                          >
-                            重试
-                          </Button>
-                        </EmptyContent>
-                      </Empty>
                     ) : rows.length === 0 ? (
                       pageOutOfRange ? (
                         <PageOutOfRange
@@ -367,19 +328,7 @@ export function PlatformRankings() {
                       ) : (
                         <Empty>
                           <EmptyHeader>
-                            <EmptyMedia variant="icon">
-                              <TrophyIcon aria-hidden="true" />
-                            </EmptyMedia>
-                            <EmptyTitle>
-                              {hasSnapshot
-                                ? "当前分区暂无榜单数据"
-                                : "尚未导入 B 站排行榜"}
-                            </EmptyTitle>
-                            <EmptyDescription>
-                              {hasSnapshot
-                                ? "本次导入没有该分区的数据。"
-                                : "请先执行离线榜单导入命令。"}
-                            </EmptyDescription>
+                            <EmptyTitle>暂无可显示内容</EmptyTitle>
                           </EmptyHeader>
                         </Empty>
                       )

@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  CommandDialog,
+  Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
@@ -26,7 +26,7 @@ import {
 } from "@/app/conversation-kind";
 import { searchConversations } from "@/lib/conversation-thread-list-adapter";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
 import {
   AuiIf,
@@ -58,6 +58,24 @@ import {
   type FC,
   type SubmitEvent,
 } from "react";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { getApiErrorMessage } from "@/lib/api-error";
+import {
+  agentArchiveConversation,
+  agentDeleteConversation,
+  agentRenameConversation,
+} from "@/lib/client";
+import { toast } from "sonner";
 
 const SEARCH_DEBOUNCE_MS = 300;
 const DAY_IN_MS = 86_400_000;
@@ -147,42 +165,49 @@ export const ThreadListSearch: FC<{
           搜索对话…
         </Button>
       )}
-      <CommandDialog
-        open={open}
-        onOpenChange={setOpen}
-        title={archived ? "已归档对话" : "搜索对话"}
-        description={archived ? "查看已归档的对话" : "搜索已有对话"}
-        className="max-h-[80dvh] sm:max-w-3xl"
-      >
-        <CommandInput
-          value={search}
-          onValueChange={setSearch}
-          placeholder={archived ? "搜索已归档对话" : "搜索对话"}
-        />
-        <CommandList className="max-h-[calc(80dvh-3rem)]">
-          {!archived && !search && (
-            <CommandGroup heading="快捷创建">
-              <CommandItem
-                onSelect={() => createNewThread("chat")}
-              >
-                <SquarePenIcon />
-                新对话
-              </CommandItem>
-              <CommandItem
-                onSelect={() => createNewThread("research")}
-              >
-                <SearchIcon />
-                新调研
-              </CommandItem>
-            </CommandGroup>
-          )}
-          <ThreadListSearchResults
-            archived={archived}
-            searchQuery={search.trim()}
-            onSelect={() => setOpen(false)}
-          />
-        </CommandList>
-      </CommandDialog>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-h-[80dvh] overflow-hidden p-0 sm:max-w-3xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>{archived ? "已归档对话" : "搜索对话"}</DialogTitle>
+            <DialogDescription>
+              {archived ? "查看已归档的对话" : "搜索已有对话"}
+            </DialogDescription>
+          </DialogHeader>
+          <Command
+            shouldFilter={false}
+            className="**:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5"
+          >
+            <CommandInput
+              value={search}
+              onValueChange={setSearch}
+              placeholder={archived ? "搜索已归档对话" : "搜索对话"}
+            />
+            <CommandList className="max-h-[calc(80dvh-3rem)]">
+              {!archived && !search && (
+                <CommandGroup heading="快捷创建">
+                  <CommandItem
+                    onSelect={() => createNewThread("chat")}
+                  >
+                    <SquarePenIcon />
+                    新对话
+                  </CommandItem>
+                  <CommandItem
+                    onSelect={() => createNewThread("research")}
+                  >
+                    <SearchIcon />
+                    新调研
+                  </CommandItem>
+                </CommandGroup>
+              )}
+              <ThreadListSearchResults
+                archived={archived}
+                searchQuery={search.trim()}
+                onSelect={() => setOpen(false)}
+              />
+            </CommandList>
+          </Command>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
@@ -209,10 +234,29 @@ export const ThreadListItems: FC<ComponentPropsWithoutRef<"div">> = ({
       className={cn("flex flex-col gap-0.5", className)}
       {...props}
     >
-      <AuiIf condition={(s) => s.threads.isLoading}>
+      <AuiIf
+        condition={(s) =>
+          !s.threads.isLoading && s.threads.threadIds.length === 0
+        }
+      >
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>暂无可显示内容</EmptyTitle>
+          </EmptyHeader>
+        </Empty>
+      </AuiIf>
+      <AuiIf
+        condition={(s) =>
+          s.threads.isLoading && s.threads.threadIds.length === 0
+        }
+      >
         <ThreadListSkeleton />
       </AuiIf>
-      <AuiIf condition={(s) => !s.threads.isLoading}>
+      <AuiIf
+        condition={(s) =>
+          !s.threads.isLoading || s.threads.threadIds.length > 0
+        }
+      >
         <ThreadListItemGroups />
       </AuiIf>
     </div>
@@ -288,63 +332,57 @@ export const ThreadListSearchResults: FC<{
 }> = ({ archived = false, searchQuery, onSelect }) => {
   const aui = useAui();
   const router = useRouter();
-  const [debouncedSearchQuery] = useDebounce(
-    searchQuery,
-    SEARCH_DEBOUNCE_MS,
-  );
+  const [debouncedSearchQuery] = useDebounce(searchQuery, SEARCH_DEBOUNCE_MS);
 
-  const {
-    data: results,
-    isError,
-    isFetching,
-  } = useQuery({
+  const { data: results, isFetching } = useQuery({
     queryKey: ["conversations", "search", debouncedSearchQuery, archived],
     queryFn: ({ signal }) =>
-      searchConversations(
-        debouncedSearchQuery || undefined,
-        archived,
-        signal,
-      ),
+      searchConversations(debouncedSearchQuery || undefined, archived, signal),
     retry: false,
   });
 
-  if (searchQuery !== debouncedSearchQuery || isFetching) {
+  if (searchQuery !== debouncedSearchQuery || (isFetching && !results)) {
     return <ThreadListSkeleton />;
   }
-  if (isError) return <CommandEmpty>搜索失败</CommandEmpty>;
-  if (!results) return <ThreadListSkeleton />;
-  if (results.length === 0) {
-    return <CommandEmpty>未找到对话</CommandEmpty>;
+
+  if (!results?.length) {
+    return <CommandEmpty>暂无可显示内容</CommandEmpty>;
   }
 
   return (
-    <CommandGroup
-      heading={searchQuery ? "搜索结果" : archived ? "已归档对话" : "最近对话"}
-    >
-      {results.map((conversation) => (
-        <CommandItem
-          key={conversation.id}
-          className="group"
-          value={`${conversation.title} ${conversation.id}`}
-          onSelect={() => {
-            void aui.threads.switchToThread(conversation.id);
-            router.replace("/");
-            onSelect();
-          }}
-        >
-          {conversation.kind === "research" ? (
-            <SearchIcon />
-          ) : (
-            <MessageCircleIcon />
-          )}
-          <span className="min-w-0 flex-1 truncate">{conversation.title}</span>
-          <span className="text-muted-foreground text-xs group-hover:hidden">
-            {formatConversationTime(conversation.updatedAt)}
-          </span>
-          <CornerUpLeftIcon className="hidden group-hover:block" />
-        </CommandItem>
-      ))}
-    </CommandGroup>
+    <>
+      <CommandGroup
+        heading={
+          searchQuery ? "搜索结果" : archived ? "已归档对话" : "最近对话"
+        }
+      >
+        {results.map((conversation) => (
+          <CommandItem
+            key={conversation.id}
+            className="group"
+            value={`${conversation.title} ${conversation.id}`}
+            onSelect={() => {
+              aui.threads.switchToThread(conversation.id);
+              router.replace("/");
+              onSelect();
+            }}
+          >
+            {conversation.kind === "research" ? (
+              <SearchIcon />
+            ) : (
+              <MessageCircleIcon />
+            )}
+            <span className="min-w-0 flex-1 truncate">
+              {conversation.title}
+            </span>
+            <span className="text-muted-foreground text-xs group-hover:hidden">
+              {formatConversationTime(conversation.updatedAt)}
+            </span>
+            <CornerUpLeftIcon className="hidden group-hover:block" />
+          </CommandItem>
+        ))}
+      </CommandGroup>
+    </>
   );
 };
 
@@ -354,48 +392,47 @@ type ThreadListNewProps = ComponentPropsWithoutRef<
   kind?: ConversationKind;
 };
 
-export const ThreadListNew = forwardRef<
-  HTMLButtonElement,
-  ThreadListNewProps
->(({ kind = "chat", className, children, onClick, ...props }, ref) => {
-  const aui = useAui();
-  const pathname = usePathname();
-  const router = useRouter();
-  const { kind: selectedKind, select: selectNewKind } =
-    useNewConversationKind();
-  const isNewThread = useAuiState(
-    (state) => state.threads.newThreadId === state.threads.mainThreadId,
-  );
-  const Icon = kind === "research" ? SearchIcon : SquarePenIcon;
-  const label = kind === "research" ? "新调研" : "新对话";
+export const ThreadListNew = forwardRef<HTMLButtonElement, ThreadListNewProps>(
+  ({ kind = "chat", className, children, onClick, ...props }, ref) => {
+    const aui = useAui();
+    const pathname = usePathname();
+    const router = useRouter();
+    const { kind: selectedKind, select: selectNewKind } =
+      useNewConversationKind();
+    const isNewThread = useAuiState(
+      (state) => state.threads.newThreadId === state.threads.mainThreadId,
+    );
+    const Icon = kind === "research" ? SearchIcon : SquarePenIcon;
+    const label = kind === "research" ? "新调研" : "新对话";
 
-  return (
-    <SidebarItemButton
-      ref={ref}
-      isActive={pathname === "/" && isNewThread && selectedKind === kind}
-      data-slot="aui_thread-list-new"
-      className={className}
-      {...props}
-      onClick={(event) => {
-        onClick?.(event);
-        if (event.defaultPrevented) return;
+    return (
+      <SidebarItemButton
+        ref={ref}
+        isActive={pathname === "/" && isNewThread && selectedKind === kind}
+        data-slot="aui_thread-list-new"
+        className={className}
+        {...props}
+        onClick={(event) => {
+          onClick?.(event);
+          if (event.defaultPrevented) return;
 
-        selectNewKind(kind);
+          selectNewKind(kind);
 
-        aui.threads.switchToNewThread();
+          aui.threads.switchToNewThread();
 
-        router.replace("/");
-      }}
-    >
-      {children ?? (
-        <>
-          <Icon data-slot="aui_thread-list-new-icon" />
-          <span data-slot="aui_thread-list-new-label">{label}</span>
-        </>
-      )}
-    </SidebarItemButton>
-  );
-});
+          router.replace("/");
+        }}
+      >
+        {children ?? (
+          <>
+            <Icon data-slot="aui_thread-list-new-icon" />
+            <span data-slot="aui_thread-list-new-label">{label}</span>
+          </>
+        )}
+      </SidebarItemButton>
+    );
+  },
+);
 
 ThreadListNew.displayName = "ThreadListNew";
 
@@ -485,16 +522,78 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
   const [isRenameOpen, setRenameOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
 
-  const renameConversation = async (
-    event: SubmitEvent<HTMLFormElement>,
-  ): Promise<void> => {
+  const [isDeleteOpen, setDeleteOpen] = useState(false);
+  const item = useAuiState((state) => state.threadListItem);
+  const refreshConversations = () => aui.threads.reload();
+
+  const rename = useMutation({
+    mutationFn: (title: string) =>
+      agentRenameConversation({
+        path: { conversation_id: item.remoteId! },
+        body: { title },
+        throwOnError: true,
+      }),
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "重命名失败"));
+    },
+
+    onSuccess: () => {
+      toast.success("会话已重命名");
+      setRenameOpen(false);
+
+      return refreshConversations();
+    },
+  });
+
+  const archive = useMutation({
+    mutationFn: () =>
+      agentArchiveConversation({
+        path: { conversation_id: item.remoteId! },
+        throwOnError: true,
+      }),
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "归档失败"));
+    },
+
+    onSuccess: () => {
+      toast.success("会话已归档");
+      if (aui.threads.getState().mainThreadId === item.id)
+        aui.threads.switchToNewThread();
+
+      return refreshConversations();
+    },
+  });
+
+  const deleteConversation = useMutation({
+    mutationFn: () =>
+      agentDeleteConversation({
+        path: { conversation_id: item.remoteId! },
+        throwOnError: true,
+      }),
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "删除会话失败"));
+    },
+
+    onSuccess: () => {
+      toast.success("会话已删除");
+      setDeleteOpen(false);
+      if (aui.threads.getState().mainThreadId === item.id)
+        aui.threads.switchToNewThread();
+
+      return refreshConversations();
+    },
+  });
+
+  const isPending =
+    rename.isPending || archive.isPending || deleteConversation.isPending;
+
+  const renameConversation = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault();
 
     const title = newTitle.trim();
-    if (!title) return;
+    if (!title || isPending) return;
 
-    await aui.threadListItem.rename(title);
-    setRenameOpen(false);
+    rename.mutate(title);
   };
 
   return (
@@ -503,7 +602,7 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
         <Button
           variant="ghost"
           size="icon"
-          disabled={disabled}
+          disabled={disabled || isPending || !item.remoteId}
           data-slot="aui_thread-list-item-more"
           className={cn(
             "data-[state=open]:bg-accent data-[state=open]:opacity-100",
@@ -533,28 +632,35 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
           <PencilIcon className="size-4" />
           重命名
         </ThreadListItemMorePrimitive.Item>
-        <ThreadListItemPrimitive.Archive asChild>
-          <ThreadListItemMorePrimitive.Item
-            data-slot="aui_thread-list-item-more-item"
-            className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm outline-none select-none"
-          >
-            <ArchiveIcon className="size-4" />
-            归档
-          </ThreadListItemMorePrimitive.Item>
-        </ThreadListItemPrimitive.Archive>
-        <ThreadListItemPrimitive.Delete asChild>
-          <ThreadListItemMorePrimitive.Item
-            data-slot="aui_thread-list-item-more-item"
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm outline-none select-none"
-          >
-            <TrashIcon className="size-4" />
-            删除
-          </ThreadListItemMorePrimitive.Item>
-        </ThreadListItemPrimitive.Delete>
+
+        <ThreadListItemMorePrimitive.Item
+          disabled={isPending}
+          onSelect={() => archive.mutate()}
+          data-slot="aui_thread-list-item-more-item"
+          className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm outline-none select-none"
+        >
+          <ArchiveIcon className="size-4" />
+          归档
+        </ThreadListItemMorePrimitive.Item>
+
+        <ThreadListItemMorePrimitive.Item
+          disabled={isPending}
+          onSelect={() => setDeleteOpen(true)}
+          data-slot="aui_thread-list-item-more-item"
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm outline-none select-none"
+        >
+          <TrashIcon className="size-4" />
+          删除
+        </ThreadListItemMorePrimitive.Item>
       </ThreadListItemMorePrimitive.Content>
 
-      <Dialog open={isRenameOpen} onOpenChange={setRenameOpen}>
-        <DialogContent>
+      <Dialog
+        open={isRenameOpen}
+        onOpenChange={(open) => {
+          if (!isPending) setRenameOpen(open);
+        }}
+      >
+        <DialogContent showCloseButton={!isPending}>
           <DialogHeader>
             <DialogTitle>重命名对话</DialogTitle>
             <DialogDescription>输入新的对话标题。</DialogDescription>
@@ -563,15 +669,47 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
             <Input
               autoFocus
               aria-label="对话标题"
+              disabled={isPending}
               value={newTitle}
               onChange={(event) => setNewTitle(event.target.value)}
             />
             <DialogFooter className="mt-4">
-              <Button type="submit">保存</Button>
+              <Button type="submit" disabled={isPending || !newTitle.trim()}>
+                {rename.isPending ? "保存中…" : "保存"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={isDeleteOpen}
+        onOpenChange={(open) => {
+          if (!isPending) setDeleteOpen(open);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除会话？</AlertDialogTitle>
+            <AlertDialogDescription>
+              将永久删除“{currentTitle || "未命名会话"}”，此操作无法撤销。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>取消</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                deleteConversation.mutate();
+              }}
+            >
+              {deleteConversation.isPending ? "删除中…" : "删除"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </ThreadListItemMorePrimitive.Root>
   );
 };

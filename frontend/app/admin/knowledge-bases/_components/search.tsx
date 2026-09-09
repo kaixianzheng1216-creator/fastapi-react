@@ -1,11 +1,9 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { AlertCircleIcon, SearchIcon } from "lucide-react";
+import { SearchIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent } from "react";
-
-import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,15 +16,12 @@ import {
 } from "@/components/ui/card";
 import {
   Empty,
-  EmptyDescription,
   EmptyHeader,
-  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { getApiErrorMessage } from "@/lib/api-error";
 import { knowledgeBasesSearchKnowledgeBase } from "@/lib/client";
 import { KNOWLEDGE_SEARCH_QUERY_KEY } from "@/app/admin/knowledge-bases/_lib/directory";
 import { getKnowledgeSearchHref } from "@/app/admin/knowledge-bases/_lib/navigation";
@@ -126,29 +121,13 @@ export function KnowledgeSearch({
         </CardContent>
       </Card>
 
-      {searchKnowledge.error ? (
-        <Alert variant="destructive">
-          <AlertCircleIcon aria-hidden="true" />
-          <AlertTitle>
-            {getApiErrorMessage(searchKnowledge.error, "搜索失败")}
-          </AlertTitle>
-        </Alert>
-      ) : null}
-
-      {searchResults?.length === 0 ? (
+      {searchQuery && !searchKnowledge.isPending && !searchResults?.length && (
         <Empty>
           <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <SearchIcon aria-hidden="true" />
-            </EmptyMedia>
-            <EmptyTitle>未找到相关内容</EmptyTitle>
-            <EmptyDescription>
-              可以换个问法，或确认相关文档已处理完成。
-            </EmptyDescription>
+            <EmptyTitle>暂无可显示内容</EmptyTitle>
           </EmptyHeader>
         </Empty>
-      ) : null}
-
+      )}
       {searchResults?.map((result) => (
         <Card
           key={`${result.document_id}-${result.chunk_index}`}

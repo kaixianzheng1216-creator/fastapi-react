@@ -2,7 +2,6 @@
 
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import {
-  AlertCircleIcon,
   ArrowLeftIcon,
   DownloadIcon,
   FileTextIcon,
@@ -15,7 +14,6 @@ import { AppHeader } from "@/components/layout/app-header";
 import { MarkdownContent } from "@/components/shared/markdown-content";
 import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
-import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,9 +24,7 @@ import {
 } from "@/components/ui/card";
 import {
   Empty,
-  EmptyDescription,
   EmptyHeader,
-  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,6 +41,7 @@ import {
 } from "@/lib/knowledge-document-download";
 import { getPaginationHref, parsePage } from "@/lib/pagination";
 import { getKnowledgeDirectoryHref } from "@/app/admin/knowledge-bases/_lib/navigation";
+import { toast } from "sonner";
 
 const CHUNK_PAGE_SIZE = 20;
 const CHUNKS_ANCHOR = "document-chunks";
@@ -117,11 +114,7 @@ export function KnowledgeDocumentPreview({
     staleTime: PREVIEW_STALE_TIME_MS,
   });
 
-  const chunkPageParameter = Number(searchParams.get("chunkPage"));
-  const chunkPage =
-    Number.isInteger(chunkPageParameter) && chunkPageParameter > 0
-      ? chunkPageParameter
-      : 1;
+  const chunkPage = parsePage(searchParams.get("chunkPage"));
 
   function getChunkPageHref(page: number): string {
     const parameters = new URLSearchParams(searchParams);
@@ -136,6 +129,12 @@ export function KnowledgeDocumentPreview({
       format === "original"
         ? downloadOriginalKnowledgeDocument(documentId)
         : downloadMarkdownKnowledgeDocument(documentId),
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "下载失败"));
+    },
+    onSuccess: () => {
+      toast.success("已开始下载");
+    },
   });
 
   return (
@@ -190,24 +189,6 @@ export function KnowledgeDocumentPreview({
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
         <div className="mx-auto flex max-w-5xl flex-col gap-6">
-          {downloadDocument.error && (
-            <Alert variant="destructive">
-              <AlertCircleIcon aria-hidden="true" />
-              <AlertTitle>
-                {getApiErrorMessage(downloadDocument.error, "下载文档失败")}
-              </AlertTitle>
-            </Alert>
-          )}
-
-          {documentQuery.error && (
-            <Alert variant="destructive">
-              <AlertCircleIcon aria-hidden="true" />
-              <AlertTitle>
-                {getApiErrorMessage(documentQuery.error, "读取文档信息失败")}
-              </AlertTitle>
-            </Alert>
-          )}
-
           <Tabs value={activeView} onValueChange={changeView} className="gap-6">
             <TabsList>
               <TabsTrigger value="markdown">
@@ -228,13 +209,12 @@ export function KnowledgeDocumentPreview({
                   <Skeleton className="h-4" />
                   <Skeleton className="h-4 w-4/5" />
                 </div>
-              ) : previewQuery.error ? (
-                <Alert variant="destructive">
-                  <AlertCircleIcon aria-hidden="true" />
-                  <AlertTitle>
-                    {getApiErrorMessage(previewQuery.error, "读取预览失败")}
-                  </AlertTitle>
-                </Alert>
+              ) : !previewQuery.data ? (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyTitle>暂无可显示内容</EmptyTitle>
+                  </EmptyHeader>
+                </Empty>
               ) : (
                 <MarkdownContent className="max-w-none">
                   {previewQuery.data.content}
@@ -297,33 +277,18 @@ function DocumentChunksView({
     );
   }
 
-  if (chunksQuery.error) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircleIcon aria-hidden="true" />
-        <AlertTitle>
-          {getApiErrorMessage(chunksQuery.error, "读取切片失败")}
-        </AlertTitle>
-      </Alert>
-    );
-  }
-
-  if (chunksQuery.data.count > 0 && chunksQuery.data.data.length === 0) {
-    return <PageOutOfRange href={getPageHref(1)} />;
-  }
-
-  if (chunksQuery.data.count === 0) {
+  if (!chunksQuery.data || chunksQuery.data.count === 0) {
     return (
       <Empty>
         <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <LayersIcon aria-hidden="true" />
-          </EmptyMedia>
-          <EmptyTitle>没有切片</EmptyTitle>
-          <EmptyDescription>该文档尚未生成可展示的切片。</EmptyDescription>
+          <EmptyTitle>暂无可显示内容</EmptyTitle>
         </EmptyHeader>
       </Empty>
     );
+  }
+
+  if (chunksQuery.data.data.length === 0) {
+    return <PageOutOfRange href={getPageHref(1)} />;
   }
 
   const pageCount = Math.ceil(chunksQuery.data.count / CHUNK_PAGE_SIZE);

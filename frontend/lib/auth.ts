@@ -1,3 +1,4 @@
+
 import { client } from "@/lib/client/client.gen";
 
 const ACCESS_TOKEN_KEY = "access_token";
@@ -17,6 +18,8 @@ export function clearAccessToken(): void {
 
 export function handleUnauthorizedResponse(response: Response): boolean {
   if (response.status !== 401) return false;
+  if (new URL(response.url).pathname.endsWith("/login/access-token"))
+    return false;
 
   clearAccessToken();
 

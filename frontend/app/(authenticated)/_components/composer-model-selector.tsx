@@ -10,7 +10,7 @@ const THINKING_OPTIONS = [
 ] as const;
 
 export function ComposerModelSelector() {
-  const { data: models } = useQuery({
+  const { data: models, isPending } = useQuery({
     queryKey: ["models"],
     queryFn: async () => {
       const { data } = await agentReadModels({
@@ -23,7 +23,16 @@ export function ComposerModelSelector() {
     staleTime: Infinity,
   });
 
-  if (!models) return null;
+  if (isPending)
+    return (
+      <span role="status" className="text-muted-foreground text-xs">
+        正在加载模型…
+      </span>
+    );
+  if (!models?.data.length)
+    return (
+      <span className="text-muted-foreground text-xs">暂无可显示内容</span>
+    );
 
   return (
     <ModelSelector

@@ -13,14 +13,12 @@ import {
   useTable,
 } from "@tanstack/react-table";
 import {
-  AlertCircleIcon,
   MoreHorizontalIcon,
   PencilIcon,
   PlusIcon,
   PowerIcon,
   PowerOffIcon,
   TrashIcon,
-  UsersIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useMemo, useState } from "react";
@@ -41,7 +39,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,14 +48,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { FieldLegend, FieldSet } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -87,6 +77,7 @@ import {
   usersReadUsers,
   usersUpdateUser,
 } from "@/lib/client";
+import { toast } from "sonner";
 
 const PAGE_SIZE = 20;
 
@@ -153,7 +144,11 @@ export function UserManager() {
         throwOnError: true,
       });
     },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "更新状态失败"));
+    },
     onSuccess: async () => {
+      toast.success("状态已更新");
       await queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
     },
   });
@@ -165,11 +160,13 @@ export function UserManager() {
         throwOnError: true,
       });
     },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "删除失败"));
+    },
     onSuccess: async () => {
+      toast.success("已删除");
       if (usersQuery.data?.data.length === 1 && currentPage > 1) {
-        router.replace(
-          getUsersHref(currentPage - 1, search, role, status),
-        );
+        router.replace(getUsersHref(currentPage - 1, search, role, status));
       }
 
       setUserToDelete(undefined);
@@ -179,7 +176,6 @@ export function UserManager() {
   });
 
   const changeUserStatus = updateStatus.mutate;
-  const resetDelete = deleteUser.reset;
 
   const columns = useMemo(
     () =>
@@ -188,7 +184,9 @@ export function UserManager() {
           header: "用户名",
           cell: ({ row }) => (
             <div className="max-w-md">
-              <div className="truncate font-medium">{row.original.username}</div>
+              <div className="truncate font-medium">
+                {row.original.username}
+              </div>
               <div className="text-muted-foreground truncate">
                 {row.original.full_name || "未填写姓名"}
               </div>
@@ -238,7 +236,9 @@ export function UserManager() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuGroup>
-                  <DropdownMenuItem onSelect={() => setUserToEdit(row.original)}>
+                  <DropdownMenuItem
+                    onSelect={() => setUserToEdit(row.original)}
+                  >
                     <PencilIcon aria-hidden="true" />
                     编辑
                   </DropdownMenuItem>
@@ -258,7 +258,6 @@ export function UserManager() {
                       <DropdownMenuItem
                         variant="destructive"
                         onSelect={() => {
-                          resetDelete();
                           setUserToDelete(row.original);
                         }}
                       >
@@ -273,12 +272,7 @@ export function UserManager() {
           ),
         }),
       ]),
-    [
-      changeUserStatus,
-      currentUser?.id,
-      resetDelete,
-      updateStatus.isPending,
-    ],
+    [changeUserStatus, currentUser?.id, updateStatus.isPending],
   );
 
   const table = useTable({
@@ -299,15 +293,6 @@ export function UserManager() {
   const pageCount = table.getPageCount();
   const rows = table.getRowModel().rows;
   const pageOutOfRange = (usersQuery.data?.count ?? 0) > 0 && rows.length === 0;
-  const loadError = usersQuery.error
-    ? getApiErrorMessage(usersQuery.error, "读取用户列表失败")
-    : "";
-  const statusError = updateStatus.error
-    ? getApiErrorMessage(updateStatus.error, "更新用户状态失败")
-    : "";
-  const deleteError = deleteUser.error
-    ? getApiErrorMessage(deleteUser.error, "删除用户失败")
-    : "";
 
   async function refreshUsers(): Promise<void> {
     await queryClient.invalidateQueries({ queryKey: USERS_QUERY_KEY });
@@ -336,17 +321,13 @@ export function UserManager() {
 
   function changeRole(nextRole: string): void {
     if (nextRole) {
-      router.push(
-        getUsersHref(1, search, nextRole as RoleFilter, status),
-      );
+      router.push(getUsersHref(1, search, nextRole as RoleFilter, status));
     }
   }
 
   function changeStatus(nextStatus: string): void {
     if (nextStatus) {
-      router.push(
-        getUsersHref(1, search, role, nextStatus as StatusFilter),
-      );
+      router.push(getUsersHref(1, search, role, nextStatus as StatusFilter));
     }
   }
 
@@ -354,14 +335,9 @@ export function UserManager() {
     <>
       <AppHeader
         title={"用户"}
-        left={
-          <SidebarTrigger className="size-9" aria-label="切换管理菜单" />
-        }
+        left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
         actions={
-          <Button
-            aria-label="创建用户"
-            onClick={() => setCreateOpen(true)}
-          >
+          <Button aria-label="创建用户" onClick={() => setCreateOpen(true)}>
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
             <span className="hidden sm:inline">创建用户</span>
           </Button>
@@ -417,51 +393,15 @@ export function UserManager() {
             </div>
           </div>
 
-          {statusError && (
-            <Alert variant="destructive">
-              <AlertCircleIcon aria-hidden="true" />
-              <AlertTitle>{statusError}</AlertTitle>
-            </Alert>
-          )}
-
           {usersQuery.isPending ? (
             <Skeleton className="h-64" />
-          ) : loadError ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <AlertCircleIcon aria-hidden="true" />
-                </EmptyMedia>
-                <EmptyTitle>无法读取用户</EmptyTitle>
-                <EmptyDescription>{loadError}</EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => usersQuery.refetch()}
-                >
-                  重试
-                </Button>
-              </EmptyContent>
-            </Empty>
           ) : rows.length === 0 ? (
             pageOutOfRange ? (
-              <PageOutOfRange
-                href={getUsersHref(1, search, role, status)}
-              />
+              <PageOutOfRange href={getUsersHref(1, search, role, status)} />
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <UsersIcon aria-hidden="true" />
-                  </EmptyMedia>
-                  <EmptyTitle>暂无用户</EmptyTitle>
-                  <EmptyDescription>
-                    {search || role !== "all" || status !== "all"
-                      ? "没有符合当前条件的用户。"
-                      : "创建用户后会显示在这里。"}
-                  </EmptyDescription>
+                  <EmptyTitle>暂无可显示内容</EmptyTitle>
                 </EmptyHeader>
               </Empty>
             )
@@ -531,13 +471,6 @@ export function UserManager() {
               确定删除“{userToDelete?.username}”吗？此操作无法撤销。
             </AlertDialogDescription>
           </AlertDialogHeader>
-
-          {deleteError && (
-            <Alert variant="destructive">
-              <AlertCircleIcon aria-hidden="true" />
-              <AlertTitle>{deleteError}</AlertTitle>
-            </Alert>
-          )}
 
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteUser.isPending}>

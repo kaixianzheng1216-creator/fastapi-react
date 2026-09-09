@@ -27,6 +27,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { usersCreateUser } from "@/lib/client";
+import { toast } from "sonner";
 
 const userSchema = z.object({
   username: z
@@ -80,11 +81,18 @@ export function UserCreateDialog({
         throwOnError: true,
       });
     },
-  });
 
-  const requestError = createUser.error
-    ? getApiErrorMessage(createUser.error, "创建用户失败")
-    : "";
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "创建用户失败"));
+    },
+
+    onSuccess: () => {
+      toast.success("用户已创建");
+      form.reset();
+      onOpenChange(false);
+      onCreated();
+    },
+  });
 
   function handleOpenChange(nextOpen: boolean): void {
     if (!nextOpen && createUser.isPending) {
@@ -92,21 +100,10 @@ export function UserCreateDialog({
     }
 
     if (!nextOpen) {
-      createUser.reset();
       form.reset();
     }
 
     onOpenChange(nextOpen);
-  }
-
-  function submitUser(values: UserValues): void {
-    createUser.mutate(values, {
-      onSuccess: () => {
-        form.reset();
-        onOpenChange(false);
-        onCreated();
-      },
-    });
   }
 
   return (
@@ -117,11 +114,15 @@ export function UserCreateDialog({
           <DialogDescription>创建可以登录系统的新账户。</DialogDescription>
         </DialogHeader>
 
-        <form noValidate onSubmit={form.handleSubmit(submitUser)}>
+        <form
+          noValidate
+          onSubmit={form.handleSubmit((values) => createUser.mutate(values))}
+        >
           <FieldGroup>
             <Field data-invalid={!!form.formState.errors.username}>
               <FieldLabel htmlFor="new-user-username">用户名</FieldLabel>
               <Input
+                disabled={createUser.isPending}
                 id="new-user-username"
                 autoComplete="off"
                 aria-invalid={!!form.formState.errors.username}
@@ -133,6 +134,7 @@ export function UserCreateDialog({
             <Field data-invalid={!!form.formState.errors.fullName}>
               <FieldLabel htmlFor="new-user-full-name">姓名</FieldLabel>
               <Input
+                disabled={createUser.isPending}
                 id="new-user-full-name"
                 autoComplete="off"
                 aria-invalid={!!form.formState.errors.fullName}
@@ -144,6 +146,7 @@ export function UserCreateDialog({
             <Field data-invalid={!!form.formState.errors.password}>
               <FieldLabel htmlFor="new-user-password">密码</FieldLabel>
               <Input
+                disabled={createUser.isPending}
                 id="new-user-password"
                 type="password"
                 autoComplete="new-password"
@@ -163,6 +166,7 @@ export function UserCreateDialog({
                     <FieldDescription>允许该用户登录系统。</FieldDescription>
                   </FieldContent>
                   <Switch
+                    disabled={createUser.isPending}
                     id="new-user-active"
                     checked={field.value}
                     onCheckedChange={field.onChange}
@@ -177,12 +181,11 @@ export function UserCreateDialog({
               render={({ field }) => (
                 <Field orientation="horizontal">
                   <FieldContent>
-                    <FieldLabel htmlFor="new-user-superuser">
-                      管理员
-                    </FieldLabel>
+                    <FieldLabel htmlFor="new-user-superuser">管理员</FieldLabel>
                     <FieldDescription>允许访问管理后台。</FieldDescription>
                   </FieldContent>
                   <Switch
+                    disabled={createUser.isPending}
                     id="new-user-superuser"
                     checked={field.value}
                     onCheckedChange={field.onChange}
@@ -190,8 +193,6 @@ export function UserCreateDialog({
                 </Field>
               )}
             />
-
-            <FieldError>{requestError}</FieldError>
 
             <DialogFooter>
               <Button

@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon, FileTextIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useRef, useState } from "react";
@@ -28,7 +27,6 @@ import {
 import { KnowledgeDocumentImport } from "@/app/admin/knowledge-bases/_components/document-import";
 import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -37,16 +35,12 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button";
 import {
   Empty,
-  EmptyDescription,
   EmptyHeader,
-  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getApiErrorMessage } from "@/lib/api-error";
 import {
   type KnowledgeFolderPublic,
   knowledgeBasesReadDirectory,
@@ -138,7 +132,6 @@ export function KnowledgeDocuments({
   const pageOutOfRange = totalEntryCount > 0 && directoryEntries.length === 0;
 
   const directoryPending = foldersQuery.isPending || directoryQuery.isPending;
-  const directoryError = foldersQuery.error ?? directoryQuery.error;
   const hasDirectoryEntries = directoryEntries.length > 0;
 
   async function refreshDocuments(): Promise<void> {
@@ -262,38 +255,8 @@ export function KnowledgeDocuments({
         onDocumentsChanged={refreshDocuments}
       />
 
-      {actions.actionError ? (
-        <Alert variant="destructive">
-          <AlertCircleIcon aria-hidden="true" />
-          <AlertTitle>
-            {getApiErrorMessage(actions.actionError, "文档操作失败")}
-          </AlertTitle>
-        </Alert>
-      ) : null}
-
       {directoryPending ? (
         <Skeleton className="h-20" role="status" aria-label="正在加载目录" />
-      ) : directoryError ? (
-        <Alert variant="destructive">
-          <AlertCircleIcon aria-hidden="true" />
-          <AlertTitle>
-            {getApiErrorMessage(directoryError, "读取目录失败")}
-          </AlertTitle>
-          <AlertDescription>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                void Promise.all([
-                  foldersQuery.refetch(),
-                  directoryQuery.refetch(),
-                ]);
-              }}
-            >
-              重试
-            </Button>
-          </AlertDescription>
-        </Alert>
       ) : (
         <section className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -364,8 +327,9 @@ export function KnowledgeDocuments({
         </section>
       )}
 
-      {!directoryPending && !directoryError && !hasDirectoryEntries ? (
-        pageOutOfRange ? (
+      {!directoryPending &&
+        !hasDirectoryEntries &&
+        (pageOutOfRange ? (
           <PageOutOfRange
             href={getKnowledgeDirectoryHref(
               knowledgeBaseId,
@@ -376,18 +340,10 @@ export function KnowledgeDocuments({
         ) : (
           <Empty>
             <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <FileTextIcon aria-hidden="true" />
-              </EmptyMedia>
-              <EmptyTitle>暂无文档</EmptyTitle>
-              <EmptyDescription>
-                添加文件或网页后，会在这里显示处理状态。
-              </EmptyDescription>
+              <EmptyTitle>暂无可显示内容</EmptyTitle>
             </EmptyHeader>
           </Empty>
-        )
-      ) : null}
-
+        ))}
       <PagePagination
         className="mt-auto"
         ariaLabel="知识库目录分页"

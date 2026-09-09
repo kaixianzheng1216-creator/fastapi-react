@@ -1,12 +1,10 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { AlertCircleIcon, GlobeIcon, UploadIcon } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { GlobeIcon, UploadIcon } from "lucide-react";
+import { type FormEvent, useState, useRef } from "react";
 
 import { KNOWLEDGE_DOCUMENT_UPLOAD_KEY } from "@/app/admin/knowledge-bases/_lib/directory";
-
-import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -38,9 +36,12 @@ import {
   KNOWLEDGE_CONTENT_TYPES,
   MAX_FILE_SIZE,
 } from "@/lib/file-types";
+import { toast } from "sonner";
 
 const UPLOAD_CONCURRENCY = 3;
 const DOCUMENT_ACCEPT = KNOWLEDGE_CONTENT_TYPES.join(",");
+
+type UploadResult = { file: File; error?: string; needsCheck?: boolean };
 
 export function KnowledgeDocumentImport({
   knowledgeBaseId,
@@ -51,76 +52,86 @@ export function KnowledgeDocumentImport({
   folderId?: string;
   onDocumentsChanged: () => Promise<void>;
 }) {
-  const [importError, setImportError] = useState<Error>();
-
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadResults, setUploadResults] = useState<UploadResult[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadDocument = useMutation({
     mutationKey: [...KNOWLEDGE_DOCUMENT_UPLOAD_KEY, knowledgeBaseId],
-    mutationFn: async (files: File[]): Promise<void> => {
-      const validatedFiles = files.map((file) => {
-        const contentType = getFileContentType(file);
-
-        if (!contentType || !KNOWLEDGE_CONTENT_TYPES.includes(contentType)) {
-          throw new Error(`${file.name} 的文件类型不受支持`);
-        }
-
-        if (file.size > MAX_FILE_SIZE) {
-          throw new Error(`${file.name} 超过 ${formatFileSize(MAX_FILE_SIZE)}`);
-        }
-
-        return { file, contentType };
-      });
-
-      const failureMessages: string[] = [];
-
-      for (
-        let startIndex = 0;
-        startIndex < validatedFiles.length;
-        startIndex += UPLOAD_CONCURRENCY
-      ) {
-        const batch = validatedFiles.slice(
-          startIndex,
-          startIndex + UPLOAD_CONCURRENCY,
+    mutationFn: async (files: File[]): Promise<UploadResult[]> => {
+      const outcomes: UploadResult[] = [];
+      for (let start = 0; start < files.length; start += UPLOAD_CONCURRENCY) {
+        const batch = files.slice(start, start + UPLOAD_CONCURRENCY);
+        const results = await Promise.all(
+          batch.map(async (file): Promise<UploadResult> => {
+            const contentType = getFileContentType(file);
+            if (
+              !contentType ||
+              !KNOWLEDGE_CONTENT_TYPES.includes(contentType)
+            ) {
+              return { file, error: "不支持该文件类型，请选择其他文件" };
+            }
+            if (file.size > MAX_FILE_SIZE) {
+              return {
+                file,
+                error: `超过 ${formatFileSize(MAX_FILE_SIZE)}，请缩小文件后重试`,
+              };
+            }
+            try {
+              return await uploadKnowledgeDocument(
+                knowledgeBaseId,
+                folderId,
+                file,
+                contentType,
+              );
+            } catch (error) {
+              return {
+                file,
+                error: getApiErrorMessage(
+                  error,
+                  error instanceof Error ? error.message : "上传失败",
+                ),
+              };
+            }
+          }),
         );
-
-        const results = await Promise.allSettled(
-          batch.map(({ file, contentType }) =>
-            uploadKnowledgeDocument(
-              knowledgeBaseId,
-              folderId,
-              file,
-              contentType,
-            ),
-          ),
-        );
-
-        for (const [index, result] of results.entries()) {
-          if (result.status === "rejected") {
-            const filename = batch[index].file.name;
-            const message = getApiErrorMessage(
-              result.reason,
-              result.reason instanceof Error
-                ? result.reason.message
-                : "上传失败",
-            );
-
-            failureMessages.push(`${filename}：${message}`);
-            console.error("知识库文档导入失败", {
-              knowledgeBaseId,
-              filename,
-              error: result.reason,
-            });
-          }
-        }
+        outcomes.push(...results);
       }
+      return outcomes;
+    },
 
-      if (failureMessages.length > 0) {
-        throw new Error(failureMessages.join("；"));
+    onSuccess: (results) => {
+      setUploadResults((previous) => [
+        ...previous.filter(
+          (item) => !results.some((result) => result.file === item.file),
+        ),
+        ...results,
+      ]);
+
+      const failures = results.filter((result) => result.error);
+      setSelectedFiles(
+        failures
+          .filter((result) => !result.needsCheck)
+          .map((result) => result.file),
+      );
+
+      if (fileInputRef.current) fileInputRef.current.value = "";
+
+      if (failures.length) {
+        toast.error(
+          `上传成功 ${results.length - failures.length} 个，失败 ${failures.length} 个`,
+          {
+            description: "请查看添加文档区域中的处理结果",
+          },
+        );
+      } else {
+        toast.success(`已上传 ${results.length} 个文件，正在处理`);
       }
     },
-    onMutate: () => setImportError(undefined),
-    onError: setImportError,
+
+    onError: () => {
+      toast.error("上传失败，请重试");
+    },
 
     onSettled: onDocumentsChanged,
   });
@@ -128,16 +139,8 @@ export function KnowledgeDocumentImport({
   function submitUpload(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
 
-    const form = event.currentTarget;
-
-    if (selectedFiles.length > 0) {
-      uploadDocument.mutate(selectedFiles, {
-        onSettled: () => {
-          form.reset();
-
-          setSelectedFiles([]);
-        },
-      });
+    if (!uploadDocument.isPending && selectedFiles.length > 0) {
+      uploadDocument.mutate(selectedFiles);
     }
   }
 
@@ -151,17 +154,23 @@ export function KnowledgeDocumentImport({
         body: { url },
         throwOnError: true,
       }),
-    onMutate: () => setImportError(undefined),
-    onError: setImportError,
-    onSuccess: onDocumentsChanged,
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "添加网页失败"));
+    },
+
+    onSuccess: () => {
+      toast.success("网页已添加，正在处理");
+      setWebpageUrl("");
+      return onDocumentsChanged();
+    },
   });
 
   function submitWebpage(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
 
-    createWebpage.mutate(webpageUrl, {
-      onSuccess: () => setWebpageUrl(""),
-    });
+    if (createWebpage.isPending) return;
+
+    createWebpage.mutate(webpageUrl);
   }
 
   return (
@@ -192,6 +201,7 @@ export function KnowledgeDocumentImport({
                     {formatFileSize(MAX_FILE_SIZE)}。
                   </FieldDescription>
                   <Input
+                    ref={fileInputRef}
                     id="knowledge-document"
                     name="document"
                     type="file"
@@ -199,15 +209,16 @@ export function KnowledgeDocumentImport({
                     disabled={uploadDocument.isPending}
                     multiple
                     onChange={(event) => {
+                      setUploadResults([]);
                       setSelectedFiles(
                         Array.from(event.currentTarget.files ?? []),
                       );
                     }}
-                    required
                   />
                   {selectedFiles.length > 0 && (
                     <FieldDescription>
-                      已选择 {selectedFiles.length} 个文件
+                      待上传 {selectedFiles.length} 个文件：
+                      {selectedFiles.map((file) => file.name).join("、")}
                     </FieldDescription>
                   )}
                 </Field>
@@ -273,19 +284,25 @@ export function KnowledgeDocumentImport({
           </TabsContent>
         </Tabs>
       </CardContent>
-      {importError && (
-        <CardFooter>
-          <Alert variant="destructive">
-            <AlertCircleIcon aria-hidden="true" />
-            <AlertTitle>
-              {getApiErrorMessage(
-                importError,
-                importError instanceof Error
-                  ? importError.message
-                  : "添加文档失败",
-              )}
-            </AlertTitle>
-          </Alert>
+      {uploadResults.length > 0 && (
+        <CardFooter className="block">
+          <details open={uploadResults.some((result) => result.error)}>
+            <summary className="cursor-pointer text-sm">
+              本次成功 {uploadResults.filter((result) => !result.error).length}{" "}
+              个， 失败 {uploadResults.filter((result) => result.error).length}{" "}
+              个
+            </summary>
+            <ul className="mt-2 flex flex-col gap-2 text-sm">
+              {uploadResults.map((result, index) => (
+                <li
+                  key={`${result.file.name}-${index}`}
+                  className="break-words"
+                >
+                  {result.file.name}：{result.error ?? "已上传，等待处理"}
+                </li>
+              ))}
+            </ul>
+          </details>
         </CardFooter>
       )}
     </Card>
@@ -297,7 +314,7 @@ async function uploadKnowledgeDocument(
   folderId: string | undefined,
   file: File,
   contentType: string,
-): Promise<void> {
+): Promise<UploadResult> {
   const { data: upload } = await knowledgeBasesCreateDocumentUpload({
     path: { knowledge_base_id: knowledgeBaseId },
     query: { folder_id: folderId },
@@ -327,31 +344,27 @@ async function uploadKnowledgeDocument(
 
     const reason = error instanceof Error ? error.message : "文件传输失败";
 
-    if (cleanupError) {
-      throw new AggregateError(
-        [error, cleanupError],
-        `上传失败：${reason}。清理请求也失败：${getApiErrorMessage(cleanupError, "请求未完成")}。请刷新目录检查并删除残留记录后再上传。`,
-      );
-    }
-
-    throw new Error(
-      `上传失败：${reason}。文档记录已清理，可重新选择文件上传。`,
-      {
-        cause: error,
-      },
-    );
+    return {
+      file,
+      needsCheck: Boolean(cleanupError),
+      error: cleanupError
+        ? `上传失败：${reason}。清理请求也失败：${getApiErrorMessage(cleanupError, "请求未完成")}。请刷新目录检查并删除残留记录后再上传。`
+        : `上传失败：${reason}。文档记录已清理，可重新上传。`,
+    };
   }
 
-  const { error: confirmationError } =
-    await knowledgeDocumentsCompleteDocumentUpload({
-      path: { document_id: upload.id },
-      throwOnError: false,
-    });
+  const { error: confirmationError } = await knowledgeDocumentsCompleteDocumentUpload({
+    path: { document_id: upload.id },
+    throwOnError: false,
+  });
 
   if (confirmationError) {
-    throw new Error(
-      `确认上传失败：${getApiErrorMessage(confirmationError, "请求未完成")}。请先刷新目录检查状态；若仍显示“等待确认上传”，请使用“确认上传”，避免重复上传。`,
-      { cause: confirmationError },
-    );
+    return {
+      file,
+      needsCheck: true,
+      error: `确认上传失败：${getApiErrorMessage(confirmationError, "请求未完成")}。请先刷新目录检查状态；若仍显示“等待确认上传”，请使用“确认上传”，避免重复上传。`,
+    };
   }
+
+  return { file };
 }

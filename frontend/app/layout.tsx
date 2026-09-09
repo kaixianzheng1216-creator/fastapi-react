@@ -3,6 +3,7 @@ import Script from "next/script";
 import { QueryProvider } from "@/app/query-provider";
 import { ThemeProvider } from "@/app/theme-provider";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "AI 助手",
@@ -33,6 +34,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <QueryProvider>{children}</QueryProvider>
+          <Toaster position="top-right" />
         </ThemeProvider>
       </body>
     </html>

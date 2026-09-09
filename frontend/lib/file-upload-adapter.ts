@@ -18,6 +18,8 @@ import {
   MAX_FILE_SIZE,
   TEXT_CONTENT_TYPES,
 } from "@/lib/file-types";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { toast } from "sonner";
 
 const FILE_UPLOAD_ACCEPT = CHAT_CONTENT_TYPES.join(",");
 
@@ -56,10 +58,12 @@ export function createFileAttachmentTransport() {
       const contentType = getFileContentType(file);
 
       if (!contentType || !CHAT_CONTENT_TYPES.includes(contentType)) {
+        toast.error("不支持该文件类型");
         throw new Error("不支持该文件类型");
       }
 
       if (file.size > MAX_FILE_SIZE) {
+        toast.error("单个附件不能超过 100MB");
         throw new Error("单个附件不能超过 100MB");
       }
 
@@ -67,13 +71,12 @@ export function createFileAttachmentTransport() {
         TEXT_CONTENT_TYPES.includes(contentType) &&
         file.size > MAX_TEXT_FILE_SIZE
       ) {
+        toast.error("文本附件不能超过 256KB");
         throw new Error("文本附件不能超过 256KB");
       }
 
-      if (
-        composerAttachmentIds.size + pendingUploadCount >=
-        MAX_FILE_COUNT
-      ) {
+      if (composerAttachmentIds.size + pendingUploadCount >= MAX_FILE_COUNT) {
+        toast.error(`单条消息最多添加 ${MAX_FILE_COUNT} 个附件`);
         throw new Error(`单条消息最多添加 ${MAX_FILE_COUNT} 个附件`);
       }
 
@@ -122,6 +125,10 @@ export function createFileAttachmentTransport() {
         });
       } catch (error) {
         pendingUploadCount -= 1;
+
+        if (!uploadId) {
+          toast.error(getApiErrorMessage(error, "添加附件失败，请重试"));
+        }
 
         try {
           if (uploadId) {

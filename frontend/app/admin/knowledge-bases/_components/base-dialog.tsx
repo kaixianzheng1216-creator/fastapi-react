@@ -29,6 +29,7 @@ import {
   knowledgeBasesCreateKnowledgeBase,
   knowledgeBasesUpdateKnowledgeBase,
 } from "@/lib/client";
+import { toast } from "sonner";
 
 const knowledgeBaseSchema = z.object({
   name: z
@@ -87,24 +88,18 @@ export function KnowledgeBaseDialog({
         throwOnError: true,
       });
     },
+
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "保存知识库失败"));
+    },
+
+    onSuccess: () => {
+      toast.success("知识库已保存");
+      form.reset();
+      onOpenChange(false);
+      onSaved();
+    },
   });
-
-  const requestError = saveKnowledgeBase.error
-    ? getApiErrorMessage(
-        saveKnowledgeBase.error,
-        isEditing ? "更新知识库失败" : "创建知识库失败",
-      )
-    : "";
-
-  function submitKnowledgeBase(values: KnowledgeBaseValues): void {
-    saveKnowledgeBase.mutate(values, {
-      onSuccess: () => {
-        form.reset();
-        onOpenChange(false);
-        onSaved();
-      },
-    });
-  }
 
   function handleOpenChange(nextOpen: boolean): void {
     if (!nextOpen && saveKnowledgeBase.isPending) {
@@ -112,7 +107,6 @@ export function KnowledgeBaseDialog({
     }
 
     if (!nextOpen) {
-      saveKnowledgeBase.reset();
       form.reset();
     }
 
@@ -131,11 +125,15 @@ export function KnowledgeBaseDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form noValidate onSubmit={form.handleSubmit(submitKnowledgeBase)}>
+        <form
+          noValidate
+          onSubmit={form.handleSubmit((values) => saveKnowledgeBase.mutate(values))}
+        >
           <FieldGroup>
             <Field data-invalid={!!form.formState.errors.name}>
               <FieldLabel htmlFor="knowledge-base-name">名称</FieldLabel>
               <Input
+                disabled={saveKnowledgeBase.isPending}
                 id="knowledge-base-name"
                 autoComplete="off"
                 aria-invalid={!!form.formState.errors.name}
@@ -147,14 +145,13 @@ export function KnowledgeBaseDialog({
             <Field data-invalid={!!form.formState.errors.description}>
               <FieldLabel htmlFor="knowledge-base-description">描述</FieldLabel>
               <Textarea
+                disabled={saveKnowledgeBase.isPending}
                 id="knowledge-base-description"
                 aria-invalid={!!form.formState.errors.description}
                 {...form.register("description")}
               />
               <FieldError errors={[form.formState.errors.description]} />
             </Field>
-
-            <FieldError>{requestError}</FieldError>
 
             <DialogFooter>
               <Button

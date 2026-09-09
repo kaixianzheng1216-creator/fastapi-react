@@ -5,7 +5,7 @@ export function getApiErrorMessage(error: unknown, fallback: string): string {
     "detail" in error &&
     typeof error.detail === "string"
   ) {
-    return error.detail;
+    return error.detail.trim() || fallback;
   }
 
   return fallback;

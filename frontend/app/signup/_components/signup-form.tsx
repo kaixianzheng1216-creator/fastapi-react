@@ -21,6 +21,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { usersRegisterUser } from "@/lib/client";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const signupSchema = z.object({
   fullName: z.string().trim().max(255, "昵称最多 255 个字符"),
@@ -42,30 +43,32 @@ export function SignupForm({
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter();
+
   const signupForm = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
   });
 
   const signupMutation = useMutation({
-    mutationFn: async ({
-      fullName,
-      username,
-      password,
-    }: SignupFormValues) => {
-      await usersRegisterUser({
+    mutationFn: ({ fullName, username, password }: SignupFormValues) =>
+      usersRegisterUser({
         body: {
           full_name: fullName || null,
           username,
           password,
         },
         throwOnError: true,
+      }),
+    onError: (error) => {
+      signupForm.setError("root", {
+        message: getApiErrorMessage(error, "注册失败，请稍后重试"),
       });
     },
-    onSuccess: () => router.replace("/login"),
+
+    onSuccess: () => {
+      toast.success("注册成功，请登录");
+      router.replace("/login");
+    },
   });
-  const error = signupMutation.error
-    ? getApiErrorMessage(signupMutation.error, "注册失败")
-    : "";
 
   function submitSignup(values: SignupFormValues): void {
     signupMutation.mutate(values);
@@ -88,6 +91,7 @@ export function SignupForm({
           <Field data-invalid={!!signupForm.formState.errors.fullName}>
             <FieldLabel htmlFor="fullName">昵称（可选）</FieldLabel>
             <Input
+              disabled={signupMutation.isPending}
               id="fullName"
               autoComplete="name"
               maxLength={255}
@@ -100,6 +104,7 @@ export function SignupForm({
           <Field data-invalid={!!signupForm.formState.errors.username}>
             <FieldLabel htmlFor="username">用户名</FieldLabel>
             <Input
+              disabled={signupMutation.isPending}
               id="username"
               autoComplete="username"
               minLength={3}
@@ -113,6 +118,7 @@ export function SignupForm({
           <Field data-invalid={!!signupForm.formState.errors.password}>
             <FieldLabel htmlFor="password">密码</FieldLabel>
             <Input
+              disabled={signupMutation.isPending}
               id="password"
               type="password"
               autoComplete="new-password"
@@ -124,7 +130,7 @@ export function SignupForm({
             <FieldError errors={[signupForm.formState.errors.password]} />
           </Field>
 
-          <FieldError>{error}</FieldError>
+          <FieldError errors={[signupForm.formState.errors.root]} />
 
           <Field>
             <Button disabled={signupMutation.isPending} type="submit">

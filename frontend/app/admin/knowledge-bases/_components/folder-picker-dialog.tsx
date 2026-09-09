@@ -8,8 +8,6 @@ import {
   FolderOpenIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-
-import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +27,6 @@ import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { getApiErrorMessage } from "@/lib/api-error";
 import type { KnowledgeFolderPublic } from "@/lib/client";
 import { getFolderAncestors } from "@/lib/knowledge-folders";
 
@@ -42,7 +39,6 @@ type KnowledgeFolderPickerDialogProps = {
   title: string;
   description: string;
   isPending: boolean;
-  error: Error | null;
   onMove: (folderId: string | null) => void;
 };
 
@@ -74,7 +70,6 @@ export function KnowledgeFolderPickerDialog({
   title,
   description,
   isPending,
-  error,
   onMove,
 }: KnowledgeFolderPickerDialogProps) {
   const { root, nodes } = useMemo(() => {
@@ -196,9 +191,9 @@ export function KnowledgeFolderPickerDialog({
         </Field>
 
         {visibleIds?.size === 0 ? (
-          <Empty role="status">
+          <Empty>
             <EmptyHeader>
-              <EmptyTitle>未找到文件夹</EmptyTitle>
+              <EmptyTitle>暂无可显示内容</EmptyTitle>
             </EmptyHeader>
           </Empty>
         ) : (
@@ -212,12 +207,6 @@ export function KnowledgeFolderPickerDialog({
             />
           </ul>
         )}
-
-        {error ? (
-          <Alert variant="destructive">
-            <AlertTitle>{getApiErrorMessage(error, "移动失败")}</AlertTitle>
-          </Alert>
-        ) : null}
 
         <DialogFooter>
           <Button

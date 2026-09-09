@@ -2,7 +2,6 @@
 
 import { useIsMutating, useMutation } from "@tanstack/react-query";
 import {
-  AlertCircleIcon,
   FileTextIcon,
   UploadIcon,
   DownloadIcon,
@@ -29,7 +28,6 @@ import {
 } from "@/app/admin/knowledge-bases/_lib/directory";
 import { KnowledgeFolderEditorDialog } from "@/app/admin/knowledge-bases/_components/folder-dialog";
 import { KnowledgeFolderPickerDialog } from "@/app/admin/knowledge-bases/_components/folder-picker-dialog";
-import { Alert, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,6 +61,7 @@ import {
   downloadMarkdownKnowledgeDocument,
   downloadOriginalKnowledgeDocument,
 } from "@/lib/knowledge-document-download";
+import { toast } from "sonner";
 
 type DirectoryDeleteTarget = {
   entries: DirectoryEntry[];
@@ -80,12 +79,6 @@ export function useDirectoryActions({
   focusFallbackRef,
   onChanged,
 }: UseDirectoryActionsOptions) {
-  const [actionError, setActionError] = useState<Error>();
-
-  function clearActionError(): void {
-    setActionError(undefined);
-  }
-
   const actionTriggerRef = useRef<HTMLButtonElement>(null);
 
   function rememberActionTrigger(
@@ -114,9 +107,13 @@ export function useDirectoryActions({
         path: { document_id: documentId },
         throwOnError: true,
       }),
-    onMutate: clearActionError,
-    onError: setActionError,
-    onSuccess: () => onChanged({ type: "documents" }),
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "文档操作失败"));
+    },
+    onSuccess: () => {
+      toast.success("上传已确认");
+      void onChanged({ type: "documents" });
+    },
   });
 
   const retryDocument = useMutation({
@@ -125,21 +122,33 @@ export function useDirectoryActions({
         path: { document_id: documentId },
         throwOnError: true,
       }),
-    onMutate: clearActionError,
-    onError: setActionError,
-    onSuccess: () => onChanged({ type: "documents" }),
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "文档操作失败"));
+    },
+    onSuccess: () => {
+      toast.success("已提交重新解析");
+      void onChanged({ type: "documents" });
+    },
   });
 
   const downloadOriginal = useMutation({
     mutationFn: downloadOriginalKnowledgeDocument,
-    onMutate: clearActionError,
-    onError: setActionError,
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "文档操作失败"));
+    },
+    onSuccess: () => {
+      toast.success("已开始下载");
+    },
   });
 
   const downloadMarkdown = useMutation({
     mutationFn: downloadMarkdownKnowledgeDocument,
-    onMutate: clearActionError,
-    onError: setActionError,
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "文档操作失败"));
+    },
+    onSuccess: () => {
+      toast.success("已开始下载");
+    },
   });
 
   const [folderToEdit, setFolderToEdit] =
@@ -169,8 +178,11 @@ export function useDirectoryActions({
         });
       }
     },
-    onMutate: clearActionError,
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "移动失败"));
+    },
     onSuccess: async (_, { entry }) => {
+      toast.success("已移动");
       actionTriggerRef.current = null;
       setEntryToMove(undefined);
 
@@ -179,7 +191,6 @@ export function useDirectoryActions({
   });
 
   function openMoveEntry(entry: DirectoryEntry): void {
-    moveEntry.reset();
     setEntryToMove(entry);
   }
 
@@ -199,8 +210,11 @@ export function useDirectoryActions({
         },
         throwOnError: true,
       }),
-    onMutate: clearActionError,
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "删除失败"));
+    },
     onSuccess: async (_, target) => {
+      toast.success("已删除");
       actionTriggerRef.current = null;
       setDeleteTarget(undefined);
 
@@ -216,8 +230,6 @@ export function useDirectoryActions({
   }
 
   function openDeleteEntries(entries: DirectoryEntry[], label?: string): void {
-    clearActionError();
-    deleteEntries.reset();
 
     setDeleteTarget({ entries, label });
   }
@@ -225,14 +237,12 @@ export function useDirectoryActions({
   function closeDelete(): void {
     if (deleteEntries.isPending) return;
 
-    deleteEntries.reset();
     setDeleteTarget(undefined);
   }
 
   function closeMove(): void {
     if (moveEntry.isPending) return;
 
-    moveEntry.reset();
     setEntryToMove(undefined);
   }
 
@@ -243,7 +253,6 @@ export function useDirectoryActions({
   }
 
   return {
-    actionError,
     rememberActionTrigger,
     restoreActionFocus,
 
@@ -502,15 +511,6 @@ export function DirectoryActionDialogs({
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          {deleteEntries.error && (
-            <Alert variant="destructive">
-              <AlertCircleIcon aria-hidden="true" />
-              <AlertTitle>
-                {getApiErrorMessage(deleteEntries.error, "删除失败")}
-              </AlertTitle>
-            </Alert>
-          )}
-
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteEntries.isPending}>
               取消
@@ -551,7 +551,6 @@ export function DirectoryActionDialogs({
           title={entryToMove.type === "folder" ? "移动文件夹" : "移动文档"}
           description={`选择“${entryToMove.type === "folder" ? entryToMove.name : entryToMove.filename}”的新位置。`}
           isPending={moveEntry.isPending}
-          error={moveEntry.error}
           onMove={(folderId) =>
             moveEntry.mutate({ entry: entryToMove, folderId })
           }

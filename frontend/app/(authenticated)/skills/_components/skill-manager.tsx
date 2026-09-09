@@ -8,10 +8,8 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import {
-  AlertCircleIcon,
   MoreHorizontalIcon,
   PlusIcon,
-  PuzzleIcon,
   TrashIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -26,7 +24,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
@@ -47,10 +44,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Empty,
-  EmptyContent,
-  EmptyDescription,
   EmptyHeader,
-  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import { AppHeader } from "@/components/layout/app-header";
@@ -65,6 +59,7 @@ import {
   type SkillSummaryPublic,
 } from "@/lib/client";
 import { SkillCreateDialog } from "@/app/(authenticated)/skills/_components/skill-create-dialog";
+import { toast } from "sonner";
 
 const PAGE_SIZE = 12;
 const SKILLS_QUERY_KEY = ["skills"] as const;
@@ -84,12 +79,7 @@ export function SkillManager() {
     setSearchDraft(searchQuery ?? "");
   }, [searchQuery]);
 
-  const {
-    data: skillsResponse,
-    error: loadError,
-    isPending: isLoading,
-    refetch,
-  } = useQuery({
+  const { data: skillsResponse, isPending: isLoading } = useQuery({
     queryKey: [...SKILLS_QUERY_KEY, offset, searchQuery],
     queryFn: async ({ signal }) => {
       const { data } = await skillsReadSkills({
@@ -110,9 +100,6 @@ export function SkillManager() {
 
   const skills = skillsResponse?.data ?? [];
   const count = skillsResponse?.count ?? 0;
-  const loadErrorMessage = loadError
-    ? getApiErrorMessage(loadError, "读取技能列表失败")
-    : "";
   const totalPages = Math.ceil(count / PAGE_SIZE);
   const pageOutOfRange = count > 0 && skills.length === 0;
 
@@ -120,10 +107,8 @@ export function SkillManager() {
   const [skillToDelete, setSkillToDelete] = useState<SkillSummaryPublic>();
 
   const {
-    error: deleteError,
     isPending: deleting,
     mutate: deleteSkill,
-    reset: resetDelete,
   } = useMutation({
     mutationFn: async (skillName: string) => {
       await skillsDeleteSkill({
@@ -131,7 +116,11 @@ export function SkillManager() {
         throwOnError: true,
       });
     },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "删除技能失败"));
+    },
     onSuccess: () => {
+      toast.success("技能已删除");
       setSkillToDelete(undefined);
       invalidateSkills();
 
@@ -140,10 +129,6 @@ export function SkillManager() {
       }
     },
   });
-
-  const deleteErrorMessage = deleteError
-    ? getApiErrorMessage(deleteError, "删除技能失败")
-    : "";
 
   function searchSkills(event: SubmitEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -176,10 +161,7 @@ export function SkillManager() {
         title="技能"
         left={<ThreadListPopover />}
         actions={
-          <Button
-            aria-label="创建技能"
-            onClick={() => setCreateOpen(true)}
-          >
+          <Button aria-label="创建技能" onClick={() => setCreateOpen(true)}>
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
             <span className="hidden sm:inline">创建技能</span>
           </Button>
@@ -208,60 +190,20 @@ export function SkillManager() {
             maxLength={100}
           />
 
-          {loadErrorMessage && (
-            <Alert variant="destructive">
-              <AlertCircleIcon aria-hidden="true" />
-              <AlertTitle>无法读取技能</AlertTitle>
-              <AlertDescription>
-                <p>{loadErrorMessage}</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void refetch()}
-                >
-                  重试
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-
           {isLoading && <SkillGridSkeleton />}
-
-          {!isLoading && !loadErrorMessage && skills.length === 0 && (
-            pageOutOfRange ? (
+          {!isLoading &&
+            skills.length === 0 &&
+            (pageOutOfRange ? (
               <PageOutOfRange href={getSkillsHref(1, searchQuery)} />
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <PuzzleIcon aria-hidden="true" />
-                  </EmptyMedia>
-                  <EmptyTitle>
-                    {searchQuery ? "没有匹配的技能" : "还没有技能"}
-                  </EmptyTitle>
-                  <EmptyDescription>
-                    {searchQuery
-                      ? "尝试其他关键词，或者清除搜索条件。"
-                      : "创建新技能，或从 ZIP 压缩包导入。"}
-                  </EmptyDescription>
+                  <EmptyTitle>暂无可显示内容</EmptyTitle>
                 </EmptyHeader>
-                <EmptyContent>
-                  {searchQuery ? (
-                    <Button variant="outline" onClick={clearSearch}>
-                      清除搜索
-                    </Button>
-                  ) : (
-                    <Button onClick={() => setCreateOpen(true)}>
-                      <PlusIcon data-icon="inline-start" />
-                      创建技能
-                    </Button>
-                  )}
-                </EmptyContent>
               </Empty>
-            )
-          )}
+            ))}
 
-          {!isLoading && !loadErrorMessage && skills.length > 0 && (
+          {!isLoading && skills.length > 0 && (
             <>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {skills.map((skill) => (
@@ -292,7 +234,6 @@ export function SkillManager() {
                               <DropdownMenuItem
                                 variant="destructive"
                                 onSelect={() => {
-                                  resetDelete();
                                   setSkillToDelete(skill);
                                 }}
                               >
@@ -331,7 +272,6 @@ export function SkillManager() {
         onOpenChange={(open) => {
           if (!open && !deleting) {
             setSkillToDelete(undefined);
-            resetDelete();
           }
         }}
       >
@@ -342,14 +282,6 @@ export function SkillManager() {
               将永久删除“{skillToDelete?.name}”及其所有文件，此操作无法撤销。
             </AlertDialogDescription>
           </AlertDialogHeader>
-
-          {deleteErrorMessage && (
-            <Alert variant="destructive">
-              <AlertCircleIcon aria-hidden="true" />
-              <AlertTitle>删除失败</AlertTitle>
-              <AlertDescription>{deleteErrorMessage}</AlertDescription>
-            </Alert>
-          )}
 
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>取消</AlertDialogCancel>

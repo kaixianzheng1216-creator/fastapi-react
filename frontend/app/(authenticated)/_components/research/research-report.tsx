@@ -3,7 +3,6 @@
 import { useAuiState } from "@assistant-ui/react";
 import { useMutation } from "@tanstack/react-query";
 import { MarkdownContent } from "@/components/shared/markdown-content";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -45,6 +44,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { toast } from "sonner";
 
 type ChartData = {
   type: "line" | "bar" | "area" | "pie";
@@ -93,11 +93,13 @@ export function ResearchReport({ report }: { report: string }) {
 
       setTimeout(() => URL.revokeObjectURL(downloadUrl), 0);
     },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "PDF 导出失败，请重试"));
+    },
+    onSuccess: () => {
+      toast.success("已开始下载");
+    },
   });
-
-  const downloadError = pdfDownload.error
-    ? getApiErrorMessage(pdfDownload.error, "PDF 导出失败，请重试。")
-    : undefined;
 
   const downloadButton = (
     <Button
@@ -151,12 +153,6 @@ export function ResearchReport({ report }: { report: string }) {
 
                 <div className="min-h-0 flex-1 overscroll-contain overflow-y-auto">
                   <div className="mx-auto max-w-5xl p-6">
-                    {downloadError && (
-                      <Alert className="mb-6" variant="destructive">
-                        <AlertDescription>{downloadError}</AlertDescription>
-                      </Alert>
-                    )}
-
                     <ResearchReportContent report={report} />
                   </div>
                 </div>
@@ -168,12 +164,6 @@ export function ResearchReport({ report }: { report: string }) {
         </CardHeader>
 
         <CardContent>
-          {downloadError && (
-            <Alert className="mb-6" variant="destructive">
-              <AlertDescription>{downloadError}</AlertDescription>
-            </Alert>
-          )}
-
           <ResearchReportContent report={report} />
         </CardContent>
       </Card>

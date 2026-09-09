@@ -13,8 +13,6 @@ import {
   useTable,
 } from "@tanstack/react-table";
 import {
-  AlertCircleIcon,
-  BookOpenIcon,
   MoreHorizontalIcon,
   PencilIcon,
   PlusIcon,
@@ -41,7 +39,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,14 +48,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldTitle } from "@/components/ui/field";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -83,6 +73,7 @@ import {
   knowledgeBasesUpdateKnowledgeBase,
 } from "@/lib/client";
 import { getPaginationHref, parsePage } from "@/lib/pagination";
+import { toast } from "sonner";
 
 const PAGE_SIZE = 20;
 
@@ -113,20 +104,14 @@ export function KnowledgeBaseManager() {
   const status = getStatusFilter(searchParams.get("status"));
 
   const knowledgeBasesQuery = useQuery({
-    queryKey: [
-      ...KNOWLEDGE_BASES_QUERY_KEY,
-      pageIndex,
-      search,
-      status,
-    ],
+    queryKey: [...KNOWLEDGE_BASES_QUERY_KEY, pageIndex, search, status],
     queryFn: async ({ signal }) => {
       const { data } = await knowledgeBasesReadKnowledgeBases({
         query: {
           skip: pageIndex * PAGE_SIZE,
           limit: PAGE_SIZE,
           search: search || undefined,
-          is_enabled:
-            status === "all" ? undefined : status === "enabled",
+          is_enabled: status === "all" ? undefined : status === "enabled",
         },
         signal,
         throwOnError: true,
@@ -138,11 +123,8 @@ export function KnowledgeBaseManager() {
     retry: false,
   });
 
-  const knowledgeBases = knowledgeBasesQuery.data?.data ?? EMPTY_KNOWLEDGE_BASES;
-
-  const loadError = knowledgeBasesQuery.error
-    ? getApiErrorMessage(knowledgeBasesQuery.error, "读取知识库列表失败")
-    : "";
+  const knowledgeBases =
+    knowledgeBasesQuery.data?.data ?? EMPTY_KNOWLEDGE_BASES;
 
   function submitSearch(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -156,14 +138,14 @@ export function KnowledgeBaseManager() {
 
   function changeStatus(nextStatus: string): void {
     if (nextStatus) {
-      router.push(
-        getKnowledgeBasesHref(1, search, nextStatus as StatusFilter),
-      );
+      router.push(getKnowledgeBasesHref(1, search, nextStatus as StatusFilter));
     }
   }
 
   async function refreshKnowledgeBases(): Promise<void> {
-    await queryClient.invalidateQueries({ queryKey: KNOWLEDGE_BASES_QUERY_KEY });
+    await queryClient.invalidateQueries({
+      queryKey: KNOWLEDGE_BASES_QUERY_KEY,
+    });
   }
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -179,16 +161,16 @@ export function KnowledgeBaseManager() {
         throwOnError: true,
       });
     },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "更新状态失败"));
+    },
     onSuccess: async () => {
+      toast.success("状态已更新");
       await refreshKnowledgeBases();
     },
   });
 
   const changeKnowledgeBaseStatus = updateStatus.mutate;
-
-  const statusError = updateStatus.error
-    ? getApiErrorMessage(updateStatus.error, "更新知识库状态失败")
-    : "";
 
   const [knowledgeBaseToDelete, setKnowledgeBaseToDelete] =
     useState<KnowledgeBasePublic>();
@@ -200,11 +182,13 @@ export function KnowledgeBaseManager() {
         throwOnError: true,
       });
     },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "删除失败"));
+    },
     onSuccess: async () => {
+      toast.success("已删除");
       if (knowledgeBasesQuery.data?.data.length === 1 && currentPage > 1) {
-        router.replace(
-          getKnowledgeBasesHref(currentPage - 1, search, status),
-        );
+        router.replace(getKnowledgeBasesHref(currentPage - 1, search, status));
       }
 
       setKnowledgeBaseToDelete(undefined);
@@ -213,11 +197,6 @@ export function KnowledgeBaseManager() {
     },
   });
 
-  const resetDelete = deleteKnowledgeBase.reset;
-
-  const deleteError = deleteKnowledgeBase.error
-    ? getApiErrorMessage(deleteKnowledgeBase.error, "删除知识库失败")
-    : "";
 
   function closeDeleteDialog(open: boolean): void {
     if (!open && !deleteKnowledgeBase.isPending) {
@@ -248,9 +227,7 @@ export function KnowledgeBaseManager() {
           id: "status",
           header: "状态",
           cell: ({ row }) => (
-            <Badge
-              variant={row.original.is_enabled ? "outline" : "secondary"}
-            >
+            <Badge variant={row.original.is_enabled ? "outline" : "secondary"}>
               {row.original.is_enabled ? "已启用" : "已停用"}
             </Badge>
           ),
@@ -296,7 +273,6 @@ export function KnowledgeBaseManager() {
                   <DropdownMenuItem
                     variant="destructive"
                     onSelect={() => {
-                      resetDelete();
                       setKnowledgeBaseToDelete(row.original);
                     }}
                   >
@@ -309,7 +285,7 @@ export function KnowledgeBaseManager() {
           ),
         }),
       ]),
-    [changeKnowledgeBaseStatus, resetDelete, updateStatus.isPending],
+    [changeKnowledgeBaseStatus, updateStatus.isPending],
   );
 
   const table = useTable({
@@ -338,10 +314,7 @@ export function KnowledgeBaseManager() {
         title="知识库"
         left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
         actions={
-          <Button
-            aria-label="创建知识库"
-            onClick={() => setCreateOpen(true)}
-          >
+          <Button aria-label="创建知识库" onClick={() => setCreateOpen(true)}>
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
             <span className="hidden sm:inline">创建知识库</span>
           </Button>
@@ -361,9 +334,7 @@ export function KnowledgeBaseManager() {
             />
 
             <Field orientation="horizontal" className="w-auto">
-              <FieldTitle id="knowledge-base-status">
-                状态
-              </FieldTitle>
+              <FieldTitle id="knowledge-base-status">状态</FieldTitle>
               <ToggleGroup
                 type="single"
                 variant="outline"
@@ -378,51 +349,15 @@ export function KnowledgeBaseManager() {
             </Field>
           </div>
 
-          {statusError && (
-            <Alert variant="destructive">
-              <AlertCircleIcon aria-hidden="true" />
-              <AlertTitle>{statusError}</AlertTitle>
-            </Alert>
-          )}
-
           {knowledgeBasesQuery.isPending ? (
             <Skeleton className="h-64" />
-          ) : loadError ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <AlertCircleIcon aria-hidden="true" />
-                </EmptyMedia>
-                <EmptyTitle>无法读取知识库</EmptyTitle>
-                <EmptyDescription>{loadError}</EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => knowledgeBasesQuery.refetch()}
-                >
-                  重试
-                </Button>
-              </EmptyContent>
-            </Empty>
           ) : rows.length === 0 ? (
             pageOutOfRange ? (
-              <PageOutOfRange
-                href={getKnowledgeBasesHref(1, search, status)}
-              />
+              <PageOutOfRange href={getKnowledgeBasesHref(1, search, status)} />
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <BookOpenIcon aria-hidden="true" />
-                  </EmptyMedia>
-                  <EmptyTitle>暂无知识库</EmptyTitle>
-                  <EmptyDescription>
-                    {search || status !== "all"
-                      ? "没有符合当前条件的知识库。"
-                      : "创建知识库后会显示在这里。"}
-                  </EmptyDescription>
+                  <EmptyTitle>暂无可显示内容</EmptyTitle>
                 </EmptyHeader>
               </Empty>
             )
@@ -458,9 +393,7 @@ export function KnowledgeBaseManager() {
             ariaLabel="知识库分页"
             currentPage={currentPage}
             pageCount={pageCount}
-            getPageHref={(page) =>
-              getKnowledgeBasesHref(page, search, status)
-            }
+            getPageHref={(page) => getKnowledgeBasesHref(page, search, status)}
           />
         </section>
       </div>
@@ -495,13 +428,6 @@ export function KnowledgeBaseManager() {
               确定删除“{knowledgeBaseToDelete?.name}”吗？此操作无法撤销。
             </AlertDialogDescription>
           </AlertDialogHeader>
-
-          {deleteError && (
-            <Alert variant="destructive">
-              <AlertCircleIcon aria-hidden="true" />
-              <AlertTitle>{deleteError}</AlertTitle>
-            </Alert>
-          )}
 
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteKnowledgeBase.isPending}>

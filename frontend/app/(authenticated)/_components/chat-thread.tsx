@@ -1,6 +1,6 @@
 "use client";
 
-import { MarkdownText } from "@/app/(authenticated)/_components/markdown-text";
+import { MarkdownText, useCopyToClipboard } from "@/app/(authenticated)/_components/markdown-text";
 import {
   Reasoning,
   ReasoningContent,
@@ -21,12 +21,12 @@ import { TooltipIconButton } from "@/app/(authenticated)/_components/tooltip-ico
 import {
   ActionBarMorePrimitive,
   ActionBarPrimitive,
-  AuiIf,
   ErrorPrimitive,
   groupPartByType,
   MessagePrimitive,
   ThreadPrimitive,
   useAuiState,
+  useAui,
 } from "@assistant-ui/react";
 import {
   CheckIcon,
@@ -35,22 +35,49 @@ import {
   MoreHorizontalIcon,
 } from "lucide-react";
 import type { FC } from "react";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import type { ApplicationState } from "@/lib/conversation-state";
 
 export const ChatThread: FC = () => {
   const isEmpty = useAuiState(selectIsNewConversation);
+  const isExisting = useAuiState(
+    (s) =>
+      !!s.threads.threadItems.find((item) => item.id === s.threads.mainThreadId)
+        ?.remoteId,
+  );
+  const isLoading = useAuiState(
+    (s) => !!(s.thread.state as ApplicationState | null)?.isLoading,
+  );
 
   return (
     <ThreadShell
       isEmpty={isEmpty}
       maxWidth="52rem"
       footer={
-        <>
-          <Composer />
-          <ThreadStarterSuggestions />
-        </>
+        !isLoading && (
+          <>
+            <Composer />
+            <ThreadStarterSuggestions />
+          </>
+        )
       }
     >
-      {isEmpty ? <ThreadWelcome title="今天有什么可以帮你？" /> : null}
+      {isLoading && (
+        <p role="status" className="text-muted-foreground text-sm">
+          正在加载会话…
+        </p>
+      )}
+
+      {isEmpty && !isLoading && isExisting && (
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>暂无可显示内容</EmptyTitle>
+          </EmptyHeader>
+        </Empty>
+      )}
+      {isEmpty && !isLoading && !isExisting ? (
+        <ThreadWelcome title="今天有什么可以帮你？" />
+      ) : null}
 
       <div
         data-slot="aui_message-group"
@@ -147,29 +174,27 @@ const AssistantMessage: FC = () => {
 
 const MessageError: FC = () => (
   <MessagePrimitive.Error>
-    <ErrorPrimitive.Root className="aui-message-error-root border-destructive bg-destructive/10 text-destructive dark:bg-destructive/5 mt-2 rounded-md border p-3 text-sm dark:text-red-200">
-      <ErrorPrimitive.Message className="aui-message-error-message line-clamp-2" />
+    <ErrorPrimitive.Root className="aui-message-error-root text-muted-foreground mt-2 text-sm">
+      <ErrorPrimitive.Message className="aui-message-error-message break-words" />
     </ErrorPrimitive.Root>
   </MessagePrimitive.Error>
 );
 
 const AssistantActionBar: FC = () => {
+  const aui = useAui();
+  const { isCopied, copyToClipboard } = useCopyToClipboard();
   return (
     <ActionBarPrimitive.Root
       hideWhenRunning
       autohide="not-last"
       className="aui-assistant-action-bar-root text-muted-foreground animate-in fade-in col-start-3 row-start-2 -ms-1 flex gap-1 duration-200"
     >
-      <ActionBarPrimitive.Copy asChild>
-        <TooltipIconButton tooltip="复制">
-          <AuiIf condition={(s) => s.message.isCopied}>
-            <CheckIcon className="animate-in zoom-in-50 fade-in duration-200 ease-out" />
-          </AuiIf>
-          <AuiIf condition={(s) => !s.message.isCopied}>
-            <CopyIcon className="animate-in zoom-in-75 fade-in duration-150" />
-          </AuiIf>
-        </TooltipIconButton>
-      </ActionBarPrimitive.Copy>
+      <TooltipIconButton
+        tooltip={isCopied ? "已复制" : "复制"}
+        onClick={() => copyToClipboard(aui.message.getCopyText())}
+      >
+        {isCopied ? <CheckIcon /> : <CopyIcon />}
+      </TooltipIconButton>
       <ActionBarMorePrimitive.Root>
         <ActionBarMorePrimitive.Trigger asChild>
           <TooltipIconButton

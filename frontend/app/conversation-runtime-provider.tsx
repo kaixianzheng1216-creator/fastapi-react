@@ -13,16 +13,16 @@ import {
     useAui,
     useRemoteThreadListRuntime,
 } from "@assistant-ui/react";
-import {convertLangChainMessages, type LangChainMessage,} from "@assistant-ui/react-langgraph";
+import { convertLangChainMessages, type LangChainMessage } from "@assistant-ui/react-langgraph";
 import {RESUMABLE_STREAM_ID_HEADER} from "assistant-stream/resumable";
 import type {ReadonlyJSONObject} from "assistant-stream/utils";
-import {type ReactNode, useEffect, useMemo, useRef, useState,} from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
-import {type ConversationKind, NewConversationKindContext,} from "@/app/conversation-kind";
+import { type ConversationKind, NewConversationKindContext } from "@/app/conversation-kind";
 import {getAccessToken, handleUnauthorizedResponse} from "@/lib/auth";
-import {agentCancelAgentRun, type ConversationStatePublic,} from "@/lib/client";
+import { type ConversationStatePublic } from "@/lib/client";
 import type {ApplicationState} from "@/lib/conversation-state";
-import {createConversationThreadListAdapter, readConversationState,} from "@/lib/conversation-thread-list-adapter";
+import { createConversationThreadListAdapter, readConversationState } from "@/lib/conversation-thread-list-adapter";
 import {createFileAttachmentTransport} from "@/lib/file-upload-adapter";
 
 type ConversationRuntimeProviderProps = {
@@ -77,15 +77,16 @@ function useConversationRuntime() {
   const assistant = useAui();
   const [threadId] = useState(() => {
     const thread = assistant.threadListItem.getState();
+
     return thread.status === "new" ? undefined : thread.remoteId;
   });
 
+  const [isLoading, setIsLoading] = useState(!!threadId);
+  const [runId, setRunId] = useState<string | null>(null);
   const fileTransport = useMemo(createFileAttachmentTransport, []);
-  const [loadError, setLoadError] = useState<string>();
 
   const savedStatePromiseRef = useRef<Promise<AgentState> | null>(null);
   const connectedThreadIdRef = useRef<string | null>(null);
-  const activeRunIdRef = useRef<string | null>(null);
 
   const runtime = useAssistantTransportRuntime<AgentState>({
     protocol: "assistant-transport",
@@ -103,7 +104,11 @@ function useConversationRuntime() {
         connection,
         fileTransport.getPendingMessageFiles(),
       ),
-      state: toApplicationState(state, loadError) as ReadonlyJSONObject,
+      state: {
+        ...toApplicationState(state),
+        isLoading,
+        runId,
+      } as ReadonlyJSONObject,
       isRunning: connection.isSending,
     }),
 
@@ -115,9 +120,7 @@ function useConversationRuntime() {
     prepareSendCommandsRequest: async (body) => {
       const savedStatePromise = savedStatePromiseRef.current;
 
-      let savedState = savedStatePromise
-        ? await savedStatePromise
-        : undefined;
+      let savedState = savedStatePromise ? await savedStatePromise : undefined;
 
       const { remoteId: remoteThreadId } =
         await assistant.threadListItem.initialize();
@@ -133,8 +136,7 @@ function useConversationRuntime() {
         savedStatePromiseRef.current = null;
       }
 
-      const stateToSend =
-        savedState ?? (body.state as AgentState | undefined);
+      const stateToSend = savedState ?? (body.state as AgentState | undefined);
       const modelConfig = body.config as LanguageModelConfig | undefined;
       const commandsToSend = fileTransport.prepareCommands(body.commands);
 
@@ -150,19 +152,17 @@ function useConversationRuntime() {
     onResponse: (response) => {
       if (handleUnauthorizedResponse(response)) return;
 
-      activeRunIdRef.current = response.headers.get(RESUMABLE_STREAM_ID_HEADER);
+      setRunId(response.headers.get(RESUMABLE_STREAM_ID_HEADER));
     },
 
     onFinish: () => {
-      activeRunIdRef.current = null;
+      setRunId(null);
 
       fileTransport.complete();
     },
 
     onError: (error, { updateState }) => {
       fileTransport.discard();
-
-      if (!connectedThreadIdRef.current) setLoadError(error.message);
 
       updateState((state) =>
         state.kind === "research"
@@ -179,36 +179,18 @@ function useConversationRuntime() {
       if (error) return;
 
       fileTransport.discard();
-
-      const runId = activeRunIdRef.current;
-
-      activeRunIdRef.current = null;
-
       updateState((state) =>
-        state.kind === "research"
-          ? {
-              ...state,
-              runStatus: "cancelled",
-              runError: "",
-            }
+        state.kind === "research" &&
+        state.runStatus !== "completed" &&
+        state.runStatus !== "failed"
+          ? { ...state, runStatus: "cancelled", runError: "" }
           : state,
       );
-
-      if (!runId) return;
-
-      void agentCancelAgentRun({
-        path: { run_id: runId },
-        throwOnError: true,
-      }).catch((error: unknown) => {
-        console.error("取消 Agent 运行失败", error);
-
-        setLoadError("取消失败，请刷新页面后重试。");
-      });
     },
   });
 
   useEffect(() => {
-    setLoadError(undefined);
+    setIsLoading(!!threadId);
 
     if (!threadId) {
       savedStatePromiseRef.current = null;
@@ -239,7 +221,10 @@ function useConversationRuntime() {
 
         console.error("读取会话状态失败", error);
 
-        setLoadError("读取会话失败，请刷新页面后重试。");
+        savedStatePromiseRef.current = null;
+      })
+      .finally(() => {
+        if (!ignoreResult) setIsLoading(false);
       });
 
     return () => {
@@ -335,14 +320,10 @@ function moveFilesToAttachments(message: ThreadMessage) {
   };
 }
 
-function toApplicationState(
-  state: AgentState,
-  loadError?: string,
-): ApplicationState {
+function toApplicationState(state: AgentState): ApplicationState {
   const baseState = {
     todos: state.todos ?? [],
     artifacts: state.artifacts ?? [],
-    loadError,
   };
 
   if (state.kind !== "research") return baseState;

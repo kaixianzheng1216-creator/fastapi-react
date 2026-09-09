@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { skillsCreateMdSkill, skillsCreateZipSkill } from "@/lib/client";
+import { toast } from "sonner";
 
 type SkillCreateDialogProps = {
   open: boolean;
@@ -68,6 +69,7 @@ export function SkillCreateDialog({
   const markdownForm = useForm<MarkdownSkillValues>({
     resolver: zodResolver(markdownSkillSchema),
   });
+
   const zipForm = useForm<ZipSkillValues>({
     resolver: zodResolver(zipSkillSchema),
   });
@@ -76,6 +78,12 @@ export function SkillCreateDialog({
     mutationFn: async (body: MarkdownSkillValues): Promise<void> => {
       await skillsCreateMdSkill({ body, throwOnError: true });
     },
+
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "创建技能失败"));
+    },
+
+    onSuccess: handleCreateSuccess,
   });
 
   const createZipMutation = useMutation({
@@ -85,23 +93,16 @@ export function SkillCreateDialog({
         throwOnError: true,
       });
     },
+
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "导入技能失败"));
+    },
+
+    onSuccess: handleCreateSuccess,
   });
 
   const isSubmitting =
     createMarkdownMutation.isPending || createZipMutation.isPending;
-  const markdownRequestError = createMarkdownMutation.error
-    ? getApiErrorMessage(createMarkdownMutation.error, "创建技能失败")
-    : "";
-  const zipRequestError = createZipMutation.error
-    ? getApiErrorMessage(createZipMutation.error, "上传技能失败")
-    : "";
-
-  function clearCreateErrors(): void {
-    createMarkdownMutation.reset();
-    createZipMutation.reset();
-    markdownForm.clearErrors();
-    zipForm.clearErrors();
-  }
 
   function handleOpenChange(nextOpen: boolean): void {
     if (!nextOpen && isSubmitting) {
@@ -109,35 +110,19 @@ export function SkillCreateDialog({
     }
 
     if (!nextOpen) {
-      clearCreateErrors();
+      markdownForm.reset();
+      zipForm.reset();
     }
 
     onOpenChange(nextOpen);
   }
 
   function handleCreateSuccess(): void {
+    toast.success("技能已创建");
     markdownForm.reset();
     zipForm.reset();
-    clearCreateErrors();
     onOpenChange(false);
     onCreated();
-  }
-
-  function submitMarkdownSkill(values: MarkdownSkillValues): void {
-    createMarkdownMutation.mutate(
-      {
-        name: values.name,
-        description: values.description,
-        content: values.content,
-      },
-      { onSuccess: handleCreateSuccess },
-    );
-  }
-
-  function submitZipSkill(values: ZipSkillValues): void {
-    createZipMutation.mutate(values.skillZip[0], {
-      onSuccess: handleCreateSuccess,
-    });
   }
 
   return (
@@ -155,19 +140,26 @@ export function SkillCreateDialog({
 
         <Tabs defaultValue="markdown">
           <TabsList>
-            <TabsTrigger value="markdown">Markdown 创建</TabsTrigger>
-            <TabsTrigger value="zip">ZIP 上传</TabsTrigger>
+            <TabsTrigger value="markdown" disabled={isSubmitting}>
+              Markdown 创建
+            </TabsTrigger>
+            <TabsTrigger value="zip" disabled={isSubmitting}>
+              ZIP 上传
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="markdown">
             <form
               noValidate
-              onSubmit={markdownForm.handleSubmit(submitMarkdownSkill)}
+              onSubmit={markdownForm.handleSubmit((values) =>
+                createMarkdownMutation.mutate(values),
+              )}
             >
               <FieldGroup>
                 <Field data-invalid={!!markdownForm.formState.errors.name}>
                   <FieldLabel htmlFor="skill-name">名称</FieldLabel>
                   <Input
+                    disabled={isSubmitting}
                     id="skill-name"
                     maxLength={64}
                     placeholder="meeting-summary"
@@ -184,6 +176,7 @@ export function SkillCreateDialog({
                 >
                   <FieldLabel htmlFor="skill-description">描述</FieldLabel>
                   <Input
+                    disabled={isSubmitting}
                     id="skill-description"
                     maxLength={1024}
                     placeholder="整理会议结论和后续行动项"
@@ -199,6 +192,7 @@ export function SkillCreateDialog({
                 <Field data-invalid={!!markdownForm.formState.errors.content}>
                   <FieldLabel htmlFor="skill-content">正文</FieldLabel>
                   <Textarea
+                    disabled={isSubmitting}
                     id="skill-content"
                     className="min-h-56 font-mono"
                     placeholder={
@@ -211,8 +205,6 @@ export function SkillCreateDialog({
                     errors={[markdownForm.formState.errors.content]}
                   />
                 </Field>
-
-                <FieldError>{markdownRequestError}</FieldError>
 
                 <DialogFooter>
                   <DialogClose asChild>
@@ -236,11 +228,17 @@ export function SkillCreateDialog({
           </TabsContent>
 
           <TabsContent value="zip">
-            <form noValidate onSubmit={zipForm.handleSubmit(submitZipSkill)}>
+            <form
+              noValidate
+              onSubmit={zipForm.handleSubmit((values) =>
+                createZipMutation.mutate(values.skillZip[0]),
+              )}
+            >
               <FieldGroup>
                 <Field data-invalid={!!zipForm.formState.errors.skillZip}>
                   <FieldLabel htmlFor="skill-zip">ZIP 压缩包</FieldLabel>
                   <Input
+                    disabled={isSubmitting}
                     id="skill-zip"
                     type="file"
                     accept=".zip"
@@ -252,8 +250,6 @@ export function SkillCreateDialog({
                   </FieldDescription>
                   <FieldError errors={[zipForm.formState.errors.skillZip]} />
                 </Field>
-
-                <FieldError>{zipRequestError}</FieldError>
 
                 <DialogFooter>
                   <DialogClose asChild>

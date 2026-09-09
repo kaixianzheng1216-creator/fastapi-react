@@ -7,7 +7,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +25,6 @@ import type {
 import {
   BookOpenTextIcon,
   ChevronDownIcon,
-  CircleXIcon,
   ClipboardListIcon,
   FileCheckIcon,
   FilePenLineIcon,
@@ -121,18 +119,14 @@ export function ResearchProgress() {
     [researchMessages],
   );
 
-  if (researchState?.loadError) {
-    return (
-      <Alert className="mb-12" variant="destructive">
-        <CircleXIcon aria-hidden="true" />
-        <AlertTitle>会话加载失败</AlertTitle>
-        <AlertDescription>{researchState.loadError}</AlertDescription>
-      </Alert>
-    );
-  }
+  if (researchState?.isLoading) return null;
 
   if (!researchState || !currentStage) {
-    return null;
+    return runStatus === "failed" ? (
+      <p role="status" className="text-muted-foreground text-sm">
+        {researchState?.runError || "调研失败，请重新提交"}
+      </p>
+    ) : null;
   }
 
   const currentStageLabel = STAGE_LABELS[currentStage];
@@ -254,20 +248,19 @@ export function ResearchProgress() {
       {report && <ResearchReport report={report} />}
 
       {runStatus === "failed" && (
-        <Alert className="mt-3" variant="destructive">
-          <CircleXIcon aria-hidden="true" />
-          <AlertTitle>调研失败</AlertTitle>
-          <AlertDescription>{runError}</AlertDescription>
-        </Alert>
+        <div role="status" className="my-3 flex flex-col gap-1 text-sm">
+          <span className="font-medium">调研失败</span>
+          <p className="text-muted-foreground">{runError}</p>
+        </div>
       )}
 
       {runStatus === "cancelled" && (
-        <Alert className="mt-3">
-          <AlertTitle>调研已停止</AlertTitle>
-          <AlertDescription>
+        <div role="status" className="my-3 flex flex-col gap-1 text-sm">
+          <span className="font-medium">调研已停止</span>
+          <p className="text-muted-foreground">
             任务已取消，后续阶段不会继续执行。
-          </AlertDescription>
-        </Alert>
+          </p>
+        </div>
       )}
     </div>
   );
@@ -500,9 +493,11 @@ function ToolDetails({
 }) {
   if (step.status === "error") {
     return (
-      <Alert variant="destructive">
-        <AlertDescription>{TOOL_LABELS[step.name]}调用失败。</AlertDescription>
-      </Alert>
+      <div role="status" className="my-3 flex flex-col gap-1 text-sm">
+        <p className="text-muted-foreground">
+          {TOOL_LABELS[step.name]}调用失败。
+        </p>
+      </div>
     );
   }
 

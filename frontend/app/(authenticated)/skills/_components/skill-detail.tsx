@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertCircleIcon,
   ArrowLeftIcon,
   ChevronRightIcon,
   DownloadIcon,
@@ -15,13 +14,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/layout/app-header";
 import { MarkdownContent } from "@/components/shared/markdown-content";
-import { getApiErrorMessage } from "@/lib/api-error";
 import {
   skillsReadSkill,
   skillsReadSkillFile,
   type SkillFileNodePublic,
 } from "@/lib/client";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -54,12 +51,7 @@ export function SkillDetail({ skillName }: SkillDetailProps) {
   const activeView =
     searchParams.get("view") === "files" ? "files" : "overview";
 
-  const {
-    data: detail,
-    error,
-    isPending: detailLoading,
-    refetch,
-  } = useQuery({
+  const { data: detail, isPending: detailLoading } = useQuery({
     queryKey: ["skills", "detail", skillName],
     queryFn: async ({ signal }) => {
       const { data } = await skillsReadSkill({
@@ -72,10 +64,6 @@ export function SkillDetail({ skillName }: SkillDetailProps) {
     },
     retry: false,
   });
-
-  const detailError = error
-    ? getApiErrorMessage(error, "读取技能详情失败")
-    : "";
 
   const description = detail?.frontmatter.description;
 
@@ -111,23 +99,13 @@ export function SkillDetail({ skillName }: SkillDetailProps) {
         <div className="mx-auto flex min-h-full max-w-6xl flex-col gap-6">
           {detailLoading && <SkillDetailSkeleton />}
 
-          {detailError && (
-            <Alert variant="destructive">
-              <AlertCircleIcon />
-              <AlertTitle>无法读取技能</AlertTitle>
-              <AlertDescription>
-                <p>{detailError}</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => refetch()}
-                >
-                  重试
-                </Button>
-              </AlertDescription>
-            </Alert>
+          {!detailLoading && !detail && (
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle>暂无可显示内容</EmptyTitle>
+              </EmptyHeader>
+            </Empty>
           )}
-
           {detail && (
             <>
               {typeof description === "string" && (
@@ -188,7 +166,6 @@ function SkillFileBrowser({
 }) {
   const [selectedPath, setSelectedPath] = useState<string>();
   const [filePreview, setFilePreview] = useState<FilePreview>();
-  const [fileError, setFileError] = useState("");
   const [fileLoading, setFileLoading] = useState(false);
   const fileRequest = useRef<AbortController | null>(null);
 
@@ -213,7 +190,6 @@ function SkillFileBrowser({
 
     setSelectedPath(path);
     setFilePreview(undefined);
-    setFileError("");
     setFileLoading(true);
 
     try {
@@ -253,10 +229,8 @@ function SkillFileBrowser({
         kind: "text",
         content: JSON.stringify(data, null, 2) ?? String(data),
       });
-    } catch (error) {
-      if (!(error instanceof DOMException && error.name === "AbortError")) {
-        setFileError(getApiErrorMessage(error, "读取文件失败"));
-      }
+    } catch {
+      // Missing content uses the same empty state as an empty response.
     } finally {
       if (!controller.signal.aborted) {
         setFileLoading(false);
@@ -288,7 +262,6 @@ function SkillFileBrowser({
             path={selectedPath}
             preview={filePreview}
             loading={fileLoading}
-            error={fileError}
           />
         </CardContent>
       </Card>
@@ -373,12 +346,10 @@ function FilePreviewContent({
   path,
   preview,
   loading,
-  error,
 }: {
   path: string | undefined;
   preview: FilePreview | undefined;
   loading: boolean;
-  error: string;
 }) {
   if (loading) {
     return (
@@ -390,15 +361,14 @@ function FilePreviewContent({
     );
   }
 
-  if (error) {
+  if (path && !preview)
     return (
-      <Alert variant="destructive">
-        <AlertCircleIcon />
-        <AlertTitle>无法读取文件</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>暂无可显示内容</EmptyTitle>
+        </EmptyHeader>
+      </Empty>
     );
-  }
 
   if (preview?.kind === "text") {
     return (

@@ -1,6 +1,5 @@
 "use client";
 
-import { AlertCircleIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -11,7 +10,6 @@ import {
   EmptyContent,
   EmptyDescription,
   EmptyHeader,
-  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import {
@@ -26,17 +24,14 @@ function AdminShellState({
   description,
 }: {
   title: string;
-  description: string;
+  description?: string;
 }) {
   return (
     <main className="flex min-h-svh">
-      <Empty>
+      <Empty role="status">
         <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <AlertCircleIcon aria-hidden="true" />
-          </EmptyMedia>
           <EmptyTitle>{title}</EmptyTitle>
-          <EmptyDescription>{description}</EmptyDescription>
+          {description && <EmptyDescription>{description}</EmptyDescription>}
         </EmptyHeader>
         <EmptyContent>
           <Button asChild variant="outline" size="sm">
@@ -49,7 +44,7 @@ function AdminShellState({
 }
 
 export function AdminShell({ children }: { children: ReactNode }) {
-  const { data: user, error, isPending } = useCurrentUserQuery();
+  const { data: user, isPending } = useCurrentUserQuery();
 
   if (isPending) {
     return (
@@ -59,13 +54,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
     );
   }
 
-  if (error || !user) {
-    return (
-      <AdminShellState
-        title="无法读取账户信息"
-        description="账户信息加载失败，请稍后重试。"
-      />
-    );
+  if (!user) {
+    return <AdminShellState title="暂无可显示内容" />;
   }
 
   if (!user.is_superuser) {

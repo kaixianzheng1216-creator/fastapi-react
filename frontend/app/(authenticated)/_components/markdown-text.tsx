@@ -14,6 +14,7 @@ import { CheckIcon, CopyIcon } from "lucide-react";
 
 import { TooltipIconButton } from "@/app/(authenticated)/_components/tooltip-icon-button";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const MarkdownTextImpl = () => {
   return (
@@ -53,7 +54,7 @@ const CodeHeader: FC<CodeHeaderProps> = ({ language, code }) => {
   );
 };
 
-const useCopyToClipboard = ({
+export const useCopyToClipboard = ({
   copiedDuration = 3000,
 }: {
   copiedDuration?: number;
@@ -62,6 +63,7 @@ const useCopyToClipboard = ({
 
   const copyToClipboard = (value: string) => {
     if (!value || typeof navigator === "undefined" || !navigator.clipboard) {
+      toast.error("无法访问剪贴板，请手动选择并复制文本");
       return;
     }
 
@@ -70,7 +72,9 @@ const useCopyToClipboard = ({
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), copiedDuration);
       },
-      () => {},
+      () => {
+        toast.error("复制失败，请手动选择并复制文本");
+      },
     );
   };
 

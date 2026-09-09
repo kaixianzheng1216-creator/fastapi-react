@@ -1,35 +1,38 @@
 "use client";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
-import { type PropsWithChildren, useEffect, useState, type FC } from "react";
+import { TooltipIconButton } from "@/app/(authenticated)/_components/tooltip-icon-button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  XIcon,
-  PlusIcon,
-  FileText,
-  Loader2Icon,
-  AlertCircleIcon,
-} from "lucide-react";
-import {
-  AttachmentPrimitive,
-  ComposerPrimitive,
-  MessagePrimitive,
-  useAuiState,
-  useAui,
-} from "@assistant-ui/react";
-import { useShallow } from "zustand/shallow";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { TooltipIconButton } from "@/app/(authenticated)/_components/tooltip-icon-button";
 import { cn } from "@/lib/utils";
+import {
+  AttachmentPrimitive,
+  ComposerPrimitive,
+  MessagePrimitive,
+  useAui,
+  useAuiState,
+} from "@assistant-ui/react";
+import {
+  AlertCircleIcon,
+  FileText,
+  Loader2Icon,
+  PlusIcon,
+  XIcon,
+} from "lucide-react";
+import { useEffect, useState, type FC, type PropsWithChildren } from "react";
+import { useShallow } from "zustand/shallow";
 
 const useFileSrc = (file: File | undefined) => {
   const [src, setSrc] = useState<string | undefined>(undefined);
@@ -89,6 +92,26 @@ const AttachmentPreview: FC<AttachmentPreviewProps> = ({ src }) => {
 
 const AttachmentPreviewDialog: FC<PropsWithChildren> = ({ children }) => {
   const src = useAttachmentSrc();
+
+  const error = useAuiState((state) =>
+    state.attachment.status.type === "incomplete" &&
+    state.attachment.status.reason === "error"
+      ? (state.attachment.status.message ?? "上传失败")
+      : undefined,
+  );
+
+  if (error)
+    return (
+      <Dialog>
+        <DialogTrigger asChild>{children}</DialogTrigger>
+        <DialogContent>
+          <DialogTitle>附件上传失败</DialogTitle>
+          <DialogDescription className="break-words">
+            {error}。请移除失败附件后重新添加。
+          </DialogDescription>
+        </DialogContent>
+      </Dialog>
+    );
 
   if (!src) return children;
 
@@ -234,8 +257,24 @@ const AttachmentUI: FC = () => {
 };
 
 const AttachmentRemove: FC = () => {
+  const aui = useAui();
+
+  const remove = useMutation({
+    mutationFn: () => aui.attachment.remove(),
+    onError: () => {
+      toast.error("移除附件失败，请重试");
+    },
+  });
+
   return (
-    <AttachmentPrimitive.Remove asChild>
+    <AttachmentPrimitive.Remove
+      asChild
+      onClick={(event) => {
+        event.preventDefault();
+        if (!remove.isPending) remove.mutate();
+      }}
+      disabled={remove.isPending}
+    >
       <TooltipIconButton
         tooltip="删除附件"
         className="aui-attachment-tile-remove text-muted-foreground hover:[&_svg]:text-destructive absolute end-1.5 top-1.5 size-3.5 rounded-full bg-white opacity-100 shadow-sm hover:bg-white! [&_svg]:text-black"

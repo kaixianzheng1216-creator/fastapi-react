@@ -10,14 +10,12 @@ import {
   useTable,
 } from "@tanstack/react-table";
 import {
-  AlertCircleIcon,
   ArrowDownRightIcon,
   ArrowUpRightIcon,
   ChevronDownIcon,
   ChevronsUpDownIcon,
   ChevronUpIcon,
   MinusIcon,
-  TablePropertiesIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
@@ -27,14 +25,7 @@ import { PageOutOfRange } from "@/components/shared/page-out-of-range";
 import { PagePagination } from "@/components/shared/page-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Select,
@@ -54,7 +45,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getApiErrorMessage } from "@/lib/api-error";
 import {
   brandMarketingReadRegionalData,
   type ProvinceAnnualDataPublic,
@@ -200,9 +190,6 @@ export function RegionalData() {
   });
 
   const regionalData = regionalDataQuery.data;
-  const loadError = regionalDataQuery.error
-    ? getApiErrorMessage(regionalDataQuery.error, "读取区域数据失败")
-    : "";
   const selectedYear = year ?? regionalData?.year ?? undefined;
   const previousYear =
     selectedYear === undefined ? undefined : selectedYear - 1;
@@ -309,25 +296,6 @@ export function RegionalData() {
 
           {regionalDataQuery.isPending ? (
             <Skeleton className="h-96" />
-          ) : loadError ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <AlertCircleIcon aria-hidden="true" />
-                </EmptyMedia>
-                <EmptyTitle>无法读取区域数据</EmptyTitle>
-                <EmptyDescription>{loadError}</EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => regionalDataQuery.refetch()}
-                >
-                  重试
-                </Button>
-              </EmptyContent>
-            </Empty>
           ) : rows.length === 0 ? (
             pageOutOfRange ? (
               <PageOutOfRange
@@ -336,13 +304,7 @@ export function RegionalData() {
             ) : (
               <Empty>
                 <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <TablePropertiesIcon aria-hidden="true" />
-                  </EmptyMedia>
-                  <EmptyTitle>暂无区域数据</EmptyTitle>
-                  <EmptyDescription>
-                    当前年份还没有可展示的数据。
-                  </EmptyDescription>
+                  <EmptyTitle>暂无可显示内容</EmptyTitle>
                 </EmptyHeader>
               </Empty>
             )

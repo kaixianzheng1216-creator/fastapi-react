@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   AuiIf,
+  useAui,
+  useAuiState,
   ComposerPrimitive,
   MessagePrimitive,
   SuggestionPrimitive,
@@ -22,7 +24,13 @@ import {
   ArrowUpIcon,
   SquareIcon,
 } from "lucide-react";
-import type { FC, PropsWithChildren, ReactNode } from "react";
+import type { ComponentProps, FC, PropsWithChildren, ReactNode } from "react";
+
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { agentCancelAgentRun } from "@/lib/client";
+import { getApiErrorMessage } from "@/lib/api-error";
+import type { ApplicationState } from "@/lib/conversation-state";
 
 export type ThreadWelcomeProps = {
   title: string;
@@ -170,21 +178,59 @@ const ComposerAction: FC = () => (
         </ComposerPrimitive.Send>
       </AuiIf>
       <AuiIf condition={(state) => state.thread.isRunning}>
-        <ComposerPrimitive.Cancel asChild>
-          <Button
-            type="button"
-            variant="default"
-            size="icon"
-            className="aui-composer-cancel size-7 rounded-full"
-            aria-label="停止生成"
-          >
-            <SquareIcon className="aui-composer-cancel-icon size-3.5 fill-current" />
-          </Button>
-        </ComposerPrimitive.Cancel>
+        <StopButton
+          type="button"
+          variant="default"
+          size="icon"
+          className="aui-composer-cancel size-7 rounded-full"
+          aria-label="停止生成"
+        >
+          <SquareIcon className="aui-composer-cancel-icon size-3.5 fill-current" />
+        </StopButton>
       </AuiIf>
     </div>
   </div>
 );
+
+export function StopButton(props: ComponentProps<typeof Button>) {
+  const aui = useAui();
+  const runId = useAuiState(
+    (state) => (state.thread.state as ApplicationState | null)?.runId,
+  );
+
+  const stop = useMutation({
+    mutationFn: (runId: string) =>
+      agentCancelAgentRun({
+        path: { run_id: runId },
+        throwOnError: true,
+      }),
+
+    onSuccess: (_, runId) => {
+      if ((aui.thread.getState().state as ApplicationState | null)?.runId === runId) {
+        aui.thread.cancelRun();
+      }
+
+      toast.success("任务已停止");
+    },
+
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "停止失败，请再次点击停止"));
+    },
+  });
+
+  return (
+    <Button
+      {...props}
+      disabled={!runId || stop.isPending}
+      aria-busy={stop.isPending}
+      onClick={() => {
+        if (!runId || stop.isPending) return;
+
+        stop.mutate(runId);
+      }}
+    />
+  );
+}
 
 export const UserMessage: FC = () => (
   <MessagePrimitive.Root

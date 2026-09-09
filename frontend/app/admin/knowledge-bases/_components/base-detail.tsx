@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { AlertCircleIcon, ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -9,15 +9,11 @@ import { AppHeader } from "@/components/layout/app-header";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
-  EmptyContent,
-  EmptyDescription,
   EmptyHeader,
-  EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getApiErrorMessage } from "@/lib/api-error";
 import { knowledgeBasesReadKnowledgeBase } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import { KnowledgeDocuments } from "@/app/admin/knowledge-bases/_components/documents";
@@ -83,30 +79,15 @@ export function KnowledgeBaseDetail({
             aria-label="正在加载知识库详情"
             className="mx-auto h-64 max-w-6xl"
           />
-        ) : knowledgeBaseQuery.error || !knowledgeBaseQuery.data ? (
+        ) : !knowledgeBaseQuery.data ? (
           <Empty className="mx-auto min-h-full max-w-6xl">
             <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <AlertCircleIcon aria-hidden="true" />
-              </EmptyMedia>
-              <EmptyTitle>无法读取知识库</EmptyTitle>
-              <EmptyDescription>
-                {getApiErrorMessage(knowledgeBaseQuery.error, "读取知识库失败")}
-              </EmptyDescription>
+              <EmptyTitle>暂无可显示内容</EmptyTitle>
             </EmptyHeader>
-            <EmptyContent>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => knowledgeBaseQuery.refetch()}
-              >
-                重试
-              </Button>
-            </EmptyContent>
           </Empty>
         ) : null}
 
-        {!knowledgeBaseQuery.error &&
+        {
           (knowledgeBaseQuery.isPending || knowledgeBaseQuery.data) && (
             <Tabs
               value={activeView}

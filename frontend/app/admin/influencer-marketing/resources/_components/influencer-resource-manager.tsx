@@ -11,11 +11,9 @@ import {
   useTable,
 } from "@tanstack/react-table";
 import {
-  AlertCircleIcon,
   ChevronDownIcon,
   ChevronsUpDownIcon,
   ChevronUpIcon,
-  UsersIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -27,13 +25,7 @@ import { PagePagination } from "@/components/shared/page-pagination";
 import { SearchToolbar } from "@/components/shared/search-toolbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -45,7 +37,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getApiErrorMessage } from "@/lib/api-error";
 import { getPaginationHref, parsePage } from "@/lib/pagination";
 import {
   type InfluencerAccountPublic,
@@ -221,13 +212,7 @@ export function InfluencerResourceManager() {
     const nextSearch = String(formData.get("search") ?? "").trim();
 
     router.push(
-      getInfluencerResourcesHref(
-        platform,
-        1,
-        nextSearch,
-        sortBy,
-        sortOrder,
-      ),
+      getInfluencerResourcesHref(platform, 1, nextSearch, sortBy, sortOrder),
     );
   }
 
@@ -282,7 +267,10 @@ export function InfluencerResourceManager() {
                     <div className="flex flex-wrap items-end justify-between gap-4">
                       <div className="flex flex-col gap-1">
                         <h3 className="font-medium">{platformName}达人</h3>
-                        <p className="text-sm text-muted-foreground" aria-live="polite">
+                        <p
+                          className="text-sm text-muted-foreground"
+                          aria-live="polite"
+                        >
                           {accountsQuery.data?.captured_at
                             ? `采集于 ${capturedAtFormatter.format(new Date(accountsQuery.data.captured_at))} · 共 ${accountsQuery.data.count} 位达人`
                             : "尚未导入达人数据"}
@@ -302,21 +290,6 @@ export function InfluencerResourceManager() {
 
                     {accountsQuery.isPending ? (
                       <Skeleton className="h-80" />
-                    ) : accountsQuery.error ? (
-                      <Empty>
-                        <EmptyHeader>
-                          <EmptyMedia variant="icon">
-                            <AlertCircleIcon aria-hidden="true" />
-                          </EmptyMedia>
-                          <EmptyTitle>无法读取达人资源</EmptyTitle>
-                          <EmptyDescription>
-                            {getApiErrorMessage(
-                              accountsQuery.error,
-                              "读取达人资源失败",
-                            )}
-                          </EmptyDescription>
-                        </EmptyHeader>
-                      </Empty>
                     ) : rows.length === 0 ? (
                       pageOutOfRange ? (
                         <PageOutOfRange
@@ -331,15 +304,7 @@ export function InfluencerResourceManager() {
                       ) : (
                         <Empty>
                           <EmptyHeader>
-                            <EmptyMedia variant="icon">
-                              <UsersIcon aria-hidden="true" />
-                            </EmptyMedia>
-                            <EmptyTitle>暂无{platformName}达人数据</EmptyTitle>
-                            <EmptyDescription>
-                              {search
-                                ? "没有符合当前搜索条件的达人。"
-                                : `当前还没有采集到${platformName}达人。`}
-                            </EmptyDescription>
+                            <EmptyTitle>暂无可显示内容</EmptyTitle>
                           </EmptyHeader>
                         </Empty>
                       )
@@ -351,7 +316,9 @@ export function InfluencerResourceManager() {
                               {headerGroup.headers.map((header) => (
                                 <TableHead
                                   key={header.id}
-                                  className={header.column.columnDef.meta?.className}
+                                  className={
+                                    header.column.columnDef.meta?.className
+                                  }
                                 >
                                   <table.FlexRender header={header} />
                                 </TableHead>
@@ -365,7 +332,9 @@ export function InfluencerResourceManager() {
                               {row.getAllCells().map((cell) => (
                                 <TableCell
                                   key={cell.id}
-                                  className={cell.column.columnDef.meta?.className}
+                                  className={
+                                    cell.column.columnDef.meta?.className
+                                  }
                                 >
                                   <table.FlexRender cell={cell} />
                                 </TableCell>

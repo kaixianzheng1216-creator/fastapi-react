@@ -27,6 +27,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { type UserPublic, usersUpdateUser } from "@/lib/client";
+import { toast } from "sonner";
 
 const userSchema = z.object({
   username: z
@@ -74,11 +75,17 @@ export function UserEditDialog({
         throwOnError: true,
       });
     },
-  });
 
-  const requestError = updateUser.error
-    ? getApiErrorMessage(updateUser.error, "更新用户失败")
-    : "";
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "更新用户失败"));
+    },
+
+    onSuccess: () => {
+      toast.success("用户已更新");
+      onOpenChange(false);
+      onUpdated();
+    },
+  });
 
   function handleOpenChange(open: boolean): void {
     if (!open && updateUser.isPending) {
@@ -86,15 +93,6 @@ export function UserEditDialog({
     }
 
     onOpenChange(open);
-  }
-
-  function submitUser(values: UserValues): void {
-    updateUser.mutate(values, {
-      onSuccess: () => {
-        onOpenChange(false);
-        onUpdated();
-      },
-    });
   }
 
   return (
@@ -105,11 +103,15 @@ export function UserEditDialog({
           <DialogDescription>更新账户资料和权限。</DialogDescription>
         </DialogHeader>
 
-        <form noValidate onSubmit={form.handleSubmit(submitUser)}>
+        <form
+          noValidate
+          onSubmit={form.handleSubmit((values) => updateUser.mutate(values))}
+        >
           <FieldGroup>
             <Field data-invalid={!!form.formState.errors.username}>
               <FieldLabel htmlFor="edit-user-username">用户名</FieldLabel>
               <Input
+                disabled={updateUser.isPending}
                 id="edit-user-username"
                 autoComplete="off"
                 aria-invalid={!!form.formState.errors.username}
@@ -121,6 +123,7 @@ export function UserEditDialog({
             <Field data-invalid={!!form.formState.errors.fullName}>
               <FieldLabel htmlFor="edit-user-full-name">姓名</FieldLabel>
               <Input
+                disabled={updateUser.isPending}
                 id="edit-user-full-name"
                 autoComplete="off"
                 aria-invalid={!!form.formState.errors.fullName}
@@ -133,7 +136,10 @@ export function UserEditDialog({
               name="isSuperuser"
               control={form.control}
               render={({ field }) => (
-                <Field orientation="horizontal" data-disabled={!canChangeRole}>
+                <Field
+                  orientation="horizontal"
+                  data-disabled={!canChangeRole || updateUser.isPending}
+                >
                   <FieldContent>
                     <FieldLabel htmlFor="edit-user-superuser">
                       管理员
@@ -148,13 +154,11 @@ export function UserEditDialog({
                     id="edit-user-superuser"
                     checked={field.value}
                     onCheckedChange={field.onChange}
-                    disabled={!canChangeRole}
+                    disabled={!canChangeRole || updateUser.isPending}
                   />
                 </Field>
               )}
             />
-
-            <FieldError>{requestError}</FieldError>
 
             <DialogFooter>
               <Button
