@@ -8,7 +8,6 @@ import {
   ExternalLinkIcon,
   RefreshCwIcon,
   FolderInputIcon,
-  FolderPlusIcon,
   MoreHorizontalIcon,
   PencilIcon,
   TrashIcon,
@@ -407,7 +406,6 @@ export function DirectoryToolbar({
         onFocus={rememberActionTrigger}
         onPointerDown={rememberActionTrigger}
       >
-        <FolderPlusIcon data-icon="inline-start" aria-hidden="true" />
         新建文件夹
       </Button>
     </div>
