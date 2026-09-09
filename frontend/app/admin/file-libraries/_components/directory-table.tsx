@@ -47,8 +47,8 @@ export function LibraryDirectoryTable({
   const someEntriesSelected = selectedEntryCount > 0 && !allEntriesSelected;
 
   return (
-    <Table>
-      <TableHeader>
+    <Table containerClassName="md:h-full md:overflow-auto md:overscroll-contain">
+      <TableHeader className="sticky top-0 z-10 bg-background">
         <TableRow>
           <TableHead>
             <Checkbox

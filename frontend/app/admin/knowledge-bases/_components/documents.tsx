@@ -265,7 +265,7 @@ export function KnowledgeDocuments({
       ref={documentsRef}
       tabIndex={-1}
       aria-label="知识库文档"
-      className="flex flex-1 flex-col gap-6"
+      className="flex flex-1 flex-col gap-6 md:min-h-0"
     >
       <KnowledgeDocumentImport
         knowledgeBaseId={knowledgeBaseId}
@@ -291,7 +291,7 @@ export function KnowledgeDocuments({
           }}
         />
       ) : (
-        <section className="flex flex-col gap-3">
+        <section className="flex flex-1 flex-col gap-3 md:min-h-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Breadcrumb>
               <BreadcrumbList>
@@ -339,7 +339,11 @@ export function KnowledgeDocuments({
           </div>
 
           {directoryEntries.length > 0 ? (
-            <CollectionContent busy={directoryQuery.isPlaceholderData}>
+            <CollectionContent
+              busy={directoryQuery.isPlaceholderData}
+              containerClassName="md:min-h-0 md:flex-1"
+              className="md:h-full"
+            >
               <KnowledgeDirectoryTable
                 knowledgeBaseId={knowledgeBaseId}
                 entries={directoryEntries}
@@ -387,7 +391,7 @@ export function KnowledgeDocuments({
           </Empty>
         ))}
       <PagePagination
-        className="mt-auto"
+        className="shrink-0"
         ariaLabel="知识库目录分页"
         currentPage={currentPage}
         pageCount={pageCount}

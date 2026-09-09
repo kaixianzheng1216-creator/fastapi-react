@@ -41,8 +41,8 @@ export function FileLibraryDetail({
           </Button>
         }
       />
-      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
-        <div className="mx-auto flex min-h-full max-w-6xl flex-col gap-6">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:overflow-hidden md:p-6">
+        <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col gap-6 md:h-full md:min-h-0">
           {libraryQuery.isPending ? (
             <TableSkeleton columns={6} />
           ) : libraryQuery.isError && libraryQuery.data === undefined ? (

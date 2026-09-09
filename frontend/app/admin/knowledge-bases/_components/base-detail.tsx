@@ -69,7 +69,7 @@ export function KnowledgeBaseDetail({
         }
       />
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:overflow-hidden md:p-6">
         {knowledgeBaseQuery.isPending ? (
           <KnowledgeBaseDetailSkeleton />
         ) : knowledgeBaseQuery.isError &&
@@ -86,7 +86,7 @@ export function KnowledgeBaseDetail({
           <Tabs
             value={activeView}
             className={cn(
-              "mx-auto min-h-full max-w-6xl gap-6",
+              "mx-auto min-h-full w-full max-w-6xl gap-6 md:h-full md:min-h-0",
               knowledgeBaseQuery.isPending && "hidden",
             )}
             onValueChange={changeView}
@@ -99,7 +99,7 @@ export function KnowledgeBaseDetail({
             <TabsContent
               value="documents"
               forceMount
-              className="flex flex-col data-[state=inactive]:hidden"
+              className="flex flex-col data-[state=inactive]:hidden md:min-h-0"
             >
               <KnowledgeDocuments
                 key={knowledgeBaseId}
@@ -107,7 +107,10 @@ export function KnowledgeBaseDetail({
               />
             </TabsContent>
 
-            <TabsContent value="search" className="flex flex-col gap-6">
+            <TabsContent
+              value="search"
+              className="min-h-0 overflow-y-auto"
+            >
               <KnowledgeSearch knowledgeBaseId={knowledgeBaseId} />
             </TabsContent>
           </Tabs>

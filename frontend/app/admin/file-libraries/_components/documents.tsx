@@ -236,7 +236,7 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
       ref={documentsRef}
       tabIndex={-1}
       aria-label="文件库文件"
-      className="flex flex-1 flex-col gap-6"
+      className="flex flex-1 flex-col gap-6 md:min-h-0"
     >
       <LibraryDocumentImport
         key={currentFolderId ?? "root"}
@@ -263,7 +263,7 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
           }}
         />
       ) : (
-        <section className="flex flex-col gap-3">
+        <section className="flex flex-1 flex-col gap-3 md:min-h-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Breadcrumb>
               <BreadcrumbList>
@@ -311,7 +311,11 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
           </div>
 
           {directoryEntries.length > 0 ? (
-            <CollectionContent busy={directoryQuery.isPlaceholderData}>
+            <CollectionContent
+              busy={directoryQuery.isPlaceholderData}
+              containerClassName="md:min-h-0 md:flex-1"
+              className="md:h-full"
+            >
               <LibraryDirectoryTable
                 fileLibraryId={fileLibraryId}
                 entries={directoryEntries}
@@ -345,7 +349,7 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
           </Empty>
         ))}
       <PagePagination
-        className="mt-auto"
+        className="shrink-0"
         ariaLabel="文件库目录分页"
         currentPage={currentPage}
         pageCount={pageCount}

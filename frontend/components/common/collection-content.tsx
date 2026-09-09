@@ -1,22 +1,29 @@
 import type { ReactNode } from "react";
 
+import { cn } from "@/lib/utils";
+
 export const CARD_PAGE_SIZE = 12;
 
 type CollectionContentProps = {
   busy: boolean;
   children: ReactNode;
   className?: string;
+  containerClassName?: string;
 };
 
 export function CollectionContent({
   busy,
   children,
   className,
+  containerClassName,
 }: CollectionContentProps) {
   return (
     <div
       aria-busy={busy}
-      className="transition-opacity aria-busy:opacity-60 motion-reduce:transition-none"
+      className={cn(
+        "transition-opacity aria-busy:opacity-60 motion-reduce:transition-none",
+        containerClassName,
+      )}
     >
       <div inert={busy} className={className}>
         {children}
