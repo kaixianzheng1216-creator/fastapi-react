@@ -74,6 +74,14 @@ type UseDirectoryActionsOptions = {
   onChanged: (change: DirectoryChange) => void;
 };
 
+function showDocumentActionError(error: Error): void {
+  toast.error(getApiErrorMessage(error, "文档操作失败，请重试"));
+}
+
+function showDownloadStarted(): void {
+  toast.success("已开始下载");
+}
+
 export function useDirectoryActions({
   knowledgeBaseId,
   focusFallbackRef,
@@ -111,9 +119,7 @@ export function useDirectoryActions({
       toast.success("上传已确认");
       onChanged({ type: "documents" });
     },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "文档操作失败，请重试"));
-    },
+    onError: showDocumentActionError,
   });
 
   const retryDocumentMutation = useMutation({
@@ -126,29 +132,19 @@ export function useDirectoryActions({
       toast.success("已提交重新解析");
       onChanged({ type: "documents" });
     },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "文档操作失败，请重试"));
-    },
+    onError: showDocumentActionError,
   });
 
   const downloadOriginalMutation = useMutation({
     mutationFn: downloadOriginalKnowledgeDocument,
-    onSuccess: () => {
-      toast.success("已开始下载");
-    },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "文档操作失败，请重试"));
-    },
+    onSuccess: showDownloadStarted,
+    onError: showDocumentActionError,
   });
 
   const downloadMarkdownMutation = useMutation({
     mutationFn: downloadMarkdownKnowledgeDocument,
-    onSuccess: () => {
-      toast.success("已开始下载");
-    },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "文档操作失败，请重试"));
-    },
+    onSuccess: showDownloadStarted,
+    onError: showDocumentActionError,
   });
 
   const [folderToEdit, setFolderToEdit] =
