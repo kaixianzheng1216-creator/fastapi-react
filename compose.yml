@@ -227,7 +227,6 @@ services:
 
   knowledge-worker:
     image: backend
-    scale: 3
     pull_policy: build
     build:
       context: .

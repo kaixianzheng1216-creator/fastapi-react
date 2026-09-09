@@ -4,6 +4,7 @@ import logging
 import multiprocessing
 import time
 import uuid
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from typing import Any, Literal, cast
 
 import httpx
@@ -37,6 +38,7 @@ from app.modules.knowledge.models import KnowledgeDocument, KnowledgeDocumentSta
 
 POLL_INTERVAL_SECONDS = 2
 PROCESSING_TIMEOUT_SECONDS = 15 * 60
+MAX_CONCURRENT_DOCUMENTS = 3
 DOCUMENT_PROCESSING_TIMEOUT_LOG = "知识库文档处理超时"
 DOCUMENT_PROCESSING_TIMEOUT_MESSAGE = "文档处理超时"
 DOCLING_INVALID_RESPONSE_MESSAGE = "Docling 返回内容无效"
@@ -72,15 +74,36 @@ def run() -> None:
 
     _fail_processing_documents_after_restart()
 
-    while True:
-        with Session(engine) as session:
-            claimed_document = _claim_document(session)
+    with ThreadPoolExecutor(max_workers=MAX_CONCURRENT_DOCUMENTS) as executor:
+        tasks: set[Future[None]] = set()
 
-        if claimed_document is None:
-            time.sleep(POLL_INTERVAL_SECONDS)
-            continue
+        while True:
+            while len(tasks) < MAX_CONCURRENT_DOCUMENTS:
+                with Session(engine) as session:
+                    claimed_document = _claim_document(session)
 
-        _process_document_with_timeout(claimed_document)
+                if claimed_document is None:
+                    break
+
+                tasks.add(
+                    executor.submit(
+                        _process_document_with_timeout,
+                        claimed_document,
+                    )
+                )
+
+            if not tasks:
+                time.sleep(POLL_INTERVAL_SECONDS)
+                continue
+
+            completed, tasks = wait(
+                tasks,
+                timeout=POLL_INTERVAL_SECONDS,
+                return_when=FIRST_COMPLETED,
+            )
+
+            for task in completed:
+                task.result()
 
 
 def _claim_document(session: Session) -> uuid.UUID | None:
@@ -93,7 +116,7 @@ def _claim_document(session: Session) -> uuid.UUID | None:
             col(StoredFile.uploaded).is_(True),
         )
         .order_by(col(KnowledgeDocument.created_at))
-        .with_for_update(skip_locked=True)
+        .with_for_update()
         .limit(1)
     )
 
