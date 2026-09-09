@@ -93,7 +93,7 @@ def _claim_document(session: Session) -> uuid.UUID | None:
             col(StoredFile.uploaded).is_(True),
         )
         .order_by(col(KnowledgeDocument.created_at))
-        .with_for_update()
+        .with_for_update(skip_locked=True)
         .limit(1)
     )
 

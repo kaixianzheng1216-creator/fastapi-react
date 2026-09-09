@@ -35,6 +35,9 @@ services:
       DOCLING_SERVE_MAX_NUM_PAGES: "1000"
       DOCLING_SERVE_MAX_SYNC_WAIT: "840"
       DOCLING_SERVE_MAX_DOCUMENT_TIMEOUT: "840"
+      DOCLING_SERVE_LOAD_MODELS_AT_BOOT: "true"
+      DOCLING_SERVE_ENG_LOC_NUM_WORKERS: "3"
+      DOCLING_SERVE_ENG_LOC_SHARE_MODELS: "true"
       DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "true"
       DOCLING_SERVE_CUSTOM_PICTURE_DESCRIPTION_PRESETS: |-
         {
@@ -64,7 +67,7 @@ services:
         - CMD
         - python
         - -c
-        - import urllib.request; urllib.request.urlopen('http://localhost:5001/health')
+        - import urllib.request; urllib.request.urlopen('http://localhost:5001/ready')
       interval: 10s
       timeout: 5s
       retries: 12
@@ -224,6 +227,7 @@ services:
 
   knowledge-worker:
     image: backend
+    scale: 3
     pull_policy: build
     build:
       context: .
