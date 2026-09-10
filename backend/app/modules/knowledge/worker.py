@@ -103,6 +103,7 @@ def _claim_document(session: Session) -> uuid.UUID | None:
         return None
 
     document.status = KnowledgeDocumentStatus.PROCESSING
+
     session.commit()
 
     return document.id
@@ -114,7 +115,9 @@ def _process_document_with_timeout(document_id: uuid.UUID) -> None:
         target=_process_document,
         args=(document_id,),
     )
+
     process.start()
+
     process.join(PROCESSING_TIMEOUT_SECONDS)
 
     timed_out = process.is_alive()
@@ -124,6 +127,7 @@ def _process_document_with_timeout(document_id: uuid.UUID) -> None:
         process.join()
 
     exit_code = process.exitcode
+
     process.close()
 
     if timed_out:
