@@ -25,10 +25,22 @@ docker compose -f compose.yml up -d --remove-orphans
 
 ## 解析服务器
 
-在解析服务器存放这两个文件的独立目录执行：
+服务器需已安装 Git、Docker 和 Docker Compose。首次获取代码：
 
 ```bash
-cp -i compose.docling.yml compose.yml
+git clone https://github.com/kaixianzheng1216-creator/fastapi-react.git
+cd fastapi-react
+```
+
+已有仓库则进入项目目录更新：
+
+```bash
+git pull --ff-only
+```
+
+首次配置：
+
+```bash
 cp -i .env.docling.example .env
 ```
 
@@ -39,10 +51,17 @@ DOCLING_PICTURE_DESCRIPTION_URL=http://主服务器公网IP:4000/v1/chat/complet
 LITELLM_MASTER_KEY=与主服务器相同的密钥
 ```
 
-启动：
+只启动 Docling：
 
 ```bash
-docker compose up -d
+docker compose -f compose.docling.yml up -d
+```
+
+后续更新无需重新复制 `.env`：
+
+```bash
+git pull --ff-only
+docker compose -f compose.docling.yml up -d
 ```
 
 ## 网络
