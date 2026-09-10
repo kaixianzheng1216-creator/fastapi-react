@@ -24,6 +24,8 @@ import type {
 } from "@assistant-ui/react-langgraph";
 import {
   BookOpenTextIcon,
+  CircleAlertIcon,
+  CircleStopIcon,
   ChevronDownIcon,
   ClipboardListIcon,
   FileCheckIcon,
@@ -109,9 +111,9 @@ export function ResearchProgress() {
 
   if (!researchState || !currentStage) {
     return runStatus === "failed" ? (
-      <p role="status" className="text-muted-foreground text-sm">
-        {researchState?.runError || "调研失败，请重新提交"}
-      </p>
+      <div className="mb-12 px-6">
+        <ResearchStatusNotice status="failed" error={researchState?.runError} />
+      </div>
     ) : null;
   }
 
@@ -228,27 +230,44 @@ export function ResearchProgress() {
             </Accordion>
           </CollapsibleContent>
         </Collapsible>
+
+        {(runStatus === "failed" || runStatus === "cancelled") && (
+          <ResearchStatusNotice status={runStatus} error={runError} />
+        )}
       </section>
 
       {report && <ResearchReport report={report} />}
+    </div>
+  );
+}
 
-      {runStatus === "failed" && (
-        <div role="status" className="my-3 flex flex-col gap-1 text-sm">
-          <span className="font-medium">调研失败</span>
-          <p className="text-muted-foreground">
-            {runError || "调研失败，请重新提交"}
-          </p>
-        </div>
-      )}
+function ResearchStatusNotice({
+  status,
+  error,
+}: {
+  status: "failed" | "cancelled";
+  error?: string | null;
+}) {
+  const failed = status === "failed";
+  const Icon = failed ? CircleAlertIcon : CircleStopIcon;
 
-      {runStatus === "cancelled" && (
-        <div role="status" className="my-3 flex flex-col gap-1 text-sm">
-          <span className="font-medium">调研已停止</span>
-          <p className="text-muted-foreground">
-            任务已取消，后续阶段不会继续执行。
-          </p>
-        </div>
-      )}
+  return (
+    <div
+      role="status"
+      className="bg-muted/40 mt-3 flex items-start gap-3 rounded-lg border px-4 py-3 text-sm"
+    >
+      <Icon
+        aria-hidden="true"
+        className={`mt-0.5 size-4 shrink-0 ${failed ? "text-destructive" : "text-muted-foreground"}`}
+      />
+      <div className="min-w-0 space-y-1">
+        <p className="font-medium">{failed ? "调研未完成" : "调研已停止"}</p>
+        <p className="text-muted-foreground leading-relaxed break-words">
+          {failed
+            ? error || "请重新提交调研任务。"
+            : "任务已取消，后续阶段不会继续执行。"}
+        </p>
+      </div>
     </div>
   );
 }
