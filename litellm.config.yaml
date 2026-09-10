@@ -24,15 +24,6 @@ model_list:
     model_info:
       mode: chat
       supports_vision: true
-  - model_name: "@cf/baai/bge-m3"
-    litellm_params:
-      model: openai/@cf/baai/bge-m3
-      api_base: os.environ/CLOUDFLARE_AI_BASE_URL
-      api_key: os.environ/CLOUDFLARE_API_KEY
-      additional_drop_params:
-        - encoding_format
-    model_info:
-      mode: embedding
 
 mcp_servers:
   firecrawl:

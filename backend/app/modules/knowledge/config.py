@@ -14,14 +14,19 @@ class KnowledgeSettings(BaseSettings):
 
     QDRANT_URL: str
     QDRANT_COLLECTION_NAME: str
+
     LITELLM_BASE_URL: str
     LITELLM_API_KEY: SecretStr
+
+    NEWAPI_BASE_URL: str
+    NEWAPI_API_KEY: SecretStr
+
     EMBEDDING_MODEL: str
-    EMBEDDING_TOKENIZER: str
+
     EMBEDDING_DIMENSIONS: Annotated[int, Field(gt=0)]
     EMBEDDING_CHUNK_MAX_TOKENS: Annotated[int, Field(gt=0)]
-    EMBEDDING_BATCH_MAX_TOKENS: Annotated[int, Field(gt=0)]
-    EMBEDDING_BATCH_SIZE: Annotated[int, Field(gt=0, le=100)]
+
+    EMBEDDING_TOKENIZER: str = "BAAI/bge-m3"
 
 
 settings = KnowledgeSettings.model_validate({})

@@ -195,7 +195,7 @@ def _process_document(document_id: uuid.UUID) -> None:
         )
     except (
         DocumentProcessingTimeoutError,
-        embedding.EmbeddingTimeoutError,
+        httpx.TimeoutException,
     ) as error:
         logger.warning(
             DOCUMENT_PROCESSING_TIMEOUT_LOG,
@@ -214,10 +214,7 @@ def _process_document(document_id: uuid.UUID) -> None:
             extra={"document_id": str(document_id)},
         )
 
-        if isinstance(error, DocumentProcessingError):
-            error_message = str(error)
-        else:
-            error_message = "文档处理失败，请重试"
+        error_message = f"{type(error).__name__}: {error}"
 
         _finish_with_error(
             document_id=document_id,
@@ -314,8 +311,7 @@ def _parse_image_document(
 ) -> DoclingDocument:
     """使用视觉模型生成可检索的图片描述。"""
     image_url = (
-        f"data:{stored_file.content_type};base64,"
-        f"{base64.b64encode(content).decode()}"
+        f"data:{stored_file.content_type};base64,{base64.b64encode(content).decode()}"
     )
 
     try:

@@ -35,19 +35,16 @@ def search_knowledge_base(
     if not ready_document_ids:
         return []
 
-    try:
-        query_vector = embedding.embed_texts([query])[0]
+    query_vector = embedding.embed_texts([query])[0]
 
+    try:
         matches = vector_store.search(
             vector=query_vector,
             knowledge_base_id=knowledge_base_id,
             document_ids=ready_document_ids,
             limit=SEARCH_RESULT_LIMIT,
         )
-    except (
-        embedding.EmbeddingServiceError,
-        vector_store.VectorStoreUnavailableError,
-    ) as error:
+    except vector_store.VectorStoreUnavailableError as error:
         logger.exception(SEARCH_ERROR_LOG)
 
         raise KnowledgeSearchUnavailableError from error
