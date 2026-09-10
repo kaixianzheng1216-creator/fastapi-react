@@ -1,0 +1,48 @@
+services:
+  docling:
+    image: ghcr.dockerproxy.net/docling-project/docling-serve-cpu:v1.30.0
+    restart: always
+    ports:
+      - "${DOCLING_BIND_HOST:-127.0.0.1}:${DOCLING_PORT:-5001}:5001"
+    environment:
+      DOCLING_SERVE_MAX_FILE_SIZE: "104857600"
+      DOCLING_SERVE_MAX_NUM_PAGES: "1000"
+      DOCLING_SERVE_MAX_SYNC_WAIT: "840"
+      DOCLING_SERVE_MAX_DOCUMENT_TIMEOUT: "840"
+      DOCLING_SERVE_LOAD_MODELS_AT_BOOT: "true"
+      DOCLING_SERVE_ENG_LOC_NUM_WORKERS: "1"
+      DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "true"
+      DOCLING_SERVE_CUSTOM_PICTURE_DESCRIPTION_PRESETS: |-
+        {
+          "deepseek-v4-flash-vision-exp": {
+            "engine_options": {
+              "engine_type": "api",
+              "url": "${DOCLING_PICTURE_DESCRIPTION_URL:-http://litellm:4000/v1/chat/completions}",
+              "concurrency": 3,
+              "headers": {
+                "Authorization": "Bearer ${LITELLM_MASTER_KEY?Variable not set}"
+              }
+            },
+            "model_spec": {
+              "name": "DeepSeek V4 Flash Vision Exp",
+              "default_repo_id": "deepseek/deepseek-v4-flash-vision-exp",
+              "prompt": "请用中文简洁、准确地描述图片中的关键信息。图表需说明标题、指标、趋势和重要数值；不要猜测看不清的内容。",
+              "response_format": "plaintext"
+            },
+            "prompt": "请用中文简洁、准确地描述图片中的关键信息。图表需说明标题、指标、趋势和重要数值；不要猜测看不清的内容。",
+            "generation_config": {
+              "max_new_tokens": 1000
+            }
+          }
+        }
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:5001/ready')
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+

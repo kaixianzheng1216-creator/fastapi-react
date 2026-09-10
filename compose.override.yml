@@ -10,14 +10,13 @@ services:
       - "127.0.0.1:5432:5432"
 
   docling:
+    extends:
+      file: compose.docling.yml
+      service: docling
     restart: "no"
-    ports:
-      - "127.0.0.1:5001:5001"
 
   litellm:
     restart: "no"
-    ports:
-      - "127.0.0.1:4000:4000"
 
   qdrant:
     restart: "no"
@@ -25,6 +24,11 @@ services:
       - "127.0.0.1:6333:6333"
 
   backend:
+    depends_on:
+      docling:
+        condition: service_healthy
+    environment:
+      - DOCLING_BASE_URL=http://docling:5001
     restart: "no"
     command:
       - uvicorn
@@ -43,6 +47,11 @@ services:
           action: rebuild
 
   agent-worker:
+    depends_on:
+      docling:
+        condition: service_healthy
+    environment:
+      - DOCLING_BASE_URL=http://docling:5001
     restart: "no"
     develop:
       watch:
@@ -55,6 +64,11 @@ services:
           action: rebuild
 
   knowledge-worker:
+    depends_on:
+      docling:
+        condition: service_healthy
+    environment:
+      - DOCLING_BASE_URL=http://docling:5001
     restart: "no"
     develop:
       watch:
@@ -82,3 +96,11 @@ services:
           action: rebuild
         - path: ./frontend/package-lock.json
           action: rebuild
+
+  prestart:
+    environment:
+      - DOCLING_BASE_URL=http://docling:5001
+
+  data-initializer:
+    environment:
+      - DOCLING_BASE_URL=http://docling:5001
