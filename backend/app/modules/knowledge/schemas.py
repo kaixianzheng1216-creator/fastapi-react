@@ -118,7 +118,9 @@ class KnowledgeWebpageCreate(SQLModel):
 
 
 class KnowledgeDocumentMove(SQLModel):
-    folder_id: uuid.UUID | None
+    folder_id: uuid.UUID | None = Field(
+        description="目标文件夹 ID；传 null 表示移动到根目录"
+    )
 
 
 class KnowledgeDocumentUploadPublic(SQLModel):

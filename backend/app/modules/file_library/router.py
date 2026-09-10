@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.dependencies import SessionDep
 from app.api.responses import error_responses
@@ -82,11 +82,11 @@ def create_file_library(
 @router.get("", response_model=FileLibrariesPublic)
 def read_file_libraries(
     session: SessionDep,
-    skip: Annotated[int, Query(ge=0, description="跳过的记录数")] = 0,
-    limit: Annotated[int, Query(ge=1, le=100, description="返回的最大记录数")] = 20,
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
     search: Annotated[
         str | None,
-        Query(max_length=100, description="按文件库名称搜索"),
+        Query(max_length=100),
     ] = None,
 ) -> FileLibrariesPublic:
     """查询文件库列表。"""
@@ -133,7 +133,7 @@ def read_file_library(
 def update_file_library(
     *,
     session: SessionDep,
-    file_library_id: Annotated[uuid.UUID, Path(description="文件库 ID")],
+    file_library_id: uuid.UUID,
     body: FileLibraryUpdate,
 ) -> FileLibraryPublic:
     """更新文件库。"""
@@ -153,7 +153,7 @@ def update_file_library(
 )
 def delete_file_library(
     session: SessionDep,
-    file_library_id: Annotated[uuid.UUID, Path(description="文件库 ID")],
+    file_library_id: uuid.UUID,
 ) -> None:
     """删除文件库。"""
     service.delete_file_library(session=session, file_library_id=file_library_id)
@@ -172,7 +172,7 @@ def delete_file_library(
 def create_folder(
     *,
     session: SessionDep,
-    file_library_id: Annotated[uuid.UUID, Path(description="文件库 ID")],
+    file_library_id: uuid.UUID,
     body: LibraryFolderCreate,
 ) -> LibraryFolderPublic:
     """创建文件库文件夹。"""
@@ -192,7 +192,7 @@ def create_folder(
 )
 def read_folders(
     session: SessionDep,
-    file_library_id: Annotated[uuid.UUID, Path(description="文件库 ID")],
+    file_library_id: uuid.UUID,
 ) -> LibraryFoldersPublic:
     """查询文件库文件夹列表。"""
     folders = service.list_folders(
@@ -223,8 +223,8 @@ def read_folders(
 def update_folder(
     *,
     session: SessionDep,
-    file_library_id: Annotated[uuid.UUID, Path(description="文件库 ID")],
-    folder_id: Annotated[uuid.UUID, Path(description="文件夹 ID")],
+    file_library_id: uuid.UUID,
+    folder_id: uuid.UUID,
     body: LibraryFolderUpdate,
 ) -> LibraryFolderPublic:
     """重命名文件库文件夹。"""
@@ -251,8 +251,8 @@ def update_folder(
 def move_folder(
     *,
     session: SessionDep,
-    file_library_id: Annotated[uuid.UUID, Path(description="文件库 ID")],
-    folder_id: Annotated[uuid.UUID, Path(description="文件夹 ID")],
+    file_library_id: uuid.UUID,
+    folder_id: uuid.UUID,
     body: LibraryFolderMove,
 ) -> LibraryFolderPublic:
     """移动文件库文件夹。"""
@@ -276,13 +276,10 @@ def move_folder(
 )
 def read_directory(
     session: SessionDep,
-    file_library_id: Annotated[uuid.UUID, Path(description="文件库 ID")],
-    folder_id: Annotated[
-        uuid.UUID | None,
-        Query(description="文件夹 ID；不传表示根目录"),
-    ] = None,
-    skip: Annotated[int, Query(ge=0, description="跳过的记录数")] = 0,
-    limit: Annotated[int, Query(ge=1, le=100, description="返回的最大记录数")] = 20,
+    file_library_id: uuid.UUID,
+    folder_id: uuid.UUID | None = None,
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
 ) -> LibraryDirectoryPublic:
     """查询文件库目录，文件夹优先排列。"""
     entries, count = service.list_directory(
@@ -307,7 +304,7 @@ def read_directory(
 )
 def delete_directory_entries(
     session: SessionDep,
-    file_library_id: Annotated[uuid.UUID, Path(description="文件库 ID")],
+    file_library_id: uuid.UUID,
     body: LibraryDirectoryDelete,
 ) -> None:
     """批量删除文件库文件夹和文件。"""
@@ -333,11 +330,8 @@ def create_document_upload(
     *,
     session: SessionDep,
     current_user: CurrentUser,
-    file_library_id: Annotated[uuid.UUID, Path(description="文件库 ID")],
-    folder_id: Annotated[
-        uuid.UUID | None,
-        Query(description="导入到的文件夹 ID；不传表示根目录"),
-    ] = None,
+    file_library_id: uuid.UUID,
+    folder_id: uuid.UUID | None = None,
     body: FileUploadRequest,
 ) -> LibraryDocumentUploadPublic:
     """创建文件库文件上传凭证。
@@ -366,7 +360,7 @@ def create_document_upload(
 )
 async def complete_document_upload(
     session: SessionDep,
-    document_id: Annotated[uuid.UUID, Path(description="待确认上传的文件 ID")],
+    document_id: uuid.UUID,
 ) -> LibraryDocumentPublic:
     """确认文件库文件上传。
 

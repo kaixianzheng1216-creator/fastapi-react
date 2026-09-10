@@ -129,7 +129,8 @@ def read_knowledge_bases(
     responses=error_responses(KnowledgeBaseNotFoundError),
 )
 def read_knowledge_base(
-    session: SessionDep, knowledge_base_id: uuid.UUID
+    session: SessionDep,
+    knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
 ) -> KnowledgeBasePublic:
     """根据 ID 获取指定知识库。"""
     knowledge_base = service.get_knowledge_base(
@@ -438,7 +439,7 @@ async def create_webpage_document(
 )
 def read_document(
     session: SessionDep,
-    document_id: uuid.UUID,
+    document_id: Annotated[uuid.UUID, Path(description="知识库文档 ID")],
 ) -> KnowledgeDocumentPublic:
     """根据 ID 获取指定知识库文档。"""
     return documents.get_document(session=session, document_id=document_id)
@@ -455,7 +456,7 @@ def read_document(
 )
 def read_document_preview(
     session: SessionDep,
-    document_id: uuid.UUID,
+    document_id: Annotated[uuid.UUID, Path(description="知识库文档 ID")],
 ) -> KnowledgeDocumentPreviewPublic:
     """获取知识库文档 Markdown 预览。"""
     return documents.get_preview(session=session, document_id=document_id)
@@ -471,9 +472,12 @@ def read_document_preview(
 )
 def read_document_chunks(
     session: SessionDep,
-    document_id: uuid.UUID,
-    skip: Annotated[int, Query(ge=0)] = 0,
-    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    document_id: Annotated[uuid.UUID, Path(description="知识库文档 ID")],
+    skip: Annotated[int, Query(ge=0, description="跳过的切片数")] = 0,
+    limit: Annotated[
+        int,
+        Query(ge=1, le=100, description="返回的最大切片数"),
+    ] = 20,
 ) -> KnowledgeDocumentChunksPublic:
     """获取知识库文档切片列表。"""
     chunks, count = documents.list_document_chunks(
@@ -497,7 +501,7 @@ def read_document_chunks(
 )
 def download_original_document(
     session: SessionDep,
-    document_id: uuid.UUID,
+    document_id: Annotated[uuid.UUID, Path(description="知识库文档 ID")],
 ) -> FileCompletePublic:
     """获取知识库文档原文件下载地址。"""
     stored_file = documents.get_original_file(
@@ -526,7 +530,7 @@ def download_original_document(
 def move_document(
     *,
     session: SessionDep,
-    document_id: uuid.UUID,
+    document_id: Annotated[uuid.UUID, Path(description="知识库文档 ID")],
     body: KnowledgeDocumentMove,
 ) -> KnowledgeDocumentPublic:
     """移动知识库文档。"""
@@ -545,7 +549,10 @@ def move_document(
         KnowledgeDocumentStateError,
     ),
 )
-def retry_document(session: SessionDep, document_id: uuid.UUID) -> None:
+def retry_document(
+    session: SessionDep,
+    document_id: Annotated[uuid.UUID, Path(description="知识库文档 ID")],
+) -> None:
     """重试知识库文档处理。"""
     documents.retry_document(session=session, document_id=document_id)
 
@@ -555,7 +562,10 @@ def retry_document(session: SessionDep, document_id: uuid.UUID) -> None:
     status_code=status.HTTP_204_NO_CONTENT,
     responses=error_responses(KnowledgeDocumentNotFoundError),
 )
-def delete_document(session: SessionDep, document_id: uuid.UUID) -> None:
+def delete_document(
+    session: SessionDep,
+    document_id: Annotated[uuid.UUID, Path(description="知识库文档 ID")],
+) -> None:
     """删除知识库文档。"""
     documents.delete_document(session=session, document_id=document_id)
 

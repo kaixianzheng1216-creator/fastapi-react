@@ -17,20 +17,18 @@ LibraryFolderName = Annotated[
 
 
 class FileLibraryCreate(SQLModel):
-    name: FileLibraryName = Field(description="文件库名称")
+    name: FileLibraryName
     description: str | None = Field(
         default=None,
         max_length=500,
-        description="文件库描述",
     )
 
 
 class FileLibraryUpdate(SQLModel):
-    name: FileLibraryName | None = Field(default=None, description="文件库名称")
+    name: FileLibraryName | None = None
     description: str | None = Field(
         default=None,
         max_length=500,
-        description="文件库描述",
     )
 
     @field_validator("name")
@@ -56,21 +54,16 @@ class FileLibrariesPublic(SQLModel):
 
 
 class LibraryFolderCreate(SQLModel):
-    name: LibraryFolderName = Field(description="文件夹名称")
-    parent_id: uuid.UUID | None = Field(
-        default=None,
-        description="父文件夹 ID；不传表示创建在根目录",
-    )
+    name: LibraryFolderName
+    parent_id: uuid.UUID | None = None
 
 
 class LibraryFolderUpdate(SQLModel):
-    name: LibraryFolderName = Field(description="新的文件夹名称")
+    name: LibraryFolderName
 
 
 class LibraryFolderMove(SQLModel):
-    parent_id: uuid.UUID | None = Field(
-        description="目标父文件夹 ID；传 null 表示移动到根目录"
-    )
+    parent_id: uuid.UUID | None
 
 
 class LibraryFolderPublic(SQLModel):
@@ -92,14 +85,12 @@ class LibraryDocumentMove(SQLModel):
 
 
 class LibraryDocumentUploadPublic(SQLModel):
-    id: uuid.UUID = Field(description="文件 ID，上传完成后用于确认")
+    id: uuid.UUID
     upload_url: str = Field(
         serialization_alias="uploadUrl",
-        description="用于上传文件内容的临时 HTTP PUT 地址",
     )
     upload_headers: dict[str, str] = Field(
         serialization_alias="uploadHeaders",
-        description="上传文件时必须原样携带的 HTTP 请求头",
     )
 
 
@@ -132,11 +123,9 @@ LibraryDirectoryEntryPublic = Annotated[
 class LibraryDirectoryDelete(SQLModel):
     folder_ids: set[uuid.UUID] = Field(
         default_factory=set,
-        description="需要删除的文件夹 ID 列表",
     )
     document_ids: set[uuid.UUID] = Field(
         default_factory=set,
-        description="需要删除的文件 ID 列表",
     )
 
     @model_validator(mode="after")
