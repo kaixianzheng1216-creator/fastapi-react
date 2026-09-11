@@ -12,6 +12,7 @@ import { getKnowledgeDirectoryHref } from "@/app/admin/knowledge-bases/_lib/navi
 
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -92,6 +93,10 @@ export function KnowledgeDirectoryTable({
         {entries.map((entry) => {
           const key = getDirectoryEntryKey(entry);
           const name = entry.type === "folder" ? entry.name : entry.filename;
+          const processing =
+            entry.type === "document" &&
+            (entry.status === "processing" ||
+              (entry.status === "pending" && entry.uploaded));
 
           return (
             <TableRow
@@ -154,13 +159,26 @@ export function KnowledgeDirectoryTable({
                 {entry.type === "folder" ? (
                   "—"
                 ) : (
-                  <Badge
-                    variant={entry.status === "ready" ? "outline" : "secondary"}
-                  >
-                    {entry.status === "pending" && !entry.uploaded
-                      ? "等待确认上传"
-                      : statusLabels[entry.status]}
-                  </Badge>
+                  <div className="flex flex-col items-start gap-1" role="status">
+                    <Badge
+                      variant={entry.status === "ready" ? "outline" : "secondary"}
+                    >
+                      {processing && (
+                        <Spinner
+                          aria-hidden="true"
+                          className="motion-reduce:animate-none"
+                        />
+                      )}
+                      {entry.status === "pending" && !entry.uploaded
+                        ? "等待确认上传"
+                        : statusLabels[entry.status]}
+                    </Badge>
+                    {processing && (
+                      <span className="whitespace-nowrap text-xs text-muted-foreground">
+                        完成后自动更新
+                      </span>
+                    )}
+                  </div>
                 )}
               </TableCell>
               <TableCell className="tabular-nums">
