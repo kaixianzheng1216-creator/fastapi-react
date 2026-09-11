@@ -159,26 +159,20 @@ export function KnowledgeDirectoryTable({
                 {entry.type === "folder" ? (
                   "—"
                 ) : (
-                  <div className="flex flex-col items-start gap-1" role="status">
-                    <Badge
-                      variant={entry.status === "ready" ? "outline" : "secondary"}
-                    >
-                      {processing && (
-                        <Spinner
-                          aria-hidden="true"
-                          className="motion-reduce:animate-none"
-                        />
-                      )}
-                      {entry.status === "pending" && !entry.uploaded
-                        ? "等待确认上传"
-                        : statusLabels[entry.status]}
-                    </Badge>
+                  <Badge
+                    role="status"
+                    variant={entry.status === "ready" ? "outline" : "secondary"}
+                  >
                     {processing && (
-                      <span className="whitespace-nowrap text-xs text-muted-foreground">
-                        完成后自动更新
-                      </span>
+                      <Spinner
+                        aria-hidden="true"
+                        className="motion-reduce:animate-none"
+                      />
                     )}
-                  </div>
+                    {entry.status === "pending" && !entry.uploaded
+                      ? "等待确认上传"
+                      : statusLabels[entry.status]}
+                  </Badge>
                 )}
               </TableCell>
               <TableCell className="tabular-nums">
