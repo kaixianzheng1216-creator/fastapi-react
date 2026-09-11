@@ -1,5 +1,7 @@
 "use client";
 
+import { LoadError } from "@/components/common/load-error";
+
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -319,23 +321,19 @@ export const ThreadListSearchResults: FC<{
 
   if (
     searchQuery !== debouncedSearchQuery ||
-    (conversationsQuery.isFetching && !conversationsQuery.data)
+    conversationsQuery.isPending
   ) {
     return <ThreadListSkeleton />;
   }
 
   if (conversationsQuery.isError && conversationsQuery.data === undefined) {
     return (
-      <CommandEmpty>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={conversationsQuery.isFetching}
-          onClick={() => void conversationsQuery.refetch()}
-        >
-          加载失败，重试
-        </Button>
+      <CommandEmpty className="p-0">
+        <LoadError
+          title="暂时无法加载对话"
+          isRetrying={conversationsQuery.isFetching}
+          onRetry={() => void conversationsQuery.refetch()}
+        />
       </CommandEmpty>
     );
   }

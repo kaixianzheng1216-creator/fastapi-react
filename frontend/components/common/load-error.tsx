@@ -1,15 +1,6 @@
-import { CircleAlertIcon } from "lucide-react";
-
 import { ButtonLoading } from "@/components/common/button-loading";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { cn } from "@/lib/utils";
 
 type LoadErrorProps = {
   title?: string;
@@ -19,35 +10,31 @@ type LoadErrorProps = {
 };
 
 export function LoadError({
-  title = "加载失败",
+  title = "暂时无法加载",
   onRetry,
   isRetrying = false,
   className,
 }: LoadErrorProps) {
   return (
-    <Empty role="alert" className={className}>
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <CircleAlertIcon aria-hidden="true" />
-        </EmptyMedia>
-        <EmptyTitle>{title}</EmptyTitle>
-        <EmptyDescription>暂时无法获取数据，请重试。</EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="relative"
-          disabled={isRetrying}
-          aria-busy={isRetrying}
-          onClick={onRetry}
-        >
-          <ButtonLoading loading={isRetrying}>
-            重试
-          </ButtonLoading>
-        </Button>
-      </EmptyContent>
-    </Empty>
+    <div
+      role="alert"
+      className={cn(
+        "flex min-h-24 flex-1 flex-wrap items-center justify-center gap-x-3 gap-y-1 p-6 text-sm",
+        className,
+      )}
+    >
+      <span className="text-muted-foreground">{title}</span>
+      <Button
+        type="button"
+        variant="link"
+        size="sm"
+        className="relative px-0"
+        disabled={isRetrying}
+        aria-busy={isRetrying}
+        onClick={onRetry}
+      >
+        <ButtonLoading loading={isRetrying}>重试</ButtonLoading>
+      </Button>
+    </div>
   );
 }

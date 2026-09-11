@@ -2,8 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { ModelSelector } from "@/app/(authenticated)/_components/model-selector";
-import { ButtonLoading } from "@/components/common/button-loading";
-import { Button } from "@/components/ui/button";
+import { LoadError } from "@/components/common/load-error";
 import { Skeleton } from "@/components/ui/skeleton";
 import { agentReadModels } from "@/lib/client";
 
@@ -38,19 +37,12 @@ export function ComposerModelSelector() {
 
   if (modelsQuery.isError && modelsQuery.data === undefined) {
     return (
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="relative text-muted-foreground"
-        disabled={modelsQuery.isFetching}
-        aria-busy={modelsQuery.isFetching}
-        onClick={() => void modelsQuery.refetch()}
-      >
-        <ButtonLoading loading={modelsQuery.isFetching}>
-          模型加载失败，重试
-        </ButtonLoading>
-      </Button>
+      <LoadError
+        title="模型暂不可用"
+        className="min-h-0 flex-none justify-start gap-x-2 p-0 text-xs"
+        isRetrying={modelsQuery.isFetching}
+        onRetry={() => void modelsQuery.refetch()}
+      />
     );
   }
 
