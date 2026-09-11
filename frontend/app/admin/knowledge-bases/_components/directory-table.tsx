@@ -2,7 +2,7 @@
 
 import { FolderIcon } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import {
   getDirectoryEntryKey,
@@ -46,6 +46,31 @@ function formatProcessingDuration(seconds: number | null | undefined): string {
   return remainingSeconds === 0
     ? `${minutes} 分钟`
     : `${minutes} 分 ${remainingSeconds} 秒`;
+}
+
+function ProcessingDuration({
+  seconds,
+  running,
+}: {
+  seconds: number | null | undefined;
+  running: boolean;
+}) {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!running || seconds == null) return;
+
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [running, seconds]);
+
+  return formatProcessingDuration(
+    seconds == null ? null : seconds + (running ? elapsed : 0),
+  );
 }
 
 export function KnowledgeDirectoryTable({
@@ -189,9 +214,15 @@ export function KnowledgeDirectoryTable({
                 )}
               </TableCell>
               <TableCell className="tabular-nums">
-                {entry.type === "folder"
-                  ? "—"
-                  : formatProcessingDuration(entry.processing_duration_seconds)}
+                {entry.type === "folder" ? (
+                  "—"
+                ) : (
+                  <ProcessingDuration
+                    key={`${entry.status}:${entry.processing_duration_seconds}`}
+                    seconds={entry.processing_duration_seconds}
+                    running={entry.status === "processing"}
+                  />
+                )}
               </TableCell>
               <TableCell className="tabular-nums">
                 {entry.type === "folder" ? "—" : formatFileSize(entry.size)}
