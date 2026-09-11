@@ -20,6 +20,7 @@ from sqlmodel import Session, col, select
 
 from app.core.config import settings as app_settings
 from app.db.session import engine
+from app.db.timestamps import utc_now
 from app.modules.files import object_storage
 from app.modules.files.constants import (
     DOCUMENT_FORMAT_BY_CONTENT_TYPE,
@@ -103,6 +104,8 @@ def _claim_document(session: Session) -> uuid.UUID | None:
         return None
 
     document.status = KnowledgeDocumentStatus.PROCESSING
+    document.processing_started_at = utc_now()
+    document.processing_finished_at = None
 
     session.commit()
 
@@ -492,6 +495,7 @@ def _publish_document(
         )
 
         if document is not None:
+            document.processing_finished_at = utc_now()
             document.status = KnowledgeDocumentStatus.READY
             document.error_message = None
             session.commit()
@@ -526,6 +530,7 @@ def _finish_with_error(
         elif document.status != KnowledgeDocumentStatus.PROCESSING:
             return
         else:
+            document.processing_finished_at = utc_now()
             document.status = status
             document.error_message = error_message
             session.commit()

@@ -5,6 +5,7 @@ from collections.abc import Sequence
 
 from sqlmodel import Session, col, select
 
+from app.db.timestamps import utc_now
 from app.modules.files import object_storage
 from app.modules.files.constants import KNOWLEDGE_CONTENT_TYPES
 from app.modules.files.exceptions import (
@@ -325,6 +326,8 @@ def retry_document(*, session: Session, document_id: uuid.UUID) -> None:
     ):
         raise KnowledgeDocumentStateError
 
+    document.processing_started_at = None
+    document.processing_finished_at = None
     document.status = KnowledgeDocumentStatus.PENDING
     document.error_message = None
 
@@ -417,6 +420,18 @@ def cleanup_deleted_documents(
 def to_public(
     document: KnowledgeDocument, stored_file: StoredFile
 ) -> KnowledgeDocumentPublic:
+    finished_at = document.processing_finished_at
+
+    if document.status == KnowledgeDocumentStatus.PROCESSING:
+        finished_at = utc_now()
+
+    duration = None
+
+    if document.processing_started_at is not None and finished_at is not None:
+        duration = max(
+            0, int((finished_at - document.processing_started_at).total_seconds())
+        )
+
     return KnowledgeDocumentPublic(
         id=document.id,
         knowledge_base_id=document.knowledge_base_id,
@@ -428,6 +443,7 @@ def to_public(
         source_url=document.source_url,
         status=document.status,
         error_message=document.error_message,
+        processing_duration_seconds=duration,
         created_at=document.created_at,
         updated_at=document.updated_at,
     )

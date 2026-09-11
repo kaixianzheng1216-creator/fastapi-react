@@ -920,6 +920,10 @@ export type KnowledgeDocumentEntryPublic = {
      */
     error_message: string | null;
     /**
+     * Processing Duration Seconds
+     */
+    processing_duration_seconds?: number | null;
+    /**
      * Created At
      */
     created_at: string;
@@ -1000,6 +1004,10 @@ export type KnowledgeDocumentPublic = {
      * Error Message
      */
     error_message: string | null;
+    /**
+     * Processing Duration Seconds
+     */
+    processing_duration_seconds?: number | null;
     /**
      * Created At
      */

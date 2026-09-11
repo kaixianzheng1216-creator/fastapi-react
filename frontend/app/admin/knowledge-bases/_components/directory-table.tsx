@@ -36,6 +36,18 @@ const statusLabels: Record<KnowledgeDocumentPublic["status"], string> = {
   timed_out: "已超时",
 };
 
+function formatProcessingDuration(seconds: number | null | undefined): string {
+  if (seconds == null) return "—";
+  if (seconds < 60) return `${seconds} 秒`;
+
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+
+  return remainingSeconds === 0
+    ? `${minutes} 分钟`
+    : `${minutes} 分 ${remainingSeconds} 秒`;
+}
+
 export function KnowledgeDirectoryTable({
   knowledgeBaseId,
   entries,
@@ -83,6 +95,7 @@ export function KnowledgeDirectoryTable({
           </TableHead>
           <TableHead>名称</TableHead>
           <TableHead>状态</TableHead>
+          <TableHead>处理时长</TableHead>
           <TableHead>大小</TableHead>
           <TableHead>添加时间</TableHead>
           <TableHead>操作</TableHead>
@@ -174,6 +187,11 @@ export function KnowledgeDirectoryTable({
                       : statusLabels[entry.status]}
                   </Badge>
                 )}
+              </TableCell>
+              <TableCell className="tabular-nums">
+                {entry.type === "folder"
+                  ? "—"
+                  : formatProcessingDuration(entry.processing_duration_seconds)}
               </TableCell>
               <TableCell className="tabular-nums">
                 {entry.type === "folder" ? "—" : formatFileSize(entry.size)}

@@ -146,6 +146,7 @@ class KnowledgeDocumentPublic(SQLModel):
     source_url: str | None
     status: KnowledgeDocumentStatus
     error_message: str | None
+    processing_duration_seconds: int | None = None
     created_at: datetime
     updated_at: datetime
 
