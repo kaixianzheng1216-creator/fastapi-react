@@ -23,6 +23,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
+import { DataRefreshButton } from "@/components/common/data-refresh-button";
 import { AppHeader } from "@/components/layout/app-header";
 import { LoadError } from "@/components/common/load-error";
 import { PageOutOfRange } from "@/components/common/page-out-of-range";
@@ -258,6 +259,7 @@ export function RegionalData() {
   return (
     <>
       <AppHeader
+        actions={<DataRefreshButton source="regional" queryKey={REGIONAL_DATA_QUERY_KEY} />}
         title="区域数据"
         left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
       />

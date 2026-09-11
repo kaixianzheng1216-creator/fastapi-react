@@ -152,7 +152,6 @@ export function KnowledgeDocuments({
   const directoryLoadFailed =
     (foldersQuery.isError && foldersQuery.data === undefined) ||
     (directoryQuery.isError && directoryQuery.data === undefined);
-  const hasDirectoryEntries = directoryEntries.length > 0;
 
   function invalidateDocuments(): void {
     void queryClient.invalidateQueries({
@@ -291,7 +290,7 @@ export function KnowledgeDocuments({
           }}
         />
       ) : (
-        <section className="flex flex-1 flex-col gap-3 md:min-h-0">
+        <section className="flex flex-1 flex-col gap-3 md:min-h-0 md:overflow-y-auto">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Breadcrumb>
               <BreadcrumbList>
@@ -362,34 +361,29 @@ export function KnowledgeDocuments({
                 )}
               />
             </CollectionContent>
-          ) : null}
+          ) : pageOutOfRange ? (
+            <PageOutOfRange
+              href={getKnowledgeDirectoryHref(
+                knowledgeBaseId,
+                1,
+                currentFolderId,
+              )}
+            />
+          ) : (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FolderOpenIcon aria-hidden="true" />
+                </EmptyMedia>
+                <EmptyTitle>此文件夹为空</EmptyTitle>
+                <EmptyDescription>
+                  上传文件、添加网页或新建文件夹。
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          )}
         </section>
       )}
-
-      {!directoryPending &&
-        !directoryLoadFailed &&
-        !hasDirectoryEntries &&
-        (pageOutOfRange ? (
-          <PageOutOfRange
-            href={getKnowledgeDirectoryHref(
-              knowledgeBaseId,
-              1,
-              currentFolderId,
-            )}
-          />
-        ) : (
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <FolderOpenIcon aria-hidden="true" />
-              </EmptyMedia>
-              <EmptyTitle>此文件夹为空</EmptyTitle>
-              <EmptyDescription>
-                上传文件、添加网页或新建文件夹。
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ))}
       <PagePagination
         className="shrink-0"
         ariaLabel="知识库目录分页"

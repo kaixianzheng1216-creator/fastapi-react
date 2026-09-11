@@ -151,27 +151,6 @@ services:
       context: .
       dockerfile: backend/Dockerfile
 
-  data-initializer:
-    image: backend-data-initializer
-    pull_policy: build
-    profiles:
-      - tools
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-      target: data-initializer
-    depends_on:
-      prestart:
-        condition: service_completed_successfully
-    env_file:
-      - .env
-    environment:
-      - LITELLM_BASE_URL=http://litellm:4000/v1
-      - DOCLING_BASE_URL=${DOCLING_BASE_URL:-http://docling:5001}
-      - POSTGRES_SERVER=db
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-
   knowledge-worker:
     image: backend
     pull_policy: build

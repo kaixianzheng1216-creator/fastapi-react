@@ -75,7 +75,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider className="h-svh overflow-hidden">
       <AdminSidebar user={currentUserQuery.data} />
-      <SidebarInset className="min-h-0">{children}</SidebarInset>
+      <SidebarInset className="min-h-0 min-w-0">{children}</SidebarInset>
     </SidebarProvider>
   );
 }

@@ -100,7 +100,3 @@ services:
   prestart:
     environment:
       - DOCLING_BASE_URL=http://docling:5001
-
-  data-initializer:
-    environment:
-      - DOCLING_BASE_URL=http://docling:5001

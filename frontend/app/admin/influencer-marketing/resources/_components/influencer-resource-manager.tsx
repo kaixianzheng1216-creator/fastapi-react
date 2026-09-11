@@ -22,6 +22,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useMemo } from "react";
 
+import { DataRefreshButton } from "@/components/common/data-refresh-button";
 import { AppHeader } from "@/components/layout/app-header";
 import { LoadError } from "@/components/common/load-error";
 import { PageOutOfRange } from "@/components/common/page-out-of-range";
@@ -229,6 +230,7 @@ export function InfluencerResourceManager() {
   return (
     <>
       <AppHeader
+        actions={<DataRefreshButton source="influencers" queryKey={["influencer-accounts"]} />}
         title="达人资源"
         left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
       />

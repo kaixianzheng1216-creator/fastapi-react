@@ -448,6 +448,20 @@ export type ConversationsPublic = {
 };
 
 /**
+ * CurrentRefreshJob
+ */
+export type CurrentRefreshJob = {
+    /**
+     * Job Id
+     */
+    job_id?: string | null;
+    /**
+     * Status
+     */
+    status?: 'idle' | 'pending' | 'succeeded' | 'failed';
+};
+
+/**
  * ErrorResponse
  */
 export type ErrorResponse = {
@@ -491,14 +505,10 @@ export type FileLibrariesPublic = {
 export type FileLibraryCreate = {
     /**
      * Name
-     *
-     * 文件库名称
      */
     name: string;
     /**
      * Description
-     *
-     * 文件库描述
      */
     description?: string | null;
 };
@@ -535,14 +545,10 @@ export type FileLibraryPublic = {
 export type FileLibraryUpdate = {
     /**
      * Name
-     *
-     * 文件库名称
      */
     name?: string | null;
     /**
      * Description
-     *
-     * 文件库描述
      */
     description?: string | null;
 };
@@ -933,6 +939,8 @@ export type KnowledgeDocumentEntryPublic = {
 export type KnowledgeDocumentMove = {
     /**
      * Folder Id
+     *
+     * 目标文件夹 ID；传 null 表示移动到根目录
      */
     folder_id: string | null;
 };
@@ -1239,14 +1247,10 @@ export type KnowledgeWebpageCreate = {
 export type LibraryDirectoryDelete = {
     /**
      * Folder Ids
-     *
-     * 需要删除的文件夹 ID 列表
      */
     folder_ids?: Array<string>;
     /**
      * Document Ids
-     *
-     * 需要删除的文件 ID 列表
      */
     document_ids?: Array<string>;
 };
@@ -1369,20 +1373,14 @@ export type LibraryDocumentPublic = {
 export type LibraryDocumentUploadPublic = {
     /**
      * Id
-     *
-     * 文件 ID，上传完成后用于确认
      */
     id: string;
     /**
      * Uploadurl
-     *
-     * 用于上传文件内容的临时 HTTP PUT 地址
      */
     uploadUrl: string;
     /**
      * Uploadheaders
-     *
-     * 上传文件时必须原样携带的 HTTP 请求头
      */
     uploadHeaders: {
         [key: string]: string;
@@ -1395,14 +1393,10 @@ export type LibraryDocumentUploadPublic = {
 export type LibraryFolderCreate = {
     /**
      * Name
-     *
-     * 文件夹名称
      */
     name: string;
     /**
      * Parent Id
-     *
-     * 父文件夹 ID；不传表示创建在根目录
      */
     parent_id?: string | null;
 };
@@ -1447,8 +1441,6 @@ export type LibraryFolderEntryPublic = {
 export type LibraryFolderMove = {
     /**
      * Parent Id
-     *
-     * 目标父文件夹 ID；传 null 表示移动到根目录
      */
     parent_id: string | null;
 };
@@ -1489,8 +1481,6 @@ export type LibraryFolderPublic = {
 export type LibraryFolderUpdate = {
     /**
      * Name
-     *
-     * 新的文件夹名称
      */
     name: string;
 };
@@ -1593,6 +1583,31 @@ export type ProvinceAnnualDataPublic = {
      * Retail Sales Yoy
      */
     retail_sales_yoy: number | null;
+};
+
+/**
+ * RefreshJob
+ */
+export type RefreshJob = {
+    /**
+     * Job Id
+     */
+    job_id: string;
+};
+
+/**
+ * RefreshSource
+ */
+export type RefreshSource = 'regional' | 'rankings' | 'influencers';
+
+/**
+ * RefreshStatus
+ */
+export type RefreshStatus = {
+    /**
+     * Status
+     */
+    status: 'pending' | 'succeeded' | 'failed';
 };
 
 /**
@@ -2689,6 +2704,8 @@ export type KnowledgeBasesReadKnowledgeBaseData = {
     path: {
         /**
          * Knowledge Base Id
+         *
+         * 知识库 ID
          */
         knowledge_base_id: string;
     };
@@ -3348,6 +3365,8 @@ export type KnowledgeDocumentsDeleteDocumentData = {
     path: {
         /**
          * Document Id
+         *
+         * 知识库文档 ID
          */
         document_id: string;
     };
@@ -3394,6 +3413,8 @@ export type KnowledgeDocumentsReadDocumentData = {
     path: {
         /**
          * Document Id
+         *
+         * 知识库文档 ID
          */
         document_id: string;
     };
@@ -3440,6 +3461,8 @@ export type KnowledgeDocumentsReadDocumentPreviewData = {
     path: {
         /**
          * Document Id
+         *
+         * 知识库文档 ID
          */
         document_id: string;
     };
@@ -3494,16 +3517,22 @@ export type KnowledgeDocumentsReadDocumentChunksData = {
     path: {
         /**
          * Document Id
+         *
+         * 知识库文档 ID
          */
         document_id: string;
     };
     query?: {
         /**
          * Skip
+         *
+         * 跳过的切片数
          */
         skip?: number;
         /**
          * Limit
+         *
+         * 返回的最大切片数
          */
         limit?: number;
     };
@@ -3553,6 +3582,8 @@ export type KnowledgeDocumentsDownloadOriginalDocumentData = {
     path: {
         /**
          * Document Id
+         *
+         * 知识库文档 ID
          */
         document_id: string;
     };
@@ -3607,6 +3638,8 @@ export type KnowledgeDocumentsMoveDocumentData = {
     path: {
         /**
          * Document Id
+         *
+         * 知识库文档 ID
          */
         document_id: string;
     };
@@ -3653,6 +3686,8 @@ export type KnowledgeDocumentsRetryDocumentData = {
     path: {
         /**
          * Document Id
+         *
+         * 知识库文档 ID
          */
         document_id: string;
     };
@@ -4869,20 +4904,14 @@ export type FileLibrariesReadFileLibrariesData = {
     query?: {
         /**
          * Skip
-         *
-         * 跳过的记录数
          */
         skip?: number;
         /**
          * Limit
-         *
-         * 返回的最大记录数
          */
         limit?: number;
         /**
          * Search
-         *
-         * 按文件库名称搜索
          */
         search?: string | null;
     };
@@ -4965,8 +4994,6 @@ export type FileLibrariesDeleteFileLibraryData = {
     path: {
         /**
          * File Library Id
-         *
-         * 文件库 ID
          */
         file_library_id: string;
     };
@@ -5059,8 +5086,6 @@ export type FileLibrariesUpdateFileLibraryData = {
     path: {
         /**
          * File Library Id
-         *
-         * 文件库 ID
          */
         file_library_id: string;
     };
@@ -5111,8 +5136,6 @@ export type FileLibrariesReadFoldersData = {
     path: {
         /**
          * File Library Id
-         *
-         * 文件库 ID
          */
         file_library_id: string;
     };
@@ -5159,8 +5182,6 @@ export type FileLibrariesCreateFolderData = {
     path: {
         /**
          * File Library Id
-         *
-         * 文件库 ID
          */
         file_library_id: string;
     };
@@ -5211,14 +5232,10 @@ export type FileLibrariesUpdateFolderData = {
     path: {
         /**
          * File Library Id
-         *
-         * 文件库 ID
          */
         file_library_id: string;
         /**
          * Folder Id
-         *
-         * 文件夹 ID
          */
         folder_id: string;
     };
@@ -5269,14 +5286,10 @@ export type FileLibrariesMoveFolderData = {
     path: {
         /**
          * File Library Id
-         *
-         * 文件库 ID
          */
         file_library_id: string;
         /**
          * Folder Id
-         *
-         * 文件夹 ID
          */
         folder_id: string;
     };
@@ -5327,28 +5340,20 @@ export type FileLibrariesReadDirectoryData = {
     path: {
         /**
          * File Library Id
-         *
-         * 文件库 ID
          */
         file_library_id: string;
     };
     query?: {
         /**
          * Folder Id
-         *
-         * 文件夹 ID；不传表示根目录
          */
         folder_id?: string | null;
         /**
          * Skip
-         *
-         * 跳过的记录数
          */
         skip?: number;
         /**
          * Limit
-         *
-         * 返回的最大记录数
          */
         limit?: number;
     };
@@ -5394,8 +5399,6 @@ export type FileLibrariesDeleteDirectoryEntriesData = {
     path: {
         /**
          * File Library Id
-         *
-         * 文件库 ID
          */
         file_library_id: string;
     };
@@ -5442,16 +5445,12 @@ export type FileLibrariesCreateDocumentUploadData = {
     path: {
         /**
          * File Library Id
-         *
-         * 文件库 ID
          */
         file_library_id: string;
     };
     query?: {
         /**
          * Folder Id
-         *
-         * 导入到的文件夹 ID；不传表示根目录
          */
         folder_id?: string | null;
     };
@@ -5501,8 +5500,6 @@ export type LibraryDocumentsCompleteDocumentUploadData = {
     path: {
         /**
          * Document Id
-         *
-         * 待确认上传的文件 ID
          */
         document_id: string;
     };
@@ -5743,3 +5740,87 @@ export type LibraryDocumentsMoveDocumentResponses = {
 };
 
 export type LibraryDocumentsMoveDocumentResponse = LibraryDocumentsMoveDocumentResponses[keyof LibraryDocumentsMoveDocumentResponses];
+
+export type DataRefreshReadCurrentRefreshData = {
+    body?: never;
+    path: {
+        source: RefreshSource;
+    };
+    query?: never;
+    url: '/api/v1/admin/data-refresh/{source}';
+};
+
+export type DataRefreshReadCurrentRefreshErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DataRefreshReadCurrentRefreshError = DataRefreshReadCurrentRefreshErrors[keyof DataRefreshReadCurrentRefreshErrors];
+
+export type DataRefreshReadCurrentRefreshResponses = {
+    /**
+     * Successful Response
+     */
+    200: CurrentRefreshJob;
+};
+
+export type DataRefreshReadCurrentRefreshResponse = DataRefreshReadCurrentRefreshResponses[keyof DataRefreshReadCurrentRefreshResponses];
+
+export type DataRefreshStartDataRefreshData = {
+    body?: never;
+    path: {
+        source: RefreshSource;
+    };
+    query?: never;
+    url: '/api/v1/admin/data-refresh/{source}';
+};
+
+export type DataRefreshStartDataRefreshErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DataRefreshStartDataRefreshError = DataRefreshStartDataRefreshErrors[keyof DataRefreshStartDataRefreshErrors];
+
+export type DataRefreshStartDataRefreshResponses = {
+    /**
+     * Successful Response
+     */
+    202: RefreshJob;
+};
+
+export type DataRefreshStartDataRefreshResponse = DataRefreshStartDataRefreshResponses[keyof DataRefreshStartDataRefreshResponses];
+
+export type DataRefreshReadRefreshStatusData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/data-refresh/jobs/{job_id}';
+};
+
+export type DataRefreshReadRefreshStatusErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DataRefreshReadRefreshStatusError = DataRefreshReadRefreshStatusErrors[keyof DataRefreshReadRefreshStatusErrors];
+
+export type DataRefreshReadRefreshStatusResponses = {
+    /**
+     * Successful Response
+     */
+    200: RefreshStatus;
+};
+
+export type DataRefreshReadRefreshStatusResponse = DataRefreshReadRefreshStatusResponses[keyof DataRefreshReadRefreshStatusResponses];

@@ -126,7 +126,6 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
   const directoryLoadFailed =
     (foldersQuery.isError && foldersQuery.data === undefined) ||
     (directoryQuery.isError && directoryQuery.data === undefined);
-  const hasDirectoryEntries = directoryEntries.length > 0;
 
   function invalidateDocuments(): void {
     void queryClient.invalidateQueries({
@@ -263,7 +262,7 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
           }}
         />
       ) : (
-        <section className="flex flex-1 flex-col gap-3 md:min-h-0">
+        <section className="flex flex-1 flex-col gap-3 md:min-h-0 md:overflow-y-auto">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Breadcrumb>
               <BreadcrumbList>
@@ -326,28 +325,23 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
                 )}
               />
             </CollectionContent>
-          ) : null}
+          ) : pageOutOfRange ? (
+            <PageOutOfRange
+              href={getLibraryDirectoryHref(fileLibraryId, 1, currentFolderId)}
+            />
+          ) : (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FolderOpenIcon aria-hidden="true" />
+                </EmptyMedia>
+                <EmptyTitle>此文件夹为空</EmptyTitle>
+                <EmptyDescription>上传文件或新建文件夹。</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          )}
         </section>
       )}
-
-      {!directoryPending &&
-        !directoryLoadFailed &&
-        !hasDirectoryEntries &&
-        (pageOutOfRange ? (
-          <PageOutOfRange
-            href={getLibraryDirectoryHref(fileLibraryId, 1, currentFolderId)}
-          />
-        ) : (
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <FolderOpenIcon aria-hidden="true" />
-              </EmptyMedia>
-              <EmptyTitle>此文件夹为空</EmptyTitle>
-              <EmptyDescription>上传文件或新建文件夹。</EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ))}
       <PagePagination
         className="shrink-0"
         ariaLabel="文件库目录分页"
