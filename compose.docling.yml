@@ -14,7 +14,7 @@ services:
       DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "true"
       DOCLING_SERVE_CUSTOM_PICTURE_DESCRIPTION_PRESETS: |-
         {
-          "deepseek-v4-flash-vision-exp": {
+          "deepseek-flash": {
             "engine_options": {
               "engine_type": "api",
               "url": "${DOCLING_PICTURE_DESCRIPTION_URL:-http://litellm:4000/v1/chat/completions}",
@@ -24,8 +24,8 @@ services:
               }
             },
             "model_spec": {
-              "name": "DeepSeek V4 Flash Vision Exp",
-              "default_repo_id": "deepseek/deepseek-v4-flash-vision-exp",
+              "name": "DeepSeek Flash",
+              "default_repo_id": "deepseek/deepseek-flash",
               "prompt": "请用中文简洁、准确地描述图片中的关键信息。图表需说明标题、指标、趋势和重要数值；不要猜测看不清的内容。",
               "response_format": "plaintext"
             },
