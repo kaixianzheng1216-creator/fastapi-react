@@ -5,7 +5,6 @@ from collections.abc import Sequence
 
 from sqlmodel import Session, col, select
 
-from app.db.timestamps import utc_now
 from app.modules.files import object_storage
 from app.modules.files.constants import KNOWLEDGE_CONTENT_TYPES
 from app.modules.files.exceptions import (
@@ -421,9 +420,6 @@ def to_public(
     document: KnowledgeDocument, stored_file: StoredFile
 ) -> KnowledgeDocumentPublic:
     finished_at = document.processing_finished_at
-
-    if document.status == KnowledgeDocumentStatus.PROCESSING:
-        finished_at = utc_now()
 
     duration = None
 
