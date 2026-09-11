@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type LucideIcon,
   BookOpenIcon,
   FolderOpenIcon,
   ChevronRightIcon,
@@ -41,39 +42,203 @@ import {
 } from "@/components/ui/sidebar";
 import type { UserPublic } from "@/lib/client";
 
-const businessModules = [
-  {
-    name: "品牌营销",
-    icon: TagIcon,
-    items: [
-      {
-        name: "区域数据",
-        href: "/admin/brand-marketing/regional-data",
-      },
-    ],
-  },
-  {
-    name: "内容运营",
-    icon: FileTextIcon,
-    items: [
-      {
-        name: "平台榜单",
-        href: "/admin/content-operations/rankings",
-      },
-    ],
-  },
-  {
-    name: "达人投放",
-    icon: UsersIcon,
-    items: [
-      {
-        name: "达人资源",
-        href: "/admin/influencer-marketing/resources",
-      },
-    ],
-  },
-  { name: "海外营销", icon: GlobeIcon, items: [] },
-];
+type NavigationLink = {
+  name: string;
+  href: string;
+};
+
+type NavigationItem = { name: string; icon: LucideIcon } & (
+  | { type: "link"; href: string }
+  | { type: "group"; items: readonly NavigationLink[] }
+);
+
+const navigation: {
+  main: readonly NavigationItem[];
+  footer: readonly NavigationItem[];
+} = {
+  main: [
+    {
+      type: "link",
+      name: "用户",
+      icon: UserIcon,
+      href: "/admin/users",
+    },
+    {
+      type: "link",
+      name: "文件库",
+      icon: FolderOpenIcon,
+      href: "/admin/file-libraries",
+    },
+    {
+      type: "link",
+      name: "知识库",
+      icon: BookOpenIcon,
+      href: "/admin/knowledge-bases",
+    },
+    {
+      type: "group",
+      name: "品牌营销",
+      icon: TagIcon,
+      items: [
+        {
+          name: "区域数据",
+          href: "/admin/brand-marketing/regional-data",
+        },
+      ],
+    },
+    {
+      type: "group",
+      name: "内容运营",
+      icon: FileTextIcon,
+      items: [
+        {
+          name: "平台榜单",
+          href: "/admin/content-operations/rankings",
+        },
+        {
+          name: "内容搜索",
+          href: "/admin/content-operations/search",
+        },
+        {
+          name: "热门内容",
+          href: "/admin/content-operations/hot-content",
+        },
+        {
+          name: "热门关键词",
+          href: "/admin/content-operations/hot-keywords",
+        },
+        {
+          name: "增长关键词",
+          href: "/admin/content-operations/growing-keywords",
+        },
+      ],
+    },
+    {
+      type: "group",
+      name: "达人投放",
+      icon: UsersIcon,
+      items: [
+        {
+          name: "达人资源",
+          href: "/admin/influencer-marketing/resources",
+        },
+      ],
+    },
+    {
+      type: "group",
+      name: "海外营销",
+      icon: GlobeIcon,
+      items: [
+        {
+          name: "海外营销",
+          href: "/admin/overseas-marketing",
+        },
+      ],
+    },
+  ],
+  footer: [
+    {
+      type: "link",
+      name: "MCP 接入",
+      icon: PlugIcon,
+      href: "/admin/mcp",
+    },
+  ],
+};
+
+function isPathActive(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function AdminNavigation({
+  items,
+  pathname,
+}: {
+  items: readonly NavigationItem[];
+  pathname: string;
+}) {
+  return (
+    <SidebarMenu>
+      {items.map((item) => (
+        <AdminNavigationItem key={item.name} item={item} pathname={pathname} />
+      ))}
+    </SidebarMenu>
+  );
+}
+
+function AdminNavigationItem({
+  item,
+  pathname,
+}: {
+  item: NavigationItem;
+  pathname: string;
+}) {
+  if (item.type === "link") {
+    const isActive = isPathActive(pathname, item.href);
+
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={isActive} tooltip={item.name}>
+          <Link href={item.href} aria-current={isActive ? "page" : undefined}>
+            <item.icon aria-hidden="true" />
+            <span>{item.name}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  }
+
+  const isActive = item.items.some((child) => isPathActive(pathname, child.href));
+
+  return (
+    <Collapsible asChild defaultOpen={isActive}>
+      <SidebarMenuItem className="group/collapsible">
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton
+            isActive={isActive}
+            className="data-[active=true]:bg-transparent"
+            tooltip={item.name}
+          >
+            <item.icon aria-hidden="true" />
+            <span>{item.name}</span>
+            <ChevronRightIcon
+              aria-hidden="true"
+              className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90"
+            />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {item.items.length > 0 ? (
+              item.items.map((child) => {
+                const childIsActive = isPathActive(pathname, child.href);
+
+                return (
+                  <SidebarMenuSubItem key={child.href}>
+                    <SidebarMenuSubButton asChild isActive={childIsActive}>
+                      <Link
+                        href={child.href}
+                        aria-current={childIsActive ? "page" : undefined}
+                      >
+                        {child.name}
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                );
+              })
+            ) : (
+              <SidebarMenuSubItem>
+                <SidebarMenuSubButton asChild aria-disabled="true">
+                  <span>暂未配置</span>
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
+            )}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  );
+}
 
 export function AdminSidebar({ user }: { user: UserPublic }) {
   const pathname = usePathname();
@@ -103,115 +268,13 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname.startsWith("/admin/users")}
-                  tooltip="用户"
-                >
-                  <Link href="/admin/users">
-                    <UserIcon aria-hidden="true" />
-                    <span>用户</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname.startsWith("/admin/file-libraries")}
-                  tooltip="文件库"
-                >
-                  <Link href="/admin/file-libraries">
-                    <FolderOpenIcon aria-hidden="true" />
-                    <span>文件库</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname.startsWith("/admin/knowledge-bases")}
-                  tooltip="知识库"
-                >
-                  <Link href="/admin/knowledge-bases">
-                    <BookOpenIcon aria-hidden="true" />
-                    <span>知识库</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              {businessModules.map((module) => {
-                const moduleIsActive = module.items.some((item) =>
-                  pathname.startsWith(item.href),
-                );
-
-                return (
-                  <Collapsible
-                    key={module.name}
-                    asChild
-                    defaultOpen={moduleIsActive}
-                  >
-                    <SidebarMenuItem className="group/collapsible">
-                      <CollapsibleTrigger asChild>
-                        <SidebarMenuButton
-                          isActive={moduleIsActive}
-                          className="data-[active=true]:bg-transparent"
-                          tooltip={module.name}
-                        >
-                          <module.icon aria-hidden="true" />
-                          <span>{module.name}</span>
-                          <ChevronRightIcon
-                            aria-hidden="true"
-                            className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90"
-                          />
-                        </SidebarMenuButton>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <SidebarMenuSub>
-                          {module.items.length > 0 ? (
-                            module.items.map((item) => (
-                              <SidebarMenuSubItem key={item.href}>
-                                <SidebarMenuSubButton
-                                  asChild
-                                  isActive={pathname.startsWith(item.href)}
-                                >
-                                  <Link href={item.href}>{item.name}</Link>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            ))
-                          ) : (
-                            <SidebarMenuSubItem>
-                              <SidebarMenuSubButton aria-disabled="true">
-                                <span>暂未配置</span>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          )}
-                        </SidebarMenuSub>
-                      </CollapsibleContent>
-                    </SidebarMenuItem>
-                  </Collapsible>
-                );
-              })}
-            </SidebarMenu>
+            <AdminNavigation items={navigation.main} pathname={pathname} />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname.startsWith("/admin/mcp")}
-              tooltip="MCP 接入"
-            >
-              <Link href="/admin/mcp">
-                <PlugIcon aria-hidden="true" />
-                <span>MCP 接入</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <AdminNavigation items={navigation.footer} pathname={pathname} />
 
         <SidebarSeparator className="mx-0" />
         <SidebarMenu>

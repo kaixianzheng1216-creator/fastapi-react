@@ -1,6 +1,7 @@
 "use client";
 
 import { CollectionContent } from "@/components/common/collection-content";
+import { UnderConstruction } from "@/components/common/under-construction";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
@@ -271,14 +272,7 @@ export function PlatformRankings() {
                 aria-busy={item.code === "bilibili" && rankingQuery.isFetching}
               >
                 {item.code !== "bilibili" ? (
-                  <Empty>
-                    <EmptyHeader>
-                      <EmptyMedia variant="icon">
-                        <ChartNoAxesColumnIcon aria-hidden="true" />
-                      </EmptyMedia>
-                      <EmptyTitle>暂无{item.name}榜单数据</EmptyTitle>
-                    </EmptyHeader>
-                  </Empty>
+                  <UnderConstruction title={`${item.name}榜单`} />
                 ) : (
                   <>
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -425,7 +419,7 @@ export function PlatformRankings() {
 
 function getPlatform(value: string | null): PlatformCode {
   return (
-    PLATFORMS.find((platform) => platform.code === value)?.code ?? "bilibili"
+    PLATFORMS.find((platform) => platform.code === value)?.code ?? "douyin"
   );
 }
 
