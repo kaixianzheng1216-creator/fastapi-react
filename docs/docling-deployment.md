@@ -13,7 +13,7 @@ docker compose up -d
 修改 `.env`：
 
 ```dotenv
-DOCLING_BASE_URL=http://解析服务器公网IP:5001
+DOCLING_BASE_URL=http://175.178.76.155:5001
 LITELLM_BIND_HOST=0.0.0.0
 ```
 
@@ -49,8 +49,8 @@ cp -i .env.docling.example .env
 修改 `.env`，其余值保留：
 
 ```dotenv
-DOCLING_PICTURE_DESCRIPTION_URL=http://主服务器公网IP:4000/v1/chat/completions
-LITELLM_MASTER_KEY=与主服务器相同的密钥
+DOCLING_PICTURE_DESCRIPTION_URL=http://43.139.210.125:4000/v1/chat/completions
+LITELLM_MASTER_KEY=changethis
 ```
 
 只启动 Docling：
