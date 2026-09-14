@@ -4,20 +4,13 @@ model_list:
       model: deepseek/deepseek-v4-pro
       api_base: os.environ/NEWAPI_BASE_URL
       api_key: os.environ/NEWAPI_API_KEY
-    model_info:
-      mode: chat
   - model_name: deepseek/deepseek-flash
     litellm_params:
-      model: openai/deepseek-flash
+      model: deepseek/deepseek-flash
       api_base: os.environ/NEWAPI_BASE_URL
       api_key: os.environ/NEWAPI_API_KEY
-      extra_body:
-        thinking:
-          type: disabled
-    model_info:
-      mode: chat
-      supports_vision: true
-      supported_openai_params: [thinking]
+      thinking:
+        type: disabled
 
 mcp_servers:
   firecrawl:
