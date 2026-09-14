@@ -4,6 +4,7 @@ import logging
 import multiprocessing
 import time
 import uuid
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from typing import Any, Literal, cast
 
 import httpx
@@ -73,15 +74,52 @@ def run() -> None:
 
     _fail_processing_documents_after_restart()
 
-    while True:
-        with Session(engine) as session:
-            claimed_document = _claim_document(session)
+    _run_document_queue()
 
-        if claimed_document is None:
-            time.sleep(POLL_INTERVAL_SECONDS)
-            continue
 
-        _process_document_with_timeout(claimed_document)
+def _run_document_queue() -> None:
+    """按可用名额领取任务，每个线程监督一个独立处理子进程。"""
+    limit = knowledge_settings.KNOWLEDGE_MAX_CONCURRENT_DOCUMENTS
+
+    pending: dict[Future[None], uuid.UUID] = {}
+
+    with ThreadPoolExecutor(max_workers=limit) as executor:
+        while True:
+            while len(pending) < limit:
+                with Session(engine) as session:
+                    document_id = _claim_document(session)
+
+                if document_id is None:
+                    break
+
+                future = executor.submit(_process_document_with_timeout, document_id)
+
+                pending[future] = document_id
+
+            if not pending:
+                time.sleep(POLL_INTERVAL_SECONDS)
+
+                continue
+
+            completed, _ = wait(
+                pending, timeout=POLL_INTERVAL_SECONDS, return_when=FIRST_COMPLETED
+            )
+
+            for future in completed:
+                document_id = pending.pop(future)
+
+                try:
+                    future.result()
+                except Exception:
+                    logger.exception(
+                        "文档处理调度失败", extra={"document_id": str(document_id)}
+                    )
+
+                    _finish_with_error(
+                        document_id=document_id,
+                        status=KnowledgeDocumentStatus.FAILED,
+                        error_message="文档处理失败，请重试",
+                    )
 
 
 def _claim_document(session: Session) -> uuid.UUID | None:

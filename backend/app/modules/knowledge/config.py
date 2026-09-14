@@ -27,6 +27,7 @@ class KnowledgeSettings(BaseSettings):
     EMBEDDING_CHUNK_MAX_TOKENS: Annotated[int, Field(gt=0)]
 
     EMBEDDING_TOKENIZER: str
+    KNOWLEDGE_MAX_CONCURRENT_DOCUMENTS: Annotated[int, Field(gt=0)]
 
 
 settings = KnowledgeSettings.model_validate({})
