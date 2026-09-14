@@ -31,6 +31,7 @@ docker compose -f compose.yml up -d --remove-orphans
 
 ```bash
 git clone https://github.com/kaixianzheng1216-creator/fastapi-react.git
+
 cd fastapi-react
 ```
 
@@ -50,6 +51,7 @@ cp -i .env.docling.example .env
 
 ```dotenv
 DOCLING_PICTURE_DESCRIPTION_URL=http://43.139.210.125:4000/v1/chat/completions
+
 LITELLM_MASTER_KEY=changethis
 ```
 
