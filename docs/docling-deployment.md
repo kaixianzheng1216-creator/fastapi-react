@@ -66,6 +66,7 @@ docker compose -f compose.docling.yml up -d
 
 ```bash
 git pull --ff-only
+
 docker compose -f compose.docling.yml up -d
 ```
 
