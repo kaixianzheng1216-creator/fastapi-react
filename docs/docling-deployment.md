@@ -1,6 +1,8 @@
 # Docling 独立部署
 
-## 本地
+## 全 Docker 运行
+
+默认前端、后端和依赖服务均通过 Docker 运行。首次将 `.env.example` 复制为 `.env` 并填写密钥。浏览器访问 `http://localhost:3001`，服务之间使用容器名通信。
 
 ```bash
 docker compose up -d
