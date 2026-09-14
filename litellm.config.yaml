@@ -9,8 +9,6 @@ model_list:
       model: deepseek/deepseek-flash
       api_base: os.environ/NEWAPI_BASE_URL
       api_key: os.environ/NEWAPI_API_KEY
-      thinking:
-        type: disabled
 
 mcp_servers:
   firecrawl:
