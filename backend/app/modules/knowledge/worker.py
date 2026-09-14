@@ -39,9 +39,21 @@ from app.modules.knowledge.models import KnowledgeDocument, KnowledgeDocumentSta
 
 POLL_INTERVAL_SECONDS = 2
 PROCESSING_TIMEOUT_SECONDS = 15 * 60
+PROCESS_START_METHOD = "spawn"
+PROCESS_SUCCESS_EXIT_CODE = 0
+
+DOCUMENT_SCHEDULING_ERROR_LOG = "知识库文档处理调度失败"
+DOCUMENT_PROCESSING_CANCELLED_LOG = "知识库文档处理已取消：文档已删除"
+DOCUMENT_PROCESSING_ERROR_LOG = "知识库文档处理失败"
+DOCUMENT_PROCESS_EXIT_ERROR_LOG = "知识库文档处理进程异常退出"
+DOCUMENT_CACHE_INVALID_LOG = "知识库文档解析缓存无效，将重新解析原文件"
 DOCUMENT_PROCESSING_TIMEOUT_LOG = "知识库文档处理超时"
+
+DOCUMENT_PROCESSING_ERROR_MESSAGE = "文档处理失败，请重试"
 DOCUMENT_PROCESSING_TIMEOUT_MESSAGE = "文档处理超时"
+DOCUMENT_PROCESSING_INTERRUPTED_MESSAGE = "Worker 重启中断了文档处理"
 DOCLING_INVALID_RESPONSE_MESSAGE = "Docling 返回内容无效"
+
 IMAGE_DESCRIPTION_MODEL = "deepseek/deepseek-flash"
 IMAGE_DESCRIPTION_PROMPT = (
     "请用中文简洁、准确地描述图片中的关键信息。"
@@ -112,13 +124,14 @@ def _run_document_queue() -> None:
                     future.result()
                 except Exception:
                     logger.exception(
-                        "文档处理调度失败", extra={"document_id": str(document_id)}
+                        DOCUMENT_SCHEDULING_ERROR_LOG,
+                        extra={"document_id": str(document_id)},
                     )
 
                     _finish_with_error(
                         document_id=document_id,
                         status=KnowledgeDocumentStatus.FAILED,
-                        error_message="文档处理失败，请重试",
+                        error_message=DOCUMENT_PROCESSING_ERROR_MESSAGE,
                     )
 
 
@@ -151,25 +164,56 @@ def _claim_document(session: Session) -> uuid.UUID | None:
 
 
 def _process_document_with_timeout(document_id: uuid.UUID) -> None:
-    """在独立子进程中限时处理文档。"""
-    process = multiprocessing.get_context("spawn").Process(
+    """监督处理子进程，在文档删除或超时时终止任务。"""
+    process = multiprocessing.get_context(PROCESS_START_METHOD).Process(
         target=_process_document,
         args=(document_id,),
     )
 
     process.start()
 
-    process.join(PROCESSING_TIMEOUT_SECONDS)
+    deadline = time.monotonic() + PROCESSING_TIMEOUT_SECONDS
+    deleted = False
+    timed_out = False
 
-    timed_out = process.is_alive()
+    try:
+        while True:
+            process.join(
+                min(POLL_INTERVAL_SECONDS, max(0, deadline - time.monotonic()))
+            )
 
-    if timed_out:
-        process.kill()
-        process.join()
+            with Session(engine) as session:
+                deleted = session.get(KnowledgeDocument, document_id) is None
 
-    exit_code = process.exitcode
+            if deleted or not process.is_alive():
+                break
 
-    process.close()
+            if time.monotonic() >= deadline:
+                timed_out = True
+
+                break
+    finally:
+        if process.is_alive():
+            process.kill()
+            process.join()
+
+        exit_code = process.exitcode
+
+        process.close()
+
+    if deleted:
+        cleanup_deleted_documents(
+            [document_id],
+            [document_json_key(document_id), document_preview_key(document_id)],
+            delete_images=True,
+        )
+
+        logger.info(
+            DOCUMENT_PROCESSING_CANCELLED_LOG,
+            extra={"document_id": str(document_id)},
+        )
+
+        return
 
     if timed_out:
         logger.warning(
@@ -185,18 +229,18 @@ def _process_document_with_timeout(document_id: uuid.UUID) -> None:
 
         return
 
-    if exit_code == 0:
+    if exit_code == PROCESS_SUCCESS_EXIT_CODE:
         return
 
     logger.error(
-        "知识库文档处理进程异常退出",
+        DOCUMENT_PROCESS_EXIT_ERROR_LOG,
         extra={"document_id": str(document_id), "exit_code": exit_code},
     )
 
     _finish_with_error(
         document_id=document_id,
         status=KnowledgeDocumentStatus.FAILED,
-        error_message="文档处理失败，请重试",
+        error_message=DOCUMENT_PROCESSING_ERROR_MESSAGE,
     )
 
 
@@ -251,7 +295,7 @@ def _process_document(document_id: uuid.UUID) -> None:
         )
     except Exception as error:
         logger.exception(
-            "知识库文档处理失败",
+            DOCUMENT_PROCESSING_ERROR_LOG,
             extra={"document_id": str(document_id)},
         )
 
@@ -298,7 +342,7 @@ def _load_or_parse_document(
         pass
     except ValidationError:
         logger.warning(
-            "知识库文档解析缓存无效，将重新解析原文件",
+            DOCUMENT_CACHE_INVALID_LOG,
             extra={"document_id": str(document_id)},
             exc_info=True,
         )
@@ -588,7 +632,7 @@ def _fail_processing_documents_after_restart() -> None:
             .where(col(KnowledgeDocument.status) == KnowledgeDocumentStatus.PROCESSING)
             .values(
                 status=KnowledgeDocumentStatus.FAILED,
-                error_message="Worker 重启中断了文档处理",
+                error_message=DOCUMENT_PROCESSING_INTERRUPTED_MESSAGE,
             )
             .returning(col(KnowledgeDocument.id))
         ).all()
