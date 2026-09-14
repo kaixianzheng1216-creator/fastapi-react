@@ -23,9 +23,9 @@ services:
     volumes:
       - app-db-data:/var/lib/postgresql
     environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?Variable not set}
-      POSTGRES_USER: ${POSTGRES_USER?Variable not set}
       POSTGRES_DB: ${POSTGRES_DB?Variable not set}
+      POSTGRES_USER: ${POSTGRES_USER?Variable not set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?Variable not set}
 
   litellm:
     image: docker.litellm.ai/berriai/litellm:v1.94.0
@@ -75,6 +75,8 @@ services:
     environment:
       - LITELLM_BASE_URL=http://litellm:4000/v1
       - DOCLING_BASE_URL=${DOCLING_BASE_URL:-http://docling:5001}
+      - EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
+      - PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
       - POSTGRES_SERVER=db
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
@@ -98,13 +100,15 @@ services:
       - .env
     environment:
       - FRONTEND_URL=http://frontend:3000
-      - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
       - LITELLM_BASE_URL=http://litellm:4000/v1
+      - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
       - DOCLING_BASE_URL=${DOCLING_BASE_URL:-http://docling:5001}
+      - EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
+      - QDRANT_URL=http://qdrant:6333
+      - PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
       - POSTGRES_SERVER=db
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
-      - QDRANT_URL=http://qdrant:6333
       - LANGFUSE_TRACING_ENVIRONMENT=${ENVIRONMENT}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/utils/health-check/')"]
@@ -139,13 +143,15 @@ services:
       - .env
     environment:
       - FRONTEND_URL=http://frontend:3000
-      - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
       - LITELLM_BASE_URL=http://litellm:4000/v1
+      - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
       - DOCLING_BASE_URL=${DOCLING_BASE_URL:-http://docling:5001}
+      - EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
+      - QDRANT_URL=http://qdrant:6333
+      - PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
       - POSTGRES_SERVER=db
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
-      - QDRANT_URL=http://qdrant:6333
       - LANGFUSE_TRACING_ENVIRONMENT=${ENVIRONMENT}
     build:
       context: .
@@ -169,13 +175,15 @@ services:
     env_file:
       - .env
     environment:
-      - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
       - LITELLM_BASE_URL=http://litellm:4000/v1
+      - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
       - DOCLING_BASE_URL=${DOCLING_BASE_URL:-http://docling:5001}
+      - EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
+      - QDRANT_URL=http://qdrant:6333
+      - PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
       - POSTGRES_SERVER=db
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
-      - QDRANT_URL=http://qdrant:6333
 
   frontend:
     image: frontend

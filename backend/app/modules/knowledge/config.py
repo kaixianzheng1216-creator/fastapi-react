@@ -26,7 +26,7 @@ class KnowledgeSettings(BaseSettings):
     EMBEDDING_DIMENSIONS: Annotated[int, Field(gt=0)]
     EMBEDDING_CHUNK_MAX_TOKENS: Annotated[int, Field(gt=0)]
 
-    EMBEDDING_TOKENIZER: str = "BAAI/bge-m3"
+    EMBEDDING_TOKENIZER: str
 
 
 settings = KnowledgeSettings.model_validate({})

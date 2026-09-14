@@ -42,7 +42,7 @@ class Settings(BaseSettings):
         list[AnyUrl] | str, BeforeValidator(parse_cors)
     ] = []
     FRONTEND_URL: AnyHttpUrl = AnyHttpUrl("http://localhost:3001")
-    PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: str | None = None
+    PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: str
 
     @computed_field  # type: ignore[prop-decorator]
     @property
