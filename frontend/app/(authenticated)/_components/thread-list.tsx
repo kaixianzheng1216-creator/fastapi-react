@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarItemButton } from "@/app/(authenticated)/_components/sidebar-item-button";
 import {
   type ConversationKind,
+  useConversationKind,
   useNewConversationKind,
 } from "@/app/conversation-kind";
 import { searchConversations } from "@/lib/conversation-thread-list-adapter";
@@ -462,16 +463,13 @@ const ThreadListSkeleton: FC = () => {
 export const ThreadListItem: FC = () => {
   const pathname = usePathname();
   const router = useRouter();
-  const { kind: selectedKind } = useNewConversationKind();
+
   const isActive = useAuiState(
     (state) => state.threads.mainThreadId === state.threadListItem.id,
   );
-  const savedKind = useAuiState(
-    (state) =>
-      state.threadListItem.custom?.kind as ConversationKind | undefined,
-  );
-  const isResearch =
-    (savedKind ?? (isActive ? selectedKind : "chat")) === "research";
+
+  const conversationKind = useConversationKind();
+  const isResearch = conversationKind === "research";
 
   return (
     <ThreadListItemPrimitive.Root
@@ -487,7 +485,9 @@ export const ThreadListItem: FC = () => {
           data-slot="aui_thread-list-item-trigger"
           onClick={() => router.replace("/")}
         >
-          {isResearch ? (
+          {!conversationKind ? (
+            <Skeleton className="size-4" />
+          ) : isResearch ? (
             <SearchIcon aria-hidden="true" />
           ) : (
             <MessageCircleIcon aria-hidden="true" />

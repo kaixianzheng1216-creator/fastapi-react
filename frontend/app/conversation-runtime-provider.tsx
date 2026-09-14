@@ -21,7 +21,6 @@ import { RESUMABLE_STREAM_ID_HEADER } from "assistant-stream/resumable";
 import type { ReadonlyJSONObject } from "assistant-stream/utils";
 import {
   type ReactNode,
-  type RefObject,
   useEffect,
   useMemo,
   useRef,
@@ -32,6 +31,7 @@ import { toast } from "sonner";
 import {
   type ConversationKind,
   NewConversationKindContext,
+  useConversationKind,
 } from "@/app/conversation-kind";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { getAccessToken, handleUnauthorizedResponse } from "@/lib/auth";
@@ -79,7 +79,7 @@ export function ConversationRuntimeProvider({
 
   const listRuntime = useRemoteThreadListRuntime({
     adapter: listAdapter,
-    runtimeHook: () => useConversationRuntime(newKindRef),
+    runtimeHook: useConversationRuntime,
   });
 
   return (
@@ -91,10 +91,10 @@ export function ConversationRuntimeProvider({
   );
 }
 
-function useConversationRuntime(
-  newKindRef: RefObject<ConversationKind>,
-) {
+function useConversationRuntime() {
   const assistant = useAui();
+  const conversationKind = useConversationKind();
+
   const [threadId] = useState(() => {
     const thread = assistant.threadListItem.getState();
 
@@ -103,6 +103,7 @@ function useConversationRuntime(
 
   const [isLoading, setIsLoading] = useState(!!threadId);
   const [runId, setRunId] = useState<string | null>(null);
+
   const fileTransport = useMemo(createFileAttachmentTransport, []);
 
   const savedStatePromiseRef = useRef<Promise<AgentState> | null>(null);
@@ -127,7 +128,7 @@ function useConversationRuntime(
       state: {
         ...toApplicationState(
           state,
-          state.kind ?? (!threadId ? newKindRef.current : undefined),
+          conversationKind,
           connection.isSending,
         ),
         isLoading,
@@ -138,6 +139,7 @@ function useConversationRuntime(
 
     headers: async (): Promise<Record<string, string>> => {
       const token = getAccessToken();
+
       return token ? { Authorization: `Bearer ${token}` } : {};
     },
 
@@ -149,8 +151,17 @@ function useConversationRuntime(
       const { remoteId: remoteThreadId } =
         await assistant.threadListItem.initialize();
 
+      if (!assistant.threadListItem.getState().custom?.kind) {
+        await assistant.threads.reload();
+
+        if (!assistant.threadListItem.getState().custom?.kind) {
+          throw new Error("会话类型加载失败，请稍后重试");
+        }
+      }
+
       if (!savedState && threadId && !connectedThreadIdRef.current) {
         savedState = await readConversationState(remoteThreadId);
+
         runtime.thread.importExternalState(savedState);
       }
 

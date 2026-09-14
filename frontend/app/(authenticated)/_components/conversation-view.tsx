@@ -56,6 +56,17 @@ type ConversationViewProps = {
 export function ConversationView(props: ConversationViewProps) {
   const conversationKind = useConversationKind();
 
+  if (!conversationKind) {
+    return (
+      <div
+        role="status"
+        className="text-muted-foreground flex flex-1 items-center justify-center text-sm"
+      >
+        正在加载会话…
+      </div>
+    );
+  }
+
   return conversationKind === "research" ? (
     <ResearchView />
   ) : (

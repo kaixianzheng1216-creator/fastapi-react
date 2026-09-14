@@ -2,6 +2,7 @@
 
 import { useAuiState } from "@assistant-ui/react";
 import { createContext, useContext } from "react";
+
 import type { ConversationKind } from "@/lib/client";
 
 export type { ConversationKind } from "@/lib/client";
@@ -26,12 +27,14 @@ export function useNewConversationKind() {
   return context;
 }
 
-export function useConversationKind(): ConversationKind {
+export function useConversationKind(): ConversationKind | undefined {
   const newConversationKind = useNewConversationKind().kind;
 
   const savedKind = useAuiState(
     (state) => state.threadListItem.custom?.kind as ConversationKind | undefined,
   );
 
-  return savedKind ?? newConversationKind;
+  const isNew = useAuiState((state) => state.threadListItem.status === "new");
+
+  return isNew ? newConversationKind : savedKind;
 }

@@ -41,8 +41,16 @@ export function ThreadHeader({
   onRightSidebarOpenChange: (open: boolean) => void;
   onMobileRightSidebarOpen: () => void;
 }) {
-  const isResearch = useConversationKind() === "research";
-  const title = useMainThreadTitle(isResearch ? "新调研" : "新对话");
+  const conversationKind = useConversationKind();
+
+  const title = useMainThreadTitle(
+    conversationKind === "research"
+      ? "新调研"
+      : conversationKind === "chat"
+        ? "新对话"
+        : "正在加载会话…",
+  );
+
   const isInitialized = useMainThreadInitialized();
   const hasStarted = useAuiState((state) => state.thread.messages.length > 0);
 
@@ -59,7 +67,7 @@ export function ThreadHeader({
             align="end"
             triggerClassName="shrink-0"
           />
-          {!isResearch && (
+          {conversationKind === "chat" && (
             <>
               <Button
                 variant="ghost"
