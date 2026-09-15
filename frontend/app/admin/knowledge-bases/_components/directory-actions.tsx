@@ -29,7 +29,6 @@ import {
 import { FolderEditorDialog } from "@/components/common/folder-editor-dialog";
 import { FolderPickerDialog } from "@/components/common/folder-picker-dialog";
 import { DeleteDialog } from "@/components/common/delete-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -372,22 +371,18 @@ export function DirectoryToolbar({
   return (
     <div className="flex flex-wrap items-center gap-2">
       {selectedEntryCount > 0 ? (
-        <>
-          <Badge variant="secondary" aria-live="polite">
-            已选择 {selectedEntryCount} 项
-          </Badge>
-          <Button
-            variant="destructive"
-            size="sm"
-            disabled={deleteEntriesMutation.isPending}
-            onFocus={rememberActionTrigger}
-            onPointerDown={rememberActionTrigger}
-            onClick={() => openDeleteEntries(selectedEntries)}
-          >
-            <TrashIcon data-icon="inline-start" aria-hidden="true" />
-            删除
-          </Button>
-        </>
+        <Button
+          variant="destructive"
+          size="icon-sm"
+          aria-label={`删除已选择的 ${selectedEntryCount} 项`}
+          title="删除所选项目"
+          disabled={deleteEntriesMutation.isPending}
+          onFocus={rememberActionTrigger}
+          onPointerDown={rememberActionTrigger}
+          onClick={() => openDeleteEntries(selectedEntries)}
+        >
+          <TrashIcon aria-hidden="true" />
+        </Button>
       ) : null}
       {currentFolder ? (
         <FolderActions

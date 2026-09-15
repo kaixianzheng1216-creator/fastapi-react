@@ -122,7 +122,7 @@ export function KnowledgeBaseDetail({
 
 function KnowledgeBaseDetailSkeleton() {
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <Skeleton className="h-9 w-32" />
       <div className="flex flex-col gap-4 rounded-xl border p-6">
         <Skeleton className="h-5 w-36" />
