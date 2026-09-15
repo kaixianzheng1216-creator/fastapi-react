@@ -150,7 +150,11 @@ export function LibraryDocumentImport({
                 }}
               />
               {selectedFiles.length > 0 && (
-                <FieldDescription>
+                <FieldDescription
+                  className="max-h-16 overflow-y-auto break-words"
+                  tabIndex={0}
+                  aria-label="待上传文件列表"
+                >
                   待上传 {selectedFiles.length} 个文件：
                   {selectedFiles.map((file) => file.name).join("、")}
                 </FieldDescription>
