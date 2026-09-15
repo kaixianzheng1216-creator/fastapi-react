@@ -6,13 +6,11 @@ import {
   DownloadIcon,
   FolderInputIcon,
   MoreHorizontalIcon,
-  PencilIcon,
   TrashIcon,
 } from "lucide-react";
 import {
   useRef,
   useState,
-  type ReactEventHandler,
   type RefObject,
   type SyntheticEvent,
 } from "react";
@@ -23,6 +21,7 @@ import {
   type DirectoryEntry,
   LIBRARY_DOCUMENT_UPLOAD_KEY,
 } from "@/app/admin/file-libraries/_lib/directory";
+import { FolderActions } from "@/components/common/folder-actions";
 import { FolderEditorDialog } from "@/components/common/folder-editor-dialog";
 import { FolderPickerDialog } from "@/components/common/folder-picker-dialog";
 import { DeleteDialog } from "@/components/common/delete-dialog";
@@ -448,53 +447,5 @@ export function DirectoryActionDialogs({
         />
       )}
     </>
-  );
-}
-
-function FolderActions({
-  name,
-  variant,
-  onTriggerInteraction,
-  onMove,
-  onRename,
-  onDelete,
-}: {
-  name: string;
-  variant: "outline" | "ghost";
-  onTriggerInteraction: ReactEventHandler<HTMLButtonElement>;
-  onMove: () => void;
-  onRename: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant={variant}
-          size="icon-sm"
-          aria-label={`${name} 的更多操作`}
-          onFocus={onTriggerInteraction}
-          onPointerDown={onTriggerInteraction}
-        >
-          <MoreHorizontalIcon aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuGroup>
-          <DropdownMenuItem onSelect={onMove}>
-            <FolderInputIcon aria-hidden="true" />
-            移动到
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={onRename}>
-            <PencilIcon aria-hidden="true" />
-            重命名
-          </DropdownMenuItem>
-          <DropdownMenuItem variant="destructive" onSelect={onDelete}>
-            <TrashIcon aria-hidden="true" />
-            删除
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
