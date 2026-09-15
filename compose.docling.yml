@@ -25,7 +25,7 @@ services:
             },
             "model_spec": {
               "name": "DeepSeek Flash",
-              "default_repo_id": "deepseek/deepseek-flash",
+              "default_repo_id": "deepseek-flash",
               "prompt": "请用中文简洁、准确地描述图片中的关键信息。图表需说明标题、指标、趋势和重要数值；不要猜测看不清的内容。",
               "response_format": "plaintext"
             },
