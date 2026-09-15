@@ -1,14 +1,22 @@
 model_list:
-  - model_name: deepseek/deepseek-v4-pro
+  - model_name: deepseek-v4-pro
     litellm_params:
-      model: deepseek/deepseek-v4-pro
+      model: openai/deepseek-v4-pro
       api_base: os.environ/NEWAPI_BASE_URL
       api_key: os.environ/NEWAPI_API_KEY
-  - model_name: deepseek/deepseek-flash
+    model_info:
+      mode: chat
+      supports_vision: true
+      supported_openai_params: [thinking]
+  - model_name: deepseek-flash
     litellm_params:
-      model: deepseek/deepseek-flash
+      model: openai/deepseek-flash
       api_base: os.environ/NEWAPI_BASE_URL
       api_key: os.environ/NEWAPI_API_KEY
+    model_info:
+      mode: chat
+      supports_vision: true
+      supported_openai_params: [thinking]
 
 mcp_servers:
   firecrawl:

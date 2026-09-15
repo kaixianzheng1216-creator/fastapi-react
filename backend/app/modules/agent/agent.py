@@ -111,7 +111,7 @@ def create_chat_model(
 
         if thinking_enabled is not None:
             thinking_type = "enabled" if thinking_enabled else "disabled"
-            extra_body = {"thinking": {"type": thinking_type}}
+            extra_body = {"extra_body": {"thinking": {"type": thinking_type}}}
 
         return ChatDeepSeek(
             model=selected_model_name,
