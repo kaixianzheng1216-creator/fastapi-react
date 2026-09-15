@@ -36,7 +36,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { TableSkeleton } from "@/components/common/table-skeleton";
 import {
@@ -279,19 +278,16 @@ export function InfluencerResourceManager() {
                     <div className="flex flex-wrap items-end justify-between gap-4">
                       <div className="flex flex-col gap-1">
                         <h3 className="font-medium">{platformName}达人</h3>
-                        {accountsQuery.isPending ? (
-                          <Skeleton className="h-4 w-48" />
-                        ) : accountsQuery.isError &&
-                          accountsQuery.data === undefined ? null : (
-                          <p
-                            className="text-sm text-muted-foreground"
-                            aria-live="polite"
-                          >
-                            {accountsQuery.data?.captured_at
+                        <p
+                          className="min-h-5 text-sm text-muted-foreground"
+                          aria-live="polite"
+                        >
+                          {accountsQuery.data && (
+                            accountsQuery.data?.captured_at
                               ? `采集于 ${capturedAtFormatter.format(new Date(accountsQuery.data.captured_at))} · 共 ${accountsQuery.data.count} 位达人`
-                              : "尚未导入达人数据"}
-                          </p>
-                        )}
+                              : "尚未导入达人数据"
+                          )}
+                        </p>
                       </div>
 
                       <SearchToolbar

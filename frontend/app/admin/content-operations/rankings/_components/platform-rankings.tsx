@@ -27,7 +27,6 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Select,
@@ -280,19 +279,16 @@ export function PlatformRankings() {
                         <h3 className="font-medium">
                           B 站 · {getCategoryName(ranking, category)}排行榜
                         </h3>
-                        {rankingQuery.isPending ? (
-                          <Skeleton className="h-4 w-48" />
-                        ) : rankingQuery.isError &&
-                          rankingQuery.data === undefined ? null : (
-                          <p
-                            className="text-sm text-muted-foreground"
-                            aria-live="polite"
-                          >
-                            {ranking?.captured_at
+                        <p
+                          className="min-h-5 text-sm text-muted-foreground"
+                          aria-live="polite"
+                        >
+                          {rankingQuery.data && (
+                            ranking?.captured_at
                               ? `采集于 ${capturedAtFormatter.format(new Date(ranking.captured_at))} · 共 ${ranking.count} 条`
-                              : "尚未导入榜单数据"}
-                          </p>
-                        )}
+                              : "尚未导入榜单数据"
+                          )}
+                        </p>
                       </div>
 
                       {ranking?.categories.length ? (

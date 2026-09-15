@@ -298,10 +298,12 @@ export function DirectoryToolbar({
   actions,
   currentFolder,
   selectedEntries,
+  disabled = false,
 }: {
   actions: DirectoryActions;
   currentFolder?: LibraryFolderPublic;
   selectedEntries: DirectoryEntry[];
+  disabled?: boolean;
 }) {
   const {
     deleteEntriesMutation,
@@ -314,7 +316,10 @@ export function DirectoryToolbar({
   const selectedEntryCount = selectedEntries.length;
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <fieldset
+      disabled={disabled}
+      className="flex min-w-0 flex-wrap items-center gap-2"
+    >
       {selectedEntryCount > 0 ? (
         <>
           <Badge variant="secondary" aria-live="polite">
@@ -352,7 +357,7 @@ export function DirectoryToolbar({
       >
         新建文件夹
       </Button>
-    </div>
+    </fieldset>
   );
 }
 

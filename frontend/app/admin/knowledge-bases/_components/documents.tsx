@@ -46,7 +46,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Skeleton } from "@/components/ui/skeleton";
 import { TableSkeleton } from "@/components/common/table-skeleton";
 import {
   type KnowledgeFolderPublic,
@@ -272,118 +271,125 @@ export function KnowledgeDocuments({
         onDocumentsChanged={invalidateDocuments}
       />
 
-      {directoryPending ? (
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-3">
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-8 w-28" />
-          </div>
-          <TableSkeleton columns={6} />
-        </div>
-      ) : directoryLoadFailed ? (
-        <LoadError
-          title="文档列表加载失败"
-          isRetrying={foldersQuery.isFetching || directoryQuery.isFetching}
-          onRetry={() => {
-            void foldersQuery.refetch();
-            void directoryQuery.refetch();
-          }}
-        />
-      ) : (
-        <section className="flex flex-1 flex-col gap-3 md:min-h-0 md:overflow-y-auto">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  {currentPath.length > 0 ? (
-                    <BreadcrumbLink asChild>
-                      <Link href={getKnowledgeDirectoryHref(knowledgeBaseId)}>
-                        全部文档
-                      </Link>
-                    </BreadcrumbLink>
-                  ) : (
-                    <BreadcrumbPage>全部文档</BreadcrumbPage>
-                  )}
-                </BreadcrumbItem>
-                {currentPath.map((folder, index) => (
-                  <Fragment key={folder.id}>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem>
-                      {index === currentPath.length - 1 ? (
-                        <BreadcrumbPage>{folder.name}</BreadcrumbPage>
-                      ) : (
-                        <BreadcrumbLink asChild>
-                          <Link
-                            href={getKnowledgeDirectoryHref(
-                              knowledgeBaseId,
-                              1,
-                              folder.id,
-                            )}
-                          >
-                            {folder.name}
-                          </Link>
-                        </BreadcrumbLink>
-                      )}
-                    </BreadcrumbItem>
-                  </Fragment>
-                ))}
-              </BreadcrumbList>
-            </Breadcrumb>
-
-            <DirectoryToolbar
-              actions={actions}
-              currentFolder={folderById.get(currentFolderId ?? "")}
-              selectedEntries={selectedEntries}
-            />
-          </div>
-
-          {directoryEntries.length > 0 ? (
-            <CollectionContent
-              busy={directoryQuery.isPlaceholderData}
-              containerClassName="md:min-h-0 md:flex-1"
-              className="md:h-full"
-            >
-              <KnowledgeDirectoryTable
-                knowledgeBaseId={knowledgeBaseId}
-                entries={directoryEntries}
-                selectedEntryKeys={selectedEntryKeys}
-                onSelectionChange={selectEntries}
-                getDocumentHref={(documentId) =>
-                  getKnowledgeDocumentHref(
-                    knowledgeBaseId,
-                    documentId,
-                    currentPage,
-                    currentFolderId,
-                  )
-                }
-                renderActions={(entry) => (
-                  <DirectoryEntryActions entry={entry} actions={actions} />
+      <section className="flex flex-1 flex-col gap-3 md:min-h-0 md:overflow-y-auto">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                {currentFolderId ? (
+                  <BreadcrumbLink asChild>
+                    <Link href={getKnowledgeDirectoryHref(knowledgeBaseId)}>
+                      全部文档
+                    </Link>
+                  </BreadcrumbLink>
+                ) : (
+                  <BreadcrumbPage>全部文档</BreadcrumbPage>
                 )}
-              />
-            </CollectionContent>
-          ) : pageOutOfRange ? (
-            <PageOutOfRange
-              href={getKnowledgeDirectoryHref(
-                knowledgeBaseId,
-                1,
-                currentFolderId,
+              </BreadcrumbItem>
+              {currentFolderId && !folderById.has(currentFolderId) && (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>
+                      {foldersQuery.isPending ? "加载目录中…" : "目录不可用"}
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </>
+              )}
+              {currentPath.map((folder, index) => (
+                <Fragment key={folder.id}>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    {index === currentPath.length - 1 ? (
+                      <BreadcrumbPage>{folder.name}</BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink asChild>
+                        <Link
+                          href={getKnowledgeDirectoryHref(
+                            knowledgeBaseId,
+                            1,
+                            folder.id,
+                          )}
+                        >
+                          {folder.name}
+                        </Link>
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                </Fragment>
+              ))}
+            </BreadcrumbList>
+          </Breadcrumb>
+
+          <DirectoryToolbar
+            actions={actions}
+            disabled={
+              directoryPending ||
+              directoryLoadFailed ||
+              Boolean(currentFolderId && !folderById.has(currentFolderId))
+            }
+            currentFolder={folderById.get(currentFolderId ?? "")}
+            selectedEntries={selectedEntries}
+          />
+        </div>
+
+        {directoryPending ? (
+          <TableSkeleton columns={7} rows={5} rowClassName="h-12" />
+        ) : directoryLoadFailed ? (
+          <LoadError
+            title="文档列表加载失败"
+            isRetrying={foldersQuery.isFetching || directoryQuery.isFetching}
+            onRetry={() => {
+              void foldersQuery.refetch();
+              void directoryQuery.refetch();
+            }}
+          />
+        ) : directoryEntries.length > 0 ? (
+          <CollectionContent
+            busy={directoryQuery.isPlaceholderData}
+            containerClassName="md:min-h-0 md:flex-1"
+            className="md:h-full"
+          >
+            <KnowledgeDirectoryTable
+              knowledgeBaseId={knowledgeBaseId}
+              entries={directoryEntries}
+              selectedEntryKeys={selectedEntryKeys}
+              onSelectionChange={selectEntries}
+              getDocumentHref={(documentId) =>
+                getKnowledgeDocumentHref(
+                  knowledgeBaseId,
+                  documentId,
+                  currentPage,
+                  currentFolderId,
+                )
+              }
+              renderActions={(entry) => (
+                <DirectoryEntryActions entry={entry} actions={actions} />
               )}
             />
-          ) : (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <FolderOpenIcon aria-hidden="true" />
-                </EmptyMedia>
-                <EmptyTitle>此文件夹为空</EmptyTitle>
-                <EmptyDescription>
-                  上传文件、添加网页或新建文件夹。
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          )}
-        </section>
-      )}
+          </CollectionContent>
+        ) : pageOutOfRange ? (
+          <PageOutOfRange
+            href={getKnowledgeDirectoryHref(
+              knowledgeBaseId,
+              1,
+              currentFolderId,
+            )}
+          />
+        ) : (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <FolderOpenIcon aria-hidden="true" />
+              </EmptyMedia>
+              <EmptyTitle>此文件夹为空</EmptyTitle>
+              <EmptyDescription>
+                上传文件、添加网页或新建文件夹。
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        )}
+      </section>
       <PagePagination
         className="shrink-0"
         ariaLabel="知识库目录分页"

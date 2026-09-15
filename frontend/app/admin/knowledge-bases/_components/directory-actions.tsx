@@ -353,10 +353,12 @@ export function DirectoryToolbar({
   actions,
   currentFolder,
   selectedEntries,
+  disabled = false,
 }: {
   actions: DirectoryActions;
   currentFolder?: KnowledgeFolderPublic;
   selectedEntries: DirectoryEntry[];
+  disabled?: boolean;
 }) {
   const {
     deleteEntriesMutation,
@@ -369,11 +371,14 @@ export function DirectoryToolbar({
   const selectedEntryCount = selectedEntries.length;
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <fieldset
+      disabled={disabled}
+      className="flex min-w-0 flex-wrap items-center gap-2"
+    >
       {selectedEntryCount > 0 ? (
         <Button
           variant="destructive"
-          size="icon-sm"
+          size="sm"
           aria-label={`删除已选择的 ${selectedEntryCount} 项`}
           title="删除所选项目"
           disabled={deleteEntriesMutation.isPending}
@@ -381,7 +386,7 @@ export function DirectoryToolbar({
           onPointerDown={rememberActionTrigger}
           onClick={() => openDeleteEntries(selectedEntries)}
         >
-          <TrashIcon aria-hidden="true" />
+          删除
         </Button>
       ) : null}
       {currentFolder ? (
@@ -403,7 +408,7 @@ export function DirectoryToolbar({
       >
         新建文件夹
       </Button>
-    </div>
+    </fieldset>
   );
 }
 

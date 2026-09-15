@@ -318,12 +318,14 @@ export const ThreadListSearchResults: FC<{
     queryKey: ["conversations", "search", debouncedSearchQuery, archived],
     queryFn: ({ signal }) =>
       searchConversations(debouncedSearchQuery || undefined, archived, signal),
+    placeholderData: (previousData, previousQuery) =>
+      previousQuery?.queryKey[3] === archived ? previousData : undefined,
   });
 
-  if (
-    searchQuery !== debouncedSearchQuery ||
-    conversationsQuery.isPending
-  ) {
+  const isUpdating =
+    searchQuery !== debouncedSearchQuery || conversationsQuery.isFetching;
+
+  if (conversationsQuery.isPending) {
     return <ThreadListSkeleton />;
   }
 
@@ -342,17 +344,24 @@ export const ThreadListSearchResults: FC<{
   if (!conversationsQuery.data?.length) {
     return (
       <CommandEmpty>
-        {searchQuery
-          ? "未找到相关会话"
-          : archived
-            ? "暂无已归档会话"
-            : "暂无会话"}
+        {isUpdating
+          ? "搜索中…"
+          : searchQuery
+            ? "未找到相关会话"
+            : archived
+              ? "暂无已归档会话"
+              : "暂无会话"}
       </CommandEmpty>
     );
   }
 
   return (
-    <>
+    <div aria-busy={isUpdating}>
+      {isUpdating && (
+        <p role="status" className="px-2 py-1 text-xs text-muted-foreground">
+          搜索中…
+        </p>
+      )}
       <CommandGroup
         heading={
           searchQuery ? "搜索结果" : archived ? "已归档对话" : "最近对话"
@@ -362,6 +371,7 @@ export const ThreadListSearchResults: FC<{
           <CommandItem
             key={conversation.id}
             className="group"
+            disabled={isUpdating}
             value={`${conversation.title} ${conversation.id}`}
             onSelect={() => {
               aui.threads.switchToThread(conversation.id);
@@ -384,7 +394,7 @@ export const ThreadListSearchResults: FC<{
           </CommandItem>
         ))}
       </CommandGroup>
-    </>
+    </div>
   );
 };
 
@@ -486,7 +496,7 @@ export const ThreadListItem: FC = () => {
           onClick={() => router.replace("/")}
         >
           {!conversationKind ? (
-            <Skeleton className="size-4" />
+            <span className="size-4 shrink-0" aria-hidden="true" />
           ) : isResearch ? (
             <SearchIcon aria-hidden="true" />
           ) : (

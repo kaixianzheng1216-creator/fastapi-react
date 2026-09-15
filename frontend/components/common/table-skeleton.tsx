@@ -11,11 +11,16 @@ import {
 type TableSkeletonProps = {
   columns: number;
   rows?: number;
+  rowClassName?: string;
 };
 
 const CELL_WIDTHS = ["72%", "88%", "56%", "80%", "64%"];
 
-export function TableSkeleton({ columns, rows = 6 }: TableSkeletonProps) {
+export function TableSkeleton({
+  columns,
+  rows = 6,
+  rowClassName,
+}: TableSkeletonProps) {
   return (
     <div role="status" aria-label="正在加载数据">
       <Table aria-hidden="true">
@@ -33,7 +38,7 @@ export function TableSkeleton({ columns, rows = 6 }: TableSkeletonProps) {
         </TableHeader>
         <TableBody>
           {Array.from({ length: rows }, (_, row) => (
-            <TableRow key={row}>
+            <TableRow key={row} className={rowClassName}>
               {Array.from({ length: columns }, (_, column) => (
                 <TableCell key={column}>
                   <Skeleton

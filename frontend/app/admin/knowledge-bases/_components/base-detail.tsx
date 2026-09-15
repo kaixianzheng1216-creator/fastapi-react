@@ -8,11 +8,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/layout/app-header";
 import { LoadError } from "@/components/common/load-error";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { TableSkeleton } from "@/components/common/table-skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { knowledgeBasesReadKnowledgeBase } from "@/lib/client";
-import { cn } from "@/lib/utils";
 import { KnowledgeDocuments } from "@/app/admin/knowledge-bases/_components/documents";
 import { KnowledgeSearch } from "@/app/admin/knowledge-bases/_components/search";
 
@@ -70,9 +67,7 @@ export function KnowledgeBaseDetail({
       />
 
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:overflow-hidden md:p-6">
-        {knowledgeBaseQuery.isPending ? (
-          <KnowledgeBaseDetailSkeleton />
-        ) : knowledgeBaseQuery.isError &&
+        {knowledgeBaseQuery.isError &&
           knowledgeBaseQuery.data === undefined ? (
           <LoadError
             title="知识库加载失败"
@@ -80,15 +75,10 @@ export function KnowledgeBaseDetail({
             onRetry={() => void knowledgeBaseQuery.refetch()}
             className="mx-auto min-h-full max-w-6xl"
           />
-        ) : null}
-
-        {(knowledgeBaseQuery.isPending || knowledgeBaseQuery.data) && (
+        ) : (
           <Tabs
             value={activeView}
-            className={cn(
-              "mx-auto min-h-full w-full max-w-6xl gap-6 md:h-full md:min-h-0",
-              knowledgeBaseQuery.isPending && "hidden",
-            )}
+            className="mx-auto min-h-full w-full max-w-6xl gap-6 md:h-full md:min-h-0"
             onValueChange={changeView}
           >
             <TabsList>
@@ -117,23 +107,5 @@ export function KnowledgeBaseDetail({
         )}
       </div>
     </>
-  );
-}
-
-function KnowledgeBaseDetailSkeleton() {
-  return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <Skeleton className="h-9 w-32" />
-      <div className="flex flex-col gap-4 rounded-xl border p-6">
-        <Skeleton className="h-5 w-36" />
-        <Skeleton className="h-4 w-2/3" />
-        <Skeleton className="h-9 w-28" />
-      </div>
-      <div className="flex items-center justify-between gap-3">
-        <Skeleton className="h-5 w-40" />
-        <Skeleton className="h-8 w-28" />
-      </div>
-      <TableSkeleton columns={6} rows={5} />
-    </div>
   );
 }

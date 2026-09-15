@@ -99,75 +99,47 @@ export function SkillDetail({ skillName }: SkillDetailProps) {
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
         <div className="mx-auto flex min-h-full max-w-6xl flex-col gap-6">
-          {detailQuery.isPending && <SkillDetailSkeleton />}
-
-          {detailQuery.isError && detail === undefined && (
-            <LoadError
-              title="技能加载失败"
-              isRetrying={detailQuery.isFetching}
-              onRetry={() => void detailQuery.refetch()}
-            />
+          {typeof description === "string" && (
+            <p className="break-words text-muted-foreground">{description}</p>
           )}
+          <Tabs value={activeView} onValueChange={changeView} className="gap-6">
+            <TabsList>
+              <TabsTrigger value="overview">概述</TabsTrigger>
+              <TabsTrigger value="files">文件</TabsTrigger>
+            </TabsList>
 
-          {detail && (
-            <>
-              {typeof description === "string" && (
-                <p className="break-words text-muted-foreground">
-                  {description}
-                </p>
-              )}
-
-              <Tabs
-                value={activeView}
-                onValueChange={changeView}
-                className="gap-6"
-              >
-                <TabsList>
-                  <TabsTrigger value="overview">概述</TabsTrigger>
-                  <TabsTrigger value="files">文件</TabsTrigger>
-                </TabsList>
-
+            {detailQuery.isPending ? (
+              <div role="status" aria-label="正在加载技能详情">
+                {activeView === "overview" ? (
+                  <div className="flex max-w-4xl flex-col gap-3">
+                    <Skeleton className="h-7 w-2/5" />
+                    <Skeleton className="h-4" />
+                    <Skeleton className="h-4 w-4/5" />
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">正在加载文件列表…</p>
+                )}
+              </div>
+            ) : detailQuery.isError && detail === undefined ? (
+              <LoadError
+                title="技能加载失败"
+                isRetrying={detailQuery.isFetching}
+                onRetry={() => void detailQuery.refetch()}
+              />
+            ) : detail ? (
+              <>
                 <TabsContent value="overview">
                   <MarkdownContent>{detail.content}</MarkdownContent>
                 </TabsContent>
-
                 <TabsContent value="files">
-                  <SkillFileBrowser
-                    skillName={skillName}
-                    nodes={detail.files}
-                  />
+                  <SkillFileBrowser skillName={skillName} nodes={detail.files} />
                 </TabsContent>
-              </Tabs>
-            </>
-          )}
+              </>
+            ) : null}
+          </Tabs>
         </div>
       </div>
     </>
-  );
-}
-
-function SkillDetailSkeleton() {
-  return (
-    <div
-      role="status"
-      className="flex flex-col gap-4"
-      aria-label="正在加载技能详情"
-    >
-      <Skeleton className="h-4 w-2/3 max-w-xl" />
-      <div className="flex gap-2">
-        <Skeleton className="h-9 w-20" />
-        <Skeleton className="h-9 w-20" />
-      </div>
-      <div className="flex max-w-4xl flex-col gap-3">
-        <Skeleton className="h-7 w-2/5" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-11/12" />
-        <Skeleton className="h-4 w-4/5" />
-        <Skeleton className="mt-3 h-6 w-1/3" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-3/4" />
-      </div>
-    </div>
   );
 }
 
