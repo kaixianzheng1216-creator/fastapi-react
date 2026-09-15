@@ -51,7 +51,6 @@ DOCUMENT_PROCESSING_TIMEOUT_LOG = "知识库文档处理超时"
 
 DOCUMENT_PROCESSING_ERROR_MESSAGE = "文档处理失败，请重试"
 DOCUMENT_PROCESSING_TIMEOUT_MESSAGE = "文档处理超时"
-DOCUMENT_PROCESSING_INTERRUPTED_MESSAGE = "Worker 重启中断了文档处理"
 DOCLING_INVALID_RESPONSE_MESSAGE = "Docling 返回内容无效"
 
 IMAGE_DESCRIPTION_MODEL = "deepseek/deepseek-flash"
@@ -84,7 +83,7 @@ def run() -> None:
     """运行知识库文档处理循环。"""
     vector_store.ensure_collection()
 
-    _fail_processing_documents_after_restart()
+    _requeue_processing_documents_after_restart()
 
     _run_document_queue()
 
@@ -624,26 +623,21 @@ def _finish_with_error(
     )
 
 
-def _fail_processing_documents_after_restart() -> None:
-    """将 Worker 重启前中断的任务标记为失败。"""
+def _requeue_processing_documents_after_restart() -> None:
+    """将 Worker 重启中断的任务重新排队。"""
     with Session(engine) as session:
-        rows = session.exec(
+        session.exec(
             update(KnowledgeDocument)
             .where(col(KnowledgeDocument.status) == KnowledgeDocumentStatus.PROCESSING)
             .values(
-                status=KnowledgeDocumentStatus.FAILED,
-                error_message=DOCUMENT_PROCESSING_INTERRUPTED_MESSAGE,
+                status=KnowledgeDocumentStatus.PENDING,
+                error_message=None,
+                processing_started_at=None,
+                processing_finished_at=None,
             )
-            .returning(col(KnowledgeDocument.id))
-        ).all()
+        )
 
-        document_ids = [cast(uuid.UUID, row[0]) for row in rows]
         session.commit()
-
-    cleanup_deleted_documents(
-        document_ids,
-        [document_preview_key(document_id) for document_id in document_ids],
-    )
 
 
 if __name__ == "__main__":

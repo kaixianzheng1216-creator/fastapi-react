@@ -24,6 +24,8 @@ import { formatFileSize } from "@/lib/file-types";
 
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
   dateStyle: "medium",
+  timeStyle: "medium",
+  hour12: false,
 });
 
 export function LibraryDirectoryTable({

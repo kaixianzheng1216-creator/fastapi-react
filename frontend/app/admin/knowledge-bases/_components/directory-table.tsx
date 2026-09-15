@@ -26,6 +26,8 @@ import { formatFileSize } from "@/lib/file-types";
 
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
   dateStyle: "medium",
+  timeStyle: "medium",
+  hour12: false,
 });
 
 const statusLabels: Record<KnowledgeDocumentPublic["status"], string> = {
@@ -182,9 +184,11 @@ export function KnowledgeDirectoryTable({
                         className="motion-reduce:animate-none"
                       />
                     )}
-                    {entry.status === "pending" && !entry.uploaded
-                      ? "等待确认上传"
-                      : statusLabels[entry.status]}
+                    {processing
+                      ? statusLabels.processing
+                      : entry.status === "pending" && !entry.uploaded
+                        ? "等待确认上传"
+                        : statusLabels[entry.status]}
                   </Badge>
                 )}
               </TableCell>
