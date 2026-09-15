@@ -82,7 +82,7 @@ export function KnowledgeSearch({
 
   return (
     <>
-      <Card>
+      <Card className="shrink-0">
         <CardHeader>
           <CardTitle>搜索知识库</CardTitle>
           <CardDescription>
@@ -122,77 +122,83 @@ export function KnowledgeSearch({
         </CardContent>
       </Card>
 
-      {knowledgeSearchQuery.isError &&
-        knowledgeSearchQuery.data === undefined && (
-          <LoadError
-            title="搜索失败"
-            isRetrying={knowledgeSearchQuery.isFetching}
-            onRetry={() => void knowledgeSearchQuery.refetch()}
-          />
-        )}
+      <h2 className="text-sm font-normal text-foreground">
+        搜索结果 · 相似度 Top 5
+      </h2>
 
-      {searchQuery &&
-        !knowledgeSearchQuery.isPending &&
-        (!knowledgeSearchQuery.isError ||
-          knowledgeSearchQuery.data !== undefined) &&
-        !searchResults?.length && (
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <SearchIcon aria-hidden="true" />
-            </EmptyMedia>
-            <EmptyTitle>未找到相关内容</EmptyTitle>
-          </EmptyHeader>
-        </Empty>
-        )}
-      {searchResults?.map((result) => (
-        <Card
-          key={`${result.document_id}-${result.chunk_index}`}
-          className="wrap-anywhere"
-        >
-          <CardHeader>
-            <CardTitle>
-              {result.knowledge_base_name} · {result.filename}
-            </CardTitle>
-            <CardDescription className="flex flex-wrap gap-x-4 gap-y-1">
-              <span>
-                章节：
-                {result.section_path.length > 0
-                  ? result.section_path.join(" / ")
-                  : "未标注"}
-              </span>
-              <span>
-                页码：
-                {result.page_numbers.length > 0
-                  ? `第 ${result.page_numbers.join("、")} 页`
-                  : "未标注"}
-              </span>
-            </CardDescription>
-            <CardAction>
-              <Badge variant="secondary" className="tabular-nums">
-                相似度 {similarityFormatter.format(result.score)}
-              </Badge>
-            </CardAction>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            {result.image_urls.length > 0 ? (
-              <div className="grid gap-3 md:grid-cols-2">
-                {result.image_urls.map((imageUrl, imageIndex) => (
-                  <img
-                    key={imageUrl}
-                    src={imageUrl}
-                    alt={`搜索结果关联图片 ${imageIndex + 1}`}
-                    className="aspect-video max-h-96 w-full object-contain"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                ))}
-              </div>
-            ) : null}
-            <p className="whitespace-pre-wrap">{result.content}</p>
-          </CardContent>
-        </Card>
-      ))}
+      <div className="flex-1 space-y-6 overflow-y-auto">
+        {knowledgeSearchQuery.isError &&
+          knowledgeSearchQuery.data === undefined && (
+            <LoadError
+              title="搜索失败"
+              isRetrying={knowledgeSearchQuery.isFetching}
+              onRetry={() => void knowledgeSearchQuery.refetch()}
+            />
+          )}
+
+        {searchQuery &&
+          !knowledgeSearchQuery.isPending &&
+          (!knowledgeSearchQuery.isError ||
+            knowledgeSearchQuery.data !== undefined) &&
+          !searchResults?.length && (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <SearchIcon aria-hidden="true" />
+                </EmptyMedia>
+                <EmptyTitle>未找到相关内容</EmptyTitle>
+              </EmptyHeader>
+            </Empty>
+          )}
+        {searchResults?.map((result) => (
+          <Card
+            key={`${result.document_id}-${result.chunk_index}`}
+            className="wrap-anywhere"
+          >
+            <CardHeader>
+              <CardTitle>
+                {result.knowledge_base_name} · {result.filename}
+              </CardTitle>
+              <CardDescription className="flex flex-wrap gap-x-4 gap-y-1">
+                <span>
+                  章节：
+                  {result.section_path.length > 0
+                    ? result.section_path.join(" / ")
+                    : "未标注"}
+                </span>
+                <span>
+                  页码：
+                  {result.page_numbers.length > 0
+                    ? `第 ${result.page_numbers.join("、")} 页`
+                    : "未标注"}
+                </span>
+              </CardDescription>
+              <CardAction>
+                <Badge variant="secondary" className="tabular-nums">
+                  相似度 {similarityFormatter.format(result.score)}
+                </Badge>
+              </CardAction>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              {result.image_urls.length > 0 ? (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {result.image_urls.map((imageUrl, imageIndex) => (
+                    <img
+                      key={imageUrl}
+                      src={imageUrl}
+                      alt={`搜索结果关联图片 ${imageIndex + 1}`}
+                      className="aspect-video max-h-96 w-full object-contain"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ))}
+                </div>
+              ) : null}
+              <p className="whitespace-pre-wrap">{result.content}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </>
   );
 }

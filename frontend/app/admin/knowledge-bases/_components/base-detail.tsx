@@ -66,7 +66,9 @@ export function KnowledgeBaseDetail({
         }
       />
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:overflow-hidden md:p-6">
+      <div
+        className={`flex min-h-0 flex-1 flex-col p-4 md:p-6 ${activeView === "search" ? "overflow-hidden" : "overflow-y-auto md:overflow-hidden"}`}
+      >
         {knowledgeBaseQuery.isError &&
           knowledgeBaseQuery.data === undefined ? (
           <LoadError
@@ -78,10 +80,10 @@ export function KnowledgeBaseDetail({
         ) : (
           <Tabs
             value={activeView}
-            className="mx-auto min-h-full w-full max-w-6xl gap-6 md:h-full md:min-h-0"
+            className={`mx-auto w-full max-w-6xl gap-6 ${activeView === "search" ? "h-full min-h-0" : "min-h-full md:h-full md:min-h-0"}`}
             onValueChange={changeView}
           >
-            <TabsList>
+            <TabsList className="shrink-0">
               <TabsTrigger value="documents">文档</TabsTrigger>
               <TabsTrigger value="search">搜索</TabsTrigger>
             </TabsList>
@@ -99,7 +101,7 @@ export function KnowledgeBaseDetail({
 
             <TabsContent
               value="search"
-              className="min-h-0 overflow-y-auto"
+              className="flex min-h-0 flex-col gap-6"
             >
               <KnowledgeSearch knowledgeBaseId={knowledgeBaseId} />
             </TabsContent>
