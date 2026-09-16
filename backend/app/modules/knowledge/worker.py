@@ -447,8 +447,10 @@ def _parse_with_docling(stored_file: StoredFile, content: bytes) -> DoclingDocum
                 "to_formats": ["json"],
                 "image_export_mode": "embedded",
                 "do_ocr": "false",
-                "do_picture_description": "true",
-                "picture_description_preset": "deepseek-flash",
+                "do_picture_description": "false",
+                # 暂停图片模型识别；恢复时替换上面的 false 配置。
+                # "do_picture_description": "true",
+                # "picture_description_preset": "deepseek-flash",
             },
             files={
                 "files": (
