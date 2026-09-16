@@ -88,7 +88,7 @@ class _TableSerializerProvider(ChunkingSerializerProvider):
         return ChunkingDocSerializer(
             doc=doc,
             table_serializer=MarkdownTableSerializer(),
-            params=MarkdownParams(compact_tables=True),
+            params=MarkdownParams(compact_tables=True, image_placeholder=""),
         )
 
 
