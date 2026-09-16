@@ -11,6 +11,8 @@ INTERNAL_OPERATIONS = {
     "knowledge-bases-read_directory": "knowledge_directory_list",
     "knowledge-bases-delete_directory_entries": "knowledge_entries_delete",
     "knowledge-bases-create_document_upload": "knowledge_document_upload_create",
+    "knowledge-bases-create_document_uploads": "knowledge_document_uploads_create",
+    "knowledge-documents-complete_document_uploads": "knowledge_document_uploads_complete",
     "knowledge-documents-complete_document_upload": "knowledge_document_upload_complete",
     "knowledge-documents-read_document": "knowledge_document_get",
     "knowledge-documents-read_document_preview": "knowledge_document_preview",

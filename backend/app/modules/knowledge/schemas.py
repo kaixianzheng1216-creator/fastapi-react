@@ -151,6 +151,18 @@ class KnowledgeDocumentPublic(SQLModel):
     updated_at: datetime
 
 
+class KnowledgeDocumentUploadResult(SQLModel):
+    filename: str
+    upload: KnowledgeDocumentUploadPublic | None = None
+    error: str | None = None
+
+
+class KnowledgeDocumentCompleteResult(SQLModel):
+    id: uuid.UUID
+    document: KnowledgeDocumentPublic | None = None
+    error: str | None = None
+
+
 class KnowledgeFolderEntryPublic(KnowledgeFolderPublic):
     type: Literal["folder"]
 

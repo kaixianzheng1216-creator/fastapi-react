@@ -1,10 +1,11 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query, status
+from fastapi import APIRouter, Body, Depends, Path, Query, status
 
 from app.api.dependencies import SessionDep
 from app.api.responses import error_responses
+from app.common.exceptions import ApplicationError
 from app.modules.auth.dependencies import CurrentUser, get_current_active_superuser
 from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
 from app.modules.files import object_storage
@@ -38,10 +39,12 @@ from app.modules.knowledge.schemas import (
     KnowledgeDirectoryDelete,
     KnowledgeDirectoryPublic,
     KnowledgeDocumentChunksPublic,
+    KnowledgeDocumentCompleteResult,
     KnowledgeDocumentMove,
     KnowledgeDocumentPreviewPublic,
     KnowledgeDocumentPublic,
     KnowledgeDocumentUploadPublic,
+    KnowledgeDocumentUploadResult,
     KnowledgeFolderCreate,
     KnowledgeFolderMove,
     KnowledgeFolderPublic,
@@ -371,6 +374,92 @@ def create_document_upload(
         folder_id=folder_id,
         upload_request=body,
     )
+
+
+@router.post(
+    "/{knowledge_base_id}/documents/uploads/batch",
+    response_model=list[KnowledgeDocumentUploadResult],
+)
+def create_document_uploads(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
+    body: Annotated[list[FileUploadRequest], Body(min_length=1, max_length=100)],
+    folder_id: Annotated[
+        uuid.UUID | None,
+        Query(description="导入到的文件夹 ID；不传表示根目录"),
+    ] = None,
+) -> list[KnowledgeDocumentUploadResult]:
+    """批量创建知识库文档上传凭证，每次 1–100 个，结果与输入顺序一致。
+
+    每项返回 upload 或 error；成功项通过 uploadUrl 和 uploadHeaders
+    使用 HTTP PUT 上传原始文件内容，再调用 knowledge_document_uploads_complete。
+    单项失败不影响其他项，只需重试失败项，避免重复创建成功项。
+    """
+    results = []
+
+    for upload_request in body:
+        try:
+            upload = service.create_document_upload(
+                session=session,
+                current_user=current_user,
+                knowledge_base_id=knowledge_base_id,
+                folder_id=folder_id,
+                upload_request=upload_request,
+            )
+        except ApplicationError as error:
+            session.rollback()
+            results.append(
+                KnowledgeDocumentUploadResult(
+                    filename=upload_request.filename, error=error.detail
+                )
+            )
+        else:
+            results.append(
+                KnowledgeDocumentUploadResult(
+                    filename=upload_request.filename, upload=upload
+                )
+            )
+
+    return results
+
+
+@document_router.post(
+    "/uploads/complete",
+    response_model=list[KnowledgeDocumentCompleteResult],
+)
+async def complete_document_uploads(
+    session: SessionDep,
+    body: Annotated[
+        list[uuid.UUID],
+        Body(min_length=1, max_length=100, description="已完成 HTTP PUT 上传的文档 ID"),
+    ],
+) -> list[KnowledgeDocumentCompleteResult]:
+    """批量确认知识库文档上传，每次 1–100 个，结果与输入顺序一致。
+
+    每项返回 document 或 error；成功项进入文档处理流程。
+    单项失败不影响其他项；未上传或存储暂时不可用时，可使用原文档 ID 重试确认。
+    文件大小不符时，该上传记录会被删除，需要重新创建凭证并上传。
+    """
+    results = []
+
+    for document_id in body:
+        try:
+            document = await documents.complete_upload(
+                session=session, document_id=document_id
+            )
+        except ApplicationError as error:
+            session.rollback()
+            results.append(
+                KnowledgeDocumentCompleteResult(id=document_id, error=error.detail)
+            )
+        else:
+            results.append(
+                KnowledgeDocumentCompleteResult(id=document_id, document=document)
+            )
+
+    return results
 
 
 @document_router.post(
