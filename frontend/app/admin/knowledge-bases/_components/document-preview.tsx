@@ -224,15 +224,21 @@ export function KnowledgeDocumentPreview({
               isRetrying={documentQuery.isFetching}
               onRetry={() => void documentQuery.refetch()}
             />
+          ) : isTableDocument ? (
+            <div id={CHUNKS_ANCHOR} className="min-w-0 scroll-mt-4">
+              <DocumentChunksView
+                documentId={documentId}
+                page={chunkPage}
+                getPageHref={getChunkPageHref}
+              />
+            </div>
           ) : (
             <Tabs value={activeView} onValueChange={changeView} className="gap-6">
               <TabsList>
-                {canPreviewMarkdown && (
-                  <TabsTrigger value="markdown">
-                    <FileTextIcon aria-hidden="true" />
-                    Markdown
-                  </TabsTrigger>
-                )}
+                <TabsTrigger value="markdown">
+                  <FileTextIcon aria-hidden="true" />
+                  Markdown
+                </TabsTrigger>
                 <TabsTrigger value="chunks">
                   <LayersIcon aria-hidden="true" />
                   切片
@@ -349,14 +355,14 @@ function DocumentChunksView({
       className="flex flex-col gap-4"
     >
       {chunksQuery.data.data.map((chunk) => (
-        <Card key={chunk.chunk_index} className="wrap-anywhere">
+        <Card key={chunk.chunk_index} className="min-w-0 wrap-anywhere">
           <CardHeader>
             <CardTitle>切片 {chunk.chunk_index + 1}</CardTitle>
             <CardDescription>
               {formatChunkLocation(chunk.section_path, chunk.page_numbers)}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
+          <CardContent className="flex min-w-0 flex-col gap-4">
             {chunk.image_urls.length > 0 && (
               <div className="grid gap-3 md:grid-cols-2">
                 {chunk.image_urls.map((imageUrl, imageIndex) => (
@@ -371,7 +377,7 @@ function DocumentChunksView({
                 ))}
               </div>
             )}
-            <MarkdownContent className="min-w-0 max-w-none overflow-x-auto">
+            <MarkdownContent className="min-w-0 max-w-none overflow-x-auto [&_table]:w-max [&_table]:min-w-full [&_td]:min-w-32 [&_td]:max-w-sm [&_td]:align-top [&_th]:whitespace-nowrap">
               {chunk.content}
             </MarkdownContent>
           </CardContent>

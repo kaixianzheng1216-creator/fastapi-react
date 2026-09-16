@@ -3,10 +3,12 @@ import logging
 import multiprocessing
 import time
 import uuid
+from collections.abc import Iterator
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from typing import Any, Literal, cast
 
 import httpx
+from docling_core.transforms.chunker import BaseChunk
 from docling_core.transforms.chunker.doc_chunk import DocMeta
 from docling_core.transforms.chunker.hierarchical_chunker import (
     ChunkingDocSerializer,
@@ -18,9 +20,9 @@ from docling_core.transforms.serializer.markdown import (
     MarkdownTableSerializer,
 )
 from docling_core.types.doc.base import ImageRefMode
-from docling_core.types.doc.document import DoclingDocument
+from docling_core.types.doc.document import DoclingDocument, GroupItem
 from docling_core.types.doc.items.picture.picture import PictureItem
-from docling_core.types.doc.labels import DocItemLabel
+from docling_core.types.doc.labels import DocItemLabel, GroupLabel
 from openai import APITimeoutError, OpenAI
 from pydantic import BaseModel, ValidationError
 from sqlalchemy import update
@@ -276,7 +278,9 @@ def _process_document(document_id: uuid.UUID) -> None:
             stored_file=stored_file,
         )
 
-        chunk_records, embedding_texts = _create_chunks(docling_document)
+        chunk_records, embedding_texts = _create_chunks(
+            docling_document, content_type=stored_file.content_type
+        )
 
         if not chunk_records:
             raise DocumentProcessingError("文档没有可索引内容")
@@ -477,8 +481,57 @@ def _parse_with_docling(stored_file: StoredFile, content: bytes) -> DoclingDocum
     return docling_document
 
 
+def _chunk_table_records(
+    document: DoclingDocument, chunker: HybridChunker
+) -> Iterator[BaseChunk]:
+    """逐条切分表格记录，超长记录由 Docling 拆分，不跨记录合并。"""
+    for table_index, table in enumerate(document.tables, start=1):
+        dataframe = table.export_to_dataframe(doc=document)
+
+        columns: list[str] = []
+
+        for index, column in enumerate(dataframe.columns, start=1):
+            if isinstance(column, str) and column.strip():
+                columns.append(column.strip())
+            else:
+                columns.append(f"第 {index} 列")
+
+        parent = None
+
+        if table.parent:
+            parent = table.parent.resolve(document)
+
+        table_title = table.caption_text(document) or f"表格 {table_index}"
+
+        for row_index, row in enumerate(
+            dataframe.itertuples(index=False, name=None), start=1
+        ):
+            fields: list[str] = []
+
+            for column, value in zip(columns, row, strict=True):
+                if str(value).strip():
+                    fields.append(f"{column}：{value}")
+
+            if not fields:
+                continue
+
+            record = DoclingDocument(name=document.name, origin=document.origin)
+
+            if isinstance(parent, GroupItem) and parent.label == GroupLabel.SHEET:
+                record.add_heading(parent.name, level=1)
+
+            record.add_heading(table_title, level=2)
+            record.add_heading(f"第 {row_index} 条记录", level=3)
+
+            text = record.add_text(DocItemLabel.TEXT, "\n\n".join(fields))
+
+            text.prov = list(table.prov)
+
+            yield from chunker.chunk(record)
+
+
 def _create_chunks(
-    document: DoclingDocument,
+    document: DoclingDocument, *, content_type: str
 ) -> tuple[list[vector_store.DocumentChunk], list[str]]:
     """创建检索切片及与其索引一一对应的 Embedding 文本。"""
     chunker = HybridChunker(
@@ -490,7 +543,12 @@ def _create_chunks(
     chunks: list[vector_store.DocumentChunk] = []
     embedding_texts: list[str] = []
 
-    for chunk_index, document_chunk in enumerate(chunker.chunk(document)):
+    if DOCUMENT_FORMAT_BY_CONTENT_TYPE.get(content_type) in {"csv", "xlsx"}:
+        document_chunks = _chunk_table_records(document, chunker)
+    else:
+        document_chunks = chunker.chunk(document)
+
+    for chunk_index, document_chunk in enumerate(document_chunks):
         metadata = cast(DocMeta, document_chunk.meta)
 
         page_numbers: set[int] = set()
