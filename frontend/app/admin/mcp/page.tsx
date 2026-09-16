@@ -53,6 +53,7 @@ const BUSINESS_QUERY_TOOLS: McpTool[] = [
 ];
 
 const INTERNAL_TOOL_GROUPS: McpToolGroup[] = [
+  { title: "业务数据", tools: BUSINESS_QUERY_TOOLS },
   {
     title: "知识库",
     tools: [
@@ -69,6 +70,16 @@ const INTERNAL_TOOL_GROUPS: McpToolGroup[] = [
       ["knowledge_entries_delete", "批量删除知识库文件夹和文档", "写入"],
       ["knowledge_document_upload_create", "获取知识库文档上传地址", "写入"],
       ["knowledge_document_upload_complete", "确认知识库文档上传", "写入"],
+      [
+        "knowledge_document_uploads_create",
+        "批量获取知识库文档上传地址，每次最多 100 个",
+        "写入",
+      ],
+      [
+        "knowledge_document_uploads_complete",
+        "批量确认知识库文档上传，每次最多 100 个",
+        "写入",
+      ],
       ["knowledge_document_get", "查询知识库文档详情", "查询"],
       ["knowledge_document_preview", "查询知识库文档预览", "查询"],
       ["knowledge_document_chunks_list", "查询知识库文档切片", "查询"],
@@ -80,10 +91,10 @@ const INTERNAL_TOOL_GROUPS: McpToolGroup[] = [
       ["knowledge_search", "检索知识库内容", "查询"],
     ],
   },
-  { title: "业务数据", tools: BUSINESS_QUERY_TOOLS },
 ];
 
 const EXTERNAL_TOOL_GROUPS: McpToolGroup[] = [
+  { title: "业务数据", tools: BUSINESS_QUERY_TOOLS },
   {
     title: "知识库",
     tools: [
@@ -91,7 +102,6 @@ const EXTERNAL_TOOL_GROUPS: McpToolGroup[] = [
       ["knowledge_search", "检索已启用的知识库内容", "查询"],
     ],
   },
-  { title: "业务数据", tools: BUSINESS_QUERY_TOOLS },
 ];
 
 function ConnectionGuide({
