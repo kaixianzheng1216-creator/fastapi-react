@@ -20,7 +20,11 @@ from docling_core.transforms.serializer.markdown import (
     MarkdownTableSerializer,
 )
 from docling_core.types.doc.base import ImageRefMode
-from docling_core.types.doc.document import DoclingDocument, GroupItem
+from docling_core.types.doc.document import (
+    DoclingDocument,
+    GroupItem,
+    TableData,
+)
 from docling_core.types.doc.items.picture.picture import PictureItem
 from docling_core.types.doc.labels import DocItemLabel, GroupLabel
 from openai import APITimeoutError, OpenAI
@@ -490,11 +494,8 @@ def _chunk_table_records(
 
         columns: list[str] = []
 
-        for index, column in enumerate(dataframe.columns, start=1):
-            if isinstance(column, str) and column.strip():
-                columns.append(column.strip())
-            else:
-                columns.append(f"第 {index} 列")
+        for column in dataframe.columns:
+            columns.append(str(column))
 
         parent = None
 
@@ -506,13 +507,9 @@ def _chunk_table_records(
         for row_index, row in enumerate(
             dataframe.itertuples(index=False, name=None), start=1
         ):
-            fields: list[str] = []
+            values = list(row)
 
-            for column, value in zip(columns, row, strict=True):
-                if str(value).strip():
-                    fields.append(f"{column}：{value}")
-
-            if not fields:
+            if not "".join(values).strip():
                 continue
 
             record = DoclingDocument(name=document.name, origin=document.origin)
@@ -523,9 +520,16 @@ def _chunk_table_records(
             record.add_heading(table_title, level=2)
             record.add_heading(f"第 {row_index} 条记录", level=3)
 
-            text = record.add_text(DocItemLabel.TEXT, "\n\n".join(fields))
+            data = TableData(num_cols=len(columns))
+            data.add_row(columns)
 
-            text.prov = list(table.prov)
+            for cell in data.table_cells:
+                cell.column_header = True
+
+            data.add_row(values)
+
+            record_table = record.add_table(data=data)
+            record_table.prov = list(table.prov)
 
             yield from chunker.chunk(record)
 
