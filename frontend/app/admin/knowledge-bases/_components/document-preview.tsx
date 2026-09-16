@@ -1,7 +1,5 @@
 "use client";
 
-import { CollectionContent } from "@/components/common/collection-content";
-
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
@@ -11,12 +9,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 
-import { AppHeader } from "@/components/layout/app-header";
+import { getKnowledgeDirectoryHref } from "@/app/admin/knowledge-bases/_lib/navigation";
+import { CollectionContent } from "@/components/common/collection-content";
 import { LoadError } from "@/components/common/load-error";
 import { MarkdownContent } from "@/components/common/markdown-content";
 import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
+import { AppHeader } from "@/components/layout/app-header";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -45,8 +46,6 @@ import {
   downloadOriginalKnowledgeDocument,
 } from "@/lib/knowledge-document-download";
 import { getPaginationHref, parsePage } from "@/lib/pagination";
-import { getKnowledgeDirectoryHref } from "@/app/admin/knowledge-bases/_lib/navigation";
-import { toast } from "sonner";
 
 const CHUNK_PAGE_SIZE = 20;
 const CHUNKS_ANCHOR = "document-chunks";
@@ -63,8 +62,17 @@ export function KnowledgeDocumentPreview({
 }: KnowledgeDocumentPreviewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const viewParameter = searchParams.get("view");
+  const chunkPage = parsePage(searchParams.get("chunkPage"));
   const documentPath = `/admin/knowledge-bases/${knowledgeBaseId}/documents/${documentId}`;
 
+  const directoryHref = getKnowledgeDirectoryHref(
+    knowledgeBaseId,
+    parsePage(searchParams.get("page")),
+    searchParams.get("folder") ?? undefined,
+  );
+
+  // 文档信息决定可用的预览方式。
   const documentQuery = useQuery({
     queryKey: ["knowledge-document", documentId],
     queryFn: async ({ signal }) => {
@@ -78,9 +86,44 @@ export function KnowledgeDocumentPreview({
     },
   });
 
-  const viewParameter = searchParams.get("view");
+  const isTableDocument =
+    documentQuery.data?.content_type === "text/csv" ||
+    documentQuery.data?.content_type ===
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  const canPreviewMarkdown = !!documentQuery.data && !isTableDocument;
 
-  const activeView = viewParameter === "chunks" ? viewParameter : "markdown";
+  const activeView =
+    isTableDocument || viewParameter === "chunks" ? "chunks" : "markdown";
+
+  // 内容读取与下载。
+  const previewQuery = useQuery({
+    meta: { handlesInitialError: true },
+    queryKey: ["knowledge-document-preview", documentId],
+    queryFn: async ({ signal }) => {
+      const { data } = await knowledgeDocumentsReadDocumentPreview({
+        path: { document_id: documentId },
+        signal,
+        throwOnError: true,
+      });
+
+      return data;
+    },
+    enabled: canPreviewMarkdown && activeView === "markdown",
+    staleTime: PREVIEW_STALE_TIME_MS,
+  });
+
+  const downloadDocumentMutation = useMutation({
+    mutationFn: (format: "original" | "markdown") =>
+      format === "original"
+        ? downloadOriginalKnowledgeDocument(documentId)
+        : downloadMarkdownKnowledgeDocument(documentId),
+    onSuccess: () => {
+      toast.success("文档已开始下载");
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "文档下载失败，请重试"));
+    },
+  });
 
   function changeView(view: string): void {
     const parameters = new URLSearchParams(searchParams);
@@ -102,24 +145,6 @@ export function KnowledgeDocumentPreview({
     });
   }
 
-  const previewQuery = useQuery({
-    meta: { handlesInitialError: true },
-    queryKey: ["knowledge-document-preview", documentId],
-    queryFn: async ({ signal }) => {
-      const { data } = await knowledgeDocumentsReadDocumentPreview({
-        path: { document_id: documentId },
-        signal,
-        throwOnError: true,
-      });
-
-      return data;
-    },
-    enabled: activeView === "markdown",
-    staleTime: PREVIEW_STALE_TIME_MS,
-  });
-
-  const chunkPage = parsePage(searchParams.get("chunkPage"));
-
   function getChunkPageHref(page: number): string {
     const parameters = new URLSearchParams(searchParams);
 
@@ -128,33 +153,13 @@ export function KnowledgeDocumentPreview({
     return `${getPaginationHref(documentPath, page, parameters, "chunkPage")}#${CHUNKS_ANCHOR}`;
   }
 
-  const downloadDocumentMutation = useMutation({
-    mutationFn: (format: "original" | "markdown") =>
-      format === "original"
-        ? downloadOriginalKnowledgeDocument(documentId)
-        : downloadMarkdownKnowledgeDocument(documentId),
-    onSuccess: () => {
-      toast.success("文档已开始下载");
-    },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "文档下载失败，请重试"));
-    },
-  });
-
   return (
     <>
       <AppHeader
         title={documentQuery.data?.filename ?? "文档预览"}
         left={
           <Button variant="ghost" size="icon-sm" asChild>
-            <Link
-              href={getKnowledgeDirectoryHref(
-                knowledgeBaseId,
-                parsePage(searchParams.get("page")),
-                searchParams.get("folder") ?? undefined,
-              )}
-              aria-label="返回文档目录"
-            >
+            <Link href={directoryHref} aria-label="返回文档目录">
               <ArrowLeftIcon aria-hidden="true" />
             </Link>
           </Button>
@@ -211,62 +216,65 @@ export function KnowledgeDocumentPreview({
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
         <div className="mx-auto flex max-w-5xl flex-col gap-6">
-          <Tabs value={activeView} onValueChange={changeView} className="gap-6">
-            <TabsList>
-              <TabsTrigger value="markdown">
-                <FileTextIcon aria-hidden="true" />
-                Markdown
-              </TabsTrigger>
-              <TabsTrigger value="chunks">
-                <LayersIcon aria-hidden="true" />
-                切片
-              </TabsTrigger>
-            </TabsList>
+          {documentQuery.isPending ? (
+            <DocumentContentSkeleton view={activeView} />
+          ) : documentQuery.isError && !documentQuery.data ? (
+            <LoadError
+              title="文档信息加载失败"
+              isRetrying={documentQuery.isFetching}
+              onRetry={() => void documentQuery.refetch()}
+            />
+          ) : (
+            <Tabs value={activeView} onValueChange={changeView} className="gap-6">
+              <TabsList>
+                {canPreviewMarkdown && (
+                  <TabsTrigger value="markdown">
+                    <FileTextIcon aria-hidden="true" />
+                    Markdown
+                  </TabsTrigger>
+                )}
+                <TabsTrigger value="chunks">
+                  <LayersIcon aria-hidden="true" />
+                  切片
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="markdown">
-              {previewQuery.isPending ? (
-                <div
-                  role="status"
-                  aria-label="正在加载文档内容"
-                  className="flex flex-col gap-4"
-                >
-                  <Skeleton className="h-8 w-1/3" />
-                  <Skeleton className="h-4" />
-                  <Skeleton className="h-4" />
-                  <Skeleton className="h-4 w-4/5" />
+              <TabsContent value="markdown">
+                {previewQuery.isPending ? (
+                  <DocumentContentSkeleton view="markdown" />
+                ) : previewQuery.isError && previewQuery.data === undefined ? (
+                  <LoadError
+                    title="文档内容加载失败"
+                    isRetrying={previewQuery.isFetching}
+                    onRetry={() => void previewQuery.refetch()}
+                  />
+                ) : !previewQuery.data ? (
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon">
+                        <FileTextIcon aria-hidden="true" />
+                      </EmptyMedia>
+                      <EmptyTitle>暂无文档内容</EmptyTitle>
+                    </EmptyHeader>
+                  </Empty>
+                ) : (
+                  <MarkdownContent className="max-w-none">
+                    {previewQuery.data.content}
+                  </MarkdownContent>
+                )}
+              </TabsContent>
+
+              <TabsContent value="chunks">
+                <div id={CHUNKS_ANCHOR} className="scroll-mt-4">
+                  <DocumentChunksView
+                    documentId={documentId}
+                    page={chunkPage}
+                    getPageHref={getChunkPageHref}
+                  />
                 </div>
-              ) : previewQuery.isError && previewQuery.data === undefined ? (
-                <LoadError
-                  title="文档内容加载失败"
-                  isRetrying={previewQuery.isFetching}
-                  onRetry={() => void previewQuery.refetch()}
-                />
-              ) : !previewQuery.data ? (
-                <Empty>
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                      <FileTextIcon aria-hidden="true" />
-                    </EmptyMedia>
-                    <EmptyTitle>暂无文档内容</EmptyTitle>
-                  </EmptyHeader>
-                </Empty>
-              ) : (
-                <MarkdownContent className="max-w-none">
-                  {previewQuery.data.content}
-                </MarkdownContent>
-              )}
-            </TabsContent>
-
-            <TabsContent value="chunks">
-              <div id={CHUNKS_ANCHOR} className="scroll-mt-4">
-                <DocumentChunksView
-                  documentId={documentId}
-                  page={chunkPage}
-                  getPageHref={getChunkPageHref}
-                />
-              </div>
-            </TabsContent>
-          </Tabs>
+              </TabsContent>
+            </Tabs>
+          )}
         </div>
       </div>
     </>
@@ -303,27 +311,7 @@ function DocumentChunksView({
   });
 
   if (chunksQuery.isPending) {
-    return (
-      <div
-        role="status"
-        aria-label="正在加载文档切片"
-        className="flex flex-col gap-4"
-      >
-        {Array.from({ length: 3 }, (_, index) => (
-          <Card key={index} aria-hidden="true">
-            <CardHeader>
-              <Skeleton className="h-5 w-24" />
-              <Skeleton className="h-4 w-40" />
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-11/12" />
-              <Skeleton className="h-4 w-3/4" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
+    return <DocumentContentSkeleton view="chunks" />;
   }
 
   if (chunksQuery.isError && chunksQuery.data === undefined) {
@@ -383,7 +371,9 @@ function DocumentChunksView({
                 ))}
               </div>
             )}
-            <p className="whitespace-pre-wrap">{chunk.content}</p>
+            <MarkdownContent className="min-w-0 max-w-none overflow-x-auto">
+              {chunk.content}
+            </MarkdownContent>
           </CardContent>
         </Card>
       ))}
@@ -408,4 +398,37 @@ function formatChunkLocation(
   ].filter(Boolean);
 
   return parts.join(" · ") || "未标注位置";
+}
+
+function DocumentContentSkeleton({ view }: { view: "markdown" | "chunks" }) {
+  return (
+    <div
+      role="status"
+      aria-busy="true"
+      aria-label={view === "chunks" ? "正在加载文档切片" : "正在加载文档内容"}
+      className="flex flex-col gap-4 [&_[data-slot=skeleton]]:motion-reduce:animate-none"
+    >
+      {view === "chunks" ? (
+        [0, 1].map((index) => (
+          <Card key={index} aria-hidden="true">
+            <CardHeader>
+              <Skeleton className="h-5 w-20" />
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </CardContent>
+          </Card>
+        ))
+      ) : (
+        <div aria-hidden="true" className="flex flex-col gap-4">
+          <Skeleton className="h-8 w-1/3" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </div>
+      )}
+    </div>
+  );
 }

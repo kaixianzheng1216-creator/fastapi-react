@@ -1,5 +1,4 @@
 export const TEXT_CONTENT_TYPES: readonly string[] = [
-  "application/json",
   "text/csv",
   "text/markdown",
   "text/plain",

@@ -1,5 +1,4 @@
 TEXT_CONTENT_TYPES = {
-    "application/json",
     "text/csv",
     "text/markdown",
     "text/plain",

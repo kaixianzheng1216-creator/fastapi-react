@@ -187,7 +187,7 @@ export function KnowledgeDocumentImport({
                   <FieldLabel htmlFor="knowledge-document">文件</FieldLabel>
                   <FieldDescription>
                     支持图片（PNG、JPEG、WebP）、PDF、Word、Excel、PowerPoint、HTML、
-                    Markdown、TXT、CSV 和 JSON。单个文件最大{" "}
+                    Markdown、TXT 和 CSV。单个文件最大{" "}
                     {formatFileSize(MAX_FILE_SIZE)}。
                   </FieldDescription>
                   <Input

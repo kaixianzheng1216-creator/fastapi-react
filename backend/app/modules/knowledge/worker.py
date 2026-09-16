@@ -1,5 +1,4 @@
 import base64
-import json
 import logging
 import multiprocessing
 import time
@@ -9,7 +8,15 @@ from typing import Any, Literal, cast
 
 import httpx
 from docling_core.transforms.chunker.doc_chunk import DocMeta
+from docling_core.transforms.chunker.hierarchical_chunker import (
+    ChunkingDocSerializer,
+    ChunkingSerializerProvider,
+)
 from docling_core.transforms.chunker.hybrid_chunker import HybridChunker
+from docling_core.transforms.serializer.markdown import (
+    MarkdownParams,
+    MarkdownTableSerializer,
+)
 from docling_core.types.doc.base import ImageRefMode
 from docling_core.types.doc.document import DoclingDocument
 from docling_core.types.doc.items.picture.picture import PictureItem
@@ -68,6 +75,15 @@ class DocumentProcessingError(Exception):
 
 class DocumentProcessingTimeoutError(DocumentProcessingError):
     pass
+
+
+class _TableSerializerProvider(ChunkingSerializerProvider):
+    def get_serializer(self, doc: DoclingDocument) -> ChunkingDocSerializer:
+        return ChunkingDocSerializer(
+            doc=doc,
+            table_serializer=MarkdownTableSerializer(),
+            params=MarkdownParams(compact_tables=True),
+        )
 
 
 class _ParsedDocument(BaseModel):
@@ -348,9 +364,7 @@ def _load_or_parse_document(
 
     content = object_storage.read_object_bytes(object_key=stored_file.object_key)
 
-    if stored_file.content_type == "application/json":
-        docling_document = _parse_json_document(stored_file, content)
-    elif stored_file.content_type in IMAGE_CONTENT_TYPES:
+    if stored_file.content_type in IMAGE_CONTENT_TYPES:
         docling_document = _parse_image_document(stored_file, content)
     else:
         docling_document = _parse_with_docling(stored_file, content)
@@ -367,26 +381,6 @@ def _load_or_parse_document(
     )
 
     return docling_document
-
-
-def _parse_json_document(
-    stored_file: StoredFile,
-    content: bytes,
-) -> DoclingDocument:
-    """将 JSON 原文件转换为 Docling 文档。"""
-    try:
-        parsed_json = json.loads(content.decode("utf-8-sig"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as error:
-        raise DocumentProcessingError("JSON 文件格式无效") from error
-
-    document = DoclingDocument(name=stored_file.filename)
-
-    document.add_text(
-        DocItemLabel.TEXT,
-        json.dumps(parsed_json, ensure_ascii=False, indent=4),
-    )
-
-    return document
 
 
 def _parse_image_document(
@@ -487,7 +481,11 @@ def _create_chunks(
     document: DoclingDocument,
 ) -> tuple[list[vector_store.DocumentChunk], list[str]]:
     """创建检索切片及与其索引一一对应的 Embedding 文本。"""
-    chunker = HybridChunker(tokenizer=embedding.get_tokenizer())
+    chunker = HybridChunker(
+        tokenizer=embedding.get_tokenizer(),
+        serializer_provider=_TableSerializerProvider(),
+        repeat_table_header=True,
+    )
 
     chunks: list[vector_store.DocumentChunk] = []
     embedding_texts: list[str] = []
