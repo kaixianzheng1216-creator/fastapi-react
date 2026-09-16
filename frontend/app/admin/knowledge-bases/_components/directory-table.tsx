@@ -109,9 +109,7 @@ export function KnowledgeDirectoryTable({
           const key = getDirectoryEntryKey(entry);
           const name = entry.type === "folder" ? entry.name : entry.filename;
           const processing =
-            entry.type === "document" &&
-            (entry.status === "processing" ||
-              (entry.status === "pending" && entry.uploaded));
+            entry.type === "document" && entry.status === "processing";
 
           return (
             <TableRow
@@ -184,11 +182,9 @@ export function KnowledgeDirectoryTable({
                         className="motion-reduce:animate-none"
                       />
                     )}
-                    {processing
-                      ? statusLabels.processing
-                      : entry.status === "pending" && !entry.uploaded
-                        ? "等待确认上传"
-                        : statusLabels[entry.status]}
+                    {entry.status === "pending" && !entry.uploaded
+                      ? "等待确认上传"
+                      : statusLabels[entry.status]}
                   </Badge>
                 )}
               </TableCell>
