@@ -98,6 +98,28 @@ sudo docker compose -f compose.docling.yml up -d
 
 只运行一个 knowledge-worker 容器，内部同时处理两份文档，其余排队；每份独立超时。先用两份较大 PDF 验证解析服务器内存和耗时，再扩大使用。
 
+## 图片描述提示词
+
+在对应服务器的 `.env` 中配置：
+
+```dotenv
+IMAGE_DESCRIPTION_PROMPT='请用中文简洁、忠实地描述图片，保留理解图片所需的具体细节。若包含图表或数值，请说明对应的标签和数据。'
+```
+
+主服务器用于单独上传的图片，Docling 服务器用于文档内的图片；如需一致，请在两台服务器填写相同内容。保持单行，建议使用中文引号；Docling 会将此值插入 JSON 配置，英文双引号和反斜杠需要按 JSON 规则转义。
+
+修改后重建对应容器以加载环境变量：
+
+```bash
+# 主服务器（更新代码后）
+sudo docker compose -f compose.yml up -d --build knowledge-worker
+
+# Docling 服务器
+sudo docker compose -f compose.docling.yml up -d
+```
+
+已有文档的图片描述不会自动更新。
+
 ## 网络
 
 安全组仅允许主服务器访问解析服务器的 5001、解析服务器访问主服务器的 4000。公网 HTTP 为明文传输，会产生流量。

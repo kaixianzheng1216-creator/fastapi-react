@@ -17,6 +17,7 @@ class KnowledgeSettings(BaseSettings):
 
     LITELLM_BASE_URL: str
     LITELLM_API_KEY: SecretStr
+    IMAGE_DESCRIPTION_PROMPT: Annotated[str, Field(min_length=1)]
 
     NEWAPI_BASE_URL: str
     NEWAPI_API_KEY: SecretStr

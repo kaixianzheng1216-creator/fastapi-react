@@ -67,10 +67,6 @@ DOCUMENT_PROCESSING_TIMEOUT_MESSAGE = "文档处理超时"
 DOCLING_INVALID_RESPONSE_MESSAGE = "Docling 返回内容无效"
 
 IMAGE_DESCRIPTION_MODEL = "deepseek/deepseek-flash"
-IMAGE_DESCRIPTION_PROMPT = (
-    "请用中文简洁、准确地描述图片中的关键信息。"
-    "图表需说明标题、指标、趋势和重要数值；不要猜测看不清的内容。"
-)
 
 logger = logging.getLogger(__name__)
 
@@ -411,7 +407,10 @@ def _parse_image_document(
                     {
                         "role": "user",
                         "content": [
-                            {"type": "text", "text": IMAGE_DESCRIPTION_PROMPT},
+                            {
+                                "type": "text",
+                                "text": knowledge_settings.IMAGE_DESCRIPTION_PROMPT,
+                            },
                             {
                                 "type": "image_url",
                                 "image_url": {"url": image_url},
@@ -446,7 +445,7 @@ def _parse_with_docling(stored_file: StoredFile, content: bytes) -> DoclingDocum
                 "from_formats": document_format,
                 "to_formats": ["json"],
                 "image_export_mode": "embedded",
-                "do_ocr": "false",
+                "do_ocr": "true",
                 "do_picture_description": "true",
                 "picture_description_preset": "deepseek-flash",
             },
