@@ -43,6 +43,7 @@ def embed_texts(texts: Sequence[str]) -> list[list[float]]:
                 "embeddings",
                 json={
                     "model": settings.EMBEDDING_MODEL,
+                    "dimensions": settings.EMBEDDING_DIMENSIONS,
                     "input": [{"type": "text", "text": text}],
                 },
             )

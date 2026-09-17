@@ -10,6 +10,7 @@ from docling_core.transforms.chunker.doc_chunk import DocMeta
 from docling_core.transforms.chunker.hierarchical_chunker import (
     ChunkingDocSerializer,
     ChunkingSerializerProvider,
+    HierarchicalChunker,
 )
 from docling_core.transforms.chunker.hybrid_chunker import HybridChunker
 from docling_core.transforms.serializer.markdown import (
@@ -311,7 +312,11 @@ def _parse_with_docling(stored_file: StoredFile) -> DoclingDocument:
 def _chunk_table_records(
     document: DoclingDocument, chunker: HybridChunker
 ) -> Iterator[BaseChunk]:
-    """逐条切分表格记录，超长记录由 Docling 拆分，不跨记录合并。"""
+    """一行生成一个完整表格切片，超限报错，不再拆分。"""
+    row_chunker = HierarchicalChunker(serializer_provider=chunker.serializer_provider)
+
+    max_tokens = knowledge_settings.EMBEDDING_TABLE_CHUNK_MAX_TOKENS
+
     for table_index, table in enumerate(document.tables, start=1):
         dataframe = table.export_to_dataframe(doc=document)
 
@@ -354,13 +359,24 @@ def _chunk_table_records(
             record_table = record.add_table(data=data)
             record_table.prov = list(table.prov)
 
-            yield from chunker.chunk(record)
+            for chunk in row_chunker.chunk(record):
+                tokens = chunker.tokenizer.count_tokens(chunker.contextualize(chunk))
+
+                if tokens > max_tokens:
+                    raise DocumentProcessingError(
+                        f"{table_title} / 第 {row_index} 条记录："
+                        f"完整切片为 {tokens} token，超过表格上限 {max_tokens} token"
+                    )
+
+                yield chunk
 
 
 def _create_chunk_batches(
     document: DoclingDocument, *, content_type: str
 ) -> Iterator[tuple[list[vector_store.DocumentChunk], list[str]]]:
     """每批生成最多 64 个切片及一一对应的 Embedding 文本。"""
+    is_table = DOCUMENT_FORMAT_BY_CONTENT_TYPE.get(content_type) in {"csv", "xlsx"}
+
     chunker = HybridChunker(
         tokenizer=embedding.get_tokenizer(),
         serializer_provider=_TableSerializerProvider(),
@@ -370,7 +386,7 @@ def _create_chunk_batches(
     chunks: list[vector_store.DocumentChunk] = []
     embedding_texts: list[str] = []
 
-    if DOCUMENT_FORMAT_BY_CONTENT_TYPE.get(content_type) in {"csv", "xlsx"}:
+    if is_table:
         document_chunks = _chunk_table_records(document, chunker)
     else:
         document_chunks = chunker.chunk(document)
