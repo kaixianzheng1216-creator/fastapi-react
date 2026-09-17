@@ -2,7 +2,7 @@ services:
   docling:
     image: ghcr.dockerproxy.net/docling-project/docling-serve-cpu:v1.30.0
     restart: always
-    mem_limit: 8g
+    mem_limit: 10g
     ports:
       - "${DOCLING_BIND_HOST:-127.0.0.1}:${DOCLING_PORT:-5001}:5001"
     environment:
