@@ -5,6 +5,8 @@ from collections.abc import Sequence
 
 from sqlmodel import Session, col, select
 
+from app.db.session import engine
+from app.db.timestamps import utc_now
 from app.modules.files import object_storage
 from app.modules.files.constants import KNOWLEDGE_CONTENT_TYPES
 from app.modules.files.exceptions import (
@@ -463,3 +465,36 @@ def _get_document_with_file(
         raise KnowledgeDocumentNotFoundError
 
     return result
+
+
+def finish_processing_with_error(
+    *,
+    document_id: uuid.UUID,
+    status: KnowledgeDocumentStatus,
+    error_message: str,
+) -> None:
+    """结束失败的处理任务并清理无效产物。"""
+    object_keys = [document_preview_key(document_id)]
+
+    with Session(engine) as session:
+        document = session.get(
+            KnowledgeDocument,
+            document_id,
+            with_for_update=True,
+        )
+
+        if document is None:
+            object_keys.append(document_json_key(document_id))
+        elif document.status != KnowledgeDocumentStatus.PROCESSING:
+            return
+        else:
+            document.processing_finished_at = utc_now()
+            document.status = status
+            document.error_message = error_message
+            session.commit()
+
+    cleanup_deleted_documents(
+        [document_id],
+        object_keys,
+        delete_images=document is None,
+    )

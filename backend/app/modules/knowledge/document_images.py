@@ -1,12 +1,15 @@
 import base64
 import re
 import uuid
+from typing import TYPE_CHECKING
 
-from docling_core.types.doc.document import DoclingDocument
 from pydantic import AnyUrl
 
 from app.modules.files import object_storage
 from app.modules.files.service import cleanup_objects
+
+if TYPE_CHECKING:
+    from docling_core.types.doc.document import DoclingDocument
 
 IMAGE_OBJECT_PREFIX = "knowledge/{document_id}/images/"
 IMAGE_REFERENCE_PREFIX = "https://knowledge-images.invalid/"
