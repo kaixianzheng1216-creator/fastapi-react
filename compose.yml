@@ -165,6 +165,8 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     restart: always
+    mem_limit: 3g
+    memswap_limit: 3g
     depends_on:
       db:
         condition: service_healthy
