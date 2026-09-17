@@ -44,23 +44,34 @@ def run() -> None:
 
 
 def _run_document_queue() -> None:
-    """按可用名额领取任务，每个线程监督一个独立处理子进程。"""
+    """小文件限时补位，大文件等待到期后排空在途任务并独占处理。"""
     limit = knowledge_settings.KNOWLEDGE_MAX_CONCURRENT_DOCUMENTS
 
-    pending: dict[Future[None], uuid.UUID] = {}
+    pending: dict[Future[None], tuple[uuid.UUID, bool]] = {}
+
+    large_wait_started: dict[uuid.UUID, float] = {}
 
     with ThreadPoolExecutor(max_workers=limit) as executor:
         while True:
             while len(pending) < limit:
-                with Session(engine) as session:
-                    document_id = _claim_document(session)
-
-                if document_id is None:
+                if any(is_large for _, is_large in pending.values()):
                     break
+
+                with Session(engine) as session:
+                    claimed = _claim_document(
+                        session,
+                        has_running_documents=bool(pending),
+                        large_wait_started=large_wait_started,
+                    )
+
+                if claimed is None:
+                    break
+
+                document_id, _ = claimed
 
                 future = executor.submit(_process_document_with_timeout, document_id)
 
-                pending[future] = document_id
+                pending[future] = claimed
 
             if not pending:
                 time.sleep(POLL_INTERVAL_SECONDS)
@@ -72,7 +83,7 @@ def _run_document_queue() -> None:
             )
 
             for future in completed:
-                document_id = pending.pop(future)
+                document_id, _ = pending.pop(future)
 
                 try:
                     future.result()
@@ -89,24 +100,61 @@ def _run_document_queue() -> None:
                     )
 
 
-def _claim_document(session: Session) -> uuid.UUID | None:
-    """领取一个等待处理的已上传文档。"""
+def _claim_document(
+    session: Session,
+    *,
+    has_running_documents: bool,
+    large_wait_started: dict[uuid.UUID, float],
+) -> tuple[uuid.UUID, bool] | None:
+    """队首大文件允许小文件限时插队，空闲时立即优先领取大文件。"""
     statement = (
-        select(KnowledgeDocument)
+        select(KnowledgeDocument, StoredFile.size)
         .join(StoredFile, col(StoredFile.id) == KnowledgeDocument.stored_file_id)
         .where(
             col(KnowledgeDocument.status) == KnowledgeDocumentStatus.PENDING,
             col(StoredFile.uploaded).is_(True),
         )
-        .order_by(col(KnowledgeDocument.created_at))
+        .order_by(col(KnowledgeDocument.created_at), col(KnowledgeDocument.id))
         .with_for_update()
         .limit(1)
     )
 
-    document = session.exec(statement).first()
+    result = session.exec(statement).first()
 
-    if document is None:
+    if result is None:
+        large_wait_started.clear()
+
         return None
+
+    document, file_size = result
+
+    threshold = knowledge_settings.KNOWLEDGE_LARGE_FILE_THRESHOLD_MB * 1024 * 1024
+
+    is_large = file_size > threshold
+
+    if is_large and has_running_documents:
+        if document.id not in large_wait_started:
+            large_wait_started.clear()
+
+            large_wait_started[document.id] = time.monotonic()
+
+        if (
+            time.monotonic() - large_wait_started[document.id]
+            >= knowledge_settings.KNOWLEDGE_LARGE_FILE_WAIT_SECONDS
+        ):
+            return None
+
+        result = session.exec(
+            statement.where(col(StoredFile.size) <= threshold)
+        ).first()
+
+        if result is None:
+            return None
+
+        document, _ = result
+        is_large = False
+    else:
+        large_wait_started.clear()
 
     document.status = KnowledgeDocumentStatus.PROCESSING
     document.processing_started_at = utc_now()
@@ -114,7 +162,7 @@ def _claim_document(session: Session) -> uuid.UUID | None:
 
     session.commit()
 
-    return document.id
+    return document.id, is_large
 
 
 def _process_document_with_timeout(document_id: uuid.UUID) -> None:

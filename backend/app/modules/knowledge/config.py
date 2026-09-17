@@ -27,7 +27,10 @@ class KnowledgeSettings(BaseSettings):
     EMBEDDING_TABLE_CHUNK_MAX_TOKENS: Annotated[int, Field(gt=0)]
 
     EMBEDDING_TOKENIZER: str
-    KNOWLEDGE_MAX_CONCURRENT_DOCUMENTS: Annotated[int, Field(gt=0)]
+
+    KNOWLEDGE_MAX_CONCURRENT_DOCUMENTS: Annotated[int, Field(gt=0)] = 3
+    KNOWLEDGE_LARGE_FILE_THRESHOLD_MB: Annotated[int, Field(gt=0)] = 15
+    KNOWLEDGE_LARGE_FILE_WAIT_SECONDS: Annotated[int, Field(ge=0)] = 30
 
 
 settings = KnowledgeSettings.model_validate({})
