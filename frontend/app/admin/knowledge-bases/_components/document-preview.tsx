@@ -398,8 +398,8 @@ function formatChunkLocation(
   pageNumbers: number[],
 ): string {
   const parts = [
-    sectionPath.length > 0 ? sectionPath.join(" / ") : undefined,
     pageNumbers.length > 0 ? `第 ${pageNumbers.join("、")} 页` : undefined,
+    sectionPath.length > 0 ? sectionPath.join(" / ") : undefined,
   ].filter(Boolean);
 
   return parts.join(" · ") || "未标注位置";
