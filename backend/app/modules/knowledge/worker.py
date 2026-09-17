@@ -28,7 +28,7 @@ from docling_core.types.doc.document import (
 from docling_core.types.doc.items.picture.picture import PictureItem
 from docling_core.types.doc.labels import DocItemLabel, GroupLabel
 from openai import APITimeoutError, OpenAI
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 from sqlalchemy import update
 from sqlmodel import Session, col, select
 
@@ -68,6 +68,7 @@ DOCUMENT_PROCESSING_TIMEOUT_MESSAGE = "文档处理超时"
 DOCLING_INVALID_RESPONSE_MESSAGE = "Docling 返回内容无效"
 
 IMAGE_DESCRIPTION_MODEL = "deepseek/deepseek-flash"
+DOCUMENT_JSON_ADAPTER = TypeAdapter(DoclingDocument)
 
 logger = logging.getLogger(__name__)
 
@@ -373,12 +374,11 @@ def _load_or_parse_document(
             exc_info=True,
         )
 
-    content = object_storage.read_object_bytes(object_key=stored_file.object_key)
-
     if stored_file.content_type in IMAGE_CONTENT_TYPES:
+        content = object_storage.read_object_bytes(object_key=stored_file.object_key)
         docling_document = _parse_image_document(stored_file, content)
     else:
-        docling_document = _parse_with_docling(stored_file, content)
+        docling_document = _parse_with_docling(stored_file)
 
     document_images.store_embedded_images(
         document_id=document_id,
@@ -387,7 +387,7 @@ def _load_or_parse_document(
 
     object_storage.write_object_content(
         object_key=document_json_key(document_id),
-        content=docling_document.model_dump_json().encode("utf-8"),
+        content=DOCUMENT_JSON_ADAPTER.dump_json(docling_document),
         content_type="application/json",
     )
 
@@ -441,11 +441,14 @@ def _parse_image_document(
     return document
 
 
-def _parse_with_docling(stored_file: StoredFile, content: bytes) -> DoclingDocument:
-    """调用 Docling 解析原文件。"""
+def _parse_with_docling(stored_file: StoredFile) -> DoclingDocument:
+    """通过临时文件上传原文件，避免整份原文件常驻内存。"""
     document_format = DOCUMENT_FORMAT_BY_CONTENT_TYPE[stored_file.content_type]
 
-    with httpx.Client(timeout=None) as client:
+    with (
+        object_storage.download_to_temporary_file(stored_file.object_key) as content,
+        httpx.Client(timeout=None) as client,
+    ):
         response = client.post(
             f"{str(app_settings.DOCLING_BASE_URL).rstrip('/')}/v1/convert/file",
             data={

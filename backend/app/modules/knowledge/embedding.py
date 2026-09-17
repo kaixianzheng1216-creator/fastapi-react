@@ -1,16 +1,23 @@
 from collections.abc import Sequence
 from functools import cache
+from typing import TYPE_CHECKING
 
 import httpx
-from docling_core.transforms.chunker.tokenizer.huggingface import (
-    HuggingFaceTokenizer,
-)
 
 from app.modules.knowledge.config import settings
+
+if TYPE_CHECKING:
+    from docling_core.transforms.chunker.tokenizer.huggingface import (
+        HuggingFaceTokenizer,
+    )
 
 
 @cache
 def get_tokenizer() -> HuggingFaceTokenizer:
+    from docling_core.transforms.chunker.tokenizer.huggingface import (
+        HuggingFaceTokenizer,
+    )
+
     return HuggingFaceTokenizer.from_pretrained(
         settings.EMBEDDING_TOKENIZER,
         max_tokens=settings.EMBEDDING_CHUNK_MAX_TOKENS,
