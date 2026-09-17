@@ -1,20 +1,14 @@
 "use client";
 
-import { CopyIcon } from "lucide-react";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
+
+import { ConnectionConfig } from "@/app/admin/mcp/_components/connection-config";
+import { KeyManager } from "@/app/admin/mcp/_components/key-manager";
+import type { McpScope } from "@/lib/client";
 
 import { AppHeader } from "@/components/layout/app-header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Field, FieldGroup, FieldTitle } from "@/components/ui/field";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Table,
@@ -42,6 +36,7 @@ type ConnectionGuideProps = {
   serverId: string;
   description: string;
   endpoint: string;
+  scope: McpScope;
   keyPlaceholder: string;
   toolGroups: readonly McpToolGroup[];
 };
@@ -109,117 +104,107 @@ function ConnectionGuide({
   serverId,
   description,
   endpoint,
+  scope,
   keyPlaceholder,
   toolGroups,
 }: ConnectionGuideProps) {
-  const config = JSON.stringify(
-    {
-      mcpServers: {
-        [serverId]: {
-          url: endpoint,
-          headers: {
-            Authorization: `Bearer <${keyPlaceholder}>`,
-          },
-        },
-      },
-    },
-    null,
-    2,
-  );
-
-  async function copyConfig(): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(config);
-      toast.success(`${name} 配置已复制`);
-    } catch {
-      toast.error(`${name} 配置复制失败，请手动复制`);
-    }
-  }
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{name}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-        <CardAction>
-          <Button variant="outline" size="sm" onClick={copyConfig}>
-            <CopyIcon aria-hidden="true" />
-            复制配置
-          </Button>
-        </CardAction>
-      </CardHeader>
+    <section className="flex min-w-0 flex-1 flex-col gap-6" aria-label={name}>
+      <header className="flex flex-col gap-1">
+        <h2 className="text-base font-semibold">{name}</h2>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </header>
 
-      <CardContent>
-        <FieldGroup>
-          <Field>
-            <FieldTitle>连接配置</FieldTitle>
-            <pre className="overflow-x-auto rounded-md bg-muted p-4 text-sm leading-6">
-              <code>{config}</code>
-            </pre>
-          </Field>
+      <Tabs defaultValue="keys" className="min-w-0 flex-1 gap-6">
+        <TabsList variant="line" aria-label={`${name}内容`}>
+          <TabsTrigger value="keys">密钥管理</TabsTrigger>
+          <TabsTrigger value="config">连接配置</TabsTrigger>
+          <TabsTrigger value="tools">可用工具</TabsTrigger>
+        </TabsList>
 
-          <section
-            className="flex min-w-0 flex-col gap-5"
-            aria-label="可用工具"
-          >
-            <h2 className="text-base font-semibold">可用工具</h2>
+        <TabsContent
+          value="keys"
+          className="min-w-0 flex-col data-[state=active]:flex"
+        >
+          <KeyManager scope={scope} endpoint={endpoint} serverId={serverId} />
+        </TabsContent>
 
-            {toolGroups.map(({ title, tools }) => (
-              <section
-                key={title}
-                className="min-w-0 overflow-hidden rounded-lg border"
-                aria-label={`${title}工具`}
-              >
-                <h3 className="flex items-center justify-between gap-2 border-b bg-muted/50 px-4 py-3 text-sm font-semibold">
-                  {title}
-                  <Badge variant="outline">{tools.length} 个工具</Badge>
-                </h3>
-                <Table className="min-w-[640px] table-fixed">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-1/2 px-4 text-muted-foreground">
-                        工具名称
-                      </TableHead>
-                      <TableHead className="px-4 text-muted-foreground">
-                        用途
-                      </TableHead>
-                      <TableHead className="w-20 px-4 text-muted-foreground">
-                        权限
-                      </TableHead>
+        <TabsContent value="config" className="min-w-0">
+          <ConnectionConfig
+            serverId={serverId}
+            endpoint={endpoint}
+            apiKey={`<${keyPlaceholder}>`}
+            isTemplate
+          />
+        </TabsContent>
+
+        <TabsContent
+          value="tools"
+          className="min-w-0 flex-col gap-4 data-[state=active]:flex"
+        >
+          <h2 className="flex min-h-8 items-center text-base font-semibold">
+            可用工具
+          </h2>
+
+          {toolGroups.map(({ title, tools }) => (
+            <section
+              key={title}
+              className="min-w-0 overflow-hidden rounded-lg border"
+              aria-label={`${title}工具`}
+            >
+              <h3 className="flex items-center justify-between gap-2 border-b bg-muted/50 px-4 py-3 text-sm font-semibold">
+                {title}
+                <Badge variant="outline">{tools.length} 个工具</Badge>
+              </h3>
+              <Table className="min-w-[640px] table-fixed">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-1/2 px-4 text-muted-foreground">
+                      工具名称
+                    </TableHead>
+                    <TableHead className="px-4 text-muted-foreground">
+                      用途
+                    </TableHead>
+                    <TableHead className="w-20 px-4 text-muted-foreground">
+                      权限
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tools.map(([name, description, access]) => (
+                    <TableRow key={name}>
+                      <TableCell className="px-4 py-3">
+                        <code>{name}</code>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 whitespace-normal">
+                        {description}
+                      </TableCell>
+                      <TableCell className="px-4 py-3">
+                        <Badge
+                          variant={access === "查询" ? "secondary" : "outline"}
+                        >
+                          {access}
+                        </Badge>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {tools.map(([name, description, access]) => (
-                      <TableRow key={name}>
-                        <TableCell className="px-4 py-3">
-                          <code>{name}</code>
-                        </TableCell>
-                        <TableCell className="px-4 py-3 whitespace-normal">
-                          {description}
-                        </TableCell>
-                        <TableCell className="px-4 py-3">
-                          <Badge
-                            variant={
-                              access === "查询" ? "secondary" : "outline"
-                            }
-                          >
-                            {access}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </section>
-            ))}
-          </section>
-        </FieldGroup>
-      </CardContent>
-    </Card>
+                  ))}
+                </TableBody>
+              </Table>
+            </section>
+          ))}
+        </TabsContent>
+      </Tabs>
+    </section>
   );
 }
 
 export default function McpPage() {
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
   return (
     <>
       <AppHeader
@@ -227,34 +212,50 @@ export default function McpPage() {
         left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
       />
 
-      <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
-        <div className="mx-auto max-w-4xl">
-          <Tabs defaultValue="internal">
+      <main className="min-h-0 flex-1 overflow-y-auto p-4 [scrollbar-gutter:stable] md:p-6">
+        <div className="mx-auto flex min-h-full max-w-4xl flex-col">
+          <Tabs defaultValue="internal" className="flex-1 gap-6">
             <TabsList>
               <TabsTrigger value="internal">内部 MCP</TabsTrigger>
               <TabsTrigger value="external">外部 MCP</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="internal">
-              <ConnectionGuide
-                name="内部 MCP"
-                serverId="data-hub-internal"
-                description="可查询和管理数据。"
-                endpoint="<服务地址>/mcp/internal/"
-                keyPlaceholder="内部访问密钥"
-                toolGroups={INTERNAL_TOOL_GROUPS}
-              />
+            <TabsContent
+              value="internal"
+              className="flex-col data-[state=active]:flex"
+            >
+              {origin ? (
+                <ConnectionGuide
+                  name="内部 MCP"
+                  serverId="data-hub-internal"
+                  description="可查询和管理数据。"
+                  endpoint={`${origin}/mcp/internal`}
+                  scope="internal"
+                  keyPlaceholder="内部访问密钥"
+                  toolGroups={INTERNAL_TOOL_GROUPS}
+                />
+              ) : (
+                <Skeleton className="h-64 w-full" />
+              )}
             </TabsContent>
 
-            <TabsContent value="external">
-              <ConnectionGuide
-                name="外部 MCP"
-                serverId="data-hub-external"
-                description="仅可查询数据。"
-                endpoint="<服务地址>/mcp/external/"
-                keyPlaceholder="外部访问密钥"
-                toolGroups={EXTERNAL_TOOL_GROUPS}
-              />
+            <TabsContent
+              value="external"
+              className="flex-col data-[state=active]:flex"
+            >
+              {origin ? (
+                <ConnectionGuide
+                  name="外部 MCP"
+                  serverId="data-hub-external"
+                  description="仅可查询数据。"
+                  endpoint={`${origin}/mcp/external`}
+                  scope="external"
+                  keyPlaceholder="外部访问密钥"
+                  toolGroups={EXTERNAL_TOOL_GROUPS}
+                />
+              ) : (
+                <Skeleton className="h-64 w-full" />
+              )}
             </TabsContent>
           </Tabs>
         </div>

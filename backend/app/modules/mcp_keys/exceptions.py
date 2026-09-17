@@ -1,0 +1,2 @@
+class McpApiKeyNotFoundError(Exception):
+    pass

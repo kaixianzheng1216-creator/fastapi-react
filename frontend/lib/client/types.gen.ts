@@ -879,6 +879,21 @@ export type KnowledgeDocumentChunksPublic = {
 };
 
 /**
+ * KnowledgeDocumentCompleteResult
+ */
+export type KnowledgeDocumentCompleteResult = {
+    /**
+     * Id
+     */
+    id: string;
+    document?: KnowledgeDocumentPublic | null;
+    /**
+     * Error
+     */
+    error?: string | null;
+};
+
+/**
  * KnowledgeDocumentEntryPublic
  */
 export type KnowledgeDocumentEntryPublic = {
@@ -1047,6 +1062,21 @@ export type KnowledgeDocumentUploadPublic = {
     uploadHeaders: {
         [key: string]: string;
     };
+};
+
+/**
+ * KnowledgeDocumentUploadResult
+ */
+export type KnowledgeDocumentUploadResult = {
+    /**
+     * Filename
+     */
+    filename: string;
+    upload?: KnowledgeDocumentUploadPublic | null;
+    /**
+     * Error
+     */
+    error?: string | null;
 };
 
 /**
@@ -1506,6 +1536,120 @@ export type LibraryFoldersPublic = {
      */
     count: number;
 };
+
+/**
+ * McpApiKeyCreate
+ */
+export type McpApiKeyCreate = {
+    /**
+     * Name
+     */
+    name: string;
+    scope: McpScope;
+};
+
+/**
+ * McpApiKeyCreated
+ */
+export type McpApiKeyCreated = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    scope: McpScope;
+    /**
+     * Key Prefix
+     */
+    key_prefix: string;
+    /**
+     * Key Suffix
+     */
+    key_suffix: string;
+    /**
+     * Is Active
+     */
+    is_active: boolean;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+    /**
+     * Key
+     */
+    key: string;
+};
+
+/**
+ * McpApiKeyPublic
+ */
+export type McpApiKeyPublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    scope: McpScope;
+    /**
+     * Key Prefix
+     */
+    key_prefix: string;
+    /**
+     * Key Suffix
+     */
+    key_suffix: string;
+    /**
+     * Is Active
+     */
+    is_active: boolean;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * McpApiKeyUpdate
+ */
+export type McpApiKeyUpdate = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Is Active
+     */
+    is_active: boolean;
+};
+
+/**
+ * McpApiKeysPublic
+ */
+export type McpApiKeysPublic = {
+    /**
+     * Data
+     */
+    data: Array<McpApiKeyPublic>;
+};
+
+/**
+ * McpScope
+ */
+export type McpScope = 'internal' | 'external';
 
 /**
  * Message
@@ -3197,6 +3341,62 @@ export type KnowledgeBasesCreateDocumentUploadResponses = {
 
 export type KnowledgeBasesCreateDocumentUploadResponse = KnowledgeBasesCreateDocumentUploadResponses[keyof KnowledgeBasesCreateDocumentUploadResponses];
 
+export type KnowledgeBasesCreateDocumentUploadsData = {
+    /**
+     * Body
+     */
+    body: Array<FileUploadRequest>;
+    path: {
+        /**
+         * Knowledge Base Id
+         *
+         * 知识库 ID
+         */
+        knowledge_base_id: string;
+    };
+    query?: {
+        /**
+         * Folder Id
+         *
+         * 导入到的文件夹 ID；不传表示根目录
+         */
+        folder_id?: string | null;
+    };
+    url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}/documents/uploads/batch';
+};
+
+export type KnowledgeBasesCreateDocumentUploadsErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeBasesCreateDocumentUploadsError = KnowledgeBasesCreateDocumentUploadsErrors[keyof KnowledgeBasesCreateDocumentUploadsErrors];
+
+export type KnowledgeBasesCreateDocumentUploadsResponses = {
+    /**
+     * Response Knowledge-Bases-Create Document Uploads
+     *
+     * Successful Response
+     */
+    200: Array<KnowledgeDocumentUploadResult>;
+};
+
+export type KnowledgeBasesCreateDocumentUploadsResponse = KnowledgeBasesCreateDocumentUploadsResponses[keyof KnowledgeBasesCreateDocumentUploadsResponses];
+
 export type KnowledgeBasesCreateWebpageDocumentData = {
     body: KnowledgeWebpageCreate;
     path: {
@@ -3311,6 +3511,50 @@ export type KnowledgeBasesSearchKnowledgeBaseResponses = {
 };
 
 export type KnowledgeBasesSearchKnowledgeBaseResponse = KnowledgeBasesSearchKnowledgeBaseResponses[keyof KnowledgeBasesSearchKnowledgeBaseResponses];
+
+export type KnowledgeDocumentsCompleteDocumentUploadsData = {
+    /**
+     * Body
+     *
+     * 已完成 HTTP PUT 上传的文档 ID
+     */
+    body: Array<string>;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/knowledge-documents/uploads/complete';
+};
+
+export type KnowledgeDocumentsCompleteDocumentUploadsErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type KnowledgeDocumentsCompleteDocumentUploadsError = KnowledgeDocumentsCompleteDocumentUploadsErrors[keyof KnowledgeDocumentsCompleteDocumentUploadsErrors];
+
+export type KnowledgeDocumentsCompleteDocumentUploadsResponses = {
+    /**
+     * Response Knowledge-Documents-Complete Document Uploads
+     *
+     * Successful Response
+     */
+    200: Array<KnowledgeDocumentCompleteResult>;
+};
+
+export type KnowledgeDocumentsCompleteDocumentUploadsResponse = KnowledgeDocumentsCompleteDocumentUploadsResponses[keyof KnowledgeDocumentsCompleteDocumentUploadsResponses];
 
 export type KnowledgeDocumentsCompleteDocumentUploadData = {
     body?: never;
@@ -5832,3 +6076,179 @@ export type DataRefreshReadRefreshStatusResponses = {
 };
 
 export type DataRefreshReadRefreshStatusResponse = DataRefreshReadRefreshStatusResponses[keyof DataRefreshReadRefreshStatusResponses];
+
+export type McpKeysReadMcpApiKeysData = {
+    body?: never;
+    path?: never;
+    query: {
+        scope: McpScope;
+    };
+    url: '/api/v1/mcp/keys';
+};
+
+export type McpKeysReadMcpApiKeysErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type McpKeysReadMcpApiKeysError = McpKeysReadMcpApiKeysErrors[keyof McpKeysReadMcpApiKeysErrors];
+
+export type McpKeysReadMcpApiKeysResponses = {
+    /**
+     * Successful Response
+     */
+    200: McpApiKeysPublic;
+};
+
+export type McpKeysReadMcpApiKeysResponse = McpKeysReadMcpApiKeysResponses[keyof McpKeysReadMcpApiKeysResponses];
+
+export type McpKeysCreateMcpApiKeyData = {
+    body: McpApiKeyCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/mcp/keys';
+};
+
+export type McpKeysCreateMcpApiKeyErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type McpKeysCreateMcpApiKeyError = McpKeysCreateMcpApiKeyErrors[keyof McpKeysCreateMcpApiKeyErrors];
+
+export type McpKeysCreateMcpApiKeyResponses = {
+    /**
+     * Successful Response
+     */
+    201: McpApiKeyCreated;
+};
+
+export type McpKeysCreateMcpApiKeyResponse = McpKeysCreateMcpApiKeyResponses[keyof McpKeysCreateMcpApiKeyResponses];
+
+export type McpKeysDeleteMcpApiKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Key Id
+         */
+        key_id: string;
+    };
+    query?: never;
+    url: '/api/v1/mcp/keys/{key_id}';
+};
+
+export type McpKeysDeleteMcpApiKeyErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type McpKeysDeleteMcpApiKeyError = McpKeysDeleteMcpApiKeyErrors[keyof McpKeysDeleteMcpApiKeyErrors];
+
+export type McpKeysDeleteMcpApiKeyResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type McpKeysDeleteMcpApiKeyResponse = McpKeysDeleteMcpApiKeyResponses[keyof McpKeysDeleteMcpApiKeyResponses];
+
+export type McpKeysUpdateMcpApiKeyData = {
+    body: McpApiKeyUpdate;
+    path: {
+        /**
+         * Key Id
+         */
+        key_id: string;
+    };
+    query?: never;
+    url: '/api/v1/mcp/keys/{key_id}';
+};
+
+export type McpKeysUpdateMcpApiKeyErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type McpKeysUpdateMcpApiKeyError = McpKeysUpdateMcpApiKeyErrors[keyof McpKeysUpdateMcpApiKeyErrors];
+
+export type McpKeysUpdateMcpApiKeyResponses = {
+    /**
+     * Successful Response
+     */
+    200: McpApiKeyPublic;
+};
+
+export type McpKeysUpdateMcpApiKeyResponse = McpKeysUpdateMcpApiKeyResponses[keyof McpKeysUpdateMcpApiKeyResponses];

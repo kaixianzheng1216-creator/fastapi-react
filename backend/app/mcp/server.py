@@ -4,8 +4,8 @@ from fastmcp.server.providers.openapi import MCPType
 from fastmcp.utilities.openapi import HTTPRoute
 
 from app.api.openapi import custom_generate_unique_id
-from app.core.config import API_V1_PREFIX, settings
-from app.mcp.auth import create_api_key_auth, get_internal_mcp_user
+from app.core.config import API_V1_PREFIX
+from app.mcp.auth import DatabaseTokenVerifier, get_internal_mcp_user
 from app.mcp.external import router as external_knowledge_router
 from app.mcp.operations import EXTERNAL_OPERATIONS, INTERNAL_OPERATIONS
 from app.modules.auth.dependencies import (
@@ -19,6 +19,7 @@ from app.modules.influencer_marketing.router import (
 )
 from app.modules.knowledge.router import document_router as knowledge_document_router
 from app.modules.knowledge.router import router as knowledge_router
+from app.modules.mcp_keys.models import McpScope
 
 
 def create_mcp_servers() -> tuple[FastMCP, FastMCP]:
@@ -26,16 +27,14 @@ def create_mcp_servers() -> tuple[FastMCP, FastMCP]:
         _create_internal_api(),
         name="Data Hub Internal",
         operations=INTERNAL_OPERATIONS,
-        api_key=settings.MCP_INTERNAL_API_KEY,
-        client_id="data-hub-internal",
+        scope=McpScope.INTERNAL,
     )
 
     external = _create_server(
         _create_external_api(),
         name="Data Hub External",
         operations=EXTERNAL_OPERATIONS,
-        api_key=settings.MCP_EXTERNAL_API_KEY,
-        client_id="data-hub-external",
+        scope=McpScope.EXTERNAL,
     )
 
     return internal, external
@@ -76,8 +75,7 @@ def _create_server(
     *,
     name: str,
     operations: dict[str, str],
-    api_key: str,
-    client_id: str,
+    scope: McpScope,
 ) -> FastMCP:
     def map_route(route: HTTPRoute, _: MCPType) -> MCPType:
         if route.operation_id in operations:
@@ -88,7 +86,7 @@ def _create_server(
     return FastMCP.from_fastapi(
         app=app,
         name=name,
-        auth=create_api_key_auth(api_key, client_id),
+        auth=DatabaseTokenVerifier(scope),
         route_map_fn=map_route,
         mcp_names=operations,
     )

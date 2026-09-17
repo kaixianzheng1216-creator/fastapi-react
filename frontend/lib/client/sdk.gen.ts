@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AgentArchiveConversationData, AgentArchiveConversationErrors, AgentArchiveConversationResponses, AgentCancelAgentRunData, AgentCancelAgentRunErrors, AgentCancelAgentRunResponses, AgentCreateAgentRunData, AgentCreateAgentRunErrors, AgentCreateAgentRunResponses, AgentCreateConversationData, AgentCreateConversationErrors, AgentCreateConversationResponses, AgentDeleteConversationData, AgentDeleteConversationErrors, AgentDeleteConversationResponses, AgentDownloadConversationReportPdfData, AgentDownloadConversationReportPdfErrors, AgentDownloadConversationReportPdfResponses, AgentGenerateConversationTitleData, AgentGenerateConversationTitleErrors, AgentGenerateConversationTitleResponses, AgentReadAgentRunResumeStateData, AgentReadAgentRunResumeStateErrors, AgentReadAgentRunResumeStateResponses, AgentReadConversationData, AgentReadConversationErrors, AgentReadConversationResponses, AgentReadConversationsData, AgentReadConversationsErrors, AgentReadConversationsResponses, AgentReadModelsData, AgentReadModelsErrors, AgentReadModelsResponses, AgentRenameConversationData, AgentRenameConversationErrors, AgentRenameConversationResponses, AgentResumeAgentRunData, AgentResumeAgentRunErrors, AgentResumeAgentRunResponses, AgentUnarchiveConversationData, AgentUnarchiveConversationErrors, AgentUnarchiveConversationResponses, BrandMarketingReadRegionalDataData, BrandMarketingReadRegionalDataErrors, BrandMarketingReadRegionalDataResponses, ContentOperationsReadBilibiliRankingData, ContentOperationsReadBilibiliRankingErrors, ContentOperationsReadBilibiliRankingResponses, DataRefreshReadCurrentRefreshData, DataRefreshReadCurrentRefreshErrors, DataRefreshReadCurrentRefreshResponses, DataRefreshReadRefreshStatusData, DataRefreshReadRefreshStatusErrors, DataRefreshReadRefreshStatusResponses, DataRefreshStartDataRefreshData, DataRefreshStartDataRefreshErrors, DataRefreshStartDataRefreshResponses, FileLibrariesCreateDocumentUploadData, FileLibrariesCreateDocumentUploadErrors, FileLibrariesCreateDocumentUploadResponses, FileLibrariesCreateFileLibraryData, FileLibrariesCreateFileLibraryErrors, FileLibrariesCreateFileLibraryResponses, FileLibrariesCreateFolderData, FileLibrariesCreateFolderErrors, FileLibrariesCreateFolderResponses, FileLibrariesDeleteDirectoryEntriesData, FileLibrariesDeleteDirectoryEntriesErrors, FileLibrariesDeleteDirectoryEntriesResponses, FileLibrariesDeleteFileLibraryData, FileLibrariesDeleteFileLibraryErrors, FileLibrariesDeleteFileLibraryResponses, FileLibrariesMoveFolderData, FileLibrariesMoveFolderErrors, FileLibrariesMoveFolderResponses, FileLibrariesReadDirectoryData, FileLibrariesReadDirectoryErrors, FileLibrariesReadDirectoryResponses, FileLibrariesReadFileLibrariesData, FileLibrariesReadFileLibrariesErrors, FileLibrariesReadFileLibrariesResponses, FileLibrariesReadFileLibraryData, FileLibrariesReadFileLibraryErrors, FileLibrariesReadFileLibraryResponses, FileLibrariesReadFoldersData, FileLibrariesReadFoldersErrors, FileLibrariesReadFoldersResponses, FileLibrariesUpdateFileLibraryData, FileLibrariesUpdateFileLibraryErrors, FileLibrariesUpdateFileLibraryResponses, FileLibrariesUpdateFolderData, FileLibrariesUpdateFolderErrors, FileLibrariesUpdateFolderResponses, FilesCompleteFileUploadData, FilesCompleteFileUploadErrors, FilesCompleteFileUploadResponses, FilesCreateFileUploadData, FilesCreateFileUploadErrors, FilesCreateFileUploadResponses, FilesDeleteUnreferencedFileData, FilesDeleteUnreferencedFileErrors, FilesDeleteUnreferencedFileResponses, FilesGetFileDownloadUrlData, FilesGetFileDownloadUrlErrors, FilesGetFileDownloadUrlResponses, InfluencerMarketingReadInfluencerAccountsData, InfluencerMarketingReadInfluencerAccountsErrors, InfluencerMarketingReadInfluencerAccountsResponses, KnowledgeBasesCreateDocumentUploadData, KnowledgeBasesCreateDocumentUploadErrors, KnowledgeBasesCreateDocumentUploadResponses, KnowledgeBasesCreateFolderData, KnowledgeBasesCreateFolderErrors, KnowledgeBasesCreateFolderResponses, KnowledgeBasesCreateKnowledgeBaseData, KnowledgeBasesCreateKnowledgeBaseErrors, KnowledgeBasesCreateKnowledgeBaseResponses, KnowledgeBasesCreateWebpageDocumentData, KnowledgeBasesCreateWebpageDocumentErrors, KnowledgeBasesCreateWebpageDocumentResponses, KnowledgeBasesDeleteDirectoryEntriesData, KnowledgeBasesDeleteDirectoryEntriesErrors, KnowledgeBasesDeleteDirectoryEntriesResponses, KnowledgeBasesDeleteKnowledgeBaseData, KnowledgeBasesDeleteKnowledgeBaseErrors, KnowledgeBasesDeleteKnowledgeBaseResponses, KnowledgeBasesMoveFolderData, KnowledgeBasesMoveFolderErrors, KnowledgeBasesMoveFolderResponses, KnowledgeBasesReadDirectoryData, KnowledgeBasesReadDirectoryErrors, KnowledgeBasesReadDirectoryResponses, KnowledgeBasesReadFoldersData, KnowledgeBasesReadFoldersErrors, KnowledgeBasesReadFoldersResponses, KnowledgeBasesReadKnowledgeBaseData, KnowledgeBasesReadKnowledgeBaseErrors, KnowledgeBasesReadKnowledgeBaseResponses, KnowledgeBasesReadKnowledgeBasesData, KnowledgeBasesReadKnowledgeBasesErrors, KnowledgeBasesReadKnowledgeBasesResponses, KnowledgeBasesSearchKnowledgeBaseData, KnowledgeBasesSearchKnowledgeBaseErrors, KnowledgeBasesSearchKnowledgeBaseResponses, KnowledgeBasesUpdateFolderData, KnowledgeBasesUpdateFolderErrors, KnowledgeBasesUpdateFolderResponses, KnowledgeBasesUpdateKnowledgeBaseData, KnowledgeBasesUpdateKnowledgeBaseErrors, KnowledgeBasesUpdateKnowledgeBaseResponses, KnowledgeDocumentsCompleteDocumentUploadData, KnowledgeDocumentsCompleteDocumentUploadErrors, KnowledgeDocumentsCompleteDocumentUploadResponses, KnowledgeDocumentsDeleteDocumentData, KnowledgeDocumentsDeleteDocumentErrors, KnowledgeDocumentsDeleteDocumentResponses, KnowledgeDocumentsDownloadOriginalDocumentData, KnowledgeDocumentsDownloadOriginalDocumentErrors, KnowledgeDocumentsDownloadOriginalDocumentResponses, KnowledgeDocumentsMoveDocumentData, KnowledgeDocumentsMoveDocumentErrors, KnowledgeDocumentsMoveDocumentResponses, KnowledgeDocumentsReadDocumentChunksData, KnowledgeDocumentsReadDocumentChunksErrors, KnowledgeDocumentsReadDocumentChunksResponses, KnowledgeDocumentsReadDocumentData, KnowledgeDocumentsReadDocumentErrors, KnowledgeDocumentsReadDocumentPreviewData, KnowledgeDocumentsReadDocumentPreviewErrors, KnowledgeDocumentsReadDocumentPreviewResponses, KnowledgeDocumentsReadDocumentResponses, KnowledgeDocumentsRetryDocumentData, KnowledgeDocumentsRetryDocumentErrors, KnowledgeDocumentsRetryDocumentResponses, LibraryDocumentsCompleteDocumentUploadData, LibraryDocumentsCompleteDocumentUploadErrors, LibraryDocumentsCompleteDocumentUploadResponses, LibraryDocumentsDeleteDocumentData, LibraryDocumentsDeleteDocumentErrors, LibraryDocumentsDeleteDocumentResponses, LibraryDocumentsDownloadOriginalDocumentData, LibraryDocumentsDownloadOriginalDocumentErrors, LibraryDocumentsDownloadOriginalDocumentResponses, LibraryDocumentsMoveDocumentData, LibraryDocumentsMoveDocumentErrors, LibraryDocumentsMoveDocumentResponses, LibraryDocumentsReadDocumentData, LibraryDocumentsReadDocumentErrors, LibraryDocumentsReadDocumentResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginTestTokenData, LoginTestTokenErrors, LoginTestTokenResponses, SkillsCreateMdSkillData, SkillsCreateMdSkillErrors, SkillsCreateMdSkillResponses, SkillsCreateZipSkillData, SkillsCreateZipSkillErrors, SkillsCreateZipSkillResponses, SkillsDeleteSkillData, SkillsDeleteSkillErrors, SkillsDeleteSkillResponses, SkillsReadSkillData, SkillsReadSkillErrors, SkillsReadSkillFileData, SkillsReadSkillFileErrors, SkillsReadSkillFileResponses, SkillsReadSkillResponses, SkillsReadSkillsData, SkillsReadSkillsErrors, SkillsReadSkillsResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeErrors, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeErrors, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
+import type { AgentArchiveConversationData, AgentArchiveConversationErrors, AgentArchiveConversationResponses, AgentCancelAgentRunData, AgentCancelAgentRunErrors, AgentCancelAgentRunResponses, AgentCreateAgentRunData, AgentCreateAgentRunErrors, AgentCreateAgentRunResponses, AgentCreateConversationData, AgentCreateConversationErrors, AgentCreateConversationResponses, AgentDeleteConversationData, AgentDeleteConversationErrors, AgentDeleteConversationResponses, AgentDownloadConversationReportPdfData, AgentDownloadConversationReportPdfErrors, AgentDownloadConversationReportPdfResponses, AgentGenerateConversationTitleData, AgentGenerateConversationTitleErrors, AgentGenerateConversationTitleResponses, AgentReadAgentRunResumeStateData, AgentReadAgentRunResumeStateErrors, AgentReadAgentRunResumeStateResponses, AgentReadConversationData, AgentReadConversationErrors, AgentReadConversationResponses, AgentReadConversationsData, AgentReadConversationsErrors, AgentReadConversationsResponses, AgentReadModelsData, AgentReadModelsErrors, AgentReadModelsResponses, AgentRenameConversationData, AgentRenameConversationErrors, AgentRenameConversationResponses, AgentResumeAgentRunData, AgentResumeAgentRunErrors, AgentResumeAgentRunResponses, AgentUnarchiveConversationData, AgentUnarchiveConversationErrors, AgentUnarchiveConversationResponses, BrandMarketingReadRegionalDataData, BrandMarketingReadRegionalDataErrors, BrandMarketingReadRegionalDataResponses, ContentOperationsReadBilibiliRankingData, ContentOperationsReadBilibiliRankingErrors, ContentOperationsReadBilibiliRankingResponses, DataRefreshReadCurrentRefreshData, DataRefreshReadCurrentRefreshErrors, DataRefreshReadCurrentRefreshResponses, DataRefreshReadRefreshStatusData, DataRefreshReadRefreshStatusErrors, DataRefreshReadRefreshStatusResponses, DataRefreshStartDataRefreshData, DataRefreshStartDataRefreshErrors, DataRefreshStartDataRefreshResponses, FileLibrariesCreateDocumentUploadData, FileLibrariesCreateDocumentUploadErrors, FileLibrariesCreateDocumentUploadResponses, FileLibrariesCreateFileLibraryData, FileLibrariesCreateFileLibraryErrors, FileLibrariesCreateFileLibraryResponses, FileLibrariesCreateFolderData, FileLibrariesCreateFolderErrors, FileLibrariesCreateFolderResponses, FileLibrariesDeleteDirectoryEntriesData, FileLibrariesDeleteDirectoryEntriesErrors, FileLibrariesDeleteDirectoryEntriesResponses, FileLibrariesDeleteFileLibraryData, FileLibrariesDeleteFileLibraryErrors, FileLibrariesDeleteFileLibraryResponses, FileLibrariesMoveFolderData, FileLibrariesMoveFolderErrors, FileLibrariesMoveFolderResponses, FileLibrariesReadDirectoryData, FileLibrariesReadDirectoryErrors, FileLibrariesReadDirectoryResponses, FileLibrariesReadFileLibrariesData, FileLibrariesReadFileLibrariesErrors, FileLibrariesReadFileLibrariesResponses, FileLibrariesReadFileLibraryData, FileLibrariesReadFileLibraryErrors, FileLibrariesReadFileLibraryResponses, FileLibrariesReadFoldersData, FileLibrariesReadFoldersErrors, FileLibrariesReadFoldersResponses, FileLibrariesUpdateFileLibraryData, FileLibrariesUpdateFileLibraryErrors, FileLibrariesUpdateFileLibraryResponses, FileLibrariesUpdateFolderData, FileLibrariesUpdateFolderErrors, FileLibrariesUpdateFolderResponses, FilesCompleteFileUploadData, FilesCompleteFileUploadErrors, FilesCompleteFileUploadResponses, FilesCreateFileUploadData, FilesCreateFileUploadErrors, FilesCreateFileUploadResponses, FilesDeleteUnreferencedFileData, FilesDeleteUnreferencedFileErrors, FilesDeleteUnreferencedFileResponses, FilesGetFileDownloadUrlData, FilesGetFileDownloadUrlErrors, FilesGetFileDownloadUrlResponses, InfluencerMarketingReadInfluencerAccountsData, InfluencerMarketingReadInfluencerAccountsErrors, InfluencerMarketingReadInfluencerAccountsResponses, KnowledgeBasesCreateDocumentUploadData, KnowledgeBasesCreateDocumentUploadErrors, KnowledgeBasesCreateDocumentUploadResponses, KnowledgeBasesCreateDocumentUploadsData, KnowledgeBasesCreateDocumentUploadsErrors, KnowledgeBasesCreateDocumentUploadsResponses, KnowledgeBasesCreateFolderData, KnowledgeBasesCreateFolderErrors, KnowledgeBasesCreateFolderResponses, KnowledgeBasesCreateKnowledgeBaseData, KnowledgeBasesCreateKnowledgeBaseErrors, KnowledgeBasesCreateKnowledgeBaseResponses, KnowledgeBasesCreateWebpageDocumentData, KnowledgeBasesCreateWebpageDocumentErrors, KnowledgeBasesCreateWebpageDocumentResponses, KnowledgeBasesDeleteDirectoryEntriesData, KnowledgeBasesDeleteDirectoryEntriesErrors, KnowledgeBasesDeleteDirectoryEntriesResponses, KnowledgeBasesDeleteKnowledgeBaseData, KnowledgeBasesDeleteKnowledgeBaseErrors, KnowledgeBasesDeleteKnowledgeBaseResponses, KnowledgeBasesMoveFolderData, KnowledgeBasesMoveFolderErrors, KnowledgeBasesMoveFolderResponses, KnowledgeBasesReadDirectoryData, KnowledgeBasesReadDirectoryErrors, KnowledgeBasesReadDirectoryResponses, KnowledgeBasesReadFoldersData, KnowledgeBasesReadFoldersErrors, KnowledgeBasesReadFoldersResponses, KnowledgeBasesReadKnowledgeBaseData, KnowledgeBasesReadKnowledgeBaseErrors, KnowledgeBasesReadKnowledgeBaseResponses, KnowledgeBasesReadKnowledgeBasesData, KnowledgeBasesReadKnowledgeBasesErrors, KnowledgeBasesReadKnowledgeBasesResponses, KnowledgeBasesSearchKnowledgeBaseData, KnowledgeBasesSearchKnowledgeBaseErrors, KnowledgeBasesSearchKnowledgeBaseResponses, KnowledgeBasesUpdateFolderData, KnowledgeBasesUpdateFolderErrors, KnowledgeBasesUpdateFolderResponses, KnowledgeBasesUpdateKnowledgeBaseData, KnowledgeBasesUpdateKnowledgeBaseErrors, KnowledgeBasesUpdateKnowledgeBaseResponses, KnowledgeDocumentsCompleteDocumentUploadData, KnowledgeDocumentsCompleteDocumentUploadErrors, KnowledgeDocumentsCompleteDocumentUploadResponses, KnowledgeDocumentsCompleteDocumentUploadsData, KnowledgeDocumentsCompleteDocumentUploadsErrors, KnowledgeDocumentsCompleteDocumentUploadsResponses, KnowledgeDocumentsDeleteDocumentData, KnowledgeDocumentsDeleteDocumentErrors, KnowledgeDocumentsDeleteDocumentResponses, KnowledgeDocumentsDownloadOriginalDocumentData, KnowledgeDocumentsDownloadOriginalDocumentErrors, KnowledgeDocumentsDownloadOriginalDocumentResponses, KnowledgeDocumentsMoveDocumentData, KnowledgeDocumentsMoveDocumentErrors, KnowledgeDocumentsMoveDocumentResponses, KnowledgeDocumentsReadDocumentChunksData, KnowledgeDocumentsReadDocumentChunksErrors, KnowledgeDocumentsReadDocumentChunksResponses, KnowledgeDocumentsReadDocumentData, KnowledgeDocumentsReadDocumentErrors, KnowledgeDocumentsReadDocumentPreviewData, KnowledgeDocumentsReadDocumentPreviewErrors, KnowledgeDocumentsReadDocumentPreviewResponses, KnowledgeDocumentsReadDocumentResponses, KnowledgeDocumentsRetryDocumentData, KnowledgeDocumentsRetryDocumentErrors, KnowledgeDocumentsRetryDocumentResponses, LibraryDocumentsCompleteDocumentUploadData, LibraryDocumentsCompleteDocumentUploadErrors, LibraryDocumentsCompleteDocumentUploadResponses, LibraryDocumentsDeleteDocumentData, LibraryDocumentsDeleteDocumentErrors, LibraryDocumentsDeleteDocumentResponses, LibraryDocumentsDownloadOriginalDocumentData, LibraryDocumentsDownloadOriginalDocumentErrors, LibraryDocumentsDownloadOriginalDocumentResponses, LibraryDocumentsMoveDocumentData, LibraryDocumentsMoveDocumentErrors, LibraryDocumentsMoveDocumentResponses, LibraryDocumentsReadDocumentData, LibraryDocumentsReadDocumentErrors, LibraryDocumentsReadDocumentResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginTestTokenData, LoginTestTokenErrors, LoginTestTokenResponses, McpKeysCreateMcpApiKeyData, McpKeysCreateMcpApiKeyErrors, McpKeysCreateMcpApiKeyResponses, McpKeysDeleteMcpApiKeyData, McpKeysDeleteMcpApiKeyErrors, McpKeysDeleteMcpApiKeyResponses, McpKeysReadMcpApiKeysData, McpKeysReadMcpApiKeysErrors, McpKeysReadMcpApiKeysResponses, McpKeysUpdateMcpApiKeyData, McpKeysUpdateMcpApiKeyErrors, McpKeysUpdateMcpApiKeyResponses, SkillsCreateMdSkillData, SkillsCreateMdSkillErrors, SkillsCreateMdSkillResponses, SkillsCreateZipSkillData, SkillsCreateZipSkillErrors, SkillsCreateZipSkillResponses, SkillsDeleteSkillData, SkillsDeleteSkillErrors, SkillsDeleteSkillResponses, SkillsReadSkillData, SkillsReadSkillErrors, SkillsReadSkillFileData, SkillsReadSkillFileErrors, SkillsReadSkillFileResponses, SkillsReadSkillResponses, SkillsReadSkillsData, SkillsReadSkillsErrors, SkillsReadSkillsResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeErrors, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeErrors, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -355,6 +355,25 @@ export const knowledgeBasesCreateDocumentUpload = <ThrowOnError extends boolean 
 });
 
 /**
+ * Create Document Uploads
+ *
+ * 批量创建知识库文档上传凭证，每次 1–100 个，结果与输入顺序一致。
+ *
+ * 每项返回 upload 或 error；成功项通过 uploadUrl 和 uploadHeaders
+ * 使用 HTTP PUT 上传原始文件内容，再调用 knowledge_document_uploads_complete。
+ * 单项失败不影响其他项，只需重试失败项，避免重复创建成功项。
+ */
+export const knowledgeBasesCreateDocumentUploads = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesCreateDocumentUploadsData, ThrowOnError>): RequestResult<KnowledgeBasesCreateDocumentUploadsResponses, KnowledgeBasesCreateDocumentUploadsErrors, ThrowOnError> => (options.client ?? client).post<KnowledgeBasesCreateDocumentUploadsResponses, KnowledgeBasesCreateDocumentUploadsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}/documents/uploads/batch',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Create Webpage Document
  *
  * 从网页导入知识库文档。
@@ -377,6 +396,25 @@ export const knowledgeBasesCreateWebpageDocument = <ThrowOnError extends boolean
 export const knowledgeBasesSearchKnowledgeBase = <ThrowOnError extends boolean = false>(options: Options<KnowledgeBasesSearchKnowledgeBaseData, ThrowOnError>): RequestResult<KnowledgeBasesSearchKnowledgeBaseResponses, KnowledgeBasesSearchKnowledgeBaseErrors, ThrowOnError> => (options.client ?? client).post<KnowledgeBasesSearchKnowledgeBaseResponses, KnowledgeBasesSearchKnowledgeBaseErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}/search',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Complete Document Uploads
+ *
+ * 批量确认知识库文档上传，每次 1–100 个，结果与输入顺序一致。
+ *
+ * 每项返回 document 或 error；成功项进入文档处理流程。
+ * 单项失败不影响其他项；未上传或存储暂时不可用时，可使用原文档 ID 重试确认。
+ * 文件大小不符时，该上传记录会被删除，需要重新创建凭证并上传。
+ */
+export const knowledgeDocumentsCompleteDocumentUploads = <ThrowOnError extends boolean = false>(options: Options<KnowledgeDocumentsCompleteDocumentUploadsData, ThrowOnError>): RequestResult<KnowledgeDocumentsCompleteDocumentUploadsResponses, KnowledgeDocumentsCompleteDocumentUploadsErrors, ThrowOnError> => (options.client ?? client).post<KnowledgeDocumentsCompleteDocumentUploadsResponses, KnowledgeDocumentsCompleteDocumentUploadsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/knowledge-documents/uploads/complete',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1048,4 +1086,56 @@ export const dataRefreshReadRefreshStatus = <ThrowOnError extends boolean = fals
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/admin/data-refresh/jobs/{job_id}',
     ...options
+});
+
+/**
+ * Read Mcp Api Keys
+ *
+ * 按内部或外部用途查询密钥，不返回密钥摘要或明文。
+ */
+export const mcpKeysReadMcpApiKeys = <ThrowOnError extends boolean = false>(options: Options<McpKeysReadMcpApiKeysData, ThrowOnError>): RequestResult<McpKeysReadMcpApiKeysResponses, McpKeysReadMcpApiKeysErrors, ThrowOnError> => (options.client ?? client).get<McpKeysReadMcpApiKeysResponses, McpKeysReadMcpApiKeysErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/mcp/keys',
+    ...options
+});
+
+/**
+ * Create Mcp Api Key
+ *
+ * 创建密钥，完整密钥仅在此响应中返回。
+ */
+export const mcpKeysCreateMcpApiKey = <ThrowOnError extends boolean = false>(options: Options<McpKeysCreateMcpApiKeyData, ThrowOnError>): RequestResult<McpKeysCreateMcpApiKeyResponses, McpKeysCreateMcpApiKeyErrors, ThrowOnError> => (options.client ?? client).post<McpKeysCreateMcpApiKeyResponses, McpKeysCreateMcpApiKeyErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/mcp/keys',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete Mcp Api Key
+ *
+ * 删除密钥，后续请求立即失效。
+ */
+export const mcpKeysDeleteMcpApiKey = <ThrowOnError extends boolean = false>(options: Options<McpKeysDeleteMcpApiKeyData, ThrowOnError>): RequestResult<McpKeysDeleteMcpApiKeyResponses, McpKeysDeleteMcpApiKeyErrors, ThrowOnError> => (options.client ?? client).delete<McpKeysDeleteMcpApiKeyResponses, McpKeysDeleteMcpApiKeyErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/mcp/keys/{key_id}',
+    ...options
+});
+
+/**
+ * Update Mcp Api Key
+ *
+ * 修改密钥名称和启用状态，用途不可变更。
+ */
+export const mcpKeysUpdateMcpApiKey = <ThrowOnError extends boolean = false>(options: Options<McpKeysUpdateMcpApiKeyData, ThrowOnError>): RequestResult<McpKeysUpdateMcpApiKeyResponses, McpKeysUpdateMcpApiKeyErrors, ThrowOnError> => (options.client ?? client).put<McpKeysUpdateMcpApiKeyResponses, McpKeysUpdateMcpApiKeyErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/mcp/keys/{key_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });

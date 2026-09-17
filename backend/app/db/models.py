@@ -9,6 +9,7 @@ from app.modules.conversations.models import (  # noqa: F401
     ConversationFile,
 )
 from app.modules.agent.models import AgentRun  # noqa: F401
+from app.modules.mcp_keys.models import McpApiKey  # noqa: F401
 from app.modules.knowledge.models import (  # noqa: F401
     KnowledgeBase,
     KnowledgeDocument,

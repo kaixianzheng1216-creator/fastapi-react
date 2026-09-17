@@ -17,6 +17,7 @@ from app.modules.influencer_marketing.router import (
 )
 from app.modules.knowledge.router import document_router as knowledge_document_router
 from app.modules.knowledge.router import router as knowledge_router
+from app.modules.mcp_keys.router import router as mcp_keys_router
 from app.modules.skills.router import router as skills_router
 from app.modules.system.router import router as system_router
 from app.modules.users.router import admin_router as admin_users_router
@@ -47,3 +48,4 @@ api_router.include_router(file_library_router)
 api_router.include_router(library_document_router)
 
 api_router.include_router(data_refresh_router)
+api_router.include_router(mcp_keys_router)
