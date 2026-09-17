@@ -1,4 +1,5 @@
 import base64
+import io
 import logging
 import uuid
 from collections.abc import Iterator
@@ -17,14 +18,18 @@ from docling_core.transforms.serializer.markdown import (
     MarkdownParams,
     MarkdownTableSerializer,
 )
-from docling_core.types.doc.base import ImageRefMode
+from docling_core.types.doc.base import ImageRefMode, Size
+from docling_core.types.doc.common.meta import DescriptionMetaField
+from docling_core.types.doc.common.reference import ImageRef
 from docling_core.types.doc.document import DoclingDocument
 from docling_core.types.doc.items.group import GroupItem
+from docling_core.types.doc.items.picture.meta import PictureMeta
 from docling_core.types.doc.items.picture.picture import PictureItem
 from docling_core.types.doc.items.table.table_data import TableData
 from docling_core.types.doc.labels import DocItemLabel, GroupLabel
 from openai import APITimeoutError, OpenAI
-from pydantic import BaseModel, TypeAdapter, ValidationError
+from PIL import Image, UnidentifiedImageError
+from pydantic import AnyUrl, BaseModel, TypeAdapter, ValidationError
 from sqlmodel import Session, col, select
 
 from app.core.config import settings as app_settings
@@ -53,6 +58,12 @@ DOCUMENT_PROCESSING_TIMEOUT_LOG = "知识库文档处理超时"
 DOCUMENT_PROCESSING_TIMEOUT_MESSAGE = "文档处理超时"
 DOCLING_INVALID_RESPONSE_MESSAGE = "Docling 返回内容无效"
 IMAGE_DESCRIPTION_MODEL = "deepseek-flash"
+DEFAULT_IMAGE_DPI = 96
+IMAGE_CONTENT_TYPE_BY_FORMAT = {
+    "JPEG": "image/jpeg",
+    "PNG": "image/png",
+    "WEBP": "image/webp",
+}
 DOCUMENT_JSON_ADAPTER = TypeAdapter(DoclingDocument)
 logger = logging.getLogger(__name__)
 
@@ -219,8 +230,9 @@ def _parse_image_document(
     content: bytes,
 ) -> DoclingDocument:
     """使用视觉模型生成可检索的图片描述。"""
-    image_url = (
-        f"data:{stored_file.content_type};base64,{base64.b64encode(content).decode()}"
+    image_reference = _create_image_reference(
+        content_type=stored_file.content_type,
+        content=content,
     )
 
     try:
@@ -240,7 +252,7 @@ def _parse_image_document(
                             },
                             {
                                 "type": "image_url",
-                                "image_url": {"url": image_url},
+                                "image_url": {"url": str(image_reference.uri)},
                             },
                         ],
                     }
@@ -256,9 +268,41 @@ def _parse_image_document(
 
     document = DoclingDocument(name=stored_file.filename)
 
-    document.add_text(DocItemLabel.TEXT, description)
+    picture = document.add_picture(image=image_reference)
+
+    picture.meta = PictureMeta(
+        description=DescriptionMetaField(
+            text=description,
+            created_by=IMAGE_DESCRIPTION_MODEL,
+        )
+    )
 
     return document
+
+
+def _create_image_reference(*, content_type: str, content: bytes) -> ImageRef:
+    """校验原图并创建内嵌图片引用。"""
+    try:
+        with Image.open(io.BytesIO(content)) as image:
+            image.load()
+            image_format = image.format
+            width, height = image.size
+    except (Image.DecompressionBombError, UnidentifiedImageError, OSError) as error:
+        raise DocumentProcessingError("图片内容无效") from error
+
+    detected_content_type = IMAGE_CONTENT_TYPE_BY_FORMAT.get(image_format or "")
+
+    if detected_content_type != content_type:
+        raise DocumentProcessingError("图片内容与文件类型不匹配")
+
+    image_url = f"data:{content_type};base64,{base64.b64encode(content).decode()}"
+
+    return ImageRef(
+        mimetype=content_type,
+        dpi=DEFAULT_IMAGE_DPI,
+        size=Size(width=width, height=height),
+        uri=AnyUrl(image_url),
+    )
 
 
 def _parse_with_docling(stored_file: StoredFile) -> DoclingDocument:
