@@ -48,7 +48,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { TableSkeleton } from "@/components/common/table-skeleton";
 import {
   type KnowledgeFolderPublic,
   knowledgeBasesReadDirectory,
@@ -274,7 +273,10 @@ export function KnowledgeDocuments({
         onDocumentsChanged={invalidateDocuments}
       />
 
-      <section ref={scrollRef} className="flex flex-1 flex-col gap-3 md:min-h-0 md:overflow-y-auto">
+      <section
+        ref={scrollRef}
+        className="flex flex-1 flex-col gap-3 md:min-h-0 md:overflow-y-auto"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Breadcrumb>
             <BreadcrumbList>
@@ -336,9 +338,7 @@ export function KnowledgeDocuments({
           />
         </div>
 
-        {directoryPending ? (
-          <TableSkeleton columns={7} rows={5} rowClassName="h-12" />
-        ) : directoryLoadFailed ? (
+        {!directoryPending && directoryLoadFailed ? (
           <LoadError
             title="文档列表加载失败"
             isRetrying={foldersQuery.isFetching || directoryQuery.isFetching}
@@ -347,13 +347,14 @@ export function KnowledgeDocuments({
               void directoryQuery.refetch();
             }}
           />
-        ) : directoryEntries.length > 0 ? (
+        ) : directoryPending || directoryEntries.length > 0 ? (
           <CollectionContent
             busy={directoryQuery.isPlaceholderData}
             containerClassName="md:min-h-0 md:flex-1"
             className="md:h-full"
           >
             <KnowledgeDirectoryTable
+              loading={directoryPending}
               currentPage={currentPage}
               knowledgeBaseId={knowledgeBaseId}
               entries={directoryEntries}

@@ -12,6 +12,7 @@ import {
 } from "@tanstack/react-query";
 import {
   createColumnHelper,
+  metaHelper,
   rowPaginationFeature,
   tableFeatures,
   useTable,
@@ -52,7 +53,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { FieldLegend, FieldSet } from "@/components/ui/field";
-import { TableSkeleton } from "@/components/common/table-skeleton";
+import { TableSkeletonBody } from "@/components/common/table-skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Table,
@@ -90,7 +91,10 @@ const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
   dateStyle: "medium",
 });
 
-const usersTableFeatures = tableFeatures({ rowPaginationFeature });
+const usersTableFeatures = tableFeatures({
+  rowPaginationFeature,
+  columnMeta: metaHelper<{ className?: string }>(),
+});
 
 const userColumnHelper = createColumnHelper<
   typeof usersTableFeatures,
@@ -195,6 +199,7 @@ export function UserManager() {
         userColumnHelper.display({
           id: "role",
           header: "角色",
+          meta: { className: "w-28" },
           cell: ({ row }) => (
             <Badge
               variant={row.original.is_superuser ? "default" : "secondary"}
@@ -206,6 +211,7 @@ export function UserManager() {
         userColumnHelper.display({
           id: "status",
           header: "状态",
+          meta: { className: "w-28" },
           cell: ({ row }) => (
             <Badge variant={row.original.is_active ? "outline" : "secondary"}>
               {row.original.is_active ? "已启用" : "已停用"}
@@ -214,6 +220,7 @@ export function UserManager() {
         }),
         userColumnHelper.accessor("created_at", {
           header: "创建时间",
+          meta: { className: "w-44" },
           cell: ({ row }) =>
             row.original.created_at
               ? dateFormatter.format(new Date(row.original.created_at))
@@ -222,6 +229,7 @@ export function UserManager() {
         userColumnHelper.display({
           id: "actions",
           header: "操作",
+          meta: { className: "w-16" },
           cell: ({ row }) => (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -337,7 +345,10 @@ export function UserManager() {
         }
       />
 
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6"
+      >
         <section className="mx-auto flex min-h-full max-w-6xl flex-col gap-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SearchToolbar
@@ -386,15 +397,13 @@ export function UserManager() {
             </div>
           </div>
 
-          {usersQuery.isPending ? (
-            <TableSkeleton columns={5} />
-          ) : usersQuery.isError && usersQuery.data === undefined ? (
+          {usersQuery.isError && usersQuery.data === undefined ? (
             <LoadError
               title="用户加载失败"
               isRetrying={usersQuery.isFetching}
               onRetry={() => void usersQuery.refetch()}
             />
-          ) : rows.length === 0 ? (
+          ) : !usersQuery.isPending && rows.length === 0 ? (
             pageOutOfRange ? (
               <PageOutOfRange href={getUsersHref(1, search, role, status)} />
             ) : (
@@ -412,13 +421,21 @@ export function UserManager() {
               </Empty>
             )
           ) : (
-            <CollectionContent busy={usersQuery.isFetching}>
-              <Table>
+            <CollectionContent
+              busy={!usersQuery.isPending && usersQuery.isFetching}
+            >
+              <Table
+                loading={usersQuery.isPending}
+                className="min-w-[720px] table-fixed [&_tbody_tr]:h-14"
+              >
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
                       {headerGroup.headers.map((header) => (
-                        <TableHead key={header.id}>
+                        <TableHead
+                          key={header.id}
+                          className={header.column.columnDef.meta?.className}
+                        >
                           {header.isPlaceholder ? null : (
                             <table.FlexRender header={header} />
                           )}
@@ -427,17 +444,27 @@ export function UserManager() {
                     </TableRow>
                   ))}
                 </TableHeader>
-                <TableBody>
-                  {rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getAllCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          <table.FlexRender cell={cell} />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
+                {usersQuery.isPending ? (
+                  <TableSkeletonBody
+                    columns={table.getAllLeafColumns().length}
+                    getCellClassName={(columnIndex) =>
+                      table.getAllLeafColumns()[columnIndex].columnDef.meta
+                        ?.className
+                    }
+                  />
+                ) : (
+                  <TableBody>
+                    {rows.map((row) => (
+                      <TableRow key={row.id}>
+                        {row.getAllCells().map((cell) => (
+                          <TableCell key={cell.id}>
+                            <table.FlexRender cell={cell} />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                )}
               </Table>
             </CollectionContent>
           )}

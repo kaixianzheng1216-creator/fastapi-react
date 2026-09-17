@@ -44,7 +44,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { TableSkeleton } from "@/components/common/table-skeleton";
 import {
   type LibraryFolderPublic,
   fileLibrariesReadDirectory,
@@ -246,7 +245,10 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
         onDocumentsChanged={invalidateDocuments}
       />
 
-      <section ref={scrollRef} className="flex flex-1 flex-col gap-3 md:min-h-0 md:overflow-y-auto">
+      <section
+        ref={scrollRef}
+        className="flex flex-1 flex-col gap-3 md:min-h-0 md:overflow-y-auto"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Breadcrumb>
             <BreadcrumbList>
@@ -308,9 +310,7 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
           />
         </div>
 
-        {directoryPending ? (
-          <TableSkeleton columns={6} />
-        ) : directoryLoadFailed ? (
+        {!directoryPending && directoryLoadFailed ? (
           <LoadError
             title="文件列表加载失败"
             isRetrying={foldersQuery.isFetching || directoryQuery.isFetching}
@@ -319,13 +319,14 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
               void directoryQuery.refetch();
             }}
           />
-        ) : directoryEntries.length > 0 ? (
+        ) : directoryPending || directoryEntries.length > 0 ? (
           <CollectionContent
             busy={directoryQuery.isPlaceholderData}
             containerClassName="md:min-h-0 md:flex-1"
             className="md:h-full"
           >
             <LibraryDirectoryTable
+              loading={directoryPending}
               currentPage={currentPage}
               fileLibraryId={fileLibraryId}
               entries={directoryEntries}

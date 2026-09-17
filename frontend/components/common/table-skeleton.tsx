@@ -1,59 +1,36 @@
+import type { ReactNode } from "react";
+
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 
-type TableSkeletonProps = {
-  columns: number;
-  rows?: number;
-  rowClassName?: string;
-};
-
+const SKELETON_ROW_COUNT = 6;
 const CELL_WIDTHS = ["72%", "88%", "56%", "80%", "64%"];
 
-export function TableSkeleton({
+type TableSkeletonBodyProps = {
+  columns: number;
+  getCellClassName?: (columnIndex: number) => string | undefined;
+};
+
+export function TableSkeletonBody({
   columns,
-  rows = 6,
-  rowClassName,
-}: TableSkeletonProps) {
+  getCellClassName,
+}: TableSkeletonBodyProps): ReactNode {
   return (
-    <div role="status" aria-label="正在加载数据">
-      <Table aria-hidden="true">
-        <TableHeader>
-          <TableRow>
-            {Array.from({ length: columns }, (_, column) => (
-              <TableHead key={column}>
-                <Skeleton
-                  className="h-4"
-                  style={{ width: CELL_WIDTHS[column % CELL_WIDTHS.length] }}
-                />
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Array.from({ length: rows }, (_, row) => (
-            <TableRow key={row} className={rowClassName}>
-              {Array.from({ length: columns }, (_, column) => (
-                <TableCell key={column}>
-                  <Skeleton
-                    className="h-4"
-                    style={{
-                      width:
-                        CELL_WIDTHS[(row + column + 1) % CELL_WIDTHS.length],
-                    }}
-                  />
-                </TableCell>
-              ))}
-            </TableRow>
+    <TableBody aria-hidden="true">
+      {Array.from({ length: SKELETON_ROW_COUNT }, (_, row) => (
+        <TableRow key={row} className="hover:bg-transparent">
+          {Array.from({ length: columns }, (_, column) => (
+            <TableCell key={column} className={getCellClassName?.(column)}>
+              <Skeleton
+                className="inline-block h-4 align-middle motion-reduce:animate-none"
+                style={{
+                  width: CELL_WIDTHS[(row + column) % CELL_WIDTHS.length],
+                }}
+              />
+            </TableCell>
           ))}
-        </TableBody>
-      </Table>
-    </div>
+        </TableRow>
+      ))}
+    </TableBody>
   );
 }

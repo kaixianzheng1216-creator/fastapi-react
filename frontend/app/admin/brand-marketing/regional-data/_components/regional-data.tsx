@@ -47,8 +47,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { TableSkeleton } from "@/components/common/table-skeleton";
+import { TableSkeletonBody } from "@/components/common/table-skeleton";
 import {
   Table,
   TableBody,
@@ -262,12 +263,20 @@ export function RegionalData() {
   return (
     <>
       <AppHeader
-        actions={<DataRefreshButton source="regional" queryKey={REGIONAL_DATA_QUERY_KEY} />}
+        actions={
+          <DataRefreshButton
+            source="regional"
+            queryKey={REGIONAL_DATA_QUERY_KEY}
+          />
+        }
         title="区域数据"
         left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
       />
 
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6"
+      >
         <section className="mx-auto flex min-h-full max-w-7xl flex-col gap-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex flex-col gap-1">
@@ -316,16 +325,13 @@ export function RegionalData() {
             ) : null}
           </div>
 
-          {regionalDataQuery.isPending ? (
-            <TableSkeleton columns={7} rows={8} />
-          ) : regionalDataQuery.isError &&
-            regionalDataQuery.data === undefined ? (
+          {regionalDataQuery.isError && regionalDataQuery.data === undefined ? (
             <LoadError
               title="区域数据加载失败"
               isRetrying={regionalDataQuery.isFetching}
               onRetry={() => void regionalDataQuery.refetch()}
             />
-          ) : rows.length === 0 ? (
+          ) : !regionalDataQuery.isPending && rows.length === 0 ? (
             pageOutOfRange ? (
               <PageOutOfRange
                 href={getRegionalDataHref(1, year, sortBy, sortOrder)}
@@ -341,8 +347,15 @@ export function RegionalData() {
               </Empty>
             )
           ) : (
-            <CollectionContent busy={regionalDataQuery.isFetching}>
-              <Table className="tabular-nums">
+            <CollectionContent
+              busy={
+                !regionalDataQuery.isPending && regionalDataQuery.isFetching
+              }
+            >
+              <Table
+                loading={regionalDataQuery.isPending}
+                className="[&_tbody_tr]:h-12 tabular-nums"
+              >
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
@@ -371,28 +384,48 @@ export function RegionalData() {
                           </TableHead>
                         );
                       })}
+                      {regionalDataQuery.isPending &&
+                        Array.from(REGIONAL_INDICATOR_CODES, (code) => (
+                          <TableHead key={code}>
+                            <Skeleton
+                              className="ml-auto h-4 w-24 motion-reduce:animate-none"
+                              aria-hidden="true"
+                            />
+                          </TableHead>
+                        ))}
                     </TableRow>
                   ))}
                 </TableHeader>
 
-                <TableBody>
-                  {rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getAllCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
-                          className={
-                            cell.column.id === "province_name"
-                              ? "w-44 min-w-44 max-w-44"
-                              : "text-right"
-                          }
-                        >
-                          <table.FlexRender cell={cell} />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
+                {regionalDataQuery.isPending ? (
+                  <TableSkeletonBody
+                    columns={1 + REGIONAL_INDICATOR_CODES.size}
+                    getCellClassName={(columnIndex) =>
+                      columnIndex === 0
+                        ? "w-44 min-w-44 max-w-44"
+                        : "text-right"
+                    }
+                  />
+                ) : (
+                  <TableBody>
+                    {rows.map((row) => (
+                      <TableRow key={row.id}>
+                        {row.getAllCells().map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            className={
+                              cell.column.id === "province_name"
+                                ? "w-44 min-w-44 max-w-44"
+                                : "text-right"
+                            }
+                          >
+                            <table.FlexRender cell={cell} />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                )}
               </Table>
             </CollectionContent>
           )}

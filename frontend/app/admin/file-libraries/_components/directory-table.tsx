@@ -12,6 +12,7 @@ import {
 } from "@/app/admin/file-libraries/_lib/directory";
 import { getLibraryDirectoryHref } from "@/app/admin/file-libraries/_lib/navigation";
 
+import { TableSkeletonBody } from "@/components/common/table-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -32,6 +33,7 @@ const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
 
 export function LibraryDirectoryTable({
   currentPage,
+  loading,
   fileLibraryId,
   entries,
   selectedEntryKeys,
@@ -39,6 +41,7 @@ export function LibraryDirectoryTable({
   renderActions,
 }: {
   currentPage: number;
+  loading: boolean;
   fileLibraryId: string;
   entries: DirectoryEntry[];
   selectedEntryKeys: ReadonlySet<string>;
@@ -55,12 +58,18 @@ export function LibraryDirectoryTable({
   const someEntriesSelected = selectedEntryCount > 0 && !allEntriesSelected;
 
   return (
-    <Table containerRef={scrollRef} containerClassName="md:h-full md:overflow-auto md:overscroll-contain">
+    <Table
+      loading={loading}
+      className="min-w-[880px] table-fixed [&_tbody_tr]:h-12"
+      containerRef={scrollRef}
+      containerClassName="md:h-full md:overflow-auto md:overscroll-contain"
+    >
       <TableHeader className="sticky top-0 z-10 bg-background">
         <TableRow>
-          <TableHead>
+          <TableHead className="w-10">
             <Checkbox
               aria-label="选择当前页全部项目"
+              disabled={loading}
               checked={
                 allEntriesSelected
                   ? true
@@ -78,75 +87,79 @@ export function LibraryDirectoryTable({
             />
           </TableHead>
           <TableHead>名称</TableHead>
-          <TableHead>状态</TableHead>
-          <TableHead>大小</TableHead>
-          <TableHead>添加时间</TableHead>
-          <TableHead>操作</TableHead>
+          <TableHead className="w-32">状态</TableHead>
+          <TableHead className="w-24">大小</TableHead>
+          <TableHead className="w-44">添加时间</TableHead>
+          <TableHead className="w-16">操作</TableHead>
         </TableRow>
       </TableHeader>
 
-      <TableBody>
-        {entries.map((entry) => {
-          const key = getDirectoryEntryKey(entry);
-          const name = entry.type === "folder" ? entry.name : entry.filename;
+      {loading ? (
+        <TableSkeletonBody columns={6} />
+      ) : (
+        <TableBody>
+          {entries.map((entry) => {
+            const key = getDirectoryEntryKey(entry);
+            const name = entry.type === "folder" ? entry.name : entry.filename;
 
-          return (
-            <TableRow
-              key={key}
-              data-state={selectedEntryKeys.has(key) ? "selected" : undefined}
-            >
-              <TableCell>
-                <Checkbox
-                  aria-label={`选择 ${name}`}
-                  checked={selectedEntryKeys.has(key)}
-                  onCheckedChange={(checked) => {
-                    const keys = new Set(selectedEntryKeys);
+            return (
+              <TableRow
+                key={key}
+                data-state={selectedEntryKeys.has(key) ? "selected" : undefined}
+              >
+                <TableCell>
+                  <Checkbox
+                    aria-label={`选择 ${name}`}
+                    checked={selectedEntryKeys.has(key)}
+                    onCheckedChange={(checked) => {
+                      const keys = new Set(selectedEntryKeys);
 
-                    if (checked === true) keys.add(key);
-                    else keys.delete(key);
+                      if (checked === true) keys.add(key);
+                      else keys.delete(key);
 
-                    onSelectionChange(keys);
-                  }}
-                />
-              </TableCell>
-              <TableCell>
-                {entry.type === "folder" ? (
-                  <Link
-                    href={getLibraryDirectoryHref(fileLibraryId, 1, entry.id)}
-                    className="flex max-w-md items-center gap-2 hover:underline"
-                  >
-                    <FolderIcon
-                      className="size-4 shrink-0"
-                      aria-hidden="true"
-                    />
-                    <span className="truncate">{entry.name}</span>
-                  </Link>
-                ) : (
-                  <span className="block max-w-md truncate">
-                    {entry.filename}
-                  </span>
-                )}
-              </TableCell>
-              <TableCell>
-                {entry.type === "folder" ? (
-                  "—"
-                ) : (
-                  <Badge variant={entry.uploaded ? "outline" : "secondary"}>
-                    {entry.uploaded ? "已上传" : "等待确认上传"}
-                  </Badge>
-                )}
-              </TableCell>
-              <TableCell className="tabular-nums">
-                {entry.type === "folder" ? "—" : formatFileSize(entry.size)}
-              </TableCell>
-              <TableCell>
-                {dateFormatter.format(new Date(entry.created_at))}
-              </TableCell>
-              <TableCell>{renderActions(entry)}</TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
+                      onSelectionChange(keys);
+                    }}
+                  />
+                </TableCell>
+                <TableCell>
+                  {entry.type === "folder" ? (
+                    <Link
+                      href={getLibraryDirectoryHref(fileLibraryId, 1, entry.id)}
+                      className="flex min-w-0 items-center gap-2 hover:underline"
+                    >
+                      <FolderIcon
+                        className="size-4 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span className="truncate">{entry.name}</span>
+                    </Link>
+                  ) : (
+                    <span className="block min-w-0 truncate">
+                      {entry.filename}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {entry.type === "folder" ? (
+                    "—"
+                  ) : (
+                    <Badge variant={entry.uploaded ? "outline" : "secondary"}>
+                      {entry.uploaded ? "已上传" : "等待确认上传"}
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell className="tabular-nums">
+                  {entry.type === "folder" ? "—" : formatFileSize(entry.size)}
+                </TableCell>
+                <TableCell>
+                  {dateFormatter.format(new Date(entry.created_at))}
+                </TableCell>
+                <TableCell>{renderActions(entry)}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      )}
     </Table>
   );
 }

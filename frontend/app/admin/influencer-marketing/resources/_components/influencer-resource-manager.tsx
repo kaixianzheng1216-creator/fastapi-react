@@ -39,7 +39,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { TableSkeleton } from "@/components/common/table-skeleton";
+import { TableSkeletonBody } from "@/components/common/table-skeleton";
 import {
   Table,
   TableBody,
@@ -159,6 +159,7 @@ export function InfluencerResourceManager() {
             <SortableHeader
               label="粉丝数"
               direction={column.getIsSorted()}
+              disabled={accountsQuery.isPending}
               onToggle={() => column.toggleSorting()}
             />
           ),
@@ -171,6 +172,7 @@ export function InfluencerResourceManager() {
             <SortableHeader
               label={platform === "douyin" ? "获赞" : "获赞与收藏"}
               direction={column.getIsSorted()}
+              disabled={accountsQuery.isPending}
               onToggle={() => column.toggleSorting()}
             />
           ),
@@ -178,7 +180,7 @@ export function InfluencerResourceManager() {
           meta: { className: "w-32 text-right" },
         }),
       ]),
-    [platform, platformName],
+    [platform, platformName, accountsQuery.isPending],
   );
 
   const table = useTable({
@@ -232,12 +234,20 @@ export function InfluencerResourceManager() {
   return (
     <>
       <AppHeader
-        actions={<DataRefreshButton source="influencers" queryKey={["influencer-accounts"]} />}
+        actions={
+          <DataRefreshButton
+            source="influencers"
+            queryKey={["influencer-accounts"]}
+          />
+        }
         title="达人资源"
         left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
       />
 
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6"
+      >
         <section className="mx-auto flex min-h-full max-w-7xl flex-col gap-6">
           <div className="flex flex-col gap-1">
             <h2 className="font-semibold">达人资源</h2>
@@ -285,11 +295,10 @@ export function InfluencerResourceManager() {
                           className="min-h-5 text-sm text-muted-foreground"
                           aria-live="polite"
                         >
-                          {accountsQuery.data && (
-                            accountsQuery.data?.captured_at
+                          {accountsQuery.data &&
+                            (accountsQuery.data?.captured_at
                               ? `采集于 ${capturedAtFormatter.format(new Date(accountsQuery.data.captured_at))} · 共 ${accountsQuery.data.count} 位达人`
-                              : "尚未导入达人数据"
-                          )}
+                              : "尚未导入达人数据")}
                         </p>
                       </div>
 
@@ -304,16 +313,14 @@ export function InfluencerResourceManager() {
                       />
                     </div>
 
-                    {accountsQuery.isPending ? (
-                      <TableSkeleton columns={4} rows={7} />
-                    ) : accountsQuery.isError &&
-                      accountsQuery.data === undefined ? (
+                    {accountsQuery.isError &&
+                    accountsQuery.data === undefined ? (
                       <LoadError
                         title="达人数据加载失败"
                         isRetrying={accountsQuery.isFetching}
                         onRetry={() => void accountsQuery.refetch()}
                       />
-                    ) : rows.length === 0 ? (
+                    ) : !accountsQuery.isPending && rows.length === 0 ? (
                       pageOutOfRange ? (
                         <PageOutOfRange
                           href={getInfluencerResourcesHref(
@@ -337,8 +344,15 @@ export function InfluencerResourceManager() {
                         </Empty>
                       )
                     ) : (
-                      <CollectionContent busy={accountsQuery.isFetching}>
-                        <Table className="table-fixed tabular-nums">
+                      <CollectionContent
+                        busy={
+                          !accountsQuery.isPending && accountsQuery.isFetching
+                        }
+                      >
+                        <Table
+                          loading={accountsQuery.isPending}
+                          className="[&_tbody_tr]:h-20 min-w-[720px] table-fixed tabular-nums"
+                        >
                           <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
                               <TableRow key={headerGroup.id}>
@@ -367,22 +381,32 @@ export function InfluencerResourceManager() {
                               </TableRow>
                             ))}
                           </TableHeader>
-                          <TableBody>
-                            {rows.map((row) => (
-                              <TableRow key={row.id}>
-                                {row.getAllCells().map((cell) => (
-                                  <TableCell
-                                    key={cell.id}
-                                    className={
-                                      cell.column.columnDef.meta?.className
-                                    }
-                                  >
-                                    <table.FlexRender cell={cell} />
-                                  </TableCell>
-                                ))}
-                              </TableRow>
-                            ))}
-                          </TableBody>
+                          {accountsQuery.isPending ? (
+                            <TableSkeletonBody
+                              columns={table.getAllLeafColumns().length}
+                              getCellClassName={(columnIndex) =>
+                                table.getAllLeafColumns()[columnIndex].columnDef
+                                  .meta?.className
+                              }
+                            />
+                          ) : (
+                            <TableBody>
+                              {rows.map((row) => (
+                                <TableRow key={row.id}>
+                                  {row.getAllCells().map((cell) => (
+                                    <TableCell
+                                      key={cell.id}
+                                      className={
+                                        cell.column.columnDef.meta?.className
+                                      }
+                                    >
+                                      <table.FlexRender cell={cell} />
+                                    </TableCell>
+                                  ))}
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          )}
                         </Table>
                       </CollectionContent>
                     )}
@@ -417,10 +441,12 @@ function SortableHeader({
   label,
   direction,
   onToggle,
+  disabled,
 }: {
   label: string;
   direction: false | "asc" | "desc";
   onToggle: () => void;
+  disabled: boolean;
 }) {
   const SortIcon =
     direction === "asc"
@@ -435,6 +461,7 @@ function SortableHeader({
       variant="ghost"
       size="sm"
       className="w-full justify-end"
+      disabled={disabled}
       onClick={onToggle}
       aria-label={`按${label}${direction === "desc" ? "升序" : "降序"}排列`}
     >

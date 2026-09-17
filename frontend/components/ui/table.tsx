@@ -8,8 +8,10 @@ function Table({
   className,
   containerClassName,
   containerRef,
+  loading = false,
   ...props
 }: React.ComponentProps<"table"> & {
+  loading?: boolean
   containerClassName?: string
   containerRef?: React.Ref<HTMLDivElement>
 }) {
@@ -19,7 +21,11 @@ function Table({
       ref={containerRef}
       className={cn("relative w-full overflow-x-auto", containerClassName)}
     >
+      <span role="status" className="sr-only">
+        {loading ? "正在加载数据…" : ""}
+      </span>
       <table
+        aria-busy={loading}
         data-slot="table"
         className={cn("w-full caption-bottom text-sm", className)}
         {...props}

@@ -38,7 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TableSkeleton } from "@/components/common/table-skeleton";
+import { TableSkeletonBody } from "@/components/common/table-skeleton";
 import {
   Table,
   TableBody,
@@ -234,12 +234,21 @@ export function PlatformRankings() {
   return (
     <>
       <AppHeader
-        actions={<DataRefreshButton source="rankings" queryKey={BILIBILI_QUERY_KEY} disabled={platform !== "bilibili"} />}
+        actions={
+          <DataRefreshButton
+            source="rankings"
+            queryKey={BILIBILI_QUERY_KEY}
+            disabled={platform !== "bilibili"}
+          />
+        }
         title="平台榜单"
         left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
       />
 
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6"
+      >
         <section className="mx-auto flex min-h-full max-w-7xl flex-col gap-6">
           <div className="flex flex-col gap-1">
             <h2 className="font-semibold">内容平台排行榜</h2>
@@ -286,11 +295,10 @@ export function PlatformRankings() {
                           className="min-h-5 text-sm text-muted-foreground"
                           aria-live="polite"
                         >
-                          {rankingQuery.data && (
-                            ranking?.captured_at
+                          {rankingQuery.data &&
+                            (ranking?.captured_at
                               ? `采集于 ${capturedAtFormatter.format(new Date(ranking.captured_at))} · 共 ${ranking.count} 条`
-                              : "尚未导入榜单数据"
-                          )}
+                              : "尚未导入榜单数据")}
                         </p>
                       </div>
 
@@ -331,16 +339,13 @@ export function PlatformRankings() {
                       ) : null}
                     </div>
 
-                    {rankingQuery.isPending ? (
-                      <TableSkeleton columns={7} rows={8} />
-                    ) : rankingQuery.isError &&
-                      rankingQuery.data === undefined ? (
+                    {rankingQuery.isError && rankingQuery.data === undefined ? (
                       <LoadError
                         title="榜单加载失败"
                         isRetrying={rankingQuery.isFetching}
                         onRetry={() => void rankingQuery.refetch()}
                       />
-                    ) : rows.length === 0 ? (
+                    ) : !rankingQuery.isPending && rows.length === 0 ? (
                       pageOutOfRange ? (
                         <PageOutOfRange
                           href={getRankingsHref("bilibili", 1, category)}
@@ -356,8 +361,15 @@ export function PlatformRankings() {
                         </Empty>
                       )
                     ) : (
-                      <CollectionContent busy={rankingQuery.isFetching}>
-                        <Table className="table-fixed tabular-nums">
+                      <CollectionContent
+                        busy={
+                          !rankingQuery.isPending && rankingQuery.isFetching
+                        }
+                      >
+                        <Table
+                          loading={rankingQuery.isPending}
+                          className="[&_tbody_tr]:h-22 min-w-[1040px] table-fixed tabular-nums"
+                        >
                           <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
                               <TableRow key={headerGroup.id}>
@@ -376,22 +388,32 @@ export function PlatformRankings() {
                               </TableRow>
                             ))}
                           </TableHeader>
-                          <TableBody>
-                            {rows.map((row) => (
-                              <TableRow key={row.id}>
-                                {row.getAllCells().map((cell) => (
-                                  <TableCell
-                                    key={cell.id}
-                                    className={
-                                      cell.column.columnDef.meta?.className
-                                    }
-                                  >
-                                    <table.FlexRender cell={cell} />
-                                  </TableCell>
-                                ))}
-                              </TableRow>
-                            ))}
-                          </TableBody>
+                          {rankingQuery.isPending ? (
+                            <TableSkeletonBody
+                              columns={table.getAllLeafColumns().length}
+                              getCellClassName={(columnIndex) =>
+                                table.getAllLeafColumns()[columnIndex].columnDef
+                                  .meta?.className
+                              }
+                            />
+                          ) : (
+                            <TableBody>
+                              {rows.map((row) => (
+                                <TableRow key={row.id}>
+                                  {row.getAllCells().map((cell) => (
+                                    <TableCell
+                                      key={cell.id}
+                                      className={
+                                        cell.column.columnDef.meta?.className
+                                      }
+                                    >
+                                      <table.FlexRender cell={cell} />
+                                    </TableCell>
+                                  ))}
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          )}
                         </Table>
                       </CollectionContent>
                     )}

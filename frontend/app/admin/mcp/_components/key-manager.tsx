@@ -11,6 +11,8 @@ import { KeyEditorDialog } from "@/app/admin/mcp/_components/key-editor-dialog";
 import { DeleteDialog } from "@/components/common/delete-dialog";
 import { LoadError } from "@/components/common/load-error";
 import { PagePagination } from "@/components/common/page-pagination";
+import { CollectionContent } from "@/components/common/collection-content";
+import { TableSkeletonBody } from "@/components/common/table-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +29,6 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -54,6 +55,7 @@ import {
 
 const KEY_QUERY_PREFIX = "mcp-api-keys";
 const PAGE_SIZE = 10;
+
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium" });
 
 type KeyManagerProps = { scope: McpScope; endpoint: string; serverId: string };
@@ -135,15 +137,13 @@ export function KeyManager({ scope, endpoint, serverId }: KeyManagerProps) {
         </Button>
       </div>
 
-      {keysQuery.isPending ? (
-        <Skeleton className="h-24 w-full" />
-      ) : keysQuery.isError ? (
+      {keysQuery.isError && keysQuery.data === undefined ? (
         <LoadError
           title="密钥加载失败"
           isRetrying={keysQuery.isFetching}
           onRetry={() => void keysQuery.refetch()}
         />
-      ) : keysQuery.data.length === 0 ? (
+      ) : !keysQuery.isPending && keysQuery.data?.length === 0 ? (
         <Empty className="border">
           <EmptyHeader>
             <EmptyTitle>暂无密钥</EmptyTitle>
@@ -153,81 +153,90 @@ export function KeyManager({ scope, endpoint, serverId }: KeyManagerProps) {
           </EmptyHeader>
         </Empty>
       ) : (
-        <TooltipProvider>
-          <Table
-            className="min-w-[720px] table-fixed"
-            containerClassName="rounded-lg border"
-            aria-label="访问密钥列表"
-          >
-            <TableHeader>
-              <TableRow>
-                <TableHead>名称</TableHead>
-                <TableHead className="w-44">密钥标识</TableHead>
-                <TableHead className="w-24">状态</TableHead>
-                <TableHead className="w-36">创建时间</TableHead>
-                <TableHead className="w-32 text-right">操作</TableHead>
-              </TableRow>
-            </TableHeader>
+        <CollectionContent busy={!keysQuery.isPending && keysQuery.isFetching}>
+          <TooltipProvider>
+            <Table
+              loading={keysQuery.isPending}
+              className="min-w-[720px] table-fixed [&_tbody_tr]:h-12 [&_tbody_td:last-child]:text-center"
+              containerClassName="rounded-lg border"
+              aria-label="访问密钥列表"
+            >
+              <TableHeader>
+                <TableRow>
+                  <TableHead>名称</TableHead>
+                  <TableHead className="w-44">密钥标识</TableHead>
+                  <TableHead className="w-24">状态</TableHead>
+                  <TableHead className="w-36">创建时间</TableHead>
+                  <TableHead className="w-32 text-center">操作</TableHead>
+                </TableRow>
+              </TableHeader>
 
-            <TableBody>
-              {keysQuery.data
-                .slice(pageStart, pageStart + PAGE_SIZE)
-                .map((apiKey) => (
-                  <TableRow key={apiKey.id} className="h-12">
-                    <TableCell>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="block truncate" tabIndex={0}>
-                            {apiKey.name}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs break-words">
-                          {apiKey.name}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TableCell>
-                    <TableCell>
-                      <code>
-                        {apiKey.key_prefix}••••{apiKey.key_suffix}
-                      </code>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={apiKey.is_active ? "secondary" : "outline"}
-                      >
-                        {apiKey.is_active ? "已启用" : "已停用"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {dateFormatter.format(new Date(apiKey.created_at))}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          aria-label={`编辑密钥 ${apiKey.name}`}
-                          onClick={() => setEditor({ kind: "edit", apiKey })}
-                        >
-                          编辑
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          aria-label={`删除密钥 ${apiKey.name}`}
-                          onClick={() => setKeyToDelete(apiKey)}
-                        >
-                          删除
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </TooltipProvider>
+              {keysQuery.isPending ? (
+                <TableSkeletonBody columns={5} />
+              ) : (
+                <TableBody>
+                  {keysQuery.data
+                    ?.slice(pageStart, pageStart + PAGE_SIZE)
+                    .map((apiKey) => (
+                      <TableRow key={apiKey.id}>
+                        <TableCell>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="block truncate" tabIndex={0}>
+                                {apiKey.name}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs break-words">
+                              {apiKey.name}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell>
+                          <code>
+                            {apiKey.key_prefix}••••{apiKey.key_suffix}
+                          </code>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={apiKey.is_active ? "secondary" : "outline"}
+                          >
+                            {apiKey.is_active ? "已启用" : "已停用"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {dateFormatter.format(new Date(apiKey.created_at))}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-center gap-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              aria-label={`编辑密钥 ${apiKey.name}`}
+                              onClick={() =>
+                                setEditor({ kind: "edit", apiKey })
+                              }
+                            >
+                              编辑
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              aria-label={`删除密钥 ${apiKey.name}`}
+                              onClick={() => setKeyToDelete(apiKey)}
+                            >
+                              删除
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              )}
+            </Table>
+          </TooltipProvider>
+        </CollectionContent>
       )}
 
       <PagePagination
