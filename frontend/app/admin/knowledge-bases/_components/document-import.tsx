@@ -255,7 +255,6 @@ export function KnowledgeDocumentImport({
                     id="knowledge-webpage-url"
                     name="url"
                     type="url"
-                    placeholder="https://example.com/article"
                     value={webpageUrl}
                     disabled={createWebpageMutation.isPending}
                     onChange={(event) =>

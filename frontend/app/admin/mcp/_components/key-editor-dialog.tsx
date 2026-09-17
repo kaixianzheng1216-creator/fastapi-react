@@ -127,7 +127,6 @@ export function KeyEditorDialog({
               <Input
                 id="mcp-key-name"
                 autoComplete="off"
-                placeholder="例如：团队助手"
                 disabled={saveMutation.isPending}
                 aria-invalid={!!form.formState.errors.name}
                 {...form.register("name")}
