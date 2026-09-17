@@ -17,10 +17,10 @@ services:
           "deepseek-flash": {
             "engine_options": {
               "engine_type": "api",
-              "url": "${DOCLING_PICTURE_DESCRIPTION_URL:-http://litellm:4000/v1/chat/completions}",
+              "url": "${DOCLING_PICTURE_DESCRIPTION_URL:?Variable not set}",
               "concurrency": 3,
               "headers": {
-                "Authorization": "Bearer ${LITELLM_MASTER_KEY?Variable not set}"
+                "Authorization": "Bearer ${NEWAPI_API_KEY?Variable not set}"
               }
             },
             "model_spec": {

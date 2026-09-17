@@ -5,10 +5,10 @@ import time
 import uuid
 from collections.abc import Iterator
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
-from typing import Literal, cast
+from typing import Final, Literal, cast
 
 import httpx
-from docling_core.transforms.chunker import BaseChunk
+from docling_core.transforms.chunker.base import BaseChunk
 from docling_core.transforms.chunker.doc_chunk import DocMeta
 from docling_core.transforms.chunker.hierarchical_chunker import (
     ChunkingDocSerializer,
@@ -20,12 +20,10 @@ from docling_core.transforms.serializer.markdown import (
     MarkdownTableSerializer,
 )
 from docling_core.types.doc.base import ImageRefMode
-from docling_core.types.doc.document import (
-    DoclingDocument,
-    GroupItem,
-    TableData,
-)
+from docling_core.types.doc.document import DoclingDocument
+from docling_core.types.doc.items.group import GroupItem
 from docling_core.types.doc.items.picture.picture import PictureItem
+from docling_core.types.doc.items.table.table_data import TableData
 from docling_core.types.doc.labels import DocItemLabel, GroupLabel
 from openai import APITimeoutError, OpenAI
 from pydantic import BaseModel, TypeAdapter, ValidationError
@@ -52,7 +50,7 @@ from app.modules.knowledge.models import KnowledgeDocument, KnowledgeDocumentSta
 
 POLL_INTERVAL_SECONDS = 2
 PROCESSING_TIMEOUT_SECONDS = 15 * 60
-PROCESS_START_METHOD = "spawn"
+PROCESS_START_METHOD: Final = "spawn"
 PROCESS_SUCCESS_EXIT_CODE = 0
 CHUNK_BATCH_SIZE = 64
 
@@ -67,7 +65,7 @@ DOCUMENT_PROCESSING_ERROR_MESSAGE = "文档处理失败，请重试"
 DOCUMENT_PROCESSING_TIMEOUT_MESSAGE = "文档处理超时"
 DOCLING_INVALID_RESPONSE_MESSAGE = "Docling 返回内容无效"
 
-IMAGE_DESCRIPTION_MODEL = "deepseek/deepseek-flash"
+IMAGE_DESCRIPTION_MODEL = "deepseek-flash"
 DOCUMENT_JSON_ADAPTER = TypeAdapter(DoclingDocument)
 
 logger = logging.getLogger(__name__)
@@ -405,8 +403,8 @@ def _parse_image_document(
 
     try:
         with OpenAI(
-            api_key=knowledge_settings.LITELLM_API_KEY.get_secret_value(),
-            base_url=knowledge_settings.LITELLM_BASE_URL,
+            api_key=knowledge_settings.NEWAPI_API_KEY.get_secret_value(),
+            base_url=knowledge_settings.NEWAPI_BASE_URL,
         ) as client:
             response = client.chat.completions.create(
                 model=IMAGE_DESCRIPTION_MODEL,

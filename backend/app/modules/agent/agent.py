@@ -9,7 +9,6 @@ from deepagents.graph import DeepAgentState
 from langchain.agents.middleware import wrap_model_call
 from langchain_core.language_models import BaseChatModel
 from langchain_deepseek import ChatDeepSeek
-from langchain_moonshot import ChatMoonshot
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.config import get_config
 from langgraph.store.postgres.aio import AsyncPostgresStore
@@ -17,10 +16,10 @@ from sqlmodel import Session
 
 from app.db.session import engine
 from app.modules.agent.config import settings
-from app.modules.agent.connections.litellm_mcp import load_litellm_mcp_tools
+from app.modules.agent.connections.firecrawl_mcp import load_firecrawl_mcp_tools
 from app.modules.agent.exceptions import ModelNotAvailableError
 from app.modules.agent.file_messages import prepare_message_file_inputs
-from app.modules.agent.model_capabilities import ModelCapabilities
+from app.modules.agent.model_capabilities import MODEL_CAPABILITIES, ModelCapabilities
 from app.modules.agent.sandbox import get_sandbox
 from app.modules.agent.skill_sync import (
     BUILTIN_SKILLS_DIRECTORY,
@@ -40,8 +39,6 @@ SYSTEM_PROMPT = (
     .read_text(encoding="utf-8")
     .strip()
 )
-DEEPSEEK_MODEL_PREFIX = "deepseek/"
-MOONSHOT_MODEL_PREFIX = "moonshot/"
 
 
 class AgentContext(TypedDict):
@@ -61,7 +58,7 @@ async def create_agent(
     checkpointer: AsyncPostgresSaver,
     store: AsyncPostgresStore,
 ) -> Any:
-    tools = await load_litellm_mcp_tools()
+    tools = await load_firecrawl_mcp_tools()
     tools.extend(load_publish_artifact_tools())
 
     return create_deep_agent(
@@ -104,35 +101,23 @@ def create_chat_model(
     thinking_enabled: bool | None = None,
 ) -> BaseChatModel:
     selected_model_name = model_name or settings.DEFAULT_MODEL_NAME
-    api_base = str(settings.LITELLM_BASE_URL)
+    if selected_model_name not in MODEL_CAPABILITIES:
+        raise ModelNotAvailableError
 
-    if selected_model_name.startswith(DEEPSEEK_MODEL_PREFIX):
-        extra_body = None
+    extra_body = None
 
-        if thinking_enabled is not None:
-            thinking_type = "enabled" if thinking_enabled else "disabled"
-            extra_body = {"extra_body": {"thinking": {"type": thinking_type}}}
+    if thinking_enabled is not None:
+        thinking_type = "enabled" if thinking_enabled else "disabled"
+        extra_body = {"thinking": {"type": thinking_type}}
 
-        return ChatDeepSeek(
-            model=selected_model_name,
-            api_key=settings.LITELLM_API_KEY,
-            base_url=api_base,
-            extra_body=extra_body,
-            output_version="v1",
-            streaming=True,
-        )
-
-    if selected_model_name.startswith(MOONSHOT_MODEL_PREFIX):
-        return ChatMoonshot(
-            model=selected_model_name,
-            api_key=settings.LITELLM_API_KEY,
-            base_url=api_base,
-            output_version="v1",
-            thinking=thinking_enabled,
-            streaming=True,
-        )
-
-    raise ModelNotAvailableError
+    return ChatDeepSeek(
+        model=selected_model_name,
+        api_key=settings.NEWAPI_API_KEY,
+        base_url=settings.NEWAPI_BASE_URL,
+        extra_body=extra_body,
+        output_version="v1",
+        streaming=True,
+    )
 
 
 @wrap_model_call

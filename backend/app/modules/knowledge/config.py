@@ -15,8 +15,6 @@ class KnowledgeSettings(BaseSettings):
     QDRANT_URL: str
     QDRANT_COLLECTION_NAME: str
 
-    LITELLM_BASE_URL: str
-    LITELLM_API_KEY: SecretStr
     IMAGE_DESCRIPTION_PROMPT: Annotated[str, Field(min_length=1)]
 
     NEWAPI_BASE_URL: str

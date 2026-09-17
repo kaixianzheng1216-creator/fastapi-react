@@ -18,7 +18,7 @@ from app.modules.agent.agent import (
     create_chat_model,
     select_chat_model,
 )
-from app.modules.agent.connections.litellm_mcp import load_litellm_mcp_tools
+from app.modules.agent.connections.firecrawl_mcp import load_firecrawl_mcp_tools
 from app.modules.agent.file_messages import prepare_message_file_inputs
 from app.modules.agent.research_report import validate_research_report
 from app.modules.conversations.report_pdf import generate_and_store_report_pdf
@@ -164,7 +164,7 @@ def _model(runtime: Runtime[AgentContext]) -> BaseChatModel:
 async def create_research_graph(
     checkpointer: AsyncPostgresSaver,
 ) -> Any:
-    tools = await load_litellm_mcp_tools()
+    tools = await load_firecrawl_mcp_tools()
 
     research_agent = create_agent(
         model=create_chat_model(),

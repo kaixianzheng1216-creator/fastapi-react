@@ -2,7 +2,14 @@ import uuid
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import DateTime, ForeignKeyConstraint, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    DateTime,
+    ForeignKeyConstraint,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlmodel import Field
 
 from app.db.timestamps import TimestampMixin
@@ -86,9 +93,9 @@ class KnowledgeDocument(TimestampMixin, table=True):
     error_message: str | None = Field(default=None, sa_type=Text)
     processing_started_at: datetime | None = Field(
         default=None,
-        sa_type=DateTime(timezone=True),
+        sa_column=Column(DateTime(timezone=True), nullable=True),
     )
     processing_finished_at: datetime | None = Field(
         default=None,
-        sa_type=DateTime(timezone=True),
+        sa_column=Column(DateTime(timezone=True), nullable=True),
     )

@@ -27,26 +27,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER?Variable not set}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD?Variable not set}
 
-  litellm:
-    image: docker.litellm.ai/berriai/litellm:v1.94.0
-    restart: always
-    ports:
-      - "${LITELLM_BIND_HOST:-127.0.0.1}:4000:4000"
-    command: --config /app/config.yaml
-    volumes:
-      - ./litellm.config.yaml:/app/config.yaml:ro
-    environment:
-      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY?Variable not set}
-      NEWAPI_BASE_URL: ${NEWAPI_BASE_URL?Variable not set}
-      NEWAPI_API_KEY: ${NEWAPI_API_KEY?Variable not set}
-      FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY?Variable not set}
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/readiness')"]
-      interval: 5s
-      timeout: 5s
-      start_period: 90s
-      retries: 10
-
   qdrant:
     image: qdrant/qdrant:v1.15.5
     restart: always
@@ -73,7 +53,6 @@ services:
     env_file:
       - .env
     environment:
-      - LITELLM_BASE_URL=http://litellm:4000/v1
       - DOCLING_BASE_URL=${DOCLING_BASE_URL:-http://docling:5001}
       - EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
       - PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
@@ -88,8 +67,6 @@ services:
     ports:
       - "8001:8000"
     depends_on:
-      litellm:
-        condition: service_healthy
       db:
         condition: service_healthy
       qdrant:
@@ -100,8 +77,6 @@ services:
       - .env
     environment:
       - FRONTEND_URL=http://frontend:3000
-      - LITELLM_BASE_URL=http://litellm:4000/v1
-      - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
       - DOCLING_BASE_URL=${DOCLING_BASE_URL:-http://docling:5001}
       - EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
       - QDRANT_URL=http://qdrant:6333
@@ -132,8 +107,6 @@ services:
       - --autoscale=3,1
       - --loglevel=INFO
     depends_on:
-      litellm:
-        condition: service_healthy
       db:
         condition: service_healthy
       qdrant:
@@ -144,8 +117,6 @@ services:
       - .env
     environment:
       - FRONTEND_URL=http://frontend:3000
-      - LITELLM_BASE_URL=http://litellm:4000/v1
-      - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
       - DOCLING_BASE_URL=${DOCLING_BASE_URL:-http://docling:5001}
       - EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
       - QDRANT_URL=http://qdrant:6333
@@ -170,16 +141,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      litellm:
-        condition: service_healthy
       qdrant:
         condition: service_healthy
     command: python -m app.modules.knowledge.worker
     env_file:
       - .env
     environment:
-      - LITELLM_BASE_URL=http://litellm:4000/v1
-      - LITELLM_API_KEY=${LITELLM_MASTER_KEY?Variable not set}
       - DOCLING_BASE_URL=${DOCLING_BASE_URL:-http://docling:5001}
       - EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
       - QDRANT_URL=http://qdrant:6333

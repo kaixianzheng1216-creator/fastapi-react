@@ -4,7 +4,10 @@ from uuid import UUID
 from langchain_core.messages import BaseMessage
 from sqlmodel import Session
 
-from app.modules.agent.exceptions import AttachmentTextTooLargeError
+from app.modules.agent.exceptions import (
+    AttachmentTextTooLargeError,
+    ImageInputNotSupportedError,
+)
 from app.modules.conversations.message_files import refresh_message_file_urls
 from app.modules.files import service as file_service
 from app.modules.files.exceptions import FileNotFoundError
@@ -32,7 +35,7 @@ def prepare_message_file_inputs(
         part_type = part.get("type")
 
         if part_type == "image_url" and not supports_vision:
-            continue
+            raise ImageInputNotSupportedError
 
         if part_type == "file":
             metadata = part.get("metadata")

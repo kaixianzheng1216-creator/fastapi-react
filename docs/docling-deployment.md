@@ -13,10 +13,12 @@ docker compose up -d
 修改 `.env`：
 
 ```dotenv
-LITELLM_BIND_HOST=0.0.0.0
-
 DOCLING_BASE_URL=http://175.178.76.155:5001
 ```
+
+聊天、调研及独立图片描述直接使用 `.env` 中的 `NEWAPI_BASE_URL` 和 `NEWAPI_API_KEY`。
+`DEFAULT_MODEL_NAME` 使用 `deepseek-flash`（默认）或 `deepseek-v4-pro`，不带供应商前缀。
+两个模型均支持思考模式，仅 Flash 支持图片。含图片的会话请使用 Flash。
 
 启动（不运行本地 Docling）：
 
@@ -24,7 +26,17 @@ DOCLING_BASE_URL=http://175.178.76.155:5001
 docker compose -f compose.yml up -d --remove-orphans
 ```
 
-`--remove-orphans` 会清理当前项目中已移出配置的容器，包括旧 Docling。
+`--remove-orphans` 会清理当前项目中已移出配置的容器，包括旧 Docling 和 LiteLLM。
+
+从旧版迁移时，先等待队列中的任务结束，再更新环境变量并执行：
+
+```bash
+docker compose -f compose.yml up -d --build --remove-orphans
+```
+
+删除旧的 `LITELLM_*` 环境变量，并刷新已打开的网页以更新模型选择。
+会话表没有模型名称字段；活动任务的请求会保存模型名称，并在任务结束后清空，因此先排空任务，无需迁移历史会话表。
+解析服务器也需要更新下文的 NewAPI 地址、密钥并重新创建 Docling 容器。
 
 ## 解析服务器
 
@@ -51,10 +63,13 @@ cp -i .env.docling.example .env
 修改 `.env`，其余值保留：
 
 ```dotenv
-LITELLM_MASTER_KEY=changethis
+NEWAPI_API_KEY=changethis
 
-DOCLING_PICTURE_DESCRIPTION_URL=http://43.139.210.125:4000/v1/chat/completions
+DOCLING_PICTURE_DESCRIPTION_URL=https://你的NewAPI地址/v1/chat/completions
 ```
+
+填写与主服务器相同的 NewAPI 服务地址和可访问 `deepseek-flash` 的密钥。
+本地 Docker 部署也需设置 `DOCLING_PICTURE_DESCRIPTION_URL`，地址指向 NewAPI 的 `/v1/chat/completions`。
 
 只启动 Docling：
 
@@ -122,4 +137,4 @@ sudo docker compose -f compose.docling.yml up -d
 
 ## 网络
 
-安全组仅允许主服务器访问解析服务器的 5001、解析服务器访问主服务器的 4000。公网 HTTP 为明文传输，会产生流量。
+安全组仅允许主服务器访问解析服务器的 5001。解析服务器直接通过 HTTPS 访问 NewAPI，无需访问主服务器的 4000 端口。

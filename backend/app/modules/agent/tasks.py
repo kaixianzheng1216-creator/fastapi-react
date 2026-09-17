@@ -12,7 +12,7 @@ from sqlmodel import Session
 from app.core.config import settings
 from app.db.session import engine
 from app.modules.agent import run_service, service
-from app.modules.agent.connections.litellm_mcp import load_litellm_mcp_tools
+from app.modules.agent.connections.firecrawl_mcp import load_firecrawl_mcp_tools
 from app.modules.agent.models import AgentRunStatus
 from app.modules.agent.resources import open_agent_resources
 from app.modules.agent.run_stream import (
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 def warm_agent_worker(**_kwargs: object) -> None:
     """在 worker 启动阶段加载远程工具，避免首条消息承担发现耗时。"""
     try:
-        asyncio.run(load_litellm_mcp_tools())
+        asyncio.run(load_firecrawl_mcp_tools())
 
         logger.info("Agent Worker 依赖预热完成")
     except Exception:

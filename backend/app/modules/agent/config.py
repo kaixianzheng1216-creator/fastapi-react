@@ -11,8 +11,8 @@ class AgentSettings(BaseSettings):
         extra="ignore",
     )
 
-    LITELLM_BASE_URL: str
-    LITELLM_API_KEY: SecretStr
+    NEWAPI_BASE_URL: str
+    NEWAPI_API_KEY: SecretStr
     DEFAULT_MODEL_NAME: str
 
     E2B_API_KEY: SecretStr
