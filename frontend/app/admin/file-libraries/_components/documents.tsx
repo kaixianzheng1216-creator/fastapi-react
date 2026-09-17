@@ -1,5 +1,7 @@
 "use client";
 
+import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
+
 import { CollectionContent } from "@/components/common/collection-content";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -64,6 +66,7 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
   const documentsRef = useRef<HTMLElement>(null);
 
   const currentPage = parsePage(searchParams.get("page"));
+  const scrollRef = usePaginationScrollReset<HTMLElement>(currentPage);
   const currentFolderId = searchParams.get("folder") ?? undefined;
   const pageIndex = currentPage - 1;
   const foldersQuery = useQuery({
@@ -243,7 +246,7 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
         onDocumentsChanged={invalidateDocuments}
       />
 
-      <section className="flex flex-1 flex-col gap-3 md:min-h-0 md:overflow-y-auto">
+      <section ref={scrollRef} className="flex flex-1 flex-col gap-3 md:min-h-0 md:overflow-y-auto">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Breadcrumb>
             <BreadcrumbList>
@@ -323,6 +326,7 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
             className="md:h-full"
           >
             <LibraryDirectoryTable
+              currentPage={currentPage}
               fileLibraryId={fileLibraryId}
               entries={directoryEntries}
               selectedEntryKeys={selectedEntryKeys}

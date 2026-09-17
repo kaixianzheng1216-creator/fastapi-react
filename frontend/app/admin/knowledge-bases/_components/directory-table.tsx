@@ -1,5 +1,7 @@
 "use client";
 
+import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
+
 import { FolderIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -51,6 +53,7 @@ function formatProcessingDuration(seconds: number | null | undefined): string {
 }
 
 export function KnowledgeDirectoryTable({
+  currentPage,
   knowledgeBaseId,
   entries,
   selectedEntryKeys,
@@ -58,6 +61,7 @@ export function KnowledgeDirectoryTable({
   getDocumentHref,
   renderActions,
 }: {
+  currentPage: number;
   knowledgeBaseId: string;
   entries: DirectoryEntry[];
   selectedEntryKeys: ReadonlySet<string>;
@@ -65,6 +69,8 @@ export function KnowledgeDirectoryTable({
   getDocumentHref: (documentId: string) => string;
   renderActions: (entry: DirectoryEntry) => ReactNode;
 }) {
+  const scrollRef = usePaginationScrollReset<HTMLDivElement>(currentPage);
+
   const selectedEntryCount = entries.filter((entry) =>
     selectedEntryKeys.has(getDirectoryEntryKey(entry)),
   ).length;
@@ -73,7 +79,7 @@ export function KnowledgeDirectoryTable({
   const someEntriesSelected = selectedEntryCount > 0 && !allEntriesSelected;
 
   return (
-    <Table containerClassName="md:h-full md:overflow-auto md:overscroll-contain">
+    <Table containerRef={scrollRef} containerClassName="md:h-full md:overflow-auto md:overscroll-contain">
       <TableHeader className="sticky top-0 z-10 bg-background">
         <TableRow>
           <TableHead>

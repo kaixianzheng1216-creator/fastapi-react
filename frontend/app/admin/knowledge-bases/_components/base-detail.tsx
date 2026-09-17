@@ -1,5 +1,8 @@
 "use client";
 
+import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
+import { parsePage } from "@/lib/pagination";
+
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
@@ -20,6 +23,7 @@ export function KnowledgeBaseDetail({
 }: KnowledgeBaseDetailProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const scrollRef = usePaginationScrollReset<HTMLDivElement>(parsePage(searchParams.get("page")));
 
   const knowledgeBaseQuery = useQuery({
     meta: { handlesInitialError: true },
@@ -67,6 +71,7 @@ export function KnowledgeBaseDetail({
       />
 
       <div
+        ref={scrollRef}
         className={`flex min-h-0 flex-1 flex-col p-4 md:p-6 ${activeView === "search" ? "overflow-hidden" : "overflow-y-auto md:overflow-hidden"}`}
       >
         {knowledgeBaseQuery.isError &&

@@ -1,5 +1,7 @@
 "use client";
 
+import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
+
 import { CollectionContent } from "@/components/common/collection-content";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -94,6 +96,7 @@ export function InfluencerResourceManager() {
   const platform = getPlatform(searchParams.get("platform"));
   const search = searchParams.get("search")?.trim() ?? "";
   const currentPage = parsePage(searchParams.get("page"));
+  const scrollRef = usePaginationScrollReset<HTMLDivElement>(currentPage);
   const pageIndex = currentPage - 1;
   const platformName = PLATFORMS[platform];
   const sortBy = getSortBy(searchParams.get("sort"));
@@ -234,7 +237,7 @@ export function InfluencerResourceManager() {
         left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
       />
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
         <section className="mx-auto flex min-h-full max-w-7xl flex-col gap-6">
           <div className="flex flex-col gap-1">
             <h2 className="font-semibold">达人资源</h2>

@@ -36,6 +36,7 @@ export function PagePagination({
         <PaginationItem>
           <PaginationPrevious
             href={getPageHref(Math.max(1, currentPage - 1))}
+            scroll={false}
             aria-disabled={currentPage <= 1}
             tabIndex={currentPage <= 1 ? -1 : undefined}
           />
@@ -48,6 +49,7 @@ export function PagePagination({
             ) : (
               <PaginationLink
                 href={getPageHref(page)}
+                scroll={false}
                 isActive={page === currentPage}
               >
                 {page}
@@ -59,6 +61,7 @@ export function PagePagination({
         <PaginationItem>
           <PaginationNext
             href={getPageHref(Math.min(pageCount, currentPage + 1))}
+            scroll={false}
             aria-disabled={currentPage >= pageCount}
             tabIndex={currentPage >= pageCount ? -1 : undefined}
           />

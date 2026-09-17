@@ -1,8 +1,12 @@
 "use client";
 
+import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
+import { parsePage } from "@/lib/pagination";
+
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 import { LibraryDocuments } from "@/app/admin/file-libraries/_components/documents";
 import { AppHeader } from "@/components/layout/app-header";
@@ -15,6 +19,9 @@ export function FileLibraryDetail({
 }: {
   fileLibraryId: string;
 }) {
+  const searchParams = useSearchParams();
+  const scrollRef = usePaginationScrollReset<HTMLDivElement>(parsePage(searchParams.get("page")));
+
   const libraryQuery = useQuery({
     meta: { handlesInitialError: true },
     queryKey: ["file-library", fileLibraryId],
@@ -40,7 +47,7 @@ export function FileLibraryDetail({
           </Button>
         }
       />
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:overflow-hidden md:p-6">
+      <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:overflow-hidden md:p-6">
         <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col gap-6 md:h-full md:min-h-0">
           {libraryQuery.isError && libraryQuery.data === undefined ? (
             <LoadError

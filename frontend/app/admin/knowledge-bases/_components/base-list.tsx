@@ -1,5 +1,7 @@
 "use client";
 
+import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
+
 import {
   keepPreviousData,
   useMutation,
@@ -66,6 +68,7 @@ export function KnowledgeBaseManager() {
   const queryClient = useQueryClient();
 
   const currentPage = parsePage(searchParams.get("page"));
+  const scrollRef = usePaginationScrollReset<HTMLDivElement>(currentPage);
   const pageIndex = currentPage - 1;
   const search = searchParams.get("search")?.trim() ?? "";
   const status = getStatusFilter(searchParams.get("status"));
@@ -183,7 +186,7 @@ export function KnowledgeBaseManager() {
         }
       />
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
         <section className="mx-auto flex min-h-full max-w-6xl flex-col gap-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SearchToolbar

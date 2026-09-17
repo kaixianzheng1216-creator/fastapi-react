@@ -1,5 +1,7 @@
 "use client";
 
+import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
+
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
@@ -48,7 +50,6 @@ import {
 import { getPaginationHref, parsePage } from "@/lib/pagination";
 
 const CHUNK_PAGE_SIZE = 20;
-const CHUNKS_ANCHOR = "document-chunks";
 const PREVIEW_STALE_TIME_MS = 50 * 60 * 1000;
 
 type KnowledgeDocumentPreviewProps = {
@@ -64,6 +65,7 @@ export function KnowledgeDocumentPreview({
   const searchParams = useSearchParams();
   const viewParameter = searchParams.get("view");
   const chunkPage = parsePage(searchParams.get("chunkPage"));
+  const scrollRef = usePaginationScrollReset<HTMLDivElement>(chunkPage);
   const documentPath = `/admin/knowledge-bases/${knowledgeBaseId}/documents/${documentId}`;
 
   const directoryHref = getKnowledgeDirectoryHref(
@@ -72,7 +74,6 @@ export function KnowledgeDocumentPreview({
     searchParams.get("folder") ?? undefined,
   );
 
-  // 文档信息决定可用的预览方式。
   const documentQuery = useQuery({
     queryKey: ["knowledge-document", documentId],
     queryFn: async ({ signal }) => {
@@ -150,7 +151,7 @@ export function KnowledgeDocumentPreview({
 
     parameters.set("view", "chunks");
 
-    return `${getPaginationHref(documentPath, page, parameters, "chunkPage")}#${CHUNKS_ANCHOR}`;
+    return getPaginationHref(documentPath, page, parameters, "chunkPage");
   }
 
   return (
@@ -214,7 +215,7 @@ export function KnowledgeDocumentPreview({
         }
       />
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
         <div className="mx-auto flex max-w-5xl flex-col gap-6">
           {documentQuery.isPending ? (
             <DocumentContentSkeleton view={activeView} />
@@ -225,7 +226,7 @@ export function KnowledgeDocumentPreview({
               onRetry={() => void documentQuery.refetch()}
             />
           ) : isTableDocument ? (
-            <div id={CHUNKS_ANCHOR} className="min-w-0 scroll-mt-4">
+            <div className="min-w-0">
               <DocumentChunksView
                 documentId={documentId}
                 page={chunkPage}
@@ -271,13 +272,11 @@ export function KnowledgeDocumentPreview({
               </TabsContent>
 
               <TabsContent value="chunks">
-                <div id={CHUNKS_ANCHOR} className="scroll-mt-4">
-                  <DocumentChunksView
-                    documentId={documentId}
-                    page={chunkPage}
-                    getPageHref={getChunkPageHref}
-                  />
-                </div>
+                <DocumentChunksView
+                  documentId={documentId}
+                  page={chunkPage}
+                  getPageHref={getChunkPageHref}
+                />
               </TabsContent>
             </Tabs>
           )}
