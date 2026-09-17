@@ -5,7 +5,7 @@ import time
 import uuid
 from collections.abc import Iterator
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
-from typing import Any, Literal, cast
+from typing import Literal, cast
 
 import httpx
 from docling_core.transforms.chunker import BaseChunk
@@ -54,6 +54,7 @@ POLL_INTERVAL_SECONDS = 2
 PROCESSING_TIMEOUT_SECONDS = 15 * 60
 PROCESS_START_METHOD = "spawn"
 PROCESS_SUCCESS_EXIT_CODE = 0
+CHUNK_BATCH_SIZE = 64
 
 DOCUMENT_SCHEDULING_ERROR_LOG = "知识库文档处理调度失败"
 DOCUMENT_PROCESSING_CANCELLED_LOG = "知识库文档处理已取消：文档已删除"
@@ -89,7 +90,7 @@ class _TableSerializerProvider(ChunkingSerializerProvider):
 
 
 class _ParsedDocument(BaseModel):
-    json_content: dict[str, Any] | None = None
+    json_content: DoclingDocument | None = None
 
 
 class _ConversionResponse(BaseModel):
@@ -278,23 +279,29 @@ def _process_document(document_id: uuid.UUID) -> None:
             stored_file=stored_file,
         )
 
-        chunk_records, embedding_texts = _create_chunks(
+        chunk_count = 0
+
+        for chunk_records, embedding_texts in _create_chunk_batches(
             docling_document, content_type=stored_file.content_type
-        )
+        ):
+            vector_store.upsert_chunks(
+                document_id=document_id,
+                knowledge_base_id=document.knowledge_base_id,
+                filename=stored_file.filename,
+                chunks=chunk_records,
+                vectors=embedding.embed_texts(embedding_texts),
+            )
 
-        if not chunk_records:
+            chunk_count += len(chunk_records)
+
+        if chunk_count == 0:
             raise DocumentProcessingError("文档没有可索引内容")
-
-        vectors = embedding.embed_texts(embedding_texts)
 
         _publish_document(
             document_id=document_id,
-            knowledge_base_id=document.knowledge_base_id,
-            filename=stored_file.filename,
-            chunks=chunk_records,
-            vectors=vectors,
             markdown=docling_document.export_to_markdown(
-                image_mode=ImageRefMode.REFERENCED
+                image_mode=ImageRefMode.REFERENCED,
+                compact_tables=True,
             ),
         )
     except (
@@ -464,22 +471,17 @@ def _parse_with_docling(stored_file: StoredFile, content: bytes) -> DoclingDocum
     response.raise_for_status()
 
     try:
-        conversion = _ConversionResponse.model_validate(response.json())
+        conversion = _ConversionResponse.model_validate_json(response.content)
     except ValueError as error:
         raise DocumentProcessingError(DOCLING_INVALID_RESPONSE_MESSAGE) from error
 
     if conversion.status != "success":
         raise DocumentProcessingError("Docling 无法完整解析该文档")
 
-    json_content = conversion.document.json_content
+    docling_document = conversion.document.json_content
 
-    if json_content is None:
+    if docling_document is None:
         raise DocumentProcessingError("Docling 未生成解析产物")
-
-    try:
-        docling_document = DoclingDocument.model_validate(json_content)
-    except ValidationError as error:
-        raise DocumentProcessingError(DOCLING_INVALID_RESPONSE_MESSAGE) from error
 
     return docling_document
 
@@ -533,10 +535,10 @@ def _chunk_table_records(
             yield from chunker.chunk(record)
 
 
-def _create_chunks(
+def _create_chunk_batches(
     document: DoclingDocument, *, content_type: str
-) -> tuple[list[vector_store.DocumentChunk], list[str]]:
-    """创建检索切片及与其索引一一对应的 Embedding 文本。"""
+) -> Iterator[tuple[list[vector_store.DocumentChunk], list[str]]]:
+    """每批生成最多 64 个切片及一一对应的 Embedding 文本。"""
     chunker = HybridChunker(
         tokenizer=embedding.get_tokenizer(),
         serializer_provider=_TableSerializerProvider(),
@@ -588,19 +590,22 @@ def _create_chunks(
 
         embedding_texts.append(chunker.contextualize(document_chunk))
 
-    return chunks, embedding_texts
+        if len(chunks) == CHUNK_BATCH_SIZE:
+            yield chunks, embedding_texts
+
+            chunks = []
+            embedding_texts = []
+
+    if chunks:
+        yield chunks, embedding_texts
 
 
 def _publish_document(
     *,
     document_id: uuid.UUID,
-    knowledge_base_id: uuid.UUID,
-    filename: str,
-    chunks: list[vector_store.DocumentChunk],
-    vectors: list[list[float]],
     markdown: str,
 ) -> None:
-    """发布文档索引和预览并标记为可用。"""
+    """索引写入完成后，发布预览并标记为可用。"""
     with Session(engine) as session:
         document = session.get(KnowledgeDocument, document_id)
 
@@ -612,14 +617,6 @@ def _publish_document(
         )
 
         return
-
-    vector_store.upsert_chunks(
-        document_id=document_id,
-        knowledge_base_id=knowledge_base_id,
-        filename=filename,
-        chunks=chunks,
-        vectors=vectors,
-    )
 
     object_storage.write_object_content(
         object_key=document_preview_key(document_id),
