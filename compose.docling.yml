@@ -22,6 +22,11 @@ services:
               "concurrency": 3,
               "headers": {
                 "Authorization": "Bearer ${NEWAPI_API_KEY?Variable not set}"
+              },
+              "params": {
+                "thinking": {
+                  "type": "disabled"
+                }
               }
             },
             "model_spec": {

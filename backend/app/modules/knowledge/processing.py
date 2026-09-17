@@ -242,6 +242,7 @@ def _parse_image_document(
         ) as client:
             response = client.chat.completions.create(
                 model=IMAGE_DESCRIPTION_MODEL,
+                extra_body={"thinking": {"type": "disabled"}},
                 messages=[
                     {
                         "role": "user",
