@@ -376,7 +376,7 @@ function DocumentChunksView({
                 ))}
               </div>
             )}
-            <MarkdownContent className="min-w-0 max-w-none overflow-x-auto [&_table]:w-max [&_table]:min-w-full [&_td]:min-w-32 [&_td]:max-w-sm [&_td]:align-top [&_th]:whitespace-nowrap">
+            <MarkdownContent className="max-h-[min(30rem,60svh)] min-w-0 max-w-none overflow-auto [&_table]:w-max [&_table]:min-w-full [&_td]:min-w-32 [&_td]:max-w-sm [&_td]:align-top [&_th]:whitespace-nowrap">
               {chunk.content}
             </MarkdownContent>
           </CardContent>
