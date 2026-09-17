@@ -152,6 +152,7 @@ def _claim_document(
             return None
 
         document, _ = result
+
         is_large = False
     else:
         large_wait_started.clear()
