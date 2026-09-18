@@ -161,15 +161,15 @@ export function KnowledgeSearch({
               </CardTitle>
               <CardDescription className="flex flex-wrap gap-x-4 gap-y-1">
                 <span>
-                  章节：
-                  {result.section_path.length > 0
-                    ? result.section_path.join(" / ")
-                    : "未标注"}
-                </span>
-                <span>
                   页码：
                   {result.page_numbers.length > 0
                     ? `第 ${result.page_numbers.join("、")} 页`
+                    : "未标注"}
+                </span>
+                <span>
+                  章节：
+                  {result.section_path.length > 0
+                    ? result.section_path.join(" / ")
                     : "未标注"}
                 </span>
               </CardDescription>
