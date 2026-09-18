@@ -135,11 +135,11 @@ export function SkillManager() {
         <section className="mx-auto flex min-h-full max-w-6xl flex-col gap-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SearchToolbar
+              isPending={skillsQuery.isFetching}
               id="skill-search"
               label="搜索技能"
               placeholder="搜索名称或描述…"
               onSubmit={searchSkills}
-              key={searchQuery}
               defaultValue={searchQuery}
               maxLength={100}
             />

@@ -1,27 +1,28 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { GlobeIcon, UploadIcon } from "lucide-react";
-import { type FormEvent, useRef, useState } from "react";
+import { UploadIcon } from "lucide-react";
+import { type FormEvent, useId, useState } from "react";
 
 import { KNOWLEDGE_DOCUMENT_UPLOAD_KEY } from "@/app/admin/knowledge-bases/_lib/directory";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { FileDropzone } from "@/components/common/file-dropzone";
 import {
   Field,
   FieldDescription,
-  FieldError,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
+import { FormDialogFooter } from "@/components/common/form-dialog-footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
@@ -34,76 +35,53 @@ import {
   formatFileSize,
   getFileContentType,
   KNOWLEDGE_CONTENT_TYPES,
+  KNOWLEDGE_FILE_ACCEPT,
   MAX_FILE_SIZE,
 } from "@/lib/file-types";
+import {
+  transferDocumentUpload,
+  uploadFiles,
+  type UploadResult,
+} from "@/lib/upload-files";
 import { toast } from "sonner";
-
-const UPLOAD_CONCURRENCY = 3;
-const DOCUMENT_ACCEPT = KNOWLEDGE_CONTENT_TYPES.join(",");
-
-type UploadResult = { file: File; error?: string };
 
 export function KnowledgeDocumentImport({
   knowledgeBaseId,
   folderId,
   onDocumentsChanged,
+  disabled = false,
 }: {
   knowledgeBaseId: string;
   folderId?: string;
   onDocumentsChanged: () => void;
+  disabled?: boolean;
 }) {
+  const webpageInputId = useId();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadFailures, setUploadFailures] = useState<UploadResult[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
 
   const uploadDocumentMutation = useMutation({
     mutationKey: [...KNOWLEDGE_DOCUMENT_UPLOAD_KEY, knowledgeBaseId],
-    mutationFn: async (files: File[]): Promise<UploadResult[]> => {
-      const outcomes: UploadResult[] = [];
-      for (let start = 0; start < files.length; start += UPLOAD_CONCURRENCY) {
-        const batch = files.slice(start, start + UPLOAD_CONCURRENCY);
-        const results = await Promise.all(
-          batch.map(async (file): Promise<UploadResult> => {
-            const contentType = getFileContentType(file);
-            if (
-              !contentType ||
-              !KNOWLEDGE_CONTENT_TYPES.includes(contentType)
-            ) {
-              return { file, error: "不支持该文件类型，请选择其他文件" };
-            }
-            if (file.size > MAX_FILE_SIZE) {
-              return {
-                file,
-                error: `超过 ${formatFileSize(MAX_FILE_SIZE)}，请缩小文件后重试`,
-              };
-            }
-            try {
-              return await uploadKnowledgeDocument(
-                knowledgeBaseId,
-                folderId,
-                file,
-                contentType,
-              );
-            } catch (error) {
-              return {
-                file,
-                error: getApiErrorMessage(error, "文件上传失败"),
-              };
-            }
-          }),
+    mutationFn: (files: File[]) =>
+      uploadFiles(files, async (file) => {
+        const contentType = getFileContentType(file);
+        if (!contentType || !KNOWLEDGE_CONTENT_TYPES.includes(contentType)) {
+          return { file, error: "不支持该文件类型，请选择其他文件" };
+        }
+        return uploadKnowledgeDocument(
+          knowledgeBaseId,
+          folderId,
+          file,
+          contentType,
         );
-        outcomes.push(...results);
-      }
-      return outcomes;
-    },
+      }),
 
     onSuccess: (results) => {
       const failures = results.filter((result) => result.error);
 
       setUploadFailures(failures);
       setSelectedFiles(failures.map((result) => result.file));
-
-      if (fileInputRef.current) fileInputRef.current.value = "";
 
       if (failures.length) {
         toast.error(
@@ -113,6 +91,7 @@ export function KnowledgeDocumentImport({
           },
         );
       } else {
+        setOpen(false);
         toast.success(`文件已上传 ${results.length} 个，正在处理`);
       }
 
@@ -147,6 +126,7 @@ export function KnowledgeDocumentImport({
     onSuccess: () => {
       toast.success("网页已添加，正在处理");
       setWebpageUrl("");
+      setOpen(false);
       onDocumentsChanged();
     },
 
@@ -160,129 +140,115 @@ export function KnowledgeDocumentImport({
 
     if (createWebpageMutation.isPending) return;
 
-    createWebpageMutation.mutate(webpageUrl);
+    createWebpageMutation.mutate(webpageUrl.trim());
   }
 
+  const isPending =
+    uploadDocumentMutation.isPending || createWebpageMutation.isPending;
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>添加文档</CardTitle>
-        <CardDescription>上传本地文件，或输入公开网页地址。</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (isPending) return;
+        setOpen(nextOpen);
+        setSelectedFiles([]);
+        setUploadFailures([]);
+        setWebpageUrl("");
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button size="sm" disabled={disabled}>
+          <UploadIcon data-icon="inline-start" aria-hidden="true" />
+          添加文档
+        </Button>
+      </DialogTrigger>
+      <DialogContent showCloseButton={!isPending}>
+        <DialogHeader>
+          <DialogTitle>添加文档</DialogTitle>
+          <DialogDescription className="sr-only">
+            上传本地文件，或输入公开网页地址。
+          </DialogDescription>
+        </DialogHeader>
         <Tabs defaultValue="files">
           <TabsList>
-            <TabsTrigger value="files">上传文件</TabsTrigger>
-            <TabsTrigger value="webpage">添加网页</TabsTrigger>
+            <TabsTrigger value="files" disabled={isPending}>
+              上传文件
+            </TabsTrigger>
+            <TabsTrigger value="webpage" disabled={isPending}>
+              添加网页
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent
-            value="files"
-            forceMount
-            className="data-[state=inactive]:hidden"
-          >
-            <form onSubmit={submitUpload}>
+          <TabsContent value="files">
+            <form
+              onSubmit={submitUpload}
+              className="flex flex-col gap-4"
+            >
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="knowledge-document">文件</FieldLabel>
-                  <FieldDescription>
-                    支持图片（PNG、JPEG、WebP）、PDF、Word、Excel、PowerPoint、HTML、
-                    Markdown、TXT 和 CSV。单个文件最大{" "}
-                    {formatFileSize(MAX_FILE_SIZE)}。
-                  </FieldDescription>
-                  <Input
-                    ref={fileInputRef}
-                    id="knowledge-document"
-                    name="document"
-                    type="file"
-                    accept={DOCUMENT_ACCEPT}
-                    disabled={uploadDocumentMutation.isPending}
-                    multiple
-                    onChange={(event) => {
+                  <FileDropzone
+                    files={selectedFiles}
+                    failures={uploadFailures}
+                    disabled={isPending}
+                    accept={KNOWLEDGE_FILE_ACCEPT}
+                    description={`图片、PDF、Office 等常见文档 · 单个最大 ${formatFileSize(MAX_FILE_SIZE)}。`}
+                    onFilesChange={(files) => {
                       setUploadFailures([]);
-                      setSelectedFiles(
-                        Array.from(event.currentTarget.files ?? []),
-                      );
+                      setSelectedFiles(files);
                     }}
                   />
-                  {selectedFiles.length > 0 && (
-                    <FieldDescription
-                      className="max-h-16 overflow-y-auto break-words"
-                      tabIndex={0}
-                      aria-label="待上传文件列表"
-                    >
-                      待上传 {selectedFiles.length} 个文件：
-                      {selectedFiles.map((file) => file.name).join("、")}
-                    </FieldDescription>
-                  )}
-                  <FieldError
-                    errors={uploadFailures.map((result) => ({
-                      message: `${result.file.name}：${result.error}`,
-                    }))}
-                  />
                 </Field>
-                <Button
-                  type="submit"
-                  className="self-end"
-                  disabled={
-                    uploadDocumentMutation.isPending || selectedFiles.length === 0
-                  }
-                >
-                  {uploadDocumentMutation.isPending ? (
-                    <Spinner data-icon="inline-start" />
-                  ) : (
-                    <UploadIcon data-icon="inline-start" aria-hidden="true" />
-                  )}
-                  {selectedFiles.length > 0
-                    ? `上传 ${selectedFiles.length} 个文件`
-                    : "上传文件"}
-                </Button>
               </FieldGroup>
+              <FormDialogFooter
+                isPending={isPending}
+                disabled={selectedFiles.length === 0}
+                submitLabel="确认上传"
+              />
             </form>
           </TabsContent>
 
           <TabsContent value="webpage">
-            <form onSubmit={submitWebpage}>
+            <form
+              onSubmit={submitWebpage}
+              className="flex flex-col gap-4"
+            >
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="knowledge-webpage-url">
-                    网页地址
-                  </FieldLabel>
-                  <FieldDescription>
-                    输入公开网页地址，系统会抓取正文并创建文档。
-                  </FieldDescription>
+                  <FieldLabel htmlFor={webpageInputId}>网页地址</FieldLabel>
                   <Input
-                    id="knowledge-webpage-url"
+                    id={webpageInputId}
                     name="url"
                     type="url"
+                    pattern={"\\s*[Hh][Tt][Tt][Pp][Ss]?://\\S+\\s*"}
+                    title="请输入以 http:// 或 https:// 开头的有效网页地址"
+                    inputMode="url"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    placeholder="https://example.com/article"
                     value={webpageUrl}
-                    disabled={createWebpageMutation.isPending}
+                    disabled={isPending}
+                    aria-describedby={`${webpageInputId}-hint`}
                     onChange={(event) =>
                       setWebpageUrl(event.currentTarget.value)
                     }
                     required
                   />
+                  <FieldDescription id={`${webpageInputId}-hint`}>
+                    请使用 http:// 或 https://
+                    开头的公开网页地址。系统会抓取正文并创建文档，不支持需要登录的页面。
+                  </FieldDescription>
                 </Field>
-                <Button
-                  type="submit"
-                  className="self-end"
-                  disabled={
-                    createWebpageMutation.isPending || !webpageUrl.trim()
-                  }
-                >
-                  {createWebpageMutation.isPending ? (
-                    <Spinner data-icon="inline-start" />
-                  ) : (
-                    <GlobeIcon data-icon="inline-start" aria-hidden="true" />
-                  )}
-                  添加网页
-                </Button>
               </FieldGroup>
+              <FormDialogFooter
+                isPending={isPending}
+                submitLabel="确认添加"
+              />
             </form>
           </TabsContent>
         </Tabs>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -303,41 +269,16 @@ async function uploadKnowledgeDocument(
     throwOnError: true,
   });
 
-  try {
-    const response = await fetch(upload.uploadUrl, {
-      method: "PUT",
-      headers: upload.uploadHeaders,
-      body: file,
-    });
-
-    if (!response.ok) {
-      throw new Error(`对象存储上传失败（${response.status}）`);
-    }
-  } catch (error) {
-    await knowledgeDocumentsDeleteDocument({
-      path: { document_id: upload.id },
-      throwOnError: false,
-    });
-
-    const reason = getApiErrorMessage(error, "文件传输失败");
-
-    return {
-      file,
-      error: `上传失败：${reason}`,
-    };
-  }
-
-  const { error: confirmationError } = await knowledgeDocumentsCompleteDocumentUpload({
-    path: { document_id: upload.id },
-    throwOnError: false,
+  return transferDocumentUpload(file, upload, {
+    complete: () =>
+      knowledgeDocumentsCompleteDocumentUpload({
+        path: { document_id: upload.id },
+        throwOnError: false,
+      }),
+    discard: () =>
+      knowledgeDocumentsDeleteDocument({
+        path: { document_id: upload.id },
+        throwOnError: false,
+      }),
   });
-
-  if (confirmationError) {
-    return {
-      file,
-      error: getApiErrorMessage(confirmationError, "确认上传失败"),
-    };
-  }
-
-  return { file };
 }

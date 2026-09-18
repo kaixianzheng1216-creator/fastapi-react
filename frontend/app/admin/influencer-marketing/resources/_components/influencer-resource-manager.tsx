@@ -303,11 +303,11 @@ export function InfluencerResourceManager() {
                       </div>
 
                       <SearchToolbar
+                        isPending={accountsQuery.isFetching}
                         id="influencer-search"
                         label="搜索昵称或平台账号"
                         placeholder="搜索昵称或平台账号…"
                         onSubmit={submitSearch}
-                        key={search}
                         defaultValue={search}
                         maxLength={255}
                       />

@@ -4,14 +4,11 @@ import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
 import { parsePage } from "@/lib/pagination";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftIcon } from "lucide-react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { LibraryDocuments } from "@/app/admin/file-libraries/_components/documents";
 import { AppHeader } from "@/components/layout/app-header";
 import { LoadError } from "@/components/common/load-error";
-import { Button } from "@/components/ui/button";
 import { fileLibrariesReadFileLibrary } from "@/lib/client";
 
 export function FileLibraryDetail({
@@ -39,13 +36,7 @@ export function FileLibraryDetail({
     <>
       <AppHeader
         title={libraryQuery.data?.name ?? "文件库详情"}
-        left={
-          <Button variant="ghost" size="icon-sm" asChild>
-            <Link href="/admin/file-libraries" aria-label="返回文件库列表">
-              <ArrowLeftIcon aria-hidden="true" />
-            </Link>
-          </Button>
-        }
+        breadcrumbs={[{ label: "文件库", href: "/admin/file-libraries" }]}
       />
       <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:overflow-hidden md:p-6">
         <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col gap-6 md:h-full md:min-h-0">

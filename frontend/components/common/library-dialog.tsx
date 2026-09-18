@@ -5,13 +5,11 @@ import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
-import { ButtonLoading } from "@/components/common/button-loading";
+import { FormDialogFooter } from "@/components/common/form-dialog-footer";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -160,26 +158,10 @@ export function LibraryDialog({
               <FieldError errors={[form.formState.errors.description]} />
             </Field>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={saveLibraryMutation.isPending}
-                onClick={() => handleOpenChange(false)}
-              >
-                取消
-              </Button>
-              <Button
-                type="submit"
-                className="relative"
-                disabled={saveLibraryMutation.isPending}
-                aria-busy={saveLibraryMutation.isPending}
-              >
-                <ButtonLoading loading={saveLibraryMutation.isPending}>
-                  {isEditing ? "保存" : `创建${label}`}
-                </ButtonLoading>
-              </Button>
-            </DialogFooter>
+            <FormDialogFooter
+              isPending={saveLibraryMutation.isPending}
+              submitLabel={isEditing ? "保存" : `创建${label}`}
+            />
           </FieldGroup>
         </form>
       </DialogContent>

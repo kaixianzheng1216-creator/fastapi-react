@@ -5,8 +5,9 @@ import { SearchIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent } from "react";
 import { LoadError } from "@/components/common/load-error";
+import { MarkdownContent } from "@/components/common/markdown-content";
+import { SearchToolbar } from "@/components/common/search-toolbar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -17,13 +18,11 @@ import {
 } from "@/components/ui/card";
 import {
   Empty,
+  EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { knowledgeBasesSearchKnowledgeBase } from "@/lib/client";
 import { KNOWLEDGE_SEARCH_QUERY_KEY } from "@/app/admin/knowledge-bases/_lib/directory";
 import { getKnowledgeSearchHref } from "@/app/admin/knowledge-bases/_lib/navigation";
@@ -64,69 +63,44 @@ export function KnowledgeSearch({
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget);
-    const query = String(formData.get("query") ?? "").trim();
+    const query = String(formData.get("search") ?? "").trim();
 
-    if (query) {
-      if (query === searchQuery) {
-        void knowledgeSearchQuery.refetch();
-      } else {
-        router.push(
-          getKnowledgeSearchHref(knowledgeBaseId, query, searchParams),
-          {
-            scroll: false,
-          },
-        );
-      }
+    if (!query || knowledgeSearchQuery.isFetching) return;
+
+    if (query === searchQuery) {
+      void knowledgeSearchQuery.refetch();
+      return;
     }
+
+    router.push(getKnowledgeSearchHref(knowledgeBaseId, query, searchParams), {
+      scroll: false,
+    });
   }
 
   return (
     <>
-      <Card className="shrink-0">
-        <CardHeader>
-          <CardTitle>搜索知识库</CardTitle>
-          <CardDescription>
-            输入问题，查看当前知识库中最相关的内容片段。
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={submitSearch}>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="knowledge-search-query">问题</FieldLabel>
-                <Input
-                  key={searchQuery}
-                  id="knowledge-search-query"
-                  name="query"
-                  defaultValue={searchQuery}
-                  autoComplete="off"
-                  placeholder="输入想了解的问题…"
-                  maxLength={1000}
-                  required
-                />
-              </Field>
-              <Button
-                type="submit"
-                className="self-end"
-                disabled={knowledgeSearchQuery.isFetching}
-              >
-                {knowledgeSearchQuery.isFetching ? (
-                  <Spinner data-icon="inline-start" />
-                ) : (
-                  <SearchIcon data-icon="inline-start" aria-hidden="true" />
-                )}
-                搜索
-              </Button>
-            </FieldGroup>
-          </form>
-        </CardContent>
-      </Card>
+      <SearchToolbar
+        id="knowledge-search-query"
+        label="搜索知识库"
+        placeholder="输入关键词或问题…"
+        className="shrink-0"
+        onSubmit={submitSearch}
+        defaultValue={searchQuery}
+        maxLength={1000}
+        required
+        isPending={knowledgeSearchQuery.isFetching}
+      />
 
-      <h2 className="text-sm font-normal text-foreground">
-        搜索结果 · 相关度 Top 6
-      </h2>
-
-      <div className="flex-1 space-y-6 overflow-y-auto">
+      {searchQuery && searchResults !== undefined && (
+        <h2 className="shrink-0 text-sm text-muted-foreground" aria-live="polite">
+          搜索结果 · {searchResults.length} 条 · 按相关度排序
+        </h2>
+      )}
+      <div
+        key={searchQuery}
+        className="scroll-content-y flex min-h-0 flex-1 flex-col gap-4"
+        aria-busy={knowledgeSearchQuery.isFetching}
+      >
         {knowledgeSearchQuery.isError &&
           knowledgeSearchQuery.data === undefined && (
             <LoadError
@@ -136,24 +110,25 @@ export function KnowledgeSearch({
             />
           )}
 
-        {searchQuery &&
-          !knowledgeSearchQuery.isPending &&
-          (!knowledgeSearchQuery.isError ||
-            knowledgeSearchQuery.data !== undefined) &&
-          !searchResults?.length && (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <SearchIcon aria-hidden="true" />
-                </EmptyMedia>
-                <EmptyTitle>未找到相关内容</EmptyTitle>
-              </EmptyHeader>
-            </Empty>
-          )}
+        {(!searchQuery || searchResults?.length === 0) && (
+          <Empty className="flex-none">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <SearchIcon aria-hidden="true" />
+              </EmptyMedia>
+              {searchQuery && <EmptyTitle>未找到相关内容</EmptyTitle>}
+              <EmptyDescription>
+                {searchQuery
+                  ? "试试其他关键词，或换一种方式描述问题。"
+                  : "输入关键词或问题，按 Enter 搜索相关知识切片。"}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        )}
         {searchResults?.map((result) => (
           <Card
             key={`${result.document_id}-${result.chunk_index}`}
-            className="wrap-anywhere"
+            className="shrink-0 wrap-anywhere"
           >
             <CardHeader>
               <CardTitle>
@@ -194,7 +169,9 @@ export function KnowledgeSearch({
                   ))}
                 </div>
               ) : null}
-              <p className="whitespace-pre-wrap">{result.content}</p>
+              <MarkdownContent className="max-w-none">
+                {result.content}
+              </MarkdownContent>
             </CardContent>
           </Card>
         ))}

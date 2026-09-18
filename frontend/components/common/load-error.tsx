@@ -1,4 +1,4 @@
-import { ButtonLoading } from "@/components/common/button-loading";
+import { ButtonContent } from "@/components/common/button-content";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -28,12 +28,12 @@ export function LoadError({
         type="button"
         variant="link"
         size="sm"
-        className="relative px-0"
+        className="px-0"
         disabled={isRetrying}
         aria-busy={isRetrying}
         onClick={onRetry}
       >
-        <ButtonLoading loading={isRetrying}>重试</ButtonLoading>
+        <ButtonContent loading={isRetrying}>重试</ButtonContent>
       </Button>
     </div>
   );

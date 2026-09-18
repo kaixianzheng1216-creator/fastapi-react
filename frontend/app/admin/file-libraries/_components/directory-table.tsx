@@ -62,7 +62,7 @@ export function LibraryDirectoryTable({
       loading={loading}
       className="min-w-[880px] table-fixed [&_tbody_tr]:h-12"
       containerRef={scrollRef}
-      containerClassName="md:h-full md:overflow-auto md:overscroll-contain"
+      containerClassName="md:scroll-content-y md:h-full md:overscroll-contain"
     >
       <TableHeader className="sticky top-0 z-10 bg-background">
         <TableRow>

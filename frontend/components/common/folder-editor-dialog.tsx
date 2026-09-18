@@ -3,13 +3,11 @@
 import { useMutation } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { ButtonLoading } from "@/components/common/button-loading";
+import { FormDialogFooter } from "@/components/common/form-dialog-footer";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -121,26 +119,11 @@ export function FolderEditorDialog({
                 onChange={(event) => setFolderName(event.currentTarget.value)}
               />
             </Field>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={saveFolderMutation.isPending}
-                onClick={onClose}
-              >
-                取消
-              </Button>
-              <Button
-                type="submit"
-                className="relative"
-                disabled={saveFolderMutation.isPending || !folderName.trim()}
-                aria-busy={saveFolderMutation.isPending}
-              >
-                <ButtonLoading loading={saveFolderMutation.isPending}>
-                  {folder ? "保存" : "创建文件夹"}
-                </ButtonLoading>
-              </Button>
-            </DialogFooter>
+            <FormDialogFooter
+              isPending={saveFolderMutation.isPending}
+              disabled={!folderName.trim()}
+              submitLabel={folder ? "保存" : "创建文件夹"}
+            />
           </FieldGroup>
         </form>
       </DialogContent>

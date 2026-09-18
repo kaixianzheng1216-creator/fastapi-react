@@ -145,6 +145,17 @@
   }
 }
 
+/* Opt in on the scrolling element when its content needs scrollbar clearance. */
+@utility scroll-content-y {
+  overflow-y: auto;
+  padding-inline-end: --spacing(3);
+}
+
+@utility scroll-content-x {
+  overflow-x: auto;
+  padding-bottom: --spacing(3);
+}
+
 @custom-variant data-open (&:where([data-state="open"], [data-open]:not([data-open="false"])));
 
 @custom-variant data-closed (&:where([data-state="closed"], [data-closed]:not([data-closed="false"])));

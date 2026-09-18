@@ -6,13 +6,11 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { ButtonLoading } from "@/components/common/button-loading";
-import { Button } from "@/components/ui/button";
+import { FormDialogFooter } from "@/components/common/form-dialog-footer";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -160,27 +158,10 @@ export function KeyEditorDialog({
               />
             )}
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={saveMutation.isPending}
-              >
-                取消
-              </Button>
-
-              <Button
-                type="submit"
-                className="relative"
-                disabled={saveMutation.isPending}
-                aria-busy={saveMutation.isPending}
-              >
-                <ButtonLoading loading={saveMutation.isPending}>
-                  {apiKey ? "保存" : "创建密钥"}
-                </ButtonLoading>
-              </Button>
-            </DialogFooter>
+            <FormDialogFooter
+              isPending={saveMutation.isPending}
+              submitLabel={apiKey ? "保存" : "创建密钥"}
+            />
           </FieldGroup>
         </form>
       </DialogContent>

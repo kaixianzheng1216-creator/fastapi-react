@@ -10,7 +10,12 @@ type MarkdownContentProps = {
 
 export function MarkdownContent({ children, className }: MarkdownContentProps) {
   return (
-    <div className={cn("prose dark:prose-invert", className)}>
+    <div
+      className={cn(
+        "prose dark:prose-invert scroll-content-x min-w-0 [&_table]:w-max [&_table]:min-w-full [&_td]:min-w-32 [&_td]:max-w-sm [&_td]:align-top [&_th]:whitespace-nowrap",
+        className,
+      )}
+    >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{

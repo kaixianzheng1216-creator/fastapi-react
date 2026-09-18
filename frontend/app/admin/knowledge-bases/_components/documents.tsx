@@ -13,7 +13,6 @@ import { Fragment, useRef, useState } from "react";
 import {
   DirectoryActionDialogs,
   DirectoryEntryActions,
-  DirectoryToolbar,
   useDirectoryActions,
 } from "@/app/admin/knowledge-bases/_components/directory-actions";
 import { KnowledgeDirectoryTable } from "@/app/admin/knowledge-bases/_components/directory-table";
@@ -30,6 +29,8 @@ import {
   getKnowledgeDocumentHref,
 } from "@/app/admin/knowledge-bases/_lib/navigation";
 import { KnowledgeDocumentImport } from "@/app/admin/knowledge-bases/_components/document-import";
+import { DirectoryToolbar } from "@/components/common/directory-toolbar";
+import { FolderActions } from "@/components/common/folder-actions";
 import { LoadError } from "@/components/common/load-error";
 import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
@@ -98,6 +99,7 @@ export function KnowledgeDocuments({
   const folders = foldersQuery.data?.data ?? EMPTY_FOLDERS;
   const folderById = new Map(folders.map((folder) => [folder.id, folder]));
   const currentPath = getFolderAncestors(folderById, currentFolderId);
+  const currentFolder = folderById.get(currentFolderId ?? "");
 
   const directoryQuery = useQuery({
     meta: { handlesInitialError: true },
@@ -153,6 +155,10 @@ export function KnowledgeDocuments({
   const directoryLoadFailed =
     (foldersQuery.isError && foldersQuery.data === undefined) ||
     (directoryQuery.isError && directoryQuery.data === undefined);
+  const actionsDisabled =
+    directoryPending ||
+    directoryLoadFailed ||
+    Boolean(currentFolderId && !folderById.has(currentFolderId));
 
   function invalidateDocuments(): void {
     void queryClient.invalidateQueries({
@@ -267,12 +273,6 @@ export function KnowledgeDocuments({
       aria-label="知识库文档"
       className="flex flex-1 flex-col gap-6 md:min-h-0"
     >
-      <KnowledgeDocumentImport
-        knowledgeBaseId={knowledgeBaseId}
-        folderId={currentFolderId}
-        onDocumentsChanged={invalidateDocuments}
-      />
-
       <section
         ref={scrollRef}
         className="flex flex-1 flex-col gap-3 md:min-h-0 md:overflow-y-auto"
@@ -326,16 +326,38 @@ export function KnowledgeDocuments({
             </BreadcrumbList>
           </Breadcrumb>
 
-          <DirectoryToolbar
-            actions={actions}
-            disabled={
-              directoryPending ||
-              directoryLoadFailed ||
-              Boolean(currentFolderId && !folderById.has(currentFolderId))
-            }
-            currentFolder={folderById.get(currentFolderId ?? "")}
-            selectedEntries={selectedEntries}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <DirectoryToolbar
+              selectedCount={selectedEntries.length}
+              disabled={actionsDisabled}
+              deletePending={actions.deleteEntriesMutation.isPending}
+              onDelete={() => actions.openDeleteEntries(selectedEntries)}
+              onCreateFolder={() => actions.editFolder(null)}
+              onTriggerInteraction={actions.rememberActionTrigger}
+            >
+              {currentFolder ? (
+                <FolderActions
+                  name={currentFolder.name}
+                  variant="outline"
+                  onTriggerInteraction={actions.rememberActionTrigger}
+                  onMove={() =>
+                    actions.openMoveEntry({ ...currentFolder, type: "folder" })
+                  }
+                  onRename={() => actions.editFolder(currentFolder)}
+                  onDelete={() =>
+                    actions.openDeleteEntry({ ...currentFolder, type: "folder" })
+                  }
+                />
+              ) : null}
+            </DirectoryToolbar>
+            <KnowledgeDocumentImport
+              key={currentFolderId ?? "root"}
+              knowledgeBaseId={knowledgeBaseId}
+              folderId={currentFolderId}
+              onDocumentsChanged={invalidateDocuments}
+              disabled={actionsDisabled}
+            />
+          </div>
         </div>
 
         {!directoryPending && directoryLoadFailed ? (

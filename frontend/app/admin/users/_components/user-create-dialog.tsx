@@ -5,13 +5,11 @@ import { useMutation } from "@tanstack/react-query";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
-import { ButtonLoading } from "@/components/common/button-loading";
+import { FormDialogFooter } from "@/components/common/form-dialog-footer";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -198,26 +196,10 @@ export function UserCreateDialog({
               )}
             />
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={createUserMutation.isPending}
-                onClick={() => handleOpenChange(false)}
-              >
-                取消
-              </Button>
-              <Button
-                type="submit"
-                className="relative"
-                disabled={createUserMutation.isPending}
-                aria-busy={createUserMutation.isPending}
-              >
-                <ButtonLoading loading={createUserMutation.isPending}>
-                  创建用户
-                </ButtonLoading>
-              </Button>
-            </DialogFooter>
+            <FormDialogFooter
+              isPending={createUserMutation.isPending}
+              submitLabel="创建用户"
+            />
           </FieldGroup>
         </form>
       </DialogContent>

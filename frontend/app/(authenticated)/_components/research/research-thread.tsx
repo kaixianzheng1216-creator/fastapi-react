@@ -12,7 +12,6 @@ import {
 import { selectIsNewConversation } from "@/app/(authenticated)/_components/conversation-selectors";
 import type { ResearchState } from "@/lib/conversation-state";
 import { ThreadPrimitive, useAuiState } from "@assistant-ui/react";
-import { SquareIcon } from "lucide-react";
 
 import { ResearchProgress } from "./research-progress";
 
@@ -80,11 +79,6 @@ function ResearchCancel() {
       variant="outline"
       className="mx-auto rounded-full"
     >
-      <SquareIcon
-        data-icon="inline-start"
-        className="fill-current"
-        aria-hidden="true"
-      />
       停止调研
     </StopButton>
   );

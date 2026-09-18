@@ -13,7 +13,6 @@ import { Fragment, useRef, useState } from "react";
 import {
   DirectoryActionDialogs,
   DirectoryEntryActions,
-  DirectoryToolbar,
   useDirectoryActions,
 } from "@/app/admin/file-libraries/_components/directory-actions";
 import { LibraryDirectoryTable } from "@/app/admin/file-libraries/_components/directory-table";
@@ -26,6 +25,8 @@ import {
 } from "@/app/admin/file-libraries/_lib/directory";
 import { getLibraryDirectoryHref } from "@/app/admin/file-libraries/_lib/navigation";
 import { LibraryDocumentImport } from "@/app/admin/file-libraries/_components/document-import";
+import { DirectoryToolbar } from "@/components/common/directory-toolbar";
+import { FolderActions } from "@/components/common/folder-actions";
 import { LoadError } from "@/components/common/load-error";
 import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
@@ -85,6 +86,7 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
   const folders = foldersQuery.data?.data ?? EMPTY_FOLDERS;
   const folderById = new Map(folders.map((folder) => [folder.id, folder]));
   const currentPath = getFolderAncestors(folderById, currentFolderId);
+  const currentFolder = folderById.get(currentFolderId ?? "");
 
   const directoryQuery = useQuery({
     meta: { handlesInitialError: true },
@@ -127,6 +129,10 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
   const directoryLoadFailed =
     (foldersQuery.isError && foldersQuery.data === undefined) ||
     (directoryQuery.isError && directoryQuery.data === undefined);
+  const actionsDisabled =
+    directoryPending ||
+    directoryLoadFailed ||
+    Boolean(currentFolderId && !folderById.has(currentFolderId));
 
   function invalidateDocuments(): void {
     void queryClient.invalidateQueries({
@@ -238,13 +244,6 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
       aria-label="文件库文件"
       className="flex flex-1 flex-col gap-6 md:min-h-0"
     >
-      <LibraryDocumentImport
-        key={currentFolderId ?? "root"}
-        fileLibraryId={fileLibraryId}
-        folderId={currentFolderId}
-        onDocumentsChanged={invalidateDocuments}
-      />
-
       <section
         ref={scrollRef}
         className="flex flex-1 flex-col gap-3 md:min-h-0 md:overflow-y-auto"
@@ -298,16 +297,38 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <DirectoryToolbar
-            actions={actions}
-            disabled={
-              directoryPending ||
-              directoryLoadFailed ||
-              Boolean(currentFolderId && !folderById.has(currentFolderId))
-            }
-            currentFolder={folderById.get(currentFolderId ?? "")}
-            selectedEntries={selectedEntries}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <DirectoryToolbar
+              selectedCount={selectedEntries.length}
+              disabled={actionsDisabled}
+              deletePending={actions.deleteEntriesMutation.isPending}
+              onDelete={() => actions.openDeleteEntries(selectedEntries)}
+              onCreateFolder={() => actions.editFolder(null)}
+              onTriggerInteraction={actions.rememberActionTrigger}
+            >
+              {currentFolder ? (
+                <FolderActions
+                  name={currentFolder.name}
+                  variant="outline"
+                  onTriggerInteraction={actions.rememberActionTrigger}
+                  onMove={() =>
+                    actions.openMoveEntry({ ...currentFolder, type: "folder" })
+                  }
+                  onRename={() => actions.editFolder(currentFolder)}
+                  onDelete={() =>
+                    actions.openDeleteEntry({ ...currentFolder, type: "folder" })
+                  }
+                />
+              ) : null}
+            </DirectoryToolbar>
+            <LibraryDocumentImport
+              key={currentFolderId ?? "root"}
+              fileLibraryId={fileLibraryId}
+              folderId={currentFolderId}
+              onDocumentsChanged={invalidateDocuments}
+              disabled={actionsDisabled}
+            />
+          </div>
         </div>
 
         {!directoryPending && directoryLoadFailed ? (

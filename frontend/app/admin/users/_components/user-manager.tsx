@@ -352,11 +352,11 @@ export function UserManager() {
         <section className="mx-auto flex min-h-full max-w-6xl flex-col gap-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SearchToolbar
+              isPending={usersQuery.isFetching}
               id="user-search"
               label="搜索用户名或姓名"
               placeholder="搜索用户名或姓名…"
               onSubmit={submitSearch}
-              key={search}
               defaultValue={search}
             />
 

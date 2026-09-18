@@ -24,6 +24,7 @@ import {
   type DirectoryEntry,
   KNOWLEDGE_DOCUMENT_UPLOAD_KEY,
 } from "@/app/admin/knowledge-bases/_lib/directory";
+import { ButtonContent } from "@/components/common/button-content";
 import { FolderActions } from "@/components/common/folder-actions";
 import { FolderEditorDialog } from "@/components/common/folder-editor-dialog";
 import { FolderPickerDialog } from "@/components/common/folder-picker-dialog";
@@ -263,6 +264,13 @@ export function DirectoryEntryActions({
     openDeleteEntry,
   } = actions;
 
+  const documentPending = [
+    completeDocumentMutation,
+    downloadOriginalMutation,
+    downloadMarkdownMutation,
+    retryDocumentMutation,
+  ].some((mutation) => mutation.isPending && mutation.variables === entry.id);
+
   return entry.type === "folder" ? (
     <FolderActions
       name={entry.name}
@@ -279,10 +287,12 @@ export function DirectoryEntryActions({
           variant="ghost"
           size="icon-sm"
           aria-label={`${entry.filename} 的更多操作`}
+          disabled={documentPending}
+          aria-busy={documentPending}
           onFocus={rememberActionTrigger}
           onPointerDown={rememberActionTrigger}
         >
-          <MoreHorizontalIcon aria-hidden="true" />
+          <ButtonContent loading={documentPending} icon={MoreHorizontalIcon} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -298,7 +308,10 @@ export function DirectoryEntryActions({
           ) : null}
           {entry.uploaded ? (
             <DropdownMenuItem
-              disabled={downloadOriginalMutation.isPending}
+              disabled={
+                downloadOriginalMutation.isPending ||
+                downloadMarkdownMutation.isPending
+              }
               onSelect={() => downloadOriginalMutation.mutate(entry.id)}
             >
               <DownloadIcon aria-hidden="true" />
@@ -315,7 +328,10 @@ export function DirectoryEntryActions({
           ) : null}
           {entry.status === "ready" ? (
             <DropdownMenuItem
-              disabled={downloadMarkdownMutation.isPending}
+              disabled={
+                downloadOriginalMutation.isPending ||
+                downloadMarkdownMutation.isPending
+              }
               onSelect={() => downloadMarkdownMutation.mutate(entry.id)}
             >
               <FileTextIcon aria-hidden="true" />
@@ -345,69 +361,6 @@ export function DirectoryEntryActions({
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-export function DirectoryToolbar({
-  actions,
-  currentFolder,
-  selectedEntries,
-  disabled = false,
-}: {
-  actions: DirectoryActions;
-  currentFolder?: KnowledgeFolderPublic;
-  selectedEntries: DirectoryEntry[];
-  disabled?: boolean;
-}) {
-  const {
-    deleteEntriesMutation,
-    rememberActionTrigger,
-    openDeleteEntries,
-    openDeleteEntry,
-    openMoveEntry,
-    editFolder,
-  } = actions;
-  const selectedEntryCount = selectedEntries.length;
-
-  return (
-    <fieldset
-      disabled={disabled}
-      className="flex min-w-0 flex-wrap items-center gap-2"
-    >
-      {selectedEntryCount > 0 ? (
-        <Button
-          variant="destructive"
-          size="sm"
-          aria-label={`删除已选择的 ${selectedEntryCount} 项`}
-          title="删除所选项目"
-          disabled={deleteEntriesMutation.isPending}
-          onFocus={rememberActionTrigger}
-          onPointerDown={rememberActionTrigger}
-          onClick={() => openDeleteEntries(selectedEntries)}
-        >
-          删除
-        </Button>
-      ) : null}
-      {currentFolder ? (
-        <FolderActions
-          name={currentFolder.name}
-          variant="outline"
-          onTriggerInteraction={rememberActionTrigger}
-          onMove={() => openMoveEntry({ ...currentFolder, type: "folder" })}
-          onRename={() => editFolder(currentFolder)}
-          onDelete={() => openDeleteEntry({ ...currentFolder, type: "folder" })}
-        />
-      ) : null}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => editFolder(null)}
-        onFocus={rememberActionTrigger}
-        onPointerDown={rememberActionTrigger}
-      >
-        新建文件夹
-      </Button>
-    </fieldset>
   );
 }
 

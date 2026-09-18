@@ -5,14 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
-import { ButtonLoading } from "@/components/common/button-loading";
+import { FormDialogFooter } from "@/components/common/form-dialog-footer";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -128,7 +125,7 @@ export function SkillCreateDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="max-h-[calc(100svh-2rem)] overflow-y-auto sm:max-w-2xl"
+        className="sm:max-w-2xl"
         showCloseButton={!isSubmitting}
       >
         <DialogHeader>
@@ -206,27 +203,10 @@ export function SkillCreateDialog({
                   />
                 </Field>
 
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={isSubmitting}
-                    >
-                      取消
-                    </Button>
-                  </DialogClose>
-                  <Button
-                    type="submit"
-                    className="relative"
-                    disabled={isSubmitting}
-                    aria-busy={isSubmitting}
-                  >
-                    <ButtonLoading loading={isSubmitting}>
-                      创建技能
-                    </ButtonLoading>
-                  </Button>
-                </DialogFooter>
+                <FormDialogFooter
+                  isPending={isSubmitting}
+                  submitLabel="创建技能"
+                />
               </FieldGroup>
             </form>
           </TabsContent>
@@ -255,27 +235,10 @@ export function SkillCreateDialog({
                   <FieldError errors={[zipForm.formState.errors.skillZip]} />
                 </Field>
 
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={isSubmitting}
-                    >
-                      取消
-                    </Button>
-                  </DialogClose>
-                  <Button
-                    type="submit"
-                    className="relative"
-                    disabled={isSubmitting}
-                    aria-busy={isSubmitting}
-                  >
-                    <ButtonLoading loading={isSubmitting}>
-                      上传技能
-                    </ButtonLoading>
-                  </Button>
-                </DialogFooter>
+                <FormDialogFooter
+                  isPending={isSubmitting}
+                  submitLabel="上传技能"
+                />
               </FieldGroup>
             </form>
           </TabsContent>

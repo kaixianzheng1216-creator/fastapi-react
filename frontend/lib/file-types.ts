@@ -53,6 +53,13 @@ const CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 };
 
+export const KNOWLEDGE_FILE_ACCEPT = [
+  ...KNOWLEDGE_CONTENT_TYPES,
+  ...Object.entries(CONTENT_TYPE_BY_EXTENSION)
+    .filter(([, type]) => KNOWLEDGE_CONTENT_TYPES.includes(type))
+    .map(([extension]) => `.${extension}`),
+].join(",");
+
 export function getFileContentType(file: File): string | undefined {
   if (file.type) return file.type;
 
@@ -67,4 +74,21 @@ export function formatFileSize(size: number): string {
   }
 
   return `${sizeFormatter.format(size / 1024 / 1024)} MB`;
+}
+
+export function deduplicateUploadFiles(incoming: File[]): File[] {
+  const files: File[] = [];
+  for (const file of incoming) {
+    if (
+      !files.some(
+        (item) =>
+          item.name === file.name &&
+          item.size === file.size &&
+          item.lastModified === file.lastModified,
+      )
+    ) {
+      files.push(file);
+    }
+  }
+  return files;
 }

@@ -8,7 +8,7 @@ import {
 import { ComposerModelSelector } from "@/app/(authenticated)/_components/composer-model-selector";
 import { selectIsNewConversation } from "@/app/(authenticated)/_components/conversation-selectors";
 import { TooltipIconButton } from "@/app/(authenticated)/_components/tooltip-icon-button";
-import { ButtonLoading } from "@/components/common/button-loading";
+import { ButtonContent } from "@/components/common/button-content";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -92,7 +92,8 @@ const ThreadScrollToBottom: FC = () => (
     <TooltipIconButton
       tooltip="滚动到底部"
       variant="outline"
-      className="aui-thread-scroll-to-bottom dark:border-border dark:bg-background dark:hover:bg-accent absolute -top-12 z-10 self-center rounded-full p-4 disabled:invisible"
+      size="icon"
+      className="aui-thread-scroll-to-bottom absolute -top-12 z-10 self-center rounded-full disabled:invisible"
     >
       <ArrowDownIcon />
     </TooltipIconButton>
@@ -183,8 +184,9 @@ const ThreadStarterSuggestion: FC = () => (
   <div className="aui-thread-welcome-suggestion-display fade-in slide-in-from-bottom-2 animate-in fill-mode-both duration-200">
     <SuggestionPrimitive.Trigger send asChild>
       <Button
-        variant="ghost"
-        className="aui-thread-welcome-suggestion text-foreground hover:bg-muted border-border/60 h-auto gap-2 rounded-full border px-3.5 py-1.5 text-sm font-normal whitespace-nowrap transition-colors"
+        variant="outline"
+        size="sm"
+        className="aui-thread-welcome-suggestion rounded-full"
       >
         <SuggestionPrimitive.Title className="aui-thread-welcome-suggestion-text-1" />
         <SuggestionPrimitive.Description className="aui-thread-welcome-suggestion-text-2 empty:hidden" />
@@ -228,11 +230,11 @@ const ComposerAction: FC = () => (
             side="bottom"
             type="button"
             variant="default"
-            size="icon"
-            className="aui-composer-send size-7 rounded-full"
+            size="icon-sm"
+            className="aui-composer-send rounded-full"
             aria-label="发送消息"
           >
-            <ArrowUpIcon className="aui-composer-send-icon size-4.5" />
+            <ArrowUpIcon className="aui-composer-send-icon" />
           </TooltipIconButton>
         </ComposerPrimitive.Send>
       </AuiIf>
@@ -240,12 +242,10 @@ const ComposerAction: FC = () => (
         <StopButton
           type="button"
           variant="default"
-          size="icon"
-          className="aui-composer-cancel size-7 rounded-full"
+          size="icon-sm"
+          className="aui-composer-cancel rounded-full"
           aria-label="停止生成"
-        >
-          <SquareIcon className="aui-composer-cancel-icon size-3.5 fill-current" />
-        </StopButton>
+        />
       </AuiIf>
     </div>
   </div>
@@ -253,7 +253,7 @@ const ComposerAction: FC = () => (
 
 export function StopButton({
   children,
-  className,
+  disabled,
   ...props
 }: ComponentProps<typeof Button>) {
   const aui = useAui();
@@ -287,18 +287,17 @@ export function StopButton({
   return (
     <Button
       {...props}
-      className={cn("relative", className)}
-      disabled={!runId || stopMutation.isPending}
+      disabled={disabled || !runId || stopMutation.isPending}
       aria-busy={stopMutation.isPending}
       onClick={() => {
-        if (!runId || stopMutation.isPending) return;
+        if (disabled || !runId || stopMutation.isPending) return;
 
         stopMutation.mutate(runId);
       }}
     >
-      <ButtonLoading loading={stopMutation.isPending}>
+      <ButtonContent loading={stopMutation.isPending} icon={SquareIcon}>
         {children}
-      </ButtonLoading>
+      </ButtonContent>
     </Button>
   );
 }

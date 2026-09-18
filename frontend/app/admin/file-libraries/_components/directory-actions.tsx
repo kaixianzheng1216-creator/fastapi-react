@@ -21,11 +21,11 @@ import {
   type DirectoryEntry,
   LIBRARY_DOCUMENT_UPLOAD_KEY,
 } from "@/app/admin/file-libraries/_lib/directory";
+import { ButtonContent } from "@/components/common/button-content";
 import { FolderActions } from "@/components/common/folder-actions";
 import { FolderEditorDialog } from "@/components/common/folder-editor-dialog";
 import { FolderPickerDialog } from "@/components/common/folder-picker-dialog";
 import { DeleteDialog } from "@/components/common/delete-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -234,6 +234,11 @@ export function DirectoryEntryActions({
     openDeleteEntry,
   } = actions;
 
+  const documentPending = [
+    completeDocumentMutation,
+    downloadOriginalMutation,
+  ].some((mutation) => mutation.isPending && mutation.variables === entry.id);
+
   return entry.type === "folder" ? (
     <FolderActions
       name={entry.name}
@@ -250,10 +255,12 @@ export function DirectoryEntryActions({
           variant="ghost"
           size="icon-sm"
           aria-label={`${entry.filename} 的更多操作`}
+          disabled={documentPending}
+          aria-busy={documentPending}
           onFocus={rememberActionTrigger}
           onPointerDown={rememberActionTrigger}
         >
-          <MoreHorizontalIcon aria-hidden="true" />
+          <ButtonContent loading={documentPending} icon={MoreHorizontalIcon} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -290,73 +297,6 @@ export function DirectoryEntryActions({
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-export function DirectoryToolbar({
-  actions,
-  currentFolder,
-  selectedEntries,
-  disabled = false,
-}: {
-  actions: DirectoryActions;
-  currentFolder?: LibraryFolderPublic;
-  selectedEntries: DirectoryEntry[];
-  disabled?: boolean;
-}) {
-  const {
-    deleteEntriesMutation,
-    rememberActionTrigger,
-    openDeleteEntries,
-    openDeleteEntry,
-    openMoveEntry,
-    editFolder,
-  } = actions;
-  const selectedEntryCount = selectedEntries.length;
-
-  return (
-    <fieldset
-      disabled={disabled}
-      className="flex min-w-0 flex-wrap items-center gap-2"
-    >
-      {selectedEntryCount > 0 ? (
-        <>
-          <Badge variant="secondary" aria-live="polite">
-            已选择 {selectedEntryCount} 项
-          </Badge>
-          <Button
-            variant="destructive"
-            size="sm"
-            disabled={deleteEntriesMutation.isPending}
-            onFocus={rememberActionTrigger}
-            onPointerDown={rememberActionTrigger}
-            onClick={() => openDeleteEntries(selectedEntries)}
-          >
-            <TrashIcon data-icon="inline-start" aria-hidden="true" />
-            删除
-          </Button>
-        </>
-      ) : null}
-      {currentFolder ? (
-        <FolderActions
-          name={currentFolder.name}
-          variant="outline"
-          onTriggerInteraction={rememberActionTrigger}
-          onMove={() => openMoveEntry({ ...currentFolder, type: "folder" })}
-          onRename={() => editFolder(currentFolder)}
-          onDelete={() => openDeleteEntry({ ...currentFolder, type: "folder" })}
-        />
-      ) : null}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => editFolder(null)}
-        onFocus={rememberActionTrigger}
-        onPointerDown={rememberActionTrigger}
-      >
-        新建文件夹
-      </Button>
-    </fieldset>
   );
 }
 

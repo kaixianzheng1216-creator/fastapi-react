@@ -19,7 +19,7 @@ function Table({
     <div
       data-slot="table-container"
       ref={containerRef}
-      className={cn("relative w-full overflow-x-auto", containerClassName)}
+      className={cn("scroll-content-x relative w-full", containerClassName)}
     >
       <span role="status" className="sr-only">
         {loading ? "正在加载数据…" : ""}

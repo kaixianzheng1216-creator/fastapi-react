@@ -10,7 +10,7 @@ import {
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ButtonLoading } from "@/components/common/button-loading";
+import { ButtonContent } from "@/components/common/button-content";
 import {
   Collapsible,
   CollapsibleContent,
@@ -205,7 +205,7 @@ export function FolderPickerDialog({
             </EmptyHeader>
           </Empty>
         ) : (
-          <ul className="max-h-72 overflow-y-auto" aria-label="目标文件夹">
+          <ul className="scroll-content-y max-h-72" aria-label="目标文件夹">
             <FolderTreeNode
               node={root}
               selectedId={selectedFolderId}
@@ -227,12 +227,11 @@ export function FolderPickerDialog({
           </Button>
           <Button
             type="button"
-            className="relative"
             disabled={isPending || !canMove}
             aria-busy={isPending}
             onClick={() => onMove(selectedFolderId)}
           >
-            <ButtonLoading loading={isPending}>移动</ButtonLoading>
+            <ButtonContent loading={isPending}>移动</ButtonContent>
           </Button>
         </DialogFooter>
       </DialogContent>

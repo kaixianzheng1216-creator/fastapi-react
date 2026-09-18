@@ -1,8 +1,10 @@
 "use client";
 
-import { CopyIcon } from "lucide-react";
+import { CheckIcon, CopyIcon } from "lucide-react";
 import { toast } from "sonner";
 
+import { ButtonContent } from "@/components/common/button-content";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { Button } from "@/components/ui/button";
 
 type ConnectionConfigProps = {
@@ -31,25 +33,28 @@ export function ConnectionConfig({
     2,
   );
 
-  async function copyConfig(): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(config);
-
+  const { isCopied, isCopying, copyToClipboard } = useCopyToClipboard({
+    onSuccess: () =>
       toast.success(
         isTemplate ? "配置模板已复制，请替换访问密钥" : "连接配置已复制",
-      );
-    } catch {
-      toast.error("无法自动复制，请选中下方配置手动复制");
-    }
-  }
+      ),
+    errorMessage: "无法自动复制，请选中下方配置手动复制",
+  });
 
   return (
     <section className="flex min-w-0 flex-col gap-4" aria-label="连接配置">
       <div className="flex min-h-8 items-center justify-between gap-3">
         <h2 className="text-base font-semibold">连接配置</h2>
-        <Button type="button" size="sm" onClick={copyConfig}>
-          <CopyIcon data-icon="inline-start" aria-hidden="true" />
-          {isTemplate ? "复制配置模板" : "复制配置"}
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => copyToClipboard(config)}
+          disabled={isCopying}
+          aria-busy={isCopying}
+        >
+          <ButtonContent loading={isCopying} icon={isCopied ? CheckIcon : CopyIcon}>
+            {isTemplate ? "复制配置模板" : "复制配置"}
+          </ButtonContent>
         </Button>
       </div>
 

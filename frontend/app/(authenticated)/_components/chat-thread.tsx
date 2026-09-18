@@ -1,9 +1,8 @@
 "use client";
 
-import {
-  MarkdownText,
-  useCopyToClipboard,
-} from "@/app/(authenticated)/_components/markdown-text";
+import { MarkdownText } from "@/app/(authenticated)/_components/markdown-text";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { ButtonContent } from "@/components/common/button-content";
 import {
   Reasoning,
   ReasoningContent,
@@ -178,7 +177,7 @@ const MessageError: FC = () => (
 
 const AssistantActionBar: FC = () => {
   const aui = useAui();
-  const { isCopied, copyToClipboard } = useCopyToClipboard();
+  const { isCopied, isCopying, copyToClipboard } = useCopyToClipboard();
   return (
     <ActionBarPrimitive.Root
       hideWhenRunning
@@ -188,8 +187,10 @@ const AssistantActionBar: FC = () => {
       <TooltipIconButton
         tooltip={isCopied ? "已复制" : "复制"}
         onClick={() => copyToClipboard(aui.message.getCopyText())}
+        disabled={isCopying}
+        aria-busy={isCopying}
       >
-        {isCopied ? <CheckIcon /> : <CopyIcon />}
+        <ButtonContent loading={isCopying} icon={isCopied ? CheckIcon : CopyIcon} />
       </TooltipIconButton>
       <ActionBarMorePrimitive.Root>
         <ActionBarMorePrimitive.Trigger asChild>

@@ -1,7 +1,8 @@
 import { SearchIcon } from "lucide-react";
-import type { ChangeEventHandler, FormEventHandler } from "react";
+import type { FormEventHandler } from "react";
 
 import { Button } from "@/components/ui/button";
+import { ButtonContent } from "@/components/common/button-content";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -12,9 +13,9 @@ type SearchToolbarProps = {
   onSubmit: FormEventHandler<HTMLFormElement>;
   className?: string;
   defaultValue?: string;
-  value?: string;
-  onChange?: ChangeEventHandler<HTMLInputElement>;
   maxLength?: number;
+  isPending?: boolean;
+  required?: boolean;
 };
 
 export function SearchToolbar({
@@ -24,21 +25,29 @@ export function SearchToolbar({
   onSubmit,
   className,
   defaultValue,
-  value,
-  onChange,
   maxLength,
+  isPending = false,
+  required = false,
 }: SearchToolbarProps) {
   return (
     <form
       role="search"
+      aria-label={label}
       className={cn("flex w-full min-w-0 items-center gap-2 sm:w-auto", className)}
-      onSubmit={onSubmit}
+      onSubmit={(event) => {
+        if (isPending) {
+          event.preventDefault();
+          return;
+        }
+        onSubmit(event);
+      }}
     >
       <label htmlFor={id} className="sr-only">
         {label}
       </label>
 
       <Input
+        key={defaultValue}
         id={id}
         name="search"
         type="search"
@@ -47,13 +56,18 @@ export function SearchToolbar({
         className="min-w-0 flex-1 sm:w-64 sm:flex-none"
         placeholder={placeholder}
         defaultValue={defaultValue}
-        value={value}
-        onChange={onChange}
         maxLength={maxLength}
+        required={required}
       />
-      <Button type="submit" variant="outline">
-        <SearchIcon data-icon="inline-start" aria-hidden="true" />
-        搜索
+      <Button
+        type="submit"
+        variant="outline"
+        disabled={isPending}
+        aria-busy={isPending}
+      >
+        <ButtonContent loading={isPending} icon={SearchIcon}>
+          搜索
+        </ButtonContent>
       </Button>
     </form>
   );

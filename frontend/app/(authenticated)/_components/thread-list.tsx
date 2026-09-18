@@ -62,7 +62,7 @@ import {
   type SubmitEvent,
 } from "react";
 import { DeleteDialog } from "@/components/common/delete-dialog";
-import { ButtonLoading } from "@/components/common/button-loading";
+import { ButtonContent } from "@/components/common/button-content";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   agentArchiveConversation,
@@ -687,13 +687,12 @@ export const ThreadListItemMore: FC<ThreadListItemMoreProps> = ({
             <DialogFooter className="mt-4">
               <Button
                 type="submit"
-                className="relative"
                 disabled={isPending || !newTitle.trim()}
                 aria-busy={renameMutation.isPending}
               >
-                <ButtonLoading loading={renameMutation.isPending}>
+                <ButtonContent loading={renameMutation.isPending}>
                   保存
-                </ButtonLoading>
+                </ButtonContent>
               </Button>
             </DialogFooter>
           </form>

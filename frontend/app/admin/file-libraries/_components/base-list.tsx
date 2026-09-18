@@ -149,11 +149,11 @@ export function FileLibraryManager() {
         <section className="mx-auto flex min-h-full max-w-6xl flex-col gap-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SearchToolbar
+              isPending={fileLibrariesQuery.isFetching}
               id="library-base-search"
               label="搜索文件库名称"
               placeholder="搜索文件库名称…"
               onSubmit={submitSearch}
-              key={search}
               defaultValue={search}
             />
           </div>

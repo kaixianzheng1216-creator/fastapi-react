@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/spinner";
+import { ButtonContent } from "@/components/common/button-content";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { agentDownloadConversationReportPdf } from "@/lib/client";
 import { cn } from "@/lib/utils";
@@ -107,12 +107,9 @@ export function ResearchReport({ report }: { report: string }) {
       aria-busy={pdfDownloadMutation.isPending}
       onClick={() => pdfDownloadMutation.mutate()}
     >
-      {pdfDownloadMutation.isPending ? (
-        <Spinner data-icon="inline-start" />
-      ) : (
-        <DownloadIcon data-icon="inline-start" aria-hidden="true" />
-      )}
-      下载 PDF
+      <ButtonContent loading={pdfDownloadMutation.isPending} icon={DownloadIcon}>
+        下载 PDF
+      </ButtonContent>
     </Button>
   );
 

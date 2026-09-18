@@ -5,13 +5,11 @@ import { useMutation } from "@tanstack/react-query";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
-import { ButtonLoading } from "@/components/common/button-loading";
+import { FormDialogFooter } from "@/components/common/form-dialog-footer";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -164,26 +162,10 @@ export function UserEditDialog({
               )}
             />
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={updateUserMutation.isPending}
-                onClick={() => handleOpenChange(false)}
-              >
-                取消
-              </Button>
-              <Button
-                type="submit"
-                className="relative"
-                disabled={updateUserMutation.isPending}
-                aria-busy={updateUserMutation.isPending}
-              >
-                <ButtonLoading loading={updateUserMutation.isPending}>
-                  保存
-                </ButtonLoading>
-              </Button>
-            </DialogFooter>
+            <FormDialogFooter
+              isPending={updateUserMutation.isPending}
+              submitLabel="保存"
+            />
           </FieldGroup>
         </form>
       </DialogContent>

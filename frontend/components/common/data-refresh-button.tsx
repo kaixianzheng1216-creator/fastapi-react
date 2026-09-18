@@ -11,6 +11,7 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ButtonContent } from "@/components/common/button-content";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   dataRefreshReadCurrentRefresh,
@@ -90,22 +91,18 @@ export function DataRefreshButton({
   }, [job, queryClient, queryKey]);
 
   const busy = mutation.isPending || job?.status === "pending";
-  const label = busy ? "刷新中…" : "刷新数据";
 
   return (
     <Button
-      aria-label={label}
+      aria-label="刷新数据"
       disabled={disabled || busy || statusQuery.isPending}
       onClick={() => mutation.mutate()}
       aria-busy={busy}
       title={disabled ? "该平台暂未接入" : undefined}
     >
-      <RefreshCwIcon
-        data-icon="inline-start"
-        aria-hidden="true"
-        className={busy ? "animate-spin motion-reduce:animate-none" : undefined}
-      />
-      <span className="hidden sm:inline">{label}</span>
+      <ButtonContent loading={busy} icon={RefreshCwIcon}>
+        <span className="hidden sm:inline">刷新数据</span>
+      </ButtonContent>
     </Button>
   );
 }

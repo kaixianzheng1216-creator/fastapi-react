@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { ButtonLoading } from "@/components/common/button-loading";
+import { ButtonContent } from "@/components/common/button-content";
 import {
   Field,
   FieldDescription,
@@ -136,14 +136,13 @@ export function SignupForm({
 
           <Field>
             <Button
-              className="relative"
               disabled={signupMutation.isPending}
               aria-busy={signupMutation.isPending}
               type="submit"
             >
-              <ButtonLoading loading={signupMutation.isPending}>
+              <ButtonContent loading={signupMutation.isPending}>
                 注册
-              </ButtonLoading>
+              </ButtonContent>
             </Button>
           </Field>
         </FieldGroup>

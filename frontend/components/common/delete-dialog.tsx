@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import { ButtonLoading } from "@/components/common/button-loading";
+import { ButtonContent } from "@/components/common/button-content";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,7 +49,6 @@ export function DeleteDialog({
           <AlertDialogCancel disabled={pending}>取消</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
-            className="relative"
             disabled={pending}
             aria-busy={pending}
             onClick={(event) => {
@@ -57,7 +56,7 @@ export function DeleteDialog({
               onConfirm();
             }}
           >
-            <ButtonLoading loading={pending}>删除</ButtonLoading>
+            <ButtonContent loading={pending}>删除</ButtonContent>
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -2,7 +2,7 @@
 
 import type { TodoState } from "@/lib/conversation-state";
 import type { TodoPublic } from "@/lib/client";
-import { cn } from "@/lib/utils";
+import { Spinner } from "@/components/ui/spinner";
 import {
   CardContent,
   CardDescription,
@@ -19,12 +19,11 @@ import {
   CheckCircle2Icon,
   ChevronDownIcon,
   CircleIcon,
-  LoaderCircleIcon,
 } from "lucide-react";
 
 const statusIcon = {
   completed: CheckCircle2Icon,
-  in_progress: LoaderCircleIcon,
+  in_progress: Spinner,
   pending: CircleIcon,
 };
 
@@ -75,11 +74,7 @@ function TodoItem({ todo }: { todo: TodoPublic }) {
     <li className="flex items-start gap-2">
       <Icon
         aria-hidden="true"
-        className={cn(
-          "mt-0.5 size-4 shrink-0",
-          todo.status === "in_progress" &&
-            "animate-spin motion-reduce:animate-none",
-        )}
+        className="mt-0.5 size-4 shrink-0"
       />
       <span className="sr-only">{statusLabel[todo.status]}：</span>
       <span

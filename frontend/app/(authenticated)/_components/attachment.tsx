@@ -4,6 +4,8 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { TooltipIconButton } from "@/app/(authenticated)/_components/tooltip-icon-button";
+import { ButtonContent } from "@/components/common/button-content";
+import { Spinner } from "@/components/ui/spinner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
@@ -28,7 +30,6 @@ import {
 import {
   AlertCircleIcon,
   FileText,
-  Loader2Icon,
   PlusIcon,
   XIcon,
 } from "lucide-react";
@@ -231,7 +232,7 @@ const AttachmentUI: FC = () => {
                   aria-hidden="true"
                   className="aui-attachment-tile-uploading bg-background/60 absolute inset-0 flex items-center justify-center backdrop-blur-[1px]"
                 >
-                  <Loader2Icon className="text-muted-foreground size-5 animate-spin" />
+                  <Spinner className="size-5 text-muted-foreground" />
                 </div>
               )}
               {isError && (
@@ -279,17 +280,15 @@ const AttachmentRemove: FC = () => {
     >
       <TooltipIconButton
         tooltip="删除附件"
-        className="aui-attachment-tile-remove text-muted-foreground hover:[&_svg]:text-destructive absolute end-1.5 top-1.5 size-3.5 rounded-full bg-white opacity-100 shadow-sm hover:bg-white! [&_svg]:text-black"
+        variant="outline"
+        size="icon-sm"
+        className="aui-attachment-tile-remove absolute end-1.5 top-1.5 rounded-full"
         side="top"
       >
-        {removeMutation.isPending ? (
-          <Loader2Icon
-            className="size-3 animate-spin"
-            aria-hidden="true"
-          />
-        ) : (
-          <XIcon className="aui-attachment-remove-icon size-3 dark:stroke-[2.5px]" />
-        )}
+        <ButtonContent
+          loading={removeMutation.isPending}
+          icon={XIcon}
+        />
       </TooltipIconButton>
     </AttachmentPrimitive.Remove>
   );
@@ -307,7 +306,7 @@ export const UserMessageAttachments: FC = () => {
 
 export const ComposerAttachments: FC = () => {
   return (
-    <div className="aui-composer-attachments flex w-full flex-row items-center gap-2 overflow-x-auto empty:hidden">
+    <div className="aui-composer-attachments scroll-content-x flex w-full flex-row items-center gap-2 empty:hidden">
       <ComposerPrimitive.Attachments>
         {() => <AttachmentUI />}
       </ComposerPrimitive.Attachments>
@@ -322,11 +321,11 @@ export const ComposerAddAttachment: FC = () => {
         tooltip="添加附件"
         side="bottom"
         variant="ghost"
-        size="icon"
-        className="aui-composer-add-attachment hover:bg-muted-foreground/15 dark:border-muted-foreground/15 dark:hover:bg-muted-foreground/30 size-7 rounded-full p-1 text-xs font-semibold"
+        size="icon-sm"
+        className="aui-composer-add-attachment rounded-full"
         aria-label="添加附件"
       >
-        <PlusIcon className="aui-attachment-add-icon size-4.5 stroke-[1.5px]" />
+        <PlusIcon className="aui-attachment-add-icon" />
       </TooltipIconButton>
     </ComposerPrimitive.AddAttachment>
   );

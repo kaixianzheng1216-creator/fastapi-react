@@ -20,6 +20,7 @@
   },
   "registries": {
     "@assistant-ui": "https://r.assistant-ui.com/{name}.json",
-    "@magicui": "https://magicui.design/r/{name}"
+    "@magicui": "https://magicui.design/r/{name}",
+    "@diceui": "https://diceui.com/r/{style}/{name}.json"
   }
 }

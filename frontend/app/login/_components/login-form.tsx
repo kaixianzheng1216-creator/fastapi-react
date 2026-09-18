@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { ButtonLoading } from "@/components/common/button-loading";
+import { ButtonContent } from "@/components/common/button-content";
 import {
   Field,
   FieldDescription,
@@ -109,14 +109,13 @@ export function LoginForm({
 
           <Field>
             <Button
-              className="relative"
               disabled={loginMutation.isPending}
               aria-busy={loginMutation.isPending}
               type="submit"
             >
-              <ButtonLoading loading={loginMutation.isPending}>
+              <ButtonContent loading={loginMutation.isPending}>
                 登录
-              </ButtonLoading>
+              </ButtonContent>
             </Button>
           </Field>
         </FieldGroup>

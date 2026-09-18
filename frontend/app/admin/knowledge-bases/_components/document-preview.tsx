@@ -4,12 +4,10 @@ import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
 
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeftIcon,
   DownloadIcon,
   FileTextIcon,
   LayersIcon,
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -35,10 +33,11 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
+import { ButtonContent } from "@/components/common/button-content";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
+  knowledgeBasesReadKnowledgeBase,
   knowledgeDocumentsReadDocument,
   knowledgeDocumentsReadDocumentChunks,
   knowledgeDocumentsReadDocumentPreview,
@@ -73,6 +72,18 @@ export function KnowledgeDocumentPreview({
     parsePage(searchParams.get("page")),
     searchParams.get("folder") ?? undefined,
   );
+
+  const knowledgeBaseQuery = useQuery({
+    queryKey: ["knowledge-base", knowledgeBaseId],
+    queryFn: async ({ signal }) => {
+      const { data } = await knowledgeBasesReadKnowledgeBase({
+        path: { knowledge_base_id: knowledgeBaseId },
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+  });
 
   const documentQuery = useQuery({
     queryKey: ["knowledge-document", documentId],
@@ -158,13 +169,10 @@ export function KnowledgeDocumentPreview({
     <>
       <AppHeader
         title={documentQuery.data?.filename ?? "文档预览"}
-        left={
-          <Button variant="ghost" size="icon-sm" asChild>
-            <Link href={directoryHref} aria-label="返回文档目录">
-              <ArrowLeftIcon aria-hidden="true" />
-            </Link>
-          </Button>
-        }
+        breadcrumbs={[
+          { label: "知识库", href: "/admin/knowledge-bases" },
+          { label: knowledgeBaseQuery.data?.name ?? "知识库详情", href: directoryHref },
+        ]}
         actions={
           documentQuery.data && (
             <div className="flex items-center gap-2">
@@ -180,13 +188,15 @@ export function KnowledgeDocumentPreview({
                   }
                   onClick={() => downloadDocumentMutation.mutate("original")}
                 >
-                  {downloadDocumentMutation.isPending &&
-                  downloadDocumentMutation.variables === "original" ? (
-                    <Spinner data-icon="inline-start" aria-hidden="true" />
-                  ) : (
-                    <DownloadIcon data-icon="inline-start" aria-hidden="true" />
-                  )}
-                  <span className="hidden sm:inline">下载原文件</span>
+                  <ButtonContent
+                    loading={
+                      downloadDocumentMutation.isPending &&
+                      downloadDocumentMutation.variables === "original"
+                    }
+                    icon={DownloadIcon}
+                  >
+                    <span className="hidden sm:inline">下载原文件</span>
+                  </ButtonContent>
                 </Button>
               )}
               {documentQuery.data.status === "ready" && (
@@ -201,13 +211,15 @@ export function KnowledgeDocumentPreview({
                   }
                   onClick={() => downloadDocumentMutation.mutate("markdown")}
                 >
-                  {downloadDocumentMutation.isPending &&
-                  downloadDocumentMutation.variables === "markdown" ? (
-                    <Spinner data-icon="inline-start" aria-hidden="true" />
-                  ) : (
-                    <FileTextIcon data-icon="inline-start" aria-hidden="true" />
-                  )}
-                  <span className="hidden sm:inline">下载 Markdown</span>
+                  <ButtonContent
+                    loading={
+                      downloadDocumentMutation.isPending &&
+                      downloadDocumentMutation.variables === "markdown"
+                    }
+                    icon={FileTextIcon}
+                  >
+                    <span className="hidden sm:inline">下载 Markdown</span>
+                  </ButtonContent>
                 </Button>
               )}
             </div>
@@ -376,7 +388,7 @@ function DocumentChunksView({
                 ))}
               </div>
             )}
-            <MarkdownContent className="max-h-[min(30rem,60svh)] min-w-0 max-w-none overflow-auto [&_table]:w-max [&_table]:min-w-full [&_td]:min-w-32 [&_td]:max-w-sm [&_td]:align-top [&_th]:whitespace-nowrap">
+            <MarkdownContent className="scroll-content-y max-h-[min(30rem,60svh)] max-w-none">
               {chunk.content}
             </MarkdownContent>
           </CardContent>

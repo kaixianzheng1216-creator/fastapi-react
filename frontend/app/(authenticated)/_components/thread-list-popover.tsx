@@ -35,7 +35,7 @@ export function ThreadListPopover() {
           align="start"
           className="flex h-[32rem] max-h-[calc(100vh-2rem)] w-72 flex-col overflow-hidden p-2"
         >
-          <div className="min-h-0 flex-1 overflow-y-auto px-1">
+          <div className="scroll-content-y min-h-0 flex-1 ps-1">
             <ThreadList />
           </div>
           {user && (

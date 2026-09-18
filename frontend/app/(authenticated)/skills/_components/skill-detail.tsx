@@ -3,14 +3,12 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeftIcon,
   ChevronRightIcon,
   DownloadIcon,
   FileIcon,
   FolderIcon,
   ImageIcon,
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/layout/app-header";
 import { LoadError } from "@/components/common/load-error";
@@ -88,13 +86,7 @@ export function SkillDetail({ skillName }: SkillDetailProps) {
     <>
       <AppHeader
         title={skillName}
-        left={
-          <Button variant="ghost" size="icon-sm" asChild>
-            <Link href="/skills" aria-label="返回技能列表">
-              <ArrowLeftIcon aria-hidden="true" />
-            </Link>
-          </Button>
-        }
+        breadcrumbs={[{ label: "技能", href: "/skills" }]}
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">

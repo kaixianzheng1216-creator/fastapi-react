@@ -4,13 +4,10 @@ import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
 import { parsePage } from "@/lib/pagination";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftIcon } from "lucide-react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/app-header";
 import { LoadError } from "@/components/common/load-error";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { knowledgeBasesReadKnowledgeBase } from "@/lib/client";
 import { KnowledgeDocuments } from "@/app/admin/knowledge-bases/_components/documents";
@@ -61,13 +58,7 @@ export function KnowledgeBaseDetail({
     <>
       <AppHeader
         title={knowledgeBaseQuery.data?.name ?? "知识库详情"}
-        left={
-          <Button variant="ghost" size="icon-sm" asChild>
-            <Link href="/admin/knowledge-bases" aria-label="返回知识库列表">
-              <ArrowLeftIcon aria-hidden="true" />
-            </Link>
-          </Button>
-        }
+        breadcrumbs={[{ label: "知识库", href: "/admin/knowledge-bases" }]}
       />
 
       <div
@@ -106,7 +97,7 @@ export function KnowledgeBaseDetail({
 
             <TabsContent
               value="search"
-              className="flex min-h-0 flex-col gap-6"
+              className="flex min-h-0 flex-col gap-4"
             >
               <KnowledgeSearch knowledgeBaseId={knowledgeBaseId} />
             </TabsContent>
