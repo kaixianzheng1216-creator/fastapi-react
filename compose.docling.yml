@@ -24,6 +24,7 @@ services:
                 "Authorization": "Bearer ${NEWAPI_API_KEY?Variable not set}"
               },
               "params": {
+                "model": "deepseek-flash",
                 "thinking": {
                   "type": "disabled"
                 }
