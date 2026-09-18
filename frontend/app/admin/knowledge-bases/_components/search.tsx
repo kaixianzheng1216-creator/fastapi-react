@@ -123,7 +123,7 @@ export function KnowledgeSearch({
       </Card>
 
       <h2 className="text-sm font-normal text-foreground">
-        搜索结果 · 相似度 Top 5
+        搜索结果 · 相关度 Top 6
       </h2>
 
       <div className="flex-1 space-y-6 overflow-y-auto">
@@ -175,7 +175,7 @@ export function KnowledgeSearch({
               </CardDescription>
               <CardAction>
                 <Badge variant="secondary" className="tabular-nums">
-                  相似度 {similarityFormatter.format(result.score)}
+                  相关度 {similarityFormatter.format(result.score)}
                 </Badge>
               </CardAction>
             </CardHeader>

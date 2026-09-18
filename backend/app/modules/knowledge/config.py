@@ -22,6 +22,8 @@ class KnowledgeSettings(BaseSettings):
 
     EMBEDDING_MODEL: str
 
+    RERANK_MODEL: str = "doubao-seed-rerank"
+
     EMBEDDING_DIMENSIONS: Annotated[int, Field(gt=0)]
     EMBEDDING_CHUNK_MAX_TOKENS: Annotated[int, Field(gt=0)]
     EMBEDDING_TABLE_CHUNK_MAX_TOKENS: Annotated[int, Field(gt=0)]

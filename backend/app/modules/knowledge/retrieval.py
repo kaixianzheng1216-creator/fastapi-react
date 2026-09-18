@@ -3,14 +3,15 @@ import uuid
 
 from sqlmodel import Session, col, select
 
-from app.modules.knowledge import document_images, embedding, vector_store
+from app.modules.knowledge import document_images, embedding, rerank, vector_store
 from app.modules.knowledge.exceptions import KnowledgeSearchUnavailableError
 from app.modules.knowledge.models import KnowledgeDocument, KnowledgeDocumentStatus
 from app.modules.knowledge.schemas import KnowledgeSearchResultPublic
 from app.modules.knowledge.service import get_knowledge_base
 
 SEARCH_ERROR_LOG = "知识库检索失败"
-SEARCH_RESULT_LIMIT = 5
+SEARCH_CANDIDATE_LIMIT = 64
+SEARCH_RESULT_LIMIT = 6
 logger = logging.getLogger(__name__)
 
 
@@ -42,12 +43,16 @@ def search_knowledge_base(
             vector=query_vector,
             knowledge_base_id=knowledge_base_id,
             document_ids=ready_document_ids,
-            limit=SEARCH_RESULT_LIMIT,
+            limit=SEARCH_CANDIDATE_LIMIT,
         )
     except vector_store.VectorStoreUnavailableError as error:
         logger.exception(SEARCH_ERROR_LOG)
 
         raise KnowledgeSearchUnavailableError from error
+
+    matches = rerank.rerank_matches(
+        query=query, matches=matches, limit=SEARCH_RESULT_LIMIT
+    )
 
     search_results: list[KnowledgeSearchResultPublic] = []
 

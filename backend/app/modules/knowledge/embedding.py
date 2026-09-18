@@ -36,7 +36,7 @@ def embed_texts(texts: Sequence[str]) -> list[list[float]]:
         headers={
             "Authorization": f"Bearer {settings.NEWAPI_API_KEY.get_secret_value()}"
         },
-        timeout=60.0,
+        timeout=15.0,
     ) as client:
         for text in texts:
             response = client.post(
