@@ -48,7 +48,7 @@ export function ThreadHeader({
       ? "新调研"
       : conversationKind === "chat"
         ? "新对话"
-        : "正在加载会话…",
+        : "会话",
   );
 
   const isInitialized = useMainThreadInitialized();

@@ -7,6 +7,7 @@ import {
 import type { LangChainMessage } from "@assistant-ui/react-langgraph";
 import { createAssistantStream } from "assistant-stream";
 import { toast } from "sonner";
+import { queryOptions, type QueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   agentArchiveConversation,
@@ -22,6 +23,19 @@ import {
 } from "@/lib/client";
 
 const PAGE_SIZE = 100;
+
+export const conversationKindQueryOptions = (id: string) => queryOptions({
+  queryKey: ["conversation-kind", id],
+  queryFn: async ({ signal }) => {
+    const { data } = await agentReadConversation({
+      path: { conversation_id: id },
+      signal,
+      throwOnError: true,
+    });
+    return data.kind;
+  },
+  staleTime: Infinity,
+});
 
 function getFirstUserText(messages: readonly ThreadMessage[]): string {
   for (const message of messages) {
@@ -40,6 +54,7 @@ function getFirstUserText(messages: readonly ThreadMessage[]): string {
 
 export function createConversationThreadListAdapter(
   getNewConversationKind: () => ConversationKind,
+  queryClient: QueryClient,
 ): RemoteThreadListAdapter {
   return {
     async list() {
@@ -48,6 +63,13 @@ export function createConversationThreadListAdapter(
           query: { limit: PAGE_SIZE },
           throwOnError: true,
         });
+
+        for (const conversation of data.data) {
+          queryClient.setQueryData(
+            conversationKindQueryOptions(conversation.id).queryKey,
+            conversation.kind,
+          );
+        }
 
         return {
           threads: data.data.map((conversation) => ({
@@ -67,11 +89,18 @@ export function createConversationThreadListAdapter(
       }
     },
 
-    async initialize() {
+    async initialize(threadId) {
+      const kind = getNewConversationKind();
+      queryClient.setQueryData(conversationKindQueryOptions(threadId).queryKey, kind);
       const { data } = await agentCreateConversation({
-        body: { kind: getNewConversationKind() },
+        body: { kind },
         throwOnError: true,
       });
+
+      queryClient.setQueryData(
+        conversationKindQueryOptions(data.id).queryKey,
+        data.kind,
+      );
 
       return { remoteId: data.id };
     },
@@ -86,6 +115,11 @@ export function createConversationThreadListAdapter(
         });
         throw error;
       });
+
+      queryClient.setQueryData(
+        conversationKindQueryOptions(data.id).queryKey,
+        data.kind,
+      );
 
       return {
         remoteId: data.id,

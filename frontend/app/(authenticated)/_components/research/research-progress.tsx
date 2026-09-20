@@ -73,8 +73,8 @@ const STATUS_BADGES = {
 type ProgressStatus = keyof typeof STATUS_BADGES;
 
 const TOOL_LABELS = {
-  "firecrawl-firecrawl_search": "网页搜索",
-  "firecrawl-firecrawl_scrape": "网页抓取",
+  firecrawl_search: "网页搜索",
+  firecrawl_scrape: "网页抓取",
 } as const;
 
 const dateTimeFormatter = new Intl.DateTimeFormat("zh-CN", {
@@ -474,7 +474,7 @@ function ToolSteps({
             <ProgressHeader
               title={TOOL_LABELS[step.name]}
               icon={
-                step.name === "firecrawl-firecrawl_scrape"
+                step.name === "firecrawl_scrape"
                   ? FileSearchIcon
                   : SearchIcon
               }
@@ -511,7 +511,7 @@ function ToolDetails({
     return <p>工具调用已中断，未收到结果。</p>;
   }
 
-  if (step.name === "firecrawl-firecrawl_search") {
+  if (step.name === "firecrawl_search") {
     const query =
       typeof step.args.query === "string" ? step.args.query : "当前主题";
 

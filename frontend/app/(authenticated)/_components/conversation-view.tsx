@@ -5,7 +5,11 @@ import type { PropsWithChildren, ReactNode } from "react";
 import { ChatThread } from "@/app/(authenticated)/_components/chat-thread";
 import { selectIsNewConversation } from "@/app/(authenticated)/_components/conversation-selectors";
 import { ResearchThread } from "@/app/(authenticated)/_components/research/research-thread";
-import { useConversationKind } from "@/app/conversation-kind";
+import { useConversationKindState } from "@/app/conversation-kind";
+import { LoadError } from "@/components/common/load-error";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { ApplicationState } from "@/lib/conversation-state";
+import { useMutation } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import {
   AuiConfig,
@@ -54,15 +58,40 @@ type ConversationViewProps = {
 };
 
 export function ConversationView(props: ConversationViewProps) {
-  const conversationKind = useConversationKind();
+  const aui = useAui();
+  const { kind: conversationKind, isError, refetch } = useConversationKindState();
+  const loadError = useAuiState(
+    (state) => (state.thread.state as ApplicationState | null)?.loadError,
+  );
+  const retry = useMutation({
+    mutationFn: async () => {
+      const threadId = aui.threads.getState().mainThreadId;
+      if (isError) await refetch({ throwOnError: true });
+      if (loadError && aui.threads.getState().mainThreadId === threadId) {
+        await aui.threads.reloadMainThread();
+      }
+    },
+  });
+
+  if (isError || loadError) {
+    return (
+      <LoadError
+        className="h-full"
+        title="暂时无法加载会话"
+        onRetry={() => retry.mutate()}
+        isRetrying={retry.isPending}
+      />
+    );
+  }
 
   if (!conversationKind) {
     return (
       <div
         role="status"
-        className="text-muted-foreground flex flex-1 items-center justify-center text-sm"
+        aria-label="正在加载会话类型"
+        className="flex h-full items-center justify-center"
       >
-        正在加载会话…
+        <Skeleton className="h-4 w-32" />
       </div>
     );
   }

@@ -27,6 +27,7 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   type ConversationKind,
@@ -39,6 +40,7 @@ import { type ConversationStatePublic } from "@/lib/client";
 import type { ApplicationState } from "@/lib/conversation-state";
 import {
   createConversationThreadListAdapter,
+  conversationKindQueryOptions,
   readConversationState,
 } from "@/lib/conversation-thread-list-adapter";
 import { createFileAttachmentTransport } from "@/lib/file-upload-adapter";
@@ -58,6 +60,7 @@ type AgentState = Partial<
 export function ConversationRuntimeProvider({
   children,
 }: ConversationRuntimeProviderProps) {
+  const queryClient = useQueryClient();
   const [newKind, setNewKind] = useState<ConversationKind>("chat");
   const newKindRef = useRef<ConversationKind>("chat");
 
@@ -73,8 +76,11 @@ export function ConversationRuntimeProvider({
   );
 
   const listAdapter = useMemo(
-    () => createConversationThreadListAdapter(() => newKindRef.current),
-    [],
+    () => createConversationThreadListAdapter(
+      () => newKindRef.current,
+      queryClient,
+    ),
+    [queryClient],
   );
 
   const listRuntime = useRemoteThreadListRuntime({
@@ -92,6 +98,7 @@ export function ConversationRuntimeProvider({
 }
 
 function useConversationRuntime() {
+  const queryClient = useQueryClient();
   const assistant = useAui();
   const conversationKind = useConversationKind();
 
@@ -102,6 +109,7 @@ function useConversationRuntime() {
   });
 
   const [isLoading, setIsLoading] = useState(!!threadId);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [runId, setRunId] = useState<string | null>(null);
 
   const fileTransport = useMemo(createFileAttachmentTransport, []);
@@ -132,6 +140,7 @@ function useConversationRuntime() {
           connection.isSending,
         ),
         isLoading,
+        loadError,
         runId,
       } as ReadonlyJSONObject,
       isRunning: connection.isSending,
@@ -151,13 +160,9 @@ function useConversationRuntime() {
       const { remoteId: remoteThreadId } =
         await assistant.threadListItem.initialize();
 
-      if (!assistant.threadListItem.getState().custom?.kind) {
-        await assistant.threads.reload();
-
-        if (!assistant.threadListItem.getState().custom?.kind) {
-          throw new Error("会话类型加载失败，请稍后重试");
-        }
-      }
+      await queryClient.ensureQueryData(
+        conversationKindQueryOptions(remoteThreadId),
+      );
 
       if (!savedState && threadId && !connectedThreadIdRef.current) {
         savedState = await readConversationState(remoteThreadId);
@@ -226,6 +231,7 @@ function useConversationRuntime() {
 
   useEffect(() => {
     setIsLoading(!!threadId);
+    setLoadError(null);
 
     if (!threadId) {
       savedStatePromiseRef.current = null;
@@ -253,6 +259,8 @@ function useConversationRuntime() {
       })
       .catch((error: unknown) => {
         if (ignoreResult) return;
+
+        setLoadError(getApiErrorMessage(error, "会话加载失败，请稍后再试"));
 
         toast.error(getApiErrorMessage(error, "会话加载失败，请稍后再试"), {
           id: `conversation-load-${threadId}`,
