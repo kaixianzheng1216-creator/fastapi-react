@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import { CircleAlertIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import { useCurrentUserQuery } from "@/hooks/use-current-user";
+import { clearAccessToken } from "@/lib/auth";
 
 function AdminShellState({
   title,
@@ -28,6 +29,14 @@ function AdminShellState({
   title: string;
   description?: string;
 }) {
+  const queryClient = useQueryClient();
+
+  function logOut(): void {
+    clearAccessToken();
+    queryClient.clear();
+    window.location.replace("/login");
+  }
+
   return (
     <main className="flex min-h-svh">
       <Empty role="status">
@@ -39,8 +48,8 @@ function AdminShellState({
           {description && <EmptyDescription>{description}</EmptyDescription>}
         </EmptyHeader>
         <EmptyContent>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/">返回聊天</Link>
+          <Button onClick={logOut} variant="outline" size="sm">
+            退出登录
           </Button>
         </EmptyContent>
       </Empty>

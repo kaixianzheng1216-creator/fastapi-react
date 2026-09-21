@@ -3,11 +3,9 @@
 import {
   type LucideIcon,
   BookOpenIcon,
-  FolderOpenIcon,
   ChevronRightIcon,
   FileTextIcon,
   GlobeIcon,
-  MessageSquareIcon,
   PlugIcon,
   TagIcon,
   UserIcon,
@@ -23,7 +21,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -62,12 +59,6 @@ const navigation: {
       name: "用户",
       icon: UserIcon,
       href: "/admin/users",
-    },
-    {
-      type: "link",
-      name: "文件库",
-      icon: FolderOpenIcon,
-      href: "/admin/file-libraries",
     },
     {
       type: "link",
@@ -278,14 +269,7 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
 
         <SidebarSeparator className="mx-0" />
         <SidebarMenu>
-          <SidebarAccountMenu user={user}>
-            <DropdownMenuItem asChild>
-              <Link href="/">
-                <MessageSquareIcon aria-hidden="true" />
-                返回聊天
-              </Link>
-            </DropdownMenuItem>
-          </SidebarAccountMenu>
+          <SidebarAccountMenu user={user} />
         </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />
