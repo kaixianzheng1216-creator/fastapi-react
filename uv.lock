@@ -165,7 +165,7 @@ requires-dist = [
     { name = "docling-core", extras = ["chunking"], specifier = ">=2.50,<3" },
     { name = "e2b", specifier = ">=2.34.0,<3.0.0" },
     { name = "fastapi", specifier = ">=0.138.1,<1.0.0" },
-    { name = "fastmcp-slim", extras = ["server"], specifier = ">=3.4.7,<4.0.0" },
+    { name = "fastmcp-slim", extras = ["server"], specifier = "==3.4.7" },
     { name = "httpx", specifier = ">=0.28.1,<1.0.0" },
     { name = "langchain-deepseek", specifier = ">=1.0.0,<2.0.0" },
     { name = "langchain-e2b", specifier = ">=0.0.5,<0.1.0" },
