@@ -35,6 +35,7 @@ import { getQueryViewState } from "@/lib/query-view-state";
 import { LoadError } from "@/components/common/load-error";
 import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
+import { Button } from "@/components/ui/button";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -65,6 +66,14 @@ const EMPTY_DIRECTORY_ENTRIES: DirectoryEntry[] = [];
 const EMPTY_FOLDERS: KnowledgeFolderPublic[] = [];
 const EMPTY_ENTRY_KEYS = new Set<string>();
 
+type DocumentStatus = "ready" | "processing" | "failed";
+
+const statusOptions: { value: DocumentStatus; label: string; color: string }[] = [
+  { value: "ready", label: "已完成", color: "bg-emerald-500/50" },
+  { value: "processing", label: "处理中", color: "bg-blue-500/50" },
+  { value: "failed", label: "失败", color: "bg-destructive/50" },
+];
+
 export function KnowledgeDocuments({
   projectId,
   knowledgeBaseId,
@@ -79,7 +88,16 @@ export function KnowledgeDocuments({
 
   const currentPage = parsePage(searchParams.get("page"));
   const scrollRef = usePaginationScrollReset<HTMLElement>(currentPage);
-  const currentFolderId = searchParams.get("folder") ?? undefined;
+  const statusParameter = searchParams.get("status");
+  const currentStatus: DocumentStatus | undefined =
+    statusParameter === "ready" ||
+    statusParameter === "processing" ||
+    statusParameter === "failed"
+      ? statusParameter
+      : undefined;
+  const currentFolderId = currentStatus
+    ? undefined
+    : (searchParams.get("folder") ?? undefined);
   const pageIndex = currentPage - 1;
   const activeView =
     searchParams.get("view") === "search" ? "search" : "documents";
@@ -110,6 +128,7 @@ export function KnowledgeDocuments({
       ...KNOWLEDGE_DIRECTORY_QUERY_KEY,
       knowledgeBaseId,
       currentFolderId,
+      currentStatus,
       pageIndex,
     ],
     queryFn: async ({ signal }) => {
@@ -117,6 +136,7 @@ export function KnowledgeDocuments({
         path: { knowledge_base_id: knowledgeBaseId },
         query: {
           folder_id: currentFolderId,
+          document_status: currentStatus,
           skip: pageIndex * PAGE_SIZE,
           limit: PAGE_SIZE,
         },
@@ -136,20 +156,27 @@ export function KnowledgeDocuments({
             (entry.status === "pending" && entry.uploaded)),
       );
 
-      return hasProcessingDocument ? DOCUMENT_POLL_INTERVAL_MS : false;
+      return hasProcessingDocument || query.state.data?.status_counts.processing
+        ? DOCUMENT_POLL_INTERVAL_MS
+        : false;
     },
     enabled: activeView === "documents",
     placeholderData: (previousData, previousQuery) => {
       const previousQueryKey = previousQuery?.queryKey;
 
-      return previousQueryKey?.at(-3) === knowledgeBaseId &&
-        previousQueryKey.at(-2) === currentFolderId
+      return previousQueryKey?.at(-4) === knowledgeBaseId &&
+        previousQueryKey.at(-3) === currentFolderId &&
+        previousQueryKey.at(-2) === currentStatus
         ? previousData
         : undefined;
     },
   });
 
   const directoryEntries = directoryQuery.data?.data ?? EMPTY_DIRECTORY_ENTRIES;
+  const statusCounts = directoryQuery.data?.status_counts;
+  const totalDocumentCount = statusCounts
+    ? statusCounts.ready + statusCounts.processing + statusCounts.failed
+    : 0;
   const totalEntryCount = directoryQuery.data?.count ?? 0;
   const pageCount = Math.ceil(totalEntryCount / PAGE_SIZE);
   const pageOutOfRange = totalEntryCount > 0 && directoryEntries.length === 0;
@@ -193,12 +220,13 @@ export function KnowledgeDocuments({
           knowledgeBaseId,
           currentPage - 1,
           currentFolderId,
+          currentStatus,
         ),
       );
     }
   }
 
-  const selectionScope = `${knowledgeBaseId}:${currentFolderId ?? "root"}:${currentPage}`;
+  const selectionScope = `${knowledgeBaseId}:${currentFolderId ?? "root"}:${currentStatus ?? "all"}:${currentPage}`;
   const [directorySelection, setDirectorySelection] = useState<{
     scope: string;
     keys: Set<string>;
@@ -229,6 +257,7 @@ export function KnowledgeDocuments({
 
       case "moved":
         if (
+          !currentStatus &&
           directoryEntries.some(
             (entry) =>
               getDirectoryEntryKey(entry) ===
@@ -257,6 +286,7 @@ export function KnowledgeDocuments({
               knowledgeBaseId,
               1,
               deletedCurrentFolder.parent_id ?? undefined,
+              currentStatus,
             ),
           );
         } else {
@@ -292,7 +322,7 @@ export function KnowledgeDocuments({
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                {currentFolderId ? (
+                {currentFolderId || currentStatus ? (
                   <BreadcrumbLink asChild>
                     <Link
                       href={getKnowledgeDirectoryHref(projectId, knowledgeBaseId)}
@@ -304,6 +334,20 @@ export function KnowledgeDocuments({
                   <BreadcrumbPage>全部文档</BreadcrumbPage>
                 )}
               </BreadcrumbItem>
+              {currentStatus && (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>
+                      {
+                        statusOptions.find(
+                          (option) => option.value === currentStatus,
+                        )?.label
+                      }
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </>
+              )}
               {currentFolderId && !folderById.has(currentFolderId) && (
                 <>
                   <BreadcrumbSeparator />
@@ -377,6 +421,62 @@ export function KnowledgeDocuments({
           </div>
         </div>
 
+        {!directoryLoadFailed && !directoryPending && statusCounts && (
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2" role="group" aria-label="文档状态筛选">
+              <Button
+                variant={!currentStatus ? "secondary" : "outline"}
+                size="sm"
+                asChild
+              >
+                <Link href={getKnowledgeDirectoryHref(projectId, knowledgeBaseId)}>
+                  目录
+                </Link>
+              </Button>
+              {statusOptions.map((option) => (
+                <Button
+                  key={option.value}
+                  variant={currentStatus === option.value ? "secondary" : "outline"}
+                  size="sm"
+                  asChild
+                >
+                  <Link
+                    href={getKnowledgeDirectoryHref(
+                      projectId,
+                      knowledgeBaseId,
+                      1,
+                      undefined,
+                      option.value,
+                    )}
+                  >
+                    <span
+                      className={`size-2 rounded-full ${option.color}`}
+                      aria-hidden="true"
+                    />
+                    {option.label} {statusCounts[option.value]}
+                  </Link>
+                </Button>
+              ))}
+            </div>
+            <div
+              className="flex h-2 overflow-hidden rounded-full bg-muted"
+              role="img"
+              aria-label={`已完成 ${statusCounts.ready}，处理中 ${statusCounts.processing}，失败 ${statusCounts.failed}`}
+            >
+              {totalDocumentCount > 0 &&
+                statusOptions.map((option) => (
+                  <div
+                    key={option.value}
+                    className={option.color}
+                    style={{
+                      width: `${(statusCounts[option.value] / totalDocumentCount) * 100}%`,
+                    }}
+                  />
+                ))}
+            </div>
+          </div>
+        )}
+
         {directoryLoadFailed ? (
           <LoadError
             title="文档列表加载失败"
@@ -400,6 +500,11 @@ export function KnowledgeDocuments({
               projectId={projectId}
               knowledgeBaseId={knowledgeBaseId}
               entries={directoryEntries}
+              folderNames={
+                currentStatus
+                  ? new Map(folders.map((folder) => [folder.id, folder.name]))
+                  : undefined
+              }
               selectedEntryKeys={selectedEntryKeys}
               onSelectionChange={selectEntries}
               getDocumentHref={(documentId) =>
@@ -409,6 +514,7 @@ export function KnowledgeDocuments({
                   documentId,
                   currentPage,
                   currentFolderId,
+                  currentStatus,
                 )
               }
               renderActions={(entry) => (
@@ -423,6 +529,7 @@ export function KnowledgeDocuments({
               knowledgeBaseId,
               1,
               currentFolderId,
+              currentStatus,
             )}
           />
         ) : (
@@ -431,10 +538,14 @@ export function KnowledgeDocuments({
               <EmptyMedia variant="icon">
                 <FolderOpenIcon aria-hidden="true" />
               </EmptyMedia>
-              <EmptyTitle>此文件夹为空</EmptyTitle>
-              <EmptyDescription>
-                上传文件、添加网页或新建文件夹。
-              </EmptyDescription>
+              <EmptyTitle>
+                {currentStatus ? "暂无此状态文档" : "此文件夹为空"}
+              </EmptyTitle>
+              {!currentStatus && (
+                <EmptyDescription>
+                  上传文件、添加网页或新建文件夹。
+                </EmptyDescription>
+              )}
             </EmptyHeader>
           </Empty>
         )}
@@ -450,6 +561,7 @@ export function KnowledgeDocuments({
             knowledgeBaseId,
             page,
             currentFolderId,
+            currentStatus,
           )
         }
       />

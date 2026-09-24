@@ -1,5 +1,5 @@
 import uuid
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Body, Path, Query, status
 
@@ -335,21 +335,28 @@ def read_directory(
         uuid.UUID | None,
         Query(description="文件夹 ID；不传表示根目录"),
     ] = None,
+    document_status: Annotated[
+        Literal["ready", "processing", "failed"] | None,
+        Query(description="按知识库内文档状态筛选；筛选时不返回文件夹"),
+    ] = None,
     skip: Annotated[int, Query(ge=0, description="跳过的记录数")] = 0,
     limit: Annotated[int, Query(ge=1, le=100, description="返回的最大记录数")] = 20,
 ) -> KnowledgeDirectoryPublic:
-    """查询知识库目录，文件夹优先排列。"""
+    """查询目录及全库文档状态数量。document_status 可筛选已完成、处理中或失败的文档。"""
     access.base(session, knowledge_base_id, write=False)
 
-    entries, count = service.list_directory(
+    entries, count, status_counts = service.list_directory(
         session=session,
         knowledge_base_id=knowledge_base_id,
         folder_id=folder_id,
+        document_status=document_status,
         skip=skip,
         limit=limit,
     )
 
-    return KnowledgeDirectoryPublic(data=entries, count=count)
+    return KnowledgeDirectoryPublic(
+        data=entries, count=count, status_counts=status_counts
+    )
 
 
 @router.post(

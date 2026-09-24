@@ -6,11 +6,16 @@ export function getKnowledgeDirectoryHref(
   knowledgeBaseId: string,
   page = 1,
   folderId?: string,
+  status?: "ready" | "processing" | "failed",
 ): string {
+  const parameters = new URLSearchParams();
+  if (folderId) parameters.set("folder", folderId);
+  if (status) parameters.set("status", status);
+
   return getPaginationHref(
     `${projectHref(projectId)}/${knowledgeBaseId}`,
     page,
-    new URLSearchParams(folderId ? { folder: folderId } : undefined),
+    parameters,
   );
 }
 
@@ -20,11 +25,16 @@ export function getKnowledgeDocumentHref(
   documentId: string,
   page: number,
   folderId?: string,
+  status?: "ready" | "processing" | "failed",
 ): string {
+  const parameters = new URLSearchParams();
+  if (folderId) parameters.set("folder", folderId);
+  if (status) parameters.set("status", status);
+
   return getPaginationHref(
     `${projectHref(projectId)}/${knowledgeBaseId}/documents/${documentId}`,
     page,
-    new URLSearchParams(folderId ? { folder: folderId } : undefined),
+    parameters,
   );
 }
 

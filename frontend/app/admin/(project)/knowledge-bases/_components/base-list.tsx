@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { FilterGroup } from "@/app/admin/_components/filter-group";
 import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
@@ -82,6 +82,7 @@ import { toast } from "sonner";
 
 const KNOWLEDGE_BASES_QUERY_KEY = ["admin-knowledge-bases"] as const;
 const EMPTY_KNOWLEDGE_BASES: KnowledgeBasePublic[] = [];
+const VIEW_STORAGE_KEY = "knowledge-base-view";
 
 type StatusFilter = "all" | "enabled" | "disabled";
 
@@ -146,6 +147,11 @@ export function KnowledgeBaseManager() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [view, setView] = useState<"cards" | "list">("cards");
+
+  useEffect(() => {
+    const savedView = localStorage.getItem(VIEW_STORAGE_KEY);
+    if (savedView === "cards" || savedView === "list") setView(savedView);
+  }, []);
 
   const [knowledgeBaseToEdit, setKnowledgeBaseToEdit] =
     useState<KnowledgeBasePublic>();
@@ -289,7 +295,10 @@ export function KnowledgeBaseManager() {
                 value={view}
                 aria-label="展示方式"
                 onValueChange={(value) => {
-                  if (value === "cards" || value === "list") setView(value);
+                  if (value === "cards" || value === "list") {
+                    setView(value);
+                    localStorage.setItem(VIEW_STORAGE_KEY, value);
+                  }
                 }}
               >
                 <ToggleGroupItem value="cards" aria-label="卡片视图" title="卡片视图">

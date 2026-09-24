@@ -1,6 +1,7 @@
 import uuid
 from collections.abc import Sequence
 from pathlib import PurePosixPath
+from typing import Literal
 from urllib.parse import unquote, urlsplit
 
 from psycopg.errors import UniqueViolation
@@ -24,6 +25,7 @@ from app.modules.knowledge.exceptions import (
 from app.modules.knowledge.models import (
     KnowledgeBase,
     KnowledgeDocument,
+    KnowledgeDocumentStatus,
     KnowledgeFolder,
 )
 from app.modules.knowledge.schemas import (
@@ -154,39 +156,88 @@ def list_directory(
     session: Session,
     knowledge_base_id: uuid.UUID,
     folder_id: uuid.UUID | None,
+    document_status: Literal["ready", "processing", "failed"] | None,
     skip: int,
     limit: int,
-) -> tuple[list[KnowledgeDirectoryEntryPublic], int]:
+) -> tuple[list[KnowledgeDirectoryEntryPublic], int, dict[str, int]]:
     """分页获取当前目录，文件夹始终排在文档前。"""
     get_knowledge_base(session=session, knowledge_base_id=knowledge_base_id)
 
-    _validate_folder(
-        session=session,
-        knowledge_base_id=knowledge_base_id,
-        folder_id=folder_id,
+    status_counts = {"ready": 0, "processing": 0, "failed": 0}
+
+    status_rows = session.exec(
+        select(KnowledgeDocument.status, func.count())
+        .where(col(KnowledgeDocument.knowledge_base_id) == knowledge_base_id)
+        .group_by(col(KnowledgeDocument.status))
+    ).all()
+
+    for status, count in status_rows:
+        if status == KnowledgeDocumentStatus.READY:
+            status_counts["ready"] += count
+        elif status in (
+            KnowledgeDocumentStatus.PENDING,
+            KnowledgeDocumentStatus.PROCESSING,
+        ):
+            status_counts["processing"] += count
+        elif status in (
+            KnowledgeDocumentStatus.FAILED,
+            KnowledgeDocumentStatus.TIMED_OUT,
+        ):
+            status_counts["failed"] += count
+
+    folder_count = 0
+
+    document_conditions: tuple[ColumnElement[bool], ...]
+
+    if document_status is None:
+        _validate_folder(
+            session=session,
+            knowledge_base_id=knowledge_base_id,
+            folder_id=folder_id,
+        )
+
+        folder_conditions = (
+            col(KnowledgeFolder.knowledge_base_id) == knowledge_base_id,
+            col(KnowledgeFolder.parent_id) == folder_id,
+        )
+        document_conditions = (
+            col(KnowledgeDocument.knowledge_base_id) == knowledge_base_id,
+            col(KnowledgeDocument.folder_id) == folder_id,
+        )
+        folder_count = session.exec(
+            select(func.count()).select_from(KnowledgeFolder).where(*folder_conditions)
+        ).one()
+    else:
+        statuses = {
+            "ready": (KnowledgeDocumentStatus.READY,),
+            "processing": (
+                KnowledgeDocumentStatus.PENDING,
+                KnowledgeDocumentStatus.PROCESSING,
+            ),
+            "failed": (
+                KnowledgeDocumentStatus.FAILED,
+                KnowledgeDocumentStatus.TIMED_OUT,
+            ),
+        }[document_status]
+
+        document_conditions = (
+            col(KnowledgeDocument.knowledge_base_id) == knowledge_base_id,
+            col(KnowledgeDocument.status).in_(statuses),
+        )
+
+    document_count = (
+        status_counts[document_status]
+        if document_status is not None
+        else session.exec(
+            select(func.count())
+            .select_from(KnowledgeDocument)
+            .where(*document_conditions)
+        ).one()
     )
-
-    folder_conditions = (
-        col(KnowledgeFolder.knowledge_base_id) == knowledge_base_id,
-        col(KnowledgeFolder.parent_id) == folder_id,
-    )
-
-    document_conditions = (
-        col(KnowledgeDocument.knowledge_base_id) == knowledge_base_id,
-        col(KnowledgeDocument.folder_id) == folder_id,
-    )
-
-    folder_count = session.exec(
-        select(func.count()).select_from(KnowledgeFolder).where(*folder_conditions)
-    ).one()
-
-    document_count = session.exec(
-        select(func.count()).select_from(KnowledgeDocument).where(*document_conditions)
-    ).one()
 
     entries: list[KnowledgeDirectoryEntryPublic] = []
 
-    if skip < folder_count:
+    if document_status is None and skip < folder_count:
         folder_rows = session.exec(
             select(KnowledgeFolder)
             .where(*folder_conditions)
@@ -233,7 +284,7 @@ def list_directory(
                 )
             )
 
-    return entries, folder_count + document_count
+    return entries, folder_count + document_count, status_counts
 
 
 def list_folders(

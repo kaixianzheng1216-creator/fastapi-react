@@ -912,6 +912,12 @@ export type KnowledgeDirectoryPublic = {
      * Count
      */
     count: number;
+    /**
+     * Status Counts
+     */
+    status_counts: {
+        [key: string]: number;
+    };
 };
 
 /**
@@ -3438,6 +3444,12 @@ export type KnowledgeBasesReadDirectoryData = {
          * 文件夹 ID；不传表示根目录
          */
         folder_id?: string | null;
+        /**
+         * Document Status
+         *
+         * 按知识库内文档状态筛选；筛选时不返回文件夹
+         */
+        document_status?: 'ready' | 'processing' | 'failed' | null;
         /**
          * Skip
          *

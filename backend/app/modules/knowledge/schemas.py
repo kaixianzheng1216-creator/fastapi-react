@@ -204,6 +204,7 @@ class KnowledgeDirectoryDelete(SQLModel):
 class KnowledgeDirectoryPublic(SQLModel):
     data: list[KnowledgeDirectoryEntryPublic]
     count: int
+    status_counts: dict[str, int]
 
 
 class KnowledgeDocumentPreviewPublic(SQLModel):
