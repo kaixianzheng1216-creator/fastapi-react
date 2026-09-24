@@ -8,14 +8,12 @@ import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { Button } from "@/components/ui/button";
 
 type ConnectionConfigProps = {
-  serverId: string;
   endpoint: string;
   apiKey: string;
   isTemplate?: boolean;
 };
 
 export function ConnectionConfig({
-  serverId,
   endpoint,
   apiKey,
   isTemplate = false,
@@ -23,7 +21,7 @@ export function ConnectionConfig({
   const config = JSON.stringify(
     {
       mcpServers: {
-        [serverId]: {
+        "data-hub": {
           url: endpoint,
           headers: { Authorization: `Bearer ${apiKey}` },
         },

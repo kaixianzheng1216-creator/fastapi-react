@@ -419,7 +419,6 @@ export function KeyManager({
             </DialogHeader>
 
             <ConnectionConfig
-              serverId={`project-${createdKey.project_id}`}
               endpoint={endpoint}
               apiKey={createdKey.key}
             />

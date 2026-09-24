@@ -60,8 +60,6 @@ export default function McpPage() {
 
   if (!project) return null;
 
-  const serverId = `project-${project.id}`;
-
   return (
     <>
       <AppHeader
@@ -69,7 +67,6 @@ export default function McpPage() {
         actions={
           <div className="flex items-center gap-2">
             <AccessHelpDialog
-              serverId={serverId}
               endpoint={endpoint}
               disabled={!origin}
             />
@@ -106,11 +103,9 @@ export default function McpPage() {
 }
 
 function AccessHelpDialog({
-  serverId,
   endpoint,
   disabled,
 }: {
-  serverId: string;
   endpoint: string;
   disabled: boolean;
 }) {
@@ -166,7 +161,6 @@ function AccessHelpDialog({
           </TabsList>
           <TabsContent value="config" className="pt-2">
             <ConnectionConfig
-              serverId={serverId}
               endpoint={endpoint}
               apiKey="<密钥>"
               isTemplate
