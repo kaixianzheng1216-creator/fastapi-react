@@ -21,14 +21,16 @@ import {
   UsersIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { type FormEvent, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 
-import { DataRefreshButton } from "@/components/common/data-refresh-button";
+import { DataRefreshButton } from "@/app/admin/_components/data-refresh-button";
 import { AppHeader } from "@/components/layout/app-header";
+import { getQueryViewState } from "@/lib/query-view-state";
 import { LoadError } from "@/components/common/load-error";
 import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
+import { useListParams } from "@/hooks/use-list-params";
 import { SearchToolbar } from "@/components/common/search-toolbar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -38,7 +40,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { TableSkeletonBody } from "@/components/common/table-skeleton";
 import {
   Table,
@@ -91,7 +92,7 @@ const influencerColumnHelper = createColumnHelper<
 
 export function InfluencerResourceManager() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const { params: searchParams, update } = useListParams();
 
   const platform = getPlatform(searchParams.get("platform"));
   const search = searchParams.get("search")?.trim() ?? "";
@@ -134,6 +135,10 @@ export function InfluencerResourceManager() {
     },
     placeholderData: keepPreviousData,
   });
+  const viewState = getQueryViewState(
+    accountsQuery,
+    accountsQuery.data?.data.length === 0,
+  );
 
   const columns = useMemo(
     () =>
@@ -159,7 +164,7 @@ export function InfluencerResourceManager() {
             <SortableHeader
               label="粉丝数"
               direction={column.getIsSorted()}
-              disabled={accountsQuery.isPending}
+              disabled={viewState === "loading"}
               onToggle={() => column.toggleSorting()}
             />
           ),
@@ -172,7 +177,7 @@ export function InfluencerResourceManager() {
             <SortableHeader
               label={platform === "douyin" ? "获赞" : "获赞与收藏"}
               direction={column.getIsSorted()}
-              disabled={accountsQuery.isPending}
+              disabled={viewState === "loading"}
               onToggle={() => column.toggleSorting()}
             />
           ),
@@ -180,7 +185,7 @@ export function InfluencerResourceManager() {
           meta: { className: "w-32 text-right" },
         }),
       ]),
-    [platform, platformName, accountsQuery.isPending],
+    [platform, platformName, viewState === "loading"],
   );
 
   const table = useTable({
@@ -221,16 +226,6 @@ export function InfluencerResourceManager() {
   const pageOutOfRange =
     (accountsQuery.data?.count ?? 0) > 0 && rows.length === 0;
 
-  function submitSearch(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const nextSearch = String(formData.get("search") ?? "").trim();
-
-    router.push(
-      getInfluencerResourcesHref(platform, 1, nextSearch, sortBy, sortOrder),
-    );
-  }
-
   return (
     <>
       <AppHeader
@@ -241,7 +236,6 @@ export function InfluencerResourceManager() {
           />
         }
         title="达人资源"
-        left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
       />
 
       <div
@@ -304,23 +298,25 @@ export function InfluencerResourceManager() {
 
                       <SearchToolbar
                         isPending={accountsQuery.isFetching}
-                        id="influencer-search"
                         label="搜索昵称或平台账号"
                         placeholder="搜索昵称或平台账号…"
-                        onSubmit={submitSearch}
-                        defaultValue={search}
+                        onSearch={(value) => {
+                          if (value === (search ?? ""))
+                            void accountsQuery.refetch();
+                          else update({ search: value });
+                        }}
+                        value={search ?? ""}
                         maxLength={255}
                       />
                     </div>
 
-                    {accountsQuery.isError &&
-                    accountsQuery.data === undefined ? (
+                    {viewState === "error" ? (
                       <LoadError
                         title="达人数据加载失败"
                         isRetrying={accountsQuery.isFetching}
                         onRetry={() => void accountsQuery.refetch()}
                       />
-                    ) : !accountsQuery.isPending && rows.length === 0 ? (
+                    ) : viewState !== "loading" && rows.length === 0 ? (
                       pageOutOfRange ? (
                         <PageOutOfRange
                           href={getInfluencerResourcesHref(
@@ -345,12 +341,16 @@ export function InfluencerResourceManager() {
                       )
                     ) : (
                       <CollectionContent
+                        inert={
+                          viewState === "ready" &&
+                          accountsQuery.isPlaceholderData
+                        }
                         busy={
-                          !accountsQuery.isPending && accountsQuery.isFetching
+                          viewState !== "loading" && accountsQuery.isFetching
                         }
                       >
                         <Table
-                          loading={accountsQuery.isPending}
+                          loading={viewState === "loading"}
                           className="[&_tbody_tr]:h-20 min-w-[720px] table-fixed tabular-nums"
                         >
                           <TableHeader>
@@ -381,7 +381,7 @@ export function InfluencerResourceManager() {
                               </TableRow>
                             ))}
                           </TableHeader>
-                          {accountsQuery.isPending ? (
+                          {viewState === "loading" ? (
                             <TableSkeletonBody
                               columns={table.getAllLeafColumns().length}
                               getCellClassName={(columnIndex) =>

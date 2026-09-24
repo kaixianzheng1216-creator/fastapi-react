@@ -2,9 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { ModelSelector } from "@/app/(authenticated)/_components/model-selector";
-import { LoadError } from "@/components/common/load-error";
+import { ButtonContent } from "@/components/common/button-content";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { agentReadModels } from "@/lib/client";
+import { getQueryViewState } from "@/lib/query-view-state";
 
 const THINKING_OPTIONS = [
   { id: "disabled", name: "关闭" },
@@ -25,7 +27,9 @@ export function ComposerModelSelector() {
     staleTime: Infinity,
   });
 
-  if (modelsQuery.isPending) {
+  const viewState = getQueryViewState(modelsQuery);
+
+  if (viewState === "loading") {
     return (
       <Skeleton
         role="status"
@@ -35,14 +39,23 @@ export function ComposerModelSelector() {
     );
   }
 
-  if (modelsQuery.isError && modelsQuery.data === undefined) {
+  if (viewState === "error") {
     return (
-      <LoadError
-        title="模型暂不可用"
-        className="min-h-0 flex-none justify-start gap-x-2 p-0 text-xs"
-        isRetrying={modelsQuery.isFetching}
-        onRetry={() => void modelsQuery.refetch()}
-      />
+      <div role="alert" className="flex items-center gap-2">
+        <span className="text-muted-foreground text-xs">模型暂不可用</span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          aria-disabled={modelsQuery.isFetching}
+          aria-busy={modelsQuery.isFetching}
+          onClick={() => {
+            if (!modelsQuery.isFetching) void modelsQuery.refetch();
+          }}
+        >
+          <ButtonContent loading={modelsQuery.isFetching}>重试</ButtonContent>
+        </Button>
+      </div>
     );
   }
 

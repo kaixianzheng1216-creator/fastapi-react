@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { UploadIcon } from "lucide-react";
 import { type FormEvent, useState } from "react";
 
-import { LIBRARY_DOCUMENT_UPLOAD_KEY } from "@/app/admin/file-libraries/_lib/directory";
+import { LIBRARY_DOCUMENT_UPLOAD_KEY } from "@/app/admin/(platform)/file-libraries/_lib/directory";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

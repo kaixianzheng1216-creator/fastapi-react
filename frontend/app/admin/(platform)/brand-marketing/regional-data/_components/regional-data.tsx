@@ -25,8 +25,9 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
-import { DataRefreshButton } from "@/components/common/data-refresh-button";
+import { DataRefreshButton } from "@/app/admin/_components/data-refresh-button";
 import { AppHeader } from "@/components/layout/app-header";
+import { getQueryViewState } from "@/lib/query-view-state";
 import { LoadError } from "@/components/common/load-error";
 import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
@@ -48,7 +49,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { TableSkeletonBody } from "@/components/common/table-skeleton";
 import {
   Table,
@@ -210,6 +210,10 @@ export function RegionalData() {
     },
     placeholderData: keepPreviousData,
   });
+  const viewState = getQueryViewState(
+    regionalDataQuery,
+    regionalDataQuery.data?.data.length === 0,
+  );
 
   const regionalData = regionalDataQuery.data;
   const selectedYear = year ?? regionalData?.year ?? undefined;
@@ -270,7 +274,6 @@ export function RegionalData() {
           />
         }
         title="区域数据"
-        left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
       />
 
       <div
@@ -325,13 +328,13 @@ export function RegionalData() {
             ) : null}
           </div>
 
-          {regionalDataQuery.isError && regionalDataQuery.data === undefined ? (
+          {viewState === "error" ? (
             <LoadError
               title="区域数据加载失败"
               isRetrying={regionalDataQuery.isFetching}
               onRetry={() => void regionalDataQuery.refetch()}
             />
-          ) : !regionalDataQuery.isPending && rows.length === 0 ? (
+          ) : viewState !== "loading" && rows.length === 0 ? (
             pageOutOfRange ? (
               <PageOutOfRange
                 href={getRegionalDataHref(1, year, sortBy, sortOrder)}
@@ -348,12 +351,13 @@ export function RegionalData() {
             )
           ) : (
             <CollectionContent
-              busy={
-                !regionalDataQuery.isPending && regionalDataQuery.isFetching
+              inert={
+                viewState === "ready" && regionalDataQuery.isPlaceholderData
               }
+              busy={viewState !== "loading" && regionalDataQuery.isFetching}
             >
               <Table
-                loading={regionalDataQuery.isPending}
+                loading={viewState === "loading"}
                 className="[&_tbody_tr]:h-12 tabular-nums"
               >
                 <TableHeader>
@@ -384,7 +388,7 @@ export function RegionalData() {
                           </TableHead>
                         );
                       })}
-                      {regionalDataQuery.isPending &&
+                      {viewState === "loading" &&
                         Array.from(REGIONAL_INDICATOR_CODES, (code) => (
                           <TableHead key={code}>
                             <Skeleton
@@ -397,7 +401,7 @@ export function RegionalData() {
                   ))}
                 </TableHeader>
 
-                {regionalDataQuery.isPending ? (
+                {viewState === "loading" ? (
                   <TableSkeletonBody
                     columns={1 + REGIONAL_INDICATOR_CODES.size}
                     getCellClassName={(columnIndex) =>

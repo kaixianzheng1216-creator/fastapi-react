@@ -9,8 +9,8 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { FolderOpenIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 
 import {
   CARD_PAGE_SIZE,
@@ -21,9 +21,12 @@ import {
   ResourceCardsSkeleton,
 } from "@/components/common/resource-card";
 import { AppHeader } from "@/components/layout/app-header";
-import { LibraryDialog } from "@/components/common/library-dialog";
+import { LibraryDialog } from "./library-dialog";
+import { getQueryViewState } from "@/lib/query-view-state";
 import { LoadError } from "@/components/common/load-error";
 import { PageOutOfRange } from "@/components/common/page-out-of-range";
+import { useActionFocus } from "@/hooks/use-action-focus";
+import { useListParams } from "@/hooks/use-list-params";
 import { SearchToolbar } from "@/components/common/search-toolbar";
 import { PagePagination } from "@/components/common/page-pagination";
 import { DeleteDialog } from "@/components/common/delete-dialog";
@@ -35,7 +38,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
@@ -50,8 +52,12 @@ const FILE_LIBRARIES_QUERY_KEY = ["admin-file-libraries"] as const;
 const EMPTY_FILE_LIBRARIES: FileLibraryPublic[] = [];
 
 export function FileLibraryManager() {
+  const createButtonRef = useRef<HTMLButtonElement>(null);
+  const { rememberActionTrigger, restoreActionFocus } =
+    useActionFocus(createButtonRef);
+
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const { params: searchParams, update } = useListParams();
   const queryClient = useQueryClient();
 
   const currentPage = parsePage(searchParams.get("page"));
@@ -77,18 +83,12 @@ export function FileLibraryManager() {
     },
     placeholderData: keepPreviousData,
   });
+  const viewState = getQueryViewState(
+    fileLibrariesQuery,
+    fileLibrariesQuery.data?.data.length === 0,
+  );
 
   const fileLibraries = fileLibrariesQuery.data?.data ?? EMPTY_FILE_LIBRARIES;
-
-  function submitSearch(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault();
-
-    const formData = new FormData(event.currentTarget);
-
-    const nextSearch = String(formData.get("search") ?? "").trim();
-
-    router.push(getFileLibrariesHref(1, nextSearch));
-  }
 
   function invalidateFileLibraries(): void {
     void queryClient.invalidateQueries({
@@ -136,32 +136,39 @@ export function FileLibraryManager() {
     <>
       <AppHeader
         title="文件库"
-        left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
         actions={
-          <Button aria-label="创建文件库" onClick={() => setCreateOpen(true)}>
+          <Button
+            ref={createButtonRef}
+            onPointerDown={rememberActionTrigger}
+            onFocus={rememberActionTrigger}
+            aria-label="创建文件库"
+            onClick={() => setCreateOpen(true)}
+          >
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
             <span className="hidden sm:inline">创建文件库</span>
           </Button>
         }
       />
 
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6"
+      >
         <section className="mx-auto flex min-h-full max-w-6xl flex-col gap-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <SearchToolbar
-              isPending={fileLibrariesQuery.isFetching}
-              id="library-base-search"
-              label="搜索文件库名称"
-              placeholder="搜索文件库名称…"
-              onSubmit={submitSearch}
-              defaultValue={search}
-            />
-          </div>
+          <SearchToolbar
+            isPending={fileLibrariesQuery.isFetching}
+            label="搜索文件库名称"
+            placeholder="搜索文件库名称…"
+            onSearch={(value) => {
+              if (value === (search ?? "")) void fileLibrariesQuery.refetch();
+              else update({ search: value });
+            }}
+            value={search ?? ""}
+          />
 
-          {fileLibrariesQuery.isPending ? (
+          {viewState === "loading" ? (
             <ResourceCardsSkeleton showMetadata />
-          ) : fileLibrariesQuery.isError &&
-            fileLibrariesQuery.data === undefined ? (
+          ) : viewState === "error" ? (
             <LoadError
               title="文件库加载失败"
               isRetrying={fileLibrariesQuery.isFetching}
@@ -183,10 +190,17 @@ export function FileLibraryManager() {
               </Empty>
             )
           ) : (
-            <CardGrid busy={fileLibrariesQuery.isFetching} label="文件库列表">
+            <CardGrid
+              inert={
+                viewState === "ready" && fileLibrariesQuery.isPlaceholderData
+              }
+              busy={fileLibrariesQuery.isFetching}
+              label="文件库列表"
+            >
               {fileLibraries.map((fileLibrary) => (
                 <li key={fileLibrary.id} className="min-w-0">
                   <ResourceCard
+                    onTriggerInteraction={rememberActionTrigger}
                     name={fileLibrary.name}
                     description={fileLibrary.description}
                     href={`/admin/file-libraries/${fileLibrary.id}`}
@@ -228,28 +242,25 @@ export function FileLibraryManager() {
         </section>
       </div>
 
-      <LibraryDialog
-        kind="file"
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onSaved={invalidateFileLibraries}
-      />
+      {createOpen && (
+        <LibraryDialog
+          onCloseAutoFocus={restoreActionFocus}
+          onClose={() => setCreateOpen(false)}
+          onSaved={invalidateFileLibraries}
+        />
+      )}
 
       {fileLibraryToEdit && (
         <LibraryDialog
-          kind="file"
-          open
+          onCloseAutoFocus={restoreActionFocus}
           library={fileLibraryToEdit}
-          onOpenChange={(open) => {
-            if (!open) {
-              setFileLibraryToEdit(undefined);
-            }
-          }}
+          onClose={() => setFileLibraryToEdit(undefined)}
           onSaved={invalidateFileLibraries}
         />
       )}
 
       <DeleteDialog
+        onCloseAutoFocus={restoreActionFocus}
         open={fileLibraryToDelete !== undefined}
         pending={deleteFileLibraryMutation.isPending}
         title="删除文件库"

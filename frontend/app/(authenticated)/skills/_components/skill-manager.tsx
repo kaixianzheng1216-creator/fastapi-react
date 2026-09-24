@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { useState } from "react";
 import {
   keepPreviousData,
   useMutation,
@@ -8,12 +8,14 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { PlusIcon, PuzzleIcon, TrashIcon } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { DeleteDialog } from "@/components/common/delete-dialog";
 import { Button } from "@/components/ui/button";
+import { getQueryViewState } from "@/lib/query-view-state";
 import { LoadError } from "@/components/common/load-error";
 import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
+import { useListParams } from "@/hooks/use-list-params";
 import { SearchToolbar } from "@/components/common/search-toolbar";
 import {
   ResourceCard,
@@ -46,7 +48,7 @@ const SKILLS_QUERY_KEY = ["skills"] as const;
 
 export function SkillManager() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const { params: searchParams, update } = useListParams();
   const queryClient = useQueryClient();
 
   const currentPage = parsePage(searchParams.get("page"));
@@ -67,6 +69,10 @@ export function SkillManager() {
     },
     placeholderData: keepPreviousData,
   });
+  const viewState = getQueryViewState(
+    skillsQuery,
+    skillsQuery.data?.data.length === 0,
+  );
 
   function invalidateSkills(): void {
     void queryClient.invalidateQueries({ queryKey: SKILLS_QUERY_KEY });
@@ -101,14 +107,6 @@ export function SkillManager() {
     },
   });
 
-  function searchSkills(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const nextSearchQuery = String(formData.get("search") ?? "").trim();
-
-    router.push(getSkillsHref(1, nextSearchQuery || undefined));
-  }
-
   function clearSearch(): void {
     router.push("/skills");
   }
@@ -136,18 +134,20 @@ export function SkillManager() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SearchToolbar
               isPending={skillsQuery.isFetching}
-              id="skill-search"
               label="搜索技能"
               placeholder="搜索名称或描述…"
-              onSubmit={searchSkills}
-              defaultValue={searchQuery}
+              onSearch={(value) => {
+                if (value === (searchQuery ?? "")) void skillsQuery.refetch();
+                else update({ search: value });
+              }}
+              value={searchQuery ?? ""}
               maxLength={100}
             />
           </div>
 
-          {skillsQuery.isPending ? (
+          {viewState === "loading" ? (
             <ResourceCardsSkeleton />
-          ) : skillsQuery.isError && skillsQuery.data === undefined ? (
+          ) : viewState === "error" ? (
             <LoadError
               title="技能加载失败"
               isRetrying={skillsQuery.isFetching}
@@ -169,7 +169,11 @@ export function SkillManager() {
               </Empty>
             )
           ) : (
-            <CardGrid busy={skillsQuery.isFetching} label="技能列表">
+            <CardGrid
+              inert={viewState === "ready" && skillsQuery.isPlaceholderData}
+              busy={skillsQuery.isFetching}
+              label="技能列表"
+            >
               {skills.map((skill) => (
                 <li key={skill.name} className="min-w-0">
                   <ResourceCard

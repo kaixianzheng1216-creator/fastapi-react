@@ -6,8 +6,9 @@ import { parsePage } from "@/lib/pagination";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 
-import { LibraryDocuments } from "@/app/admin/file-libraries/_components/documents";
+import { LibraryDocuments } from "@/app/admin/(platform)/file-libraries/_components/documents";
 import { AppHeader } from "@/components/layout/app-header";
+import { getQueryViewState } from "@/lib/query-view-state";
 import { LoadError } from "@/components/common/load-error";
 import { fileLibrariesReadFileLibrary } from "@/lib/client";
 
@@ -17,7 +18,9 @@ export function FileLibraryDetail({
   fileLibraryId: string;
 }) {
   const searchParams = useSearchParams();
-  const scrollRef = usePaginationScrollReset<HTMLDivElement>(parsePage(searchParams.get("page")));
+  const scrollRef = usePaginationScrollReset<HTMLDivElement>(
+    parsePage(searchParams.get("page")),
+  );
 
   const libraryQuery = useQuery({
     meta: { handlesInitialError: true },
@@ -38,9 +41,12 @@ export function FileLibraryDetail({
         title={libraryQuery.data?.name ?? "文件库详情"}
         breadcrumbs={[{ label: "文件库", href: "/admin/file-libraries" }]}
       />
-      <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:overflow-hidden md:p-6">
+      <div
+        ref={scrollRef}
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:overflow-hidden md:p-6"
+      >
         <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col gap-6 md:h-full md:min-h-0">
-          {libraryQuery.isError && libraryQuery.data === undefined ? (
+          {getQueryViewState(libraryQuery) === "error" ? (
             <LoadError
               title="文件库加载失败"
               isRetrying={libraryQuery.isFetching}

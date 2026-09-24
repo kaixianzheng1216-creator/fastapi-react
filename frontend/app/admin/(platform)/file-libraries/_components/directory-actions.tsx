@@ -8,22 +8,18 @@ import {
   MoreHorizontalIcon,
   TrashIcon,
 } from "lucide-react";
-import {
-  useRef,
-  useState,
-  type RefObject,
-  type SyntheticEvent,
-} from "react";
+import { useState, type RefObject } from "react";
+import { useActionFocus } from "@/hooks/use-action-focus";
 import { toast } from "sonner";
 
 import {
   type DirectoryChange,
   type DirectoryEntry,
   LIBRARY_DOCUMENT_UPLOAD_KEY,
-} from "@/app/admin/file-libraries/_lib/directory";
+} from "@/app/admin/(platform)/file-libraries/_lib/directory";
 import { ButtonContent } from "@/components/common/button-content";
 import { FolderActions } from "@/components/common/folder-actions";
-import { FolderEditorDialog } from "@/components/common/folder-editor-dialog";
+import { FolderEditorDialog } from "./folder-editor-dialog";
 import { FolderPickerDialog } from "@/components/common/folder-picker-dialog";
 import { DeleteDialog } from "@/components/common/delete-dialog";
 import { Button } from "@/components/ui/button";
@@ -68,22 +64,8 @@ export function useDirectoryActions({
   focusFallbackRef,
   onChanged,
 }: UseDirectoryActionsOptions) {
-  const actionTriggerRef = useRef<HTMLButtonElement>(null);
-
-  function rememberActionTrigger(
-    event: SyntheticEvent<HTMLButtonElement>,
-  ): void {
-    actionTriggerRef.current = event.currentTarget;
-  }
-
-  function restoreActionFocus(event: Event): void {
-    event.preventDefault();
-
-    const trigger = actionTriggerRef.current;
-    const target = trigger?.isConnected ? trigger : focusFallbackRef.current;
-
-    target?.focus();
-  }
+  const { rememberActionTrigger, restoreActionFocus, clearActionTrigger } =
+    useActionFocus(focusFallbackRef);
 
   const isUploading =
     useIsMutating({
@@ -137,7 +119,7 @@ export function useDirectoryActions({
     },
     onSuccess: (_, { entry }) => {
       toast.success("项目已移动");
-      actionTriggerRef.current = null;
+      clearActionTrigger();
       setEntryToMove(undefined);
       onChanged({ type: "moved", entry });
     },
@@ -164,7 +146,7 @@ export function useDirectoryActions({
       }),
     onSuccess: (_, target) => {
       toast.success("项目已删除");
-      actionTriggerRef.current = null;
+      clearActionTrigger();
       setDeleteTarget(undefined);
       onChanged({ type: "deleted", entries: target.entries });
     },
@@ -329,7 +311,6 @@ export function DirectoryActionDialogs({
     <>
       {folderToEdit !== undefined && (
         <FolderEditorDialog
-          kind="file"
           libraryId={fileLibraryId}
           parentFolderId={currentFolderId}
           folder={folderToEdit ?? undefined}

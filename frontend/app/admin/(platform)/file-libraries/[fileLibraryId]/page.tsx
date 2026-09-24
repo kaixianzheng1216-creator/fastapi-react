@@ -1,4 +1,4 @@
-import { FileLibraryDetail } from "@/app/admin/file-libraries/_components/base-detail";
+import { FileLibraryDetail } from "@/app/admin/(platform)/file-libraries/_components/base-detail";
 
 export default async function FileLibraryDetailPage({
   params,

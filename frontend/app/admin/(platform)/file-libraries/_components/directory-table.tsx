@@ -9,8 +9,8 @@ import type { ReactNode } from "react";
 import {
   getDirectoryEntryKey,
   type DirectoryEntry,
-} from "@/app/admin/file-libraries/_lib/directory";
-import { getLibraryDirectoryHref } from "@/app/admin/file-libraries/_lib/navigation";
+} from "@/app/admin/(platform)/file-libraries/_lib/directory";
+import { getLibraryDirectoryHref } from "@/app/admin/(platform)/file-libraries/_lib/navigation";
 
 import { TableSkeletonBody } from "@/components/common/table-skeleton";
 import { Badge } from "@/components/ui/badge";

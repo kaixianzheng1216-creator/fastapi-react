@@ -17,8 +17,9 @@ import Link from "next/link";
 import { ChartNoAxesColumnIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { DataRefreshButton } from "@/components/common/data-refresh-button";
+import { DataRefreshButton } from "@/app/admin/_components/data-refresh-button";
 import { AppHeader } from "@/components/layout/app-header";
+import { getQueryViewState } from "@/lib/query-view-state";
 import { LoadError } from "@/components/common/load-error";
 import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
@@ -29,7 +30,6 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Select,
   SelectContent,
@@ -209,6 +209,10 @@ export function PlatformRankings() {
     enabled: platform === "bilibili",
     placeholderData: keepPreviousData,
   });
+  const viewState = getQueryViewState(
+    rankingQuery,
+    rankingQuery.data?.data.length === 0,
+  );
 
   const ranking = rankingQuery.data;
 
@@ -242,7 +246,6 @@ export function PlatformRankings() {
           />
         }
         title="平台榜单"
-        left={<SidebarTrigger className="size-9" aria-label="切换管理菜单" />}
       />
 
       <div
@@ -339,13 +342,13 @@ export function PlatformRankings() {
                       ) : null}
                     </div>
 
-                    {rankingQuery.isError && rankingQuery.data === undefined ? (
+                    {viewState === "error" ? (
                       <LoadError
                         title="榜单加载失败"
                         isRetrying={rankingQuery.isFetching}
                         onRetry={() => void rankingQuery.refetch()}
                       />
-                    ) : !rankingQuery.isPending && rows.length === 0 ? (
+                    ) : viewState !== "loading" && rows.length === 0 ? (
                       pageOutOfRange ? (
                         <PageOutOfRange
                           href={getRankingsHref("bilibili", 1, category)}
@@ -362,12 +365,16 @@ export function PlatformRankings() {
                       )
                     ) : (
                       <CollectionContent
+                        inert={
+                          viewState === "ready" &&
+                          rankingQuery.isPlaceholderData
+                        }
                         busy={
-                          !rankingQuery.isPending && rankingQuery.isFetching
+                          viewState !== "loading" && rankingQuery.isFetching
                         }
                       >
                         <Table
-                          loading={rankingQuery.isPending}
+                          loading={viewState === "loading"}
                           className="[&_tbody_tr]:h-22 min-w-[1040px] table-fixed tabular-nums"
                         >
                           <TableHeader>
@@ -388,7 +395,7 @@ export function PlatformRankings() {
                               </TableRow>
                             ))}
                           </TableHeader>
-                          {rankingQuery.isPending ? (
+                          {viewState === "loading" ? (
                             <TableSkeletonBody
                               columns={table.getAllLeafColumns().length}
                               getCellClassName={(columnIndex) =>

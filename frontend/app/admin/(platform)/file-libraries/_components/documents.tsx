@@ -14,19 +14,20 @@ import {
   DirectoryActionDialogs,
   DirectoryEntryActions,
   useDirectoryActions,
-} from "@/app/admin/file-libraries/_components/directory-actions";
-import { LibraryDirectoryTable } from "@/app/admin/file-libraries/_components/directory-table";
+} from "@/app/admin/(platform)/file-libraries/_components/directory-actions";
+import { LibraryDirectoryTable } from "@/app/admin/(platform)/file-libraries/_components/directory-table";
 import {
   getDirectoryEntryKey,
   type DirectoryEntry,
   type DirectoryChange,
   LIBRARY_FOLDERS_QUERY_KEY,
   LIBRARY_DIRECTORY_QUERY_KEY,
-} from "@/app/admin/file-libraries/_lib/directory";
-import { getLibraryDirectoryHref } from "@/app/admin/file-libraries/_lib/navigation";
-import { LibraryDocumentImport } from "@/app/admin/file-libraries/_components/document-import";
+} from "@/app/admin/(platform)/file-libraries/_lib/directory";
+import { getLibraryDirectoryHref } from "@/app/admin/(platform)/file-libraries/_lib/navigation";
+import { LibraryDocumentImport } from "@/app/admin/(platform)/file-libraries/_components/document-import";
 import { DirectoryToolbar } from "@/components/common/directory-toolbar";
 import { FolderActions } from "@/components/common/folder-actions";
+import { getQueryViewState } from "@/lib/query-view-state";
 import { LoadError } from "@/components/common/load-error";
 import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
@@ -125,10 +126,16 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
   const pageCount = Math.ceil(totalEntryCount / PAGE_SIZE);
   const pageOutOfRange = totalEntryCount > 0 && directoryEntries.length === 0;
 
-  const directoryPending = foldersQuery.isPending || directoryQuery.isPending;
+  const foldersState = getQueryViewState(foldersQuery);
+  const directoryState = getQueryViewState(
+    directoryQuery,
+    directoryEntries.length === 0,
+  );
   const directoryLoadFailed =
-    (foldersQuery.isError && foldersQuery.data === undefined) ||
-    (directoryQuery.isError && directoryQuery.data === undefined);
+    foldersState === "error" || directoryState === "error";
+  const directoryPending =
+    !directoryLoadFailed &&
+    (foldersState === "loading" || directoryState === "loading");
   const actionsDisabled =
     directoryPending ||
     directoryLoadFailed ||
@@ -316,7 +323,10 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
                   }
                   onRename={() => actions.editFolder(currentFolder)}
                   onDelete={() =>
-                    actions.openDeleteEntry({ ...currentFolder, type: "folder" })
+                    actions.openDeleteEntry({
+                      ...currentFolder,
+                      type: "folder",
+                    })
                   }
                 />
               ) : null}
@@ -331,7 +341,7 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
           </div>
         </div>
 
-        {!directoryPending && directoryLoadFailed ? (
+        {directoryLoadFailed ? (
           <LoadError
             title="文件列表加载失败"
             isRetrying={foldersQuery.isFetching || directoryQuery.isFetching}
@@ -342,9 +352,11 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
           />
         ) : directoryPending || directoryEntries.length > 0 ? (
           <CollectionContent
-            busy={directoryQuery.isPlaceholderData}
-            containerClassName="md:min-h-0 md:flex-1"
-            className="md:h-full"
+            busy={directoryState !== "loading" && directoryQuery.isFetching}
+            inert={
+              directoryState === "ready" && directoryQuery.isPlaceholderData
+            }
+            className="md:min-h-0 md:h-full md:flex-1"
           >
             <LibraryDirectoryTable
               loading={directoryPending}
