@@ -218,7 +218,7 @@ export function UserManager() {
                 if (value === search) void usersQuery.refetch();
                 else update({ search: value });
               }}
-              label="搜索用户名或姓名…"
+              label="搜索账号或姓名…"
             />
 
             <div className="flex flex-wrap items-center gap-3">
@@ -282,7 +282,7 @@ export function UserManager() {
               >
                 <TableHeader>
                   <TableRow>
-                    <TableHead>用户名</TableHead>
+                    <TableHead>账号 / 姓名</TableHead>
                     <TableHead className="w-28">角色</TableHead>
                     <TableHead className="w-28">状态</TableHead>
                     <TableHead className="w-44">创建时间</TableHead>

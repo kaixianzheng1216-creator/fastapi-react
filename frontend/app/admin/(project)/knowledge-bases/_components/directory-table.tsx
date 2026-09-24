@@ -59,7 +59,7 @@ export function KnowledgeDirectoryTable({
   projectId,
   knowledgeBaseId,
   entries,
-  folderNames,
+  folderPaths,
   selectedEntryKeys,
   onSelectionChange,
   getDocumentHref,
@@ -70,7 +70,7 @@ export function KnowledgeDirectoryTable({
   projectId: string;
   knowledgeBaseId: string;
   entries: DirectoryEntry[];
-  folderNames?: ReadonlyMap<string, string>;
+  folderPaths?: ReadonlyMap<string, string>;
   selectedEntryKeys: ReadonlySet<string>;
   onSelectionChange: (keys: Set<string>) => void;
   getDocumentHref: (documentId: string) => string;
@@ -115,7 +115,7 @@ export function KnowledgeDirectoryTable({
             />
           </TableHead>
           <TableHead>名称</TableHead>
-          {folderNames && <TableHead className="w-36">所在文件夹</TableHead>}
+          {folderPaths && <TableHead className="w-48">所在文件夹</TableHead>}
           <TableHead className="w-32">状态</TableHead>
           <TableHead className="w-28">处理时长</TableHead>
           <TableHead className="w-24">大小</TableHead>
@@ -125,7 +125,7 @@ export function KnowledgeDirectoryTable({
       </TableHeader>
 
       {loading ? (
-        <TableSkeletonBody columns={folderNames ? 8 : 7} />
+        <TableSkeletonBody columns={folderPaths ? 8 : 7} />
       ) : (
         <TableBody>
           {entries.map((entry) => {
@@ -192,11 +192,11 @@ export function KnowledgeDirectoryTable({
                     </div>
                   )}
                 </TableCell>
-                {folderNames && (
-                  <TableCell className="truncate">
+                {folderPaths && (
+                  <TableCell className="whitespace-normal break-words">
                     {entry.type === "document"
                       ? entry.folder_id
-                        ? (folderNames.get(entry.folder_id) ?? "—")
+                        ? (folderPaths.get(entry.folder_id) ?? "—")
                         : "根目录"
                       : "—"}
                   </TableCell>

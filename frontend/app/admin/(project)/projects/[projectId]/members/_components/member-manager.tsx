@@ -173,7 +173,7 @@ export function MemberManager() {
                 if (value === search) void query.refetch();
                 else update({ search: value });
               }}
-              label="搜索成员账号或姓名…"
+              label="搜索账号或姓名…"
             />
             <FilterGroup
               label="角色"

@@ -121,6 +121,14 @@ export function KnowledgeDocuments({
   const folderById = new Map(folders.map((folder) => [folder.id, folder]));
   const currentPath = getFolderAncestors(folderById, currentFolderId);
   const currentFolder = folderById.get(currentFolderId ?? "");
+  const folderPaths = new Map<string, string>();
+
+  if (currentStatus) {
+    for (const folder of folders) {
+      const ancestors = getFolderAncestors(folderById, folder.id);
+      folderPaths.set(folder.id, ancestors.map((item) => item.name).join(" / "));
+    }
+  }
 
   const directoryQuery = useQuery({
     meta: { handlesInitialError: true },
@@ -500,11 +508,7 @@ export function KnowledgeDocuments({
               projectId={projectId}
               knowledgeBaseId={knowledgeBaseId}
               entries={directoryEntries}
-              folderNames={
-                currentStatus
-                  ? new Map(folders.map((folder) => [folder.id, folder.name]))
-                  : undefined
-              }
+              folderPaths={currentStatus ? folderPaths : undefined}
               selectedEntryKeys={selectedEntryKeys}
               onSelectionChange={selectEntries}
               getDocumentHref={(documentId) =>
