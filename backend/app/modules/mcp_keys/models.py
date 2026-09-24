@@ -7,9 +7,9 @@ from sqlmodel import Field
 from app.db.timestamps import TimestampMixin
 
 
-class McpScope(StrEnum):
-    INTERNAL = "internal"
-    EXTERNAL = "external"
+class McpPermission(StrEnum):
+    READ_ONLY = "read_only"
+    READ_WRITE = "read_write"
 
 
 class McpApiKey(TimestampMixin, table=True):
@@ -17,16 +17,19 @@ class McpApiKey(TimestampMixin, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(max_length=100)
-    scope: McpScope = Field(
+    project_id: uuid.UUID = Field(foreign_key="project.id", ondelete="CASCADE")
+    created_by: uuid.UUID = Field(foreign_key="user.id")
+    permission: McpPermission = Field(  # type: ignore[call-overload]
         sa_type=Enum(
-            McpScope,
-            name="mcp_scope",
+            McpPermission,
+            values_callable=lambda e: [v.value for v in e],
             native_enum=False,
             create_constraint=True,
-            values_callable=lambda scopes: [scope.value for scope in scopes],
-        ),  # type: ignore
+            name="mcp_permission",
+        ),
     )
+    is_active: bool = True
+
     token_hash: str = Field(max_length=64, unique=True)
     key_prefix: str = Field(max_length=8)
     key_suffix: str = Field(max_length=4)
-    is_active: bool = True
