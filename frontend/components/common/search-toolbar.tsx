@@ -1,5 +1,8 @@
+"use client";
+
 import { SearchIcon } from "lucide-react";
-import type { FormEventHandler } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { useDebouncedCallback } from "use-debounce";
 
 import { Button } from "@/components/ui/button";
 import { ButtonContent } from "@/components/common/button-content";
@@ -7,57 +10,89 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 type SearchToolbarProps = {
-  id: string;
   label: string;
-  placeholder: string;
-  onSubmit: FormEventHandler<HTMLFormElement>;
+  placeholder?: string;
   className?: string;
-  defaultValue?: string;
   maxLength?: number;
   isPending?: boolean;
-  required?: boolean;
+  value: string;
+  onSearch: (value: string) => void;
+  searchOnChange?: boolean;
 };
 
 export function SearchToolbar({
-  id,
   label,
-  placeholder,
-  onSubmit,
+  placeholder = label,
+  onSearch,
+  value,
   className,
-  defaultValue,
   maxLength,
   isPending = false,
-  required = false,
+  searchOnChange = true,
 }: SearchToolbarProps) {
+  const generatedId = useId();
+  const [input, setInput] = useState(value);
+  const composing = useRef(false);
+  const submitted = useRef(value);
+  const search = useDebouncedCallback((text: string) => {
+    submitted.current = text.trim();
+    onSearch(submitted.current);
+  }, 300);
+
+  useEffect(() => {
+    if (value !== submitted.current) {
+      search.cancel();
+      submitted.current = value;
+      setInput(value);
+    }
+  }, [value, search]);
+
+  useEffect(() => () => search.cancel(), [search]);
+
   return (
     <form
       role="search"
       aria-label={label}
-      className={cn("flex w-full min-w-0 items-center gap-2 sm:w-auto", className)}
+      className={cn(
+        "flex w-full min-w-0 items-center gap-2 sm:w-auto",
+        className,
+      )}
       onSubmit={(event) => {
-        if (isPending) {
-          event.preventDefault();
+        event.preventDefault();
+        if (isPending || composing.current) {
           return;
         }
-        onSubmit(event);
+        search.cancel();
+        submitted.current = input.trim();
+        onSearch(submitted.current);
       }}
     >
-      <label htmlFor={id} className="sr-only">
+      <label htmlFor={generatedId} className="sr-only">
         {label}
       </label>
 
       <Input
-        key={defaultValue}
-        id={id}
+        id={generatedId}
         name="search"
         type="search"
         autoComplete="off"
         spellCheck={false}
         className="min-w-0 flex-1 sm:w-64 sm:flex-none"
         placeholder={placeholder}
-        defaultValue={defaultValue}
+        value={input}
+        onChange={(event) => {
+          setInput(event.target.value);
+          if (searchOnChange && !composing.current) search(event.target.value);
+        }}
+        onCompositionStart={() => {
+          composing.current = true;
+          search.cancel();
+        }}
+        onCompositionEnd={(event) => {
+          composing.current = false;
+          if (searchOnChange) search(event.currentTarget.value);
+        }}
         maxLength={maxLength}
-        required={required}
       />
       <Button
         type="submit"

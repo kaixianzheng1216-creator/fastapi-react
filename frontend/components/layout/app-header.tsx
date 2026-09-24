@@ -19,14 +19,14 @@ type AppHeaderProps = {
 
 export function AppHeader({
   title,
-  left,
+  left = <SidebarTrigger className="size-9" aria-label="切换侧栏" />,
   actions,
   breadcrumbs,
 }: AppHeaderProps) {
-  if (breadcrumbs) {
+  if (breadcrumbs?.length) {
     return (
       <header className="flex h-14 shrink-0 items-center gap-3 border-b px-3">
-        <SidebarTrigger className="size-9" aria-label="切换侧栏" />
+        {left}
         <h1 className="sr-only">{title}</h1>
         <Breadcrumb aria-label="页面路径" className="min-w-0 flex-1">
           <BreadcrumbList className="flex-nowrap">
@@ -51,6 +51,7 @@ export function AppHeader({
       </header>
     );
   }
+
   return (
     <header className="grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-b px-3">
       <div className="min-w-0 justify-self-start">{left}</div>

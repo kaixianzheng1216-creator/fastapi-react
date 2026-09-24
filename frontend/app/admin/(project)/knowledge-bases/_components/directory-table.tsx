@@ -1,0 +1,237 @@
+"use client";
+
+import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
+
+import { FolderIcon } from "lucide-react";
+import Link from "next/link";
+import type { ReactNode } from "react";
+
+import {
+  getDirectoryEntryKey,
+  type DirectoryEntry,
+} from "@/app/admin/(project)/knowledge-bases/_lib/directory";
+import { getKnowledgeDirectoryHref } from "@/app/admin/(project)/knowledge-bases/_lib/navigation";
+
+import { TableSkeletonBody } from "@/components/common/table-skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import type { KnowledgeDocumentPublic } from "@/lib/client";
+import { formatFileSize } from "@/lib/file-types";
+
+const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
+  dateStyle: "medium",
+  timeStyle: "medium",
+  hour12: false,
+});
+
+const statusLabels: Record<KnowledgeDocumentPublic["status"], string> = {
+  pending: "等待处理",
+  processing: "处理中",
+  ready: "可用",
+  failed: "失败",
+  timed_out: "已超时",
+};
+
+function formatProcessingDuration(seconds: number | null | undefined): string {
+  if (seconds == null) return "—";
+  if (seconds < 60) return `${seconds} 秒`;
+
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+
+  return remainingSeconds === 0
+    ? `${minutes} 分钟`
+    : `${minutes} 分 ${remainingSeconds} 秒`;
+}
+
+export function KnowledgeDirectoryTable({
+  currentPage,
+  loading,
+  projectId,
+  knowledgeBaseId,
+  entries,
+  selectedEntryKeys,
+  onSelectionChange,
+  getDocumentHref,
+  renderActions,
+}: {
+  currentPage: number;
+  loading: boolean;
+  projectId: string;
+  knowledgeBaseId: string;
+  entries: DirectoryEntry[];
+  selectedEntryKeys: ReadonlySet<string>;
+  onSelectionChange: (keys: Set<string>) => void;
+  getDocumentHref: (documentId: string) => string;
+  renderActions: (entry: DirectoryEntry) => ReactNode;
+}) {
+  const scrollRef = usePaginationScrollReset<HTMLDivElement>(currentPage);
+
+  const selectedEntryCount = entries.filter((entry) =>
+    selectedEntryKeys.has(getDirectoryEntryKey(entry)),
+  ).length;
+  const allEntriesSelected =
+    entries.length > 0 && selectedEntryCount === entries.length;
+  const someEntriesSelected = selectedEntryCount > 0 && !allEntriesSelected;
+
+  return (
+    <Table
+      loading={loading}
+      className="min-w-[1040px] table-fixed [&_tbody_tr]:h-12"
+      containerRef={scrollRef}
+      containerClassName="md:scroll-content-y md:h-full md:overscroll-contain"
+    >
+      <TableHeader className="sticky top-0 z-10 bg-background">
+        <TableRow>
+          <TableHead className="w-10">
+            <Checkbox
+              aria-label="选择当前页全部项目"
+              disabled={loading}
+              checked={
+                allEntriesSelected
+                  ? true
+                  : someEntriesSelected
+                    ? "indeterminate"
+                    : false
+              }
+              onCheckedChange={(checked) =>
+                onSelectionChange(
+                  checked === true
+                    ? new Set(entries.map(getDirectoryEntryKey))
+                    : new Set(),
+                )
+              }
+            />
+          </TableHead>
+          <TableHead>名称</TableHead>
+          <TableHead className="w-32">状态</TableHead>
+          <TableHead className="w-28">处理时长</TableHead>
+          <TableHead className="w-24">大小</TableHead>
+          <TableHead className="w-44">添加时间</TableHead>
+          <TableHead className="w-16">操作</TableHead>
+        </TableRow>
+      </TableHeader>
+
+      {loading ? (
+        <TableSkeletonBody columns={7} />
+      ) : (
+        <TableBody>
+          {entries.map((entry) => {
+            const key = getDirectoryEntryKey(entry);
+            const name = entry.type === "folder" ? entry.name : entry.filename;
+            const processing =
+              entry.type === "document" && entry.status === "processing";
+
+            return (
+              <TableRow
+                key={key}
+                data-state={selectedEntryKeys.has(key) ? "selected" : undefined}
+              >
+                <TableCell>
+                  <Checkbox
+                    aria-label={`选择 ${name}`}
+                    checked={selectedEntryKeys.has(key)}
+                    onCheckedChange={(checked) => {
+                      const keys = new Set(selectedEntryKeys);
+
+                      if (checked === true) keys.add(key);
+                      else keys.delete(key);
+
+                      onSelectionChange(keys);
+                    }}
+                  />
+                </TableCell>
+                <TableCell>
+                  {entry.type === "folder" ? (
+                    <Link
+                      href={getKnowledgeDirectoryHref(
+                        projectId,
+                        knowledgeBaseId,
+                        1,
+                        entry.id,
+                      )}
+                      className="flex min-w-0 items-center gap-2 hover:underline"
+                    >
+                      <FolderIcon
+                        className="size-4 shrink-0"
+                        aria-hidden="true"
+                      />
+                      <span className="truncate">{entry.name}</span>
+                    </Link>
+                  ) : (
+                    <div className="min-w-0">
+                      <div className="truncate">
+                        {entry.status === "ready" ? (
+                          <Link
+                            href={getDocumentHref(entry.id)}
+                            className="hover:underline"
+                          >
+                            {entry.filename}
+                          </Link>
+                        ) : (
+                          entry.filename
+                        )}
+                      </div>
+                      {entry.error_message ? (
+                        <p className="text-destructive whitespace-normal break-words">
+                          {entry.error_message}
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {entry.type === "folder" ? (
+                    "—"
+                  ) : (
+                    <Badge
+                      role="status"
+                      variant={
+                        entry.status === "ready" ? "outline" : "secondary"
+                      }
+                    >
+                      {processing && (
+                        <Spinner
+                          aria-hidden="true"
+                          className="motion-reduce:animate-none"
+                        />
+                      )}
+                      {entry.status === "pending" && !entry.uploaded
+                        ? "等待确认上传"
+                        : statusLabels[entry.status]}
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell className="tabular-nums">
+                  {entry.type === "folder" ||
+                  entry.status === "pending" ||
+                  entry.status === "processing"
+                    ? "—"
+                    : formatProcessingDuration(
+                        entry.processing_duration_seconds,
+                      )}
+                </TableCell>
+                <TableCell className="tabular-nums">
+                  {entry.type === "folder" ? "—" : formatFileSize(entry.size)}
+                </TableCell>
+                <TableCell>
+                  {dateFormatter.format(new Date(entry.created_at))}
+                </TableCell>
+                <TableCell>{renderActions(entry)}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      )}
+    </Table>
+  );
+}

@@ -5,15 +5,15 @@ import {
   BookOpenIcon,
   ChevronRightIcon,
   FileTextIcon,
+  FolderKanbanIcon,
   GlobeIcon,
   PlugIcon,
   TagIcon,
-  UserIcon,
   UsersIcon,
   WaypointsIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 import { SidebarAccountMenu } from "@/app/_components/sidebar-account-menu";
 import {
@@ -27,6 +27,8 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
+  useSidebar,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -37,6 +39,10 @@ import {
   SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ProjectPicker } from "./project-picker";
+import { useProject, useProjectLoading } from "./project-context";
+import { projectHref, projectMembersHref } from "@/lib/project-routes";
 import type { UserPublic } from "@/lib/client";
 
 type NavigationLink = {
@@ -45,27 +51,14 @@ type NavigationLink = {
 };
 
 type NavigationItem = { name: string; icon: LucideIcon } & (
-  | { type: "link"; href: string }
+  | { type: "link"; href?: string }
   | { type: "group"; items: readonly NavigationLink[] }
 );
 
 const navigation: {
   main: readonly NavigationItem[];
-  footer: readonly NavigationItem[];
 } = {
   main: [
-    {
-      type: "link",
-      name: "用户",
-      icon: UserIcon,
-      href: "/admin/users",
-    },
-    {
-      type: "link",
-      name: "知识库",
-      icon: BookOpenIcon,
-      href: "/admin/knowledge-bases",
-    },
     {
       type: "group",
       name: "品牌营销",
@@ -85,22 +78,6 @@ const navigation: {
         {
           name: "平台榜单",
           href: "/admin/content-operations/rankings",
-        },
-        {
-          name: "内容搜索",
-          href: "/admin/content-operations/search",
-        },
-        {
-          name: "热门内容",
-          href: "/admin/content-operations/hot-content",
-        },
-        {
-          name: "热门关键词",
-          href: "/admin/content-operations/hot-keywords",
-        },
-        {
-          name: "增长关键词",
-          href: "/admin/content-operations/growing-keywords",
         },
       ],
     },
@@ -127,18 +104,11 @@ const navigation: {
       ],
     },
   ],
-  footer: [
-    {
-      type: "link",
-      name: "MCP 接入",
-      icon: PlugIcon,
-      href: "/admin/mcp",
-    },
-  ],
 };
 
 function isPathActive(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(`${href}/`);
+  const path = href.split("?")[0];
+  return pathname === path || pathname.startsWith(`${path}/`);
 }
 
 function AdminNavigation({
@@ -165,31 +135,43 @@ function AdminNavigationItem({
   pathname: string;
 }) {
   if (item.type === "link") {
-    const isActive = isPathActive(pathname, item.href);
+    const isActive = !!item.href && isPathActive(pathname, item.href);
+    const label = (
+      <>
+        <item.icon aria-hidden="true" />
+        <span>{item.name}</span>
+      </>
+    );
 
     return (
       <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={isActive} tooltip={item.name}>
-          <Link href={item.href} aria-current={isActive ? "page" : undefined}>
-            <item.icon aria-hidden="true" />
-            <span>{item.name}</span>
-          </Link>
+        <SidebarMenuButton
+          asChild={!!item.href}
+          disabled={!item.href}
+          isActive={isActive}
+          tooltip={item.name}
+        >
+          {item.href ? (
+            <Link href={item.href} aria-current={isActive ? "page" : undefined}>
+              {label}
+            </Link>
+          ) : (
+            label
+          )}
         </SidebarMenuButton>
       </SidebarMenuItem>
     );
   }
 
-  const isActive = item.items.some((child) => isPathActive(pathname, child.href));
+  const isActive = item.items.some((child) =>
+    isPathActive(pathname, child.href),
+  );
 
   return (
     <Collapsible asChild defaultOpen={isActive}>
       <SidebarMenuItem className="group/collapsible">
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton
-            isActive={isActive}
-            className="data-[active=true]:bg-transparent"
-            tooltip={item.name}
-          >
+          <SidebarMenuButton isActive={isActive} tooltip={item.name}>
             <item.icon aria-hidden="true" />
             <span>{item.name}</span>
             <ChevronRightIcon
@@ -200,30 +182,22 @@ function AdminNavigationItem({
         </CollapsibleTrigger>
         <CollapsibleContent>
           <SidebarMenuSub>
-            {item.items.length > 0 ? (
-              item.items.map((child) => {
-                const childIsActive = isPathActive(pathname, child.href);
+            {item.items.map((child) => {
+              const childIsActive = isPathActive(pathname, child.href);
 
-                return (
-                  <SidebarMenuSubItem key={child.href}>
-                    <SidebarMenuSubButton asChild isActive={childIsActive}>
-                      <Link
-                        href={child.href}
-                        aria-current={childIsActive ? "page" : undefined}
-                      >
-                        {child.name}
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                );
-              })
-            ) : (
-              <SidebarMenuSubItem>
-                <SidebarMenuSubButton asChild aria-disabled="true">
-                  <span>暂未配置</span>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-            )}
+              return (
+                <SidebarMenuSubItem key={child.href}>
+                  <SidebarMenuSubButton asChild isActive={childIsActive}>
+                    <Link
+                      href={child.href}
+                      aria-current={childIsActive ? "page" : undefined}
+                    >
+                      {child.name}
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              );
+            })}
           </SidebarMenuSub>
         </CollapsibleContent>
       </SidebarMenuItem>
@@ -233,6 +207,10 @@ function AdminNavigationItem({
 
 export function AdminSidebar({ user }: { user: UserPublic }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const project = useProject();
+  const projectLoading = useProjectLoading();
+  const { setOpenMobile } = useSidebar();
 
   return (
     <Sidebar>
@@ -240,7 +218,7 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg">
-              <Link href="/admin/users">
+              <Link href="/admin">
                 <span className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <WaypointsIcon aria-hidden="true" className="size-4" />
                 </span>
@@ -254,18 +232,114 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        <ProjectPicker
+          current={project}
+          onSelect={(next) => {
+            setOpenMobile(false);
+            const href =
+              user.is_superuser || next.role === "admin"
+                ? projectMembersHref(next.id)
+                : projectHref(next.id);
+            router.push(href);
+          }}
+        />
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent
+        onClick={(event) => {
+          if ((event.target as HTMLElement).closest("a")) setOpenMobile(false);
+        }}
+      >
+        {user.is_superuser && (
+          <SidebarGroup>
+            <SidebarGroupLabel>平台管理</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <AdminNavigation
+                pathname={pathname}
+                items={[
+                  {
+                    type: "link",
+                    name: "项目管理",
+                    icon: FolderKanbanIcon,
+                    href: "/admin/manage",
+                  },
+                  {
+                    type: "link",
+                    name: "用户管理",
+                    icon: UsersIcon,
+                    href: "/admin/users",
+                  },
+                ]}
+              />
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
         <SidebarGroup>
+          <SidebarGroupLabel>项目资源</SidebarGroupLabel>
           <SidebarGroupContent>
-            <AdminNavigation items={navigation.main} pathname={pathname} />
+            {projectLoading && !user.is_superuser ? (
+              <SidebarMenu aria-label="加载项目菜单" aria-busy="true">
+                {[0, 1].map((item) => (
+                  <SidebarMenuItem key={item}>
+                    <Skeleton className="h-8" />
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            ) : (
+              <AdminNavigation
+                pathname={pathname}
+                items={[
+                  ...(user.is_superuser || project?.role === "admin"
+                    ? [
+                        {
+                          type: "link" as const,
+                          name: "项目成员",
+                          icon: UsersIcon,
+                          href: project
+                            ? projectMembersHref(project.id)
+                            : undefined,
+                        },
+                      ]
+                    : []),
+                  {
+                    type: "link",
+                    name: "知识库",
+                    icon: BookOpenIcon,
+                    href: project ? projectHref(project.id) : undefined,
+                  },
+                ]}
+              />
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
+        {user.is_superuser && (
+          <SidebarGroup>
+            <SidebarGroupLabel>业务工具</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <AdminNavigation items={navigation.main} pathname={pathname} />
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
-      <SidebarFooter>
-        <AdminNavigation items={navigation.footer} pathname={pathname} />
+      <SidebarFooter
+        onClick={(event) => {
+          if ((event.target as HTMLElement).closest("a")) setOpenMobile(false);
+        }}
+      >
+        <AdminNavigation
+          items={[
+            {
+              type: "link",
+              name: "MCP 接入",
+              icon: PlugIcon,
+              href: project
+                ? `/admin/projects/${project.id}/mcp`
+                : undefined,
+            },
+          ]}
+          pathname={pathname}
+        />
 
         <SidebarSeparator className="mx-0" />
         <SidebarMenu>

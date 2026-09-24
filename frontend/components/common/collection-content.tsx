@@ -6,53 +6,47 @@ export const CARD_PAGE_SIZE = 12;
 
 type CollectionContentProps = {
   busy: boolean;
+  inert?: boolean;
   children: ReactNode;
   className?: string;
-  containerClassName?: string;
 };
 
 export function CollectionContent({
   busy,
+  inert = false,
   children,
   className,
-  containerClassName,
 }: CollectionContentProps) {
   return (
     <div
       aria-busy={busy}
-      className={cn(
-        "transition-opacity aria-busy:opacity-60 motion-reduce:transition-none",
-        containerClassName,
-      )}
+      inert={inert}
+      className={cn("aria-busy:opacity-60", className)}
     >
-      <div inert={busy} className={className}>
-        {children}
-      </div>
+      {children}
     </div>
   );
 }
 
 export function CardGrid({
   busy = false,
+  inert = false,
   children,
   label,
 }: {
   busy?: boolean;
+  inert?: boolean;
   children: ReactNode;
   label: string;
 }) {
   return (
-    <div
+    <ul
+      aria-label={label}
       aria-busy={busy}
-      className="transition-opacity aria-busy:opacity-60 motion-reduce:transition-none"
+      inert={inert}
+      className="grid grid-cols-1 gap-4 aria-busy:opacity-60 md:grid-cols-2 xl:grid-cols-3"
     >
-      <ul
-        aria-label={label}
-        inert={busy}
-        className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
-      >
-        {children}
-      </ul>
-    </div>
+      {children}
+    </ul>
   );
 }

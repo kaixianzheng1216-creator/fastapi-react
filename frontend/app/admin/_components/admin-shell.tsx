@@ -2,8 +2,9 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { CircleAlertIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
+import { ProjectProvider } from "./project-context";
 import { AdminSidebar } from "@/app/admin/_components/admin-sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,10 +15,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import { useCurrentUserQuery } from "@/hooks/use-current-user";
 import { clearAccessToken } from "@/lib/auth";
@@ -72,19 +70,17 @@ export function AdminShell({ children }: { children: ReactNode }) {
     return <AdminShellState title="账户信息不可用" />;
   }
 
-  if (!currentUserQuery.data.is_superuser) {
-    return (
-      <AdminShellState
-        title="无权访问管理后台"
-        description="当前账户没有管理员权限，请联系管理员获取权限。"
-      />
-    );
-  }
-
   return (
     <SidebarProvider className="h-svh overflow-hidden">
-      <AdminSidebar user={currentUserQuery.data} />
-      <SidebarInset className="min-h-0 min-w-0">{children}</SidebarInset>
+      <Suspense fallback={<Spinner aria-label="加载项目" />}>
+        <ProjectProvider
+          key={currentUserQuery.data.id}
+          user={currentUserQuery.data}
+        >
+          <AdminSidebar user={currentUserQuery.data} />
+          <SidebarInset className="min-h-0 min-w-0">{children}</SidebarInset>
+        </ProjectProvider>
+      </Suspense>
     </SidebarProvider>
   );
 }

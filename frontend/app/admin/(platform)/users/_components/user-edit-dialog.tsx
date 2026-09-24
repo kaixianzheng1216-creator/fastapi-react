@@ -1,0 +1,179 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { FormDialogFooter } from "@/components/common/form-dialog-footer";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { type UserPublic, usersUpdateUser } from "@/lib/client";
+import { toast } from "sonner";
+
+const userSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(3, "用户名至少 3 个字符")
+    .max(255, "用户名最多 255 个字符"),
+  fullName: z.string().trim().max(255, "姓名最多 255 个字符"),
+  isSuperuser: z.boolean(),
+});
+
+type UserValues = z.infer<typeof userSchema>;
+
+type UserEditDialogProps = {
+  user: UserPublic;
+  canChangeRole: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCloseAutoFocus?: (event: Event) => void;
+  onUpdated: () => void;
+};
+
+export function UserEditDialog({
+  user,
+  canChangeRole,
+  onOpenChange,
+  onCloseAutoFocus,
+  onUpdated,
+}: UserEditDialogProps) {
+  const form = useForm<UserValues>({
+    resolver: zodResolver(userSchema),
+    defaultValues: {
+      username: user.username,
+      fullName: user.full_name ?? "",
+      isSuperuser: user.is_superuser ?? false,
+    },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: async (values: UserValues): Promise<void> => {
+      await usersUpdateUser({
+        path: { user_id: user.id },
+        body: {
+          username: values.username,
+          full_name: values.fullName || null,
+          is_superuser: values.isSuperuser,
+        },
+        throwOnError: true,
+      });
+    },
+
+    onSuccess: () => {
+      toast.success("用户已更新");
+      onOpenChange(false);
+      onUpdated();
+    },
+
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, "用户更新失败，请重试"));
+    },
+  });
+
+  function handleOpenChange(open: boolean): void {
+    if (!open && updateUserMutation.isPending) {
+      return;
+    }
+
+    onOpenChange(open);
+  }
+
+  return (
+    <Dialog open onOpenChange={handleOpenChange}>
+      <DialogContent
+        onCloseAutoFocus={onCloseAutoFocus}
+        showCloseButton={!updateUserMutation.isPending}
+      >
+        <DialogHeader>
+          <DialogTitle>编辑用户</DialogTitle>
+          <DialogDescription>更新账户资料和权限。</DialogDescription>
+        </DialogHeader>
+
+        <form
+          noValidate
+          onSubmit={form.handleSubmit((values) =>
+            updateUserMutation.mutate(values),
+          )}
+        >
+          <FieldGroup>
+            <Field data-invalid={!!form.formState.errors.username}>
+              <FieldLabel htmlFor="edit-user-username">用户名</FieldLabel>
+              <Input
+                disabled={updateUserMutation.isPending}
+                id="edit-user-username"
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                aria-invalid={!!form.formState.errors.username}
+                {...form.register("username")}
+              />
+              <FieldError errors={[form.formState.errors.username]} />
+            </Field>
+
+            <Field data-invalid={!!form.formState.errors.fullName}>
+              <FieldLabel htmlFor="edit-user-full-name">姓名</FieldLabel>
+              <Input
+                disabled={updateUserMutation.isPending}
+                id="edit-user-full-name"
+                autoComplete="off"
+                aria-invalid={!!form.formState.errors.fullName}
+                {...form.register("fullName")}
+              />
+              <FieldError errors={[form.formState.errors.fullName]} />
+            </Field>
+
+            <Controller
+              name="isSuperuser"
+              control={form.control}
+              render={({ field }) => (
+                <Field
+                  orientation="horizontal"
+                  data-disabled={!canChangeRole || updateUserMutation.isPending}
+                >
+                  <FieldContent>
+                    <FieldLabel htmlFor="edit-user-superuser">
+                      管理员
+                    </FieldLabel>
+                    <FieldDescription>
+                      {canChangeRole
+                        ? "管理所有项目和平台账号。"
+                        : "不能取消自己的管理员身份。"}
+                    </FieldDescription>
+                  </FieldContent>
+                  <Switch
+                    id="edit-user-superuser"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={!canChangeRole || updateUserMutation.isPending}
+                  />
+                </Field>
+              )}
+            />
+
+            <FormDialogFooter
+              isPending={updateUserMutation.isPending}
+              submitLabel="保存"
+            />
+          </FieldGroup>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
