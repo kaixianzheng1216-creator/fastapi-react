@@ -1,6 +1,6 @@
 # 项目、知识库与 MCP Plan
 
-状态：前后端已实现，后端集成测试、前端组件检查、浏览器回归、类型检查与生产构建已通过；临时测试文件按交付要求移除。发布须执行数据库迁移并切换已有知识库 MCP 客户端，见 [项目后端接入](project-backend.md)。
+状态：前后端已实现；本次项目路由调整已通过前端类型检查与生产构建，浏览器回归尚未重新执行。发布须执行数据库迁移并切换已有知识库 MCP 客户端，见 [项目后端接入](project-backend.md)。
 
 ## 1. 目标与实现原则
 
@@ -168,9 +168,9 @@ MCP 接入
 
 ### 4.7 状态与反馈
 
-- 登录进入最近有权限项目的知识库；无记录取首个项目，无项目显示分配提示，超级管理员可进入平台管理创建。
-- 项目/成员/MCP 之间切换保留当前项目；更换项目尽量保持功能，详情回到目标项目列表。
-- 在平台管理或业务工具中选择项目时，进入目标项目知识库。
+- 登录进入首个有权限项目；管理员落在项目成员页，普通成员落在知识库列表。无项目显示分配提示，超级管理员可进入平台管理创建。
+- 项目内的成员、知识库和 MCP 页面共用地址中的项目 ID；切换项目时进入目标项目的成员页或知识库列表。
+- 在平台管理或业务工具中选择项目时，管理员进入目标项目成员页，普通成员进入知识库列表。
 - 项目切换清除旧搜索、分页、选中项和密钥明文；编辑 Dialog 关闭后再切换，不新增全局导航拦截。
 - 刷新和深链接恢复正确项目，面包屑与侧边栏一致；无权限显示现有错误状态，不自动猜测资源归属。
 - 空知识库提供创建按钮；删除项目有知识库时提示先清空，允许删除时说明成员关系和密钥同步删除。
@@ -183,17 +183,17 @@ MCP 接入
 
 ```text
 /admin                                     项目默认入口
-/admin/knowledge-bases?projectId=...        原路径，项目列表上下文
-/admin/knowledge-bases/[id]                 原详情路径，查询确定项目
-/admin/projects/[projectId]/members         新增成员页
-/admin/mcp?projectId=...                    原路径，项目 MCP
+/admin/projects/[projectId]/members         项目成员
+/admin/projects/[projectId]/knowledge-bases 知识库列表
+/admin/projects/[projectId]/knowledge-bases/[knowledgeBaseId] 知识库详情
+/admin/projects/[projectId]/mcp             项目 MCP
 /admin/manage                              项目管理页
 /admin/users                               用户管理页
 ```
 
 - 项目管理和用户管理分别使用现有 ProjectManager、UserManager；旧 `/admin/manage?tab=users` 跳转到用户管理页。
 - 项目列表和选择器共用接口，返回当前角色；后端操作仍实时授权。
-- URL/已授权详情决定当前项目，本地只记忆最近项目；缓存键包含项目，跨项目不保留旧 placeholderData。
+- 项目页面以 URL 中的 projectId 为准；平台页面使用浏览器按用户保存的最近项目，缓存键包含项目。
 - 切换链接移除旧筛选参数，局部组件以 projectId 为 key 重置；不新增 store、手写竞态锁或逐项清理 effect。
 - 组件优先复用仓库已有实现；缺少时使用 shadcn CLI 添加所需组件，不批量覆盖已定制的组件。
 - 表单沿用 React Hook Form + Zod、FieldGroup/Field/FieldError；不封装万能表单或重做视觉体系。
