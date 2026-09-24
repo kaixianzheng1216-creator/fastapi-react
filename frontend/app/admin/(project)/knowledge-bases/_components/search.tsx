@@ -102,7 +102,7 @@ export function KnowledgeSearch({
         )}
       <div
         key={searchQuery}
-        className="flex min-w-0 flex-col gap-4"
+        className="flex min-w-0 flex-1 flex-col gap-4"
         aria-busy={knowledgeSearchQuery.isFetching}
       >
         {searchQuery && viewState === "loading" && <ContentSkeleton />}
@@ -116,7 +116,7 @@ export function KnowledgeSearch({
 
         {(!searchQuery ||
           (viewState === "ready" && searchResults?.length === 0)) && (
-          <Empty className="flex-none">
+          <Empty>
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <SearchIcon aria-hidden="true" />

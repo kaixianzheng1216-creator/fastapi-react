@@ -368,13 +368,18 @@ function FilePreviewContent({
 
   if (error) {
     return (
-      <LoadError title="文件加载失败" isRetrying={retrying} onRetry={onRetry} />
+      <LoadError
+        className="h-full"
+        title="文件加载失败"
+        isRetrying={retrying}
+        onRetry={onRetry}
+      />
     );
   }
 
   if (path && !preview)
     return (
-      <Empty>
+      <Empty className="h-full">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <FileIcon aria-hidden="true" />
@@ -404,7 +409,7 @@ function FilePreviewContent({
 
   if (preview?.kind === "download") {
     return (
-      <Empty>
+      <Empty className="h-full">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <DownloadIcon aria-hidden="true" />
@@ -423,7 +428,7 @@ function FilePreviewContent({
   }
 
   return (
-    <Empty>
+    <Empty className="h-full">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <ImageIcon aria-hidden="true" />

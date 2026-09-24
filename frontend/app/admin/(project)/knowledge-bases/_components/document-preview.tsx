@@ -251,7 +251,7 @@ export function KnowledgeDocumentPreview({
         ref={scrollRef}
         className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6"
       >
-        <div className="mx-auto flex max-w-5xl flex-col gap-6">
+        <div className="mx-auto flex min-h-full max-w-5xl flex-col gap-6">
           {documentState === "loading" ? (
             <ContentSkeleton
               variant={activeView === "chunks" ? "cards" : "text"}
@@ -263,7 +263,7 @@ export function KnowledgeDocumentPreview({
               onRetry={() => void documentQuery.refetch()}
             />
           ) : isTableDocument ? (
-            <div className="min-w-0">
+            <div className="flex min-w-0 flex-1 flex-col">
               <DocumentChunksView
                 documentId={documentId}
                 page={chunkPage}
@@ -274,7 +274,7 @@ export function KnowledgeDocumentPreview({
             <Tabs
               value={activeView}
               onValueChange={changeView}
-              className="gap-6"
+              className="flex-1 gap-6"
             >
               <TabsList>
                 <TabsTrigger value="markdown">
@@ -287,7 +287,7 @@ export function KnowledgeDocumentPreview({
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="markdown">
+              <TabsContent value="markdown" className="flex flex-col">
                 {previewState === "loading" ? (
                   <ContentSkeleton variant="text" />
                 ) : previewState === "error" ? (
@@ -312,7 +312,7 @@ export function KnowledgeDocumentPreview({
                 )}
               </TabsContent>
 
-              <TabsContent value="chunks">
+              <TabsContent value="chunks" className="flex flex-col">
                 <DocumentChunksView
                   documentId={documentId}
                   page={chunkPage}

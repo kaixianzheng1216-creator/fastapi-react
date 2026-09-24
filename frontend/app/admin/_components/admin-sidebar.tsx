@@ -13,7 +13,7 @@ import {
   WaypointsIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useParams, useRouter, usePathname } from "next/navigation";
 
 import { SidebarAccountMenu } from "@/app/_components/sidebar-account-menu";
 import {
@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProjectPicker } from "./project-picker";
-import { useProject, useProjectLoading } from "./project-context";
+import { useProjectState } from "./project-context";
 import { projectHref, projectMembersHref } from "@/lib/project-routes";
 import type { UserPublic } from "@/lib/client";
 
@@ -210,9 +210,9 @@ function AdminNavigationItem({
 
 export function AdminSidebar({ user }: { user: UserPublic }) {
   const pathname = usePathname();
+  const { projectId: routeProjectId } = useParams<{ projectId?: string }>();
   const router = useRouter();
-  const project = useProject();
-  const projectLoading = useProjectLoading();
+  const { project, isLoading: projectLoading, selectProject } = useProjectState();
   const { setOpenMobile } = useSidebar();
 
   return (
@@ -239,10 +239,24 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
           current={project}
           onSelect={(next) => {
             setOpenMobile(false);
-            const href =
-              user.is_superuser || next.role === "admin"
-                ? projectMembersHref(next.id)
-                : projectHref(next.id);
+            if (next.id === project?.id) return;
+
+            if (!routeProjectId) {
+              selectProject(next);
+              return;
+            }
+
+            let href = projectHref(next.id);
+            if (isPathActive(pathname, projectMembersHref(routeProjectId))) {
+              href = projectMembersHref(next.id);
+            } else if (
+              isPathActive(
+                pathname,
+                `/admin/projects/${encodeURIComponent(routeProjectId)}/mcp`,
+              )
+            ) {
+              href = `/admin/projects/${encodeURIComponent(next.id)}/mcp`;
+            }
             router.push(href);
           }}
         />
@@ -292,18 +306,12 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
               <AdminNavigation
                 pathname={pathname}
                 items={[
-                  ...(user.is_superuser || project?.role === "admin"
-                    ? [
-                        {
-                          type: "link" as const,
-                          name: "项目成员",
-                          icon: UsersIcon,
-                          href: project
-                            ? projectMembersHref(project.id)
-                            : undefined,
-                        },
-                      ]
-                    : []),
+                  {
+                    type: "link",
+                    name: "项目成员",
+                    icon: UsersIcon,
+                    href: project ? projectMembersHref(project.id) : undefined,
+                  },
                   {
                     type: "link",
                     name: "知识库",

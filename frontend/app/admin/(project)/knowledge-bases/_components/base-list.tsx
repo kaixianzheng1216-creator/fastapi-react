@@ -281,7 +281,7 @@ export function KnowledgeBaseManager() {
             </FilterGroup>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-1 flex-col gap-3">
             <div className="flex items-center justify-between gap-3">
               <span className="text-sm text-muted-foreground">
                 {knowledgeBasesQuery.data

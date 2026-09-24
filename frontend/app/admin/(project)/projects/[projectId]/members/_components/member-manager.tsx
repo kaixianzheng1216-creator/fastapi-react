@@ -72,6 +72,7 @@ export function MemberManager() {
   const pathname = usePathname();
   const project = useProject()!;
   const user = useCurrentUser()!;
+  const canManage = user.is_superuser || project.role === "admin";
   const { params, update } = useListParams();
   const search = params.get("search") ?? "";
   const role =
@@ -148,15 +149,17 @@ export function MemberManager() {
       <AppHeader
         title="项目成员"
         actions={
-          <Button
-            ref={createButtonRef}
-            onPointerDown={rememberActionTrigger}
-            onFocus={rememberActionTrigger}
-            onClick={() => setAdding(true)}
-          >
-            <PlusIcon data-icon="inline-start" />
-            添加成员
-          </Button>
+          canManage && (
+            <Button
+              ref={createButtonRef}
+              onPointerDown={rememberActionTrigger}
+              onFocus={rememberActionTrigger}
+              onClick={() => setAdding(true)}
+            >
+              <PlusIcon data-icon="inline-start" />
+              添加成员
+            </Button>
+          )
         }
       />
       <main
@@ -228,11 +231,11 @@ export function MemberManager() {
                   <TableRow>
                     <TableHead>账号 / 姓名</TableHead>
                     <TableHead className="w-36">项目角色</TableHead>
-                    <TableHead className="w-16">操作</TableHead>
+                    {canManage && <TableHead className="w-16">操作</TableHead>}
                   </TableRow>
                 </TableHeader>
                 {viewState === "loading" ? (
-                  <TableSkeletonBody columns={3} />
+                  <TableSkeletonBody columns={canManage ? 3 : 2} />
                 ) : (
                   <TableBody>
                     {query.data?.data.map((member) => {
@@ -263,61 +266,63 @@ export function MemberManager() {
                                 : "普通成员"}
                             </Badge>
                           </TableCell>
-                          <TableCell>
-                            {(user.is_superuser ||
-                              member.role === "member") && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger
-                                  asChild
-                                  onPointerDown={rememberActionTrigger}
-                                  onFocus={rememberActionTrigger}
-                                >
-                                  <Button
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    aria-label={`${member.username} 的操作`}
-                                    disabled={
-                                      changeRole.isPending ||
-                                      query.isPlaceholderData
-                                    }
-                                    aria-busy={isUpdating}
+                          {canManage && (
+                            <TableCell>
+                              {(user.is_superuser ||
+                                member.role === "member") && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger
+                                    asChild
+                                    onPointerDown={rememberActionTrigger}
+                                    onFocus={rememberActionTrigger}
                                   >
-                                    <ButtonContent
-                                      icon={MoreHorizontalIcon}
-                                      loading={isUpdating}
-                                    />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuGroup>
-                                    {user.is_superuser && (
-                                      <DropdownMenuItem
-                                        onSelect={() =>
-                                          changeRole.mutate({
-                                            id: member.user_id,
-                                            role:
-                                              member.role === "admin"
-                                                ? "member"
-                                                : "admin",
-                                          })
-                                        }
-                                      >
-                                        {member.role === "admin"
-                                          ? "设为普通成员"
-                                          : "设为项目管理员"}
-                                      </DropdownMenuItem>
-                                    )}
-                                    <DropdownMenuItem
-                                      variant="destructive"
-                                      onSelect={() => setDeleting(member)}
+                                    <Button
+                                      variant="ghost"
+                                      size="icon-sm"
+                                      aria-label={`${member.username} 的操作`}
+                                      disabled={
+                                        changeRole.isPending ||
+                                        query.isPlaceholderData
+                                      }
+                                      aria-busy={isUpdating}
                                     >
-                                      移出项目
-                                    </DropdownMenuItem>
-                                  </DropdownMenuGroup>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
-                          </TableCell>
+                                      <ButtonContent
+                                        icon={MoreHorizontalIcon}
+                                        loading={isUpdating}
+                                      />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuGroup>
+                                      {user.is_superuser && (
+                                        <DropdownMenuItem
+                                          onSelect={() =>
+                                            changeRole.mutate({
+                                              id: member.user_id,
+                                              role:
+                                                member.role === "admin"
+                                                  ? "member"
+                                                  : "admin",
+                                            })
+                                          }
+                                        >
+                                          {member.role === "admin"
+                                            ? "设为普通成员"
+                                            : "设为项目管理员"}
+                                        </DropdownMenuItem>
+                                      )}
+                                      <DropdownMenuItem
+                                        variant="destructive"
+                                        onSelect={() => setDeleting(member)}
+                                      >
+                                        移出项目
+                                      </DropdownMenuItem>
+                                    </DropdownMenuGroup>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                            </TableCell>
+                          )}
                         </TableRow>
                       );
                     })}

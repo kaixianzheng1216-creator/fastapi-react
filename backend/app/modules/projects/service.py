@@ -190,7 +190,7 @@ def list_members(
     search: str | None,
     role: ProjectRole | None,
 ) -> tuple[list[MemberPublic], int]:
-    require_project(session, user, project_id, manage_members=True)
+    require_project(session, user, project_id)
 
     filters: list[ColumnElement[bool]] = [
         col(ProjectMember.project_id) == project_id,

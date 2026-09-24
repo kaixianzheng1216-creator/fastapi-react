@@ -9,6 +9,7 @@ import { getQueryViewState } from "@/lib/query-view-state";
 
 type ProjectState = {
   project?: ProjectPublic;
+  selectProject: (project: ProjectPublic) => void;
   isLoading: boolean;
   isError: boolean;
   isRetrying: boolean;
@@ -66,10 +67,16 @@ export function ProjectProvider({
 
   const projectState = getQueryViewState(project);
 
+  function selectProject(next: ProjectPublic) {
+    localStorage.setItem(storageKey, next.id);
+    setRecentProjectId(next.id);
+  }
+
   return (
     <ProjectContext
       value={{
         project: project.data,
+        selectProject,
         isLoading:
           (!routeProjectId && recentProjectId === undefined) ||
           (!!projectId && project.isPending),
