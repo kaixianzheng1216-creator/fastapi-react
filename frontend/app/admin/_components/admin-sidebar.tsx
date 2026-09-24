@@ -4,11 +4,11 @@ import {
   type LucideIcon,
   BookOpenIcon,
   ChevronRightIcon,
-  FileTextIcon,
+  // FileTextIcon,
   FolderKanbanIcon,
-  GlobeIcon,
+  // GlobeIcon,
   PlugIcon,
-  TagIcon,
+  // TagIcon,
   UsersIcon,
   WaypointsIcon,
 } from "lucide-react";
@@ -55,6 +55,8 @@ type NavigationItem = { name: string; icon: LucideIcon } & (
   | { type: "group"; items: readonly NavigationLink[] }
 );
 
+// 业务工具暂不展示；恢复时取消导航配置和下方 SidebarGroup 的注释。
+/*
 const navigation: {
   main: readonly NavigationItem[];
 } = {
@@ -105,6 +107,7 @@ const navigation: {
     },
   ],
 };
+*/
 
 function isPathActive(pathname: string, href: string) {
   const path = href.split("?")[0];
@@ -312,6 +315,7 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
             )}
           </SidebarGroupContent>
         </SidebarGroup>
+        {/* 业务工具暂不展示，恢复时取消此处及上方 navigation 配置的注释。
         {user.is_superuser && (
           <SidebarGroup>
             <SidebarGroupLabel>业务工具</SidebarGroupLabel>
@@ -319,7 +323,7 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
               <AdminNavigation items={navigation.main} pathname={pathname} />
             </SidebarGroupContent>
           </SidebarGroup>
-        )}
+        )} */}
       </SidebarContent>
 
       <SidebarFooter

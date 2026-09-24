@@ -157,18 +157,56 @@ def list_directory(
     knowledge_base_id: uuid.UUID,
     folder_id: uuid.UUID | None,
     document_status: Literal["ready", "processing", "failed"] | None,
+    search: str | None,
     skip: int,
     limit: int,
 ) -> tuple[list[KnowledgeDirectoryEntryPublic], int, dict[str, int]]:
-    """分页获取当前目录，文件夹始终排在文档前。"""
+    """分页获取当前目录；状态统计包含子文件夹，搜索覆盖全库。"""
     get_knowledge_base(session=session, knowledge_base_id=knowledge_base_id)
+
+    scope_conditions: tuple[ColumnElement[bool], ...] = (
+        col(KnowledgeDocument.knowledge_base_id) == knowledge_base_id,
+    )
+
+    if folder_id is not None and not search:
+        _validate_folder(
+            session=session,
+            knowledge_base_id=knowledge_base_id,
+            folder_id=folder_id,
+        )
+
+        folder_tree = (
+            select(col(KnowledgeFolder.id))
+            .where(col(KnowledgeFolder.id) == folder_id)
+            .cte(recursive=True)
+        )
+
+        folder_tree = folder_tree.union_all(
+            select(col(KnowledgeFolder.id)).join(
+                folder_tree,
+                col(KnowledgeFolder.parent_id) == folder_tree.c.id,
+            )
+        )
+
+        scope_conditions += (
+            col(KnowledgeDocument.folder_id).in_(select(folder_tree.c.id)),
+        )
 
     status_counts = {"ready": 0, "processing": 0, "failed": 0}
 
+    filename_filter = (
+        col(StoredFile.filename).icontains(search, autoescape=True) if search else None
+    )
+
+    status_statement = select(KnowledgeDocument.status, func.count()).where(
+        *scope_conditions
+    )
+
+    if filename_filter is not None:
+        status_statement = status_statement.join(StoredFile).where(filename_filter)
+
     status_rows = session.exec(
-        select(KnowledgeDocument.status, func.count())
-        .where(col(KnowledgeDocument.knowledge_base_id) == knowledge_base_id)
-        .group_by(col(KnowledgeDocument.status))
+        status_statement.group_by(col(KnowledgeDocument.status))
     ).all()
 
     for status, count in status_rows:
@@ -189,13 +227,7 @@ def list_directory(
 
     document_conditions: tuple[ColumnElement[bool], ...]
 
-    if document_status is None:
-        _validate_folder(
-            session=session,
-            knowledge_base_id=knowledge_base_id,
-            folder_id=folder_id,
-        )
-
+    if document_status is None and not search:
         folder_conditions = (
             col(KnowledgeFolder.knowledge_base_id) == knowledge_base_id,
             col(KnowledgeFolder.parent_id) == folder_id,
@@ -208,36 +240,36 @@ def list_directory(
             select(func.count()).select_from(KnowledgeFolder).where(*folder_conditions)
         ).one()
     else:
-        statuses = {
-            "ready": (KnowledgeDocumentStatus.READY,),
-            "processing": (
-                KnowledgeDocumentStatus.PENDING,
-                KnowledgeDocumentStatus.PROCESSING,
-            ),
-            "failed": (
-                KnowledgeDocumentStatus.FAILED,
-                KnowledgeDocumentStatus.TIMED_OUT,
-            ),
-        }[document_status]
+        document_conditions = scope_conditions
 
-        document_conditions = (
-            col(KnowledgeDocument.knowledge_base_id) == knowledge_base_id,
-            col(KnowledgeDocument.status).in_(statuses),
-        )
+        if document_status is not None:
+            statuses = {
+                "ready": (KnowledgeDocumentStatus.READY,),
+                "processing": (
+                    KnowledgeDocumentStatus.PENDING,
+                    KnowledgeDocumentStatus.PROCESSING,
+                ),
+                "failed": (
+                    KnowledgeDocumentStatus.FAILED,
+                    KnowledgeDocumentStatus.TIMED_OUT,
+                ),
+            }[document_status]
+            document_conditions += (col(KnowledgeDocument.status).in_(statuses),)
 
-    document_count = (
-        status_counts[document_status]
-        if document_status is not None
-        else session.exec(
+    if document_status is not None:
+        document_count = status_counts[document_status]
+    elif search:
+        document_count = sum(status_counts.values())
+    else:
+        document_count = session.exec(
             select(func.count())
             .select_from(KnowledgeDocument)
             .where(*document_conditions)
         ).one()
-    )
 
     entries: list[KnowledgeDirectoryEntryPublic] = []
 
-    if document_status is None and skip < folder_count:
+    if document_status is None and not search and skip < folder_count:
         folder_rows = session.exec(
             select(KnowledgeFolder)
             .where(*folder_conditions)
@@ -273,6 +305,9 @@ def list_directory(
             .offset(document_skip)
             .limit(document_limit)
         )
+
+        if filename_filter is not None:
+            document_statement = document_statement.where(filename_filter)
 
         document_rows = session.exec(document_statement).all()
 

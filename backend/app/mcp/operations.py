@@ -11,7 +11,8 @@ READ_ONLY_KNOWLEDGE_OPERATIONS = {
 
 
 PROJECT_OPERATIONS = {
-    **BUSINESS_OPERATIONS,
+    # 业务数据工具暂不对 MCP 开放；恢复时取消此行及 catalog.py 中路由的注释。
+    # **BUSINESS_OPERATIONS,
     "knowledge-bases-read_knowledge_bases": "knowledge_bases_list",
     "knowledge-bases-create_knowledge_base": "knowledge_base_create",
     "knowledge-bases-read_knowledge_base": "knowledge_base_get",

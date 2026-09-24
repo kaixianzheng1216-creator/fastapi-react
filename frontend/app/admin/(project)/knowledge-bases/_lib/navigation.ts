@@ -7,10 +7,12 @@ export function getKnowledgeDirectoryHref(
   page = 1,
   folderId?: string,
   status?: "ready" | "processing" | "failed",
+  search?: string,
 ): string {
   const parameters = new URLSearchParams();
   if (folderId) parameters.set("folder", folderId);
   if (status) parameters.set("status", status);
+  if (search) parameters.set("search", search);
 
   return getPaginationHref(
     `${projectHref(projectId)}/${knowledgeBaseId}`,
@@ -26,10 +28,12 @@ export function getKnowledgeDocumentHref(
   page: number,
   folderId?: string,
   status?: "ready" | "processing" | "failed",
+  search?: string,
 ): string {
   const parameters = new URLSearchParams();
   if (folderId) parameters.set("folder", folderId);
   if (status) parameters.set("status", status);
+  if (search) parameters.set("search", search);
 
   return getPaginationHref(
     `${projectHref(projectId)}/${knowledgeBaseId}/documents/${documentId}`,

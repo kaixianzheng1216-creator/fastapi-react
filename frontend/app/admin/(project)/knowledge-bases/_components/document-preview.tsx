@@ -74,6 +74,7 @@ export function KnowledgeDocumentPreview({
     parsePage(searchParams.get("page")),
     searchParams.get("folder") ?? undefined,
     searchParams.get("status") === "ready" ? "ready" : undefined,
+    searchParams.get("search") ?? undefined,
   );
 
   const knowledgeBaseQuery = useQuery({

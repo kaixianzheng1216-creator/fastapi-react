@@ -30,6 +30,7 @@ import {
 } from "@/app/admin/(project)/knowledge-bases/_lib/navigation";
 import { KnowledgeDocumentImport } from "@/app/admin/(project)/knowledge-bases/_components/document-import";
 import { DirectoryToolbar } from "@/components/common/directory-toolbar";
+import { SearchToolbar } from "@/components/common/search-toolbar";
 import { FolderActions } from "@/components/common/folder-actions";
 import { getQueryViewState } from "@/lib/query-view-state";
 import { LoadError } from "@/components/common/load-error";
@@ -58,6 +59,7 @@ import {
 } from "@/lib/client";
 import { getFolderAncestors } from "@/lib/folders";
 import { parsePage } from "@/lib/pagination";
+import { useListParams } from "@/hooks/use-list-params";
 
 const PAGE_SIZE = 20;
 const DOCUMENT_POLL_INTERVAL_MS = 3000;
@@ -83,6 +85,8 @@ export function KnowledgeDocuments({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { update } = useListParams();
+  const search = searchParams.get("search")?.trim() ?? "";
   const queryClient = useQueryClient();
   const documentsRef = useRef<HTMLElement>(null);
 
@@ -95,7 +99,7 @@ export function KnowledgeDocuments({
     statusParameter === "failed"
       ? statusParameter
       : undefined;
-  const currentFolderId = currentStatus
+  const currentFolderId = search
     ? undefined
     : (searchParams.get("folder") ?? undefined);
   const pageIndex = currentPage - 1;
@@ -123,7 +127,7 @@ export function KnowledgeDocuments({
   const currentFolder = folderById.get(currentFolderId ?? "");
   const folderPaths = new Map<string, string>();
 
-  if (currentStatus) {
+  if (currentStatus || search) {
     for (const folder of folders) {
       const ancestors = getFolderAncestors(folderById, folder.id);
       folderPaths.set(folder.id, ancestors.map((item) => item.name).join(" / "));
@@ -137,6 +141,7 @@ export function KnowledgeDocuments({
       knowledgeBaseId,
       currentFolderId,
       currentStatus,
+      search,
       pageIndex,
     ],
     queryFn: async ({ signal }) => {
@@ -145,6 +150,7 @@ export function KnowledgeDocuments({
         query: {
           folder_id: currentFolderId,
           document_status: currentStatus,
+          search: search || undefined,
           skip: pageIndex * PAGE_SIZE,
           limit: PAGE_SIZE,
         },
@@ -172,9 +178,10 @@ export function KnowledgeDocuments({
     placeholderData: (previousData, previousQuery) => {
       const previousQueryKey = previousQuery?.queryKey;
 
-      return previousQueryKey?.at(-4) === knowledgeBaseId &&
-        previousQueryKey.at(-3) === currentFolderId &&
-        previousQueryKey.at(-2) === currentStatus
+      return previousQueryKey?.at(-5) === knowledgeBaseId &&
+        previousQueryKey.at(-4) === currentFolderId &&
+        previousQueryKey.at(-3) === currentStatus &&
+        previousQueryKey.at(-2) === search
         ? previousData
         : undefined;
     },
@@ -229,12 +236,13 @@ export function KnowledgeDocuments({
           currentPage - 1,
           currentFolderId,
           currentStatus,
+          search,
         ),
       );
     }
   }
 
-  const selectionScope = `${knowledgeBaseId}:${currentFolderId ?? "root"}:${currentStatus ?? "all"}:${currentPage}`;
+  const selectionScope = `${knowledgeBaseId}:${currentFolderId ?? "root"}:${currentStatus ?? "all"}:${search}:${currentPage}`;
   const [directorySelection, setDirectorySelection] = useState<{
     scope: string;
     keys: Set<string>;
@@ -342,20 +350,6 @@ export function KnowledgeDocuments({
                   <BreadcrumbPage>全部文档</BreadcrumbPage>
                 )}
               </BreadcrumbItem>
-              {currentStatus && (
-                <>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>
-                      {
-                        statusOptions.find(
-                          (option) => option.value === currentStatus,
-                        )?.label
-                      }
-                    </BreadcrumbPage>
-                  </BreadcrumbItem>
-                </>
-              )}
               {currentFolderId && !folderById.has(currentFolderId) && (
                 <>
                   <BreadcrumbSeparator />
@@ -370,7 +364,7 @@ export function KnowledgeDocuments({
                 <Fragment key={folder.id}>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    {index === currentPath.length - 1 ? (
+                    {index === currentPath.length - 1 && !currentStatus ? (
                       <BreadcrumbPage>{folder.name}</BreadcrumbPage>
                     ) : (
                       <BreadcrumbLink asChild>
@@ -389,6 +383,20 @@ export function KnowledgeDocuments({
                   </BreadcrumbItem>
                 </Fragment>
               ))}
+              {currentStatus && (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>
+                      {
+                        statusOptions.find(
+                          (option) => option.value === currentStatus,
+                        )?.label
+                      }
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </>
+              )}
             </BreadcrumbList>
           </Breadcrumb>
 
@@ -429,18 +437,20 @@ export function KnowledgeDocuments({
           </div>
         </div>
 
-        {!directoryLoadFailed && !directoryPending && statusCounts && (
-          <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <SearchToolbar
+            label="搜索文档名称"
+            placeholder="搜索文档名称…"
+            maxLength={100}
+            value={search}
+            onSearch={(value) => {
+              if (value === search) void directoryQuery.refetch();
+              else update({ search: value, folder: "" });
+            }}
+          />
+
+          {!directoryLoadFailed && !directoryPending && statusCounts && (
             <div className="flex flex-wrap gap-2" role="group" aria-label="文档状态筛选">
-              <Button
-                variant={!currentStatus ? "secondary" : "outline"}
-                size="sm"
-                asChild
-              >
-                <Link href={getKnowledgeDirectoryHref(projectId, knowledgeBaseId)}>
-                  目录
-                </Link>
-              </Button>
               {statusOptions.map((option) => (
                 <Button
                   key={option.value}
@@ -453,8 +463,9 @@ export function KnowledgeDocuments({
                       projectId,
                       knowledgeBaseId,
                       1,
-                      undefined,
+                      currentFolderId,
                       option.value,
+                      search,
                     )}
                   >
                     <span
@@ -466,22 +477,25 @@ export function KnowledgeDocuments({
                 </Button>
               ))}
             </div>
-            <div
-              className="flex h-2 overflow-hidden rounded-full bg-muted"
-              role="img"
-              aria-label={`已完成 ${statusCounts.ready}，处理中 ${statusCounts.processing}，失败 ${statusCounts.failed}`}
-            >
-              {totalDocumentCount > 0 &&
-                statusOptions.map((option) => (
-                  <div
-                    key={option.value}
-                    className={option.color}
-                    style={{
-                      width: `${(statusCounts[option.value] / totalDocumentCount) * 100}%`,
-                    }}
-                  />
-                ))}
-            </div>
+          )}
+        </div>
+
+        {!directoryLoadFailed && !directoryPending && statusCounts && (
+          <div
+            className="flex h-2 overflow-hidden rounded-full bg-muted"
+            role="img"
+            aria-label={`已完成 ${statusCounts.ready}，处理中 ${statusCounts.processing}，失败 ${statusCounts.failed}`}
+          >
+            {totalDocumentCount > 0 &&
+              statusOptions.map((option) => (
+                <div
+                  key={option.value}
+                  className={option.color}
+                  style={{
+                    width: `${(statusCounts[option.value] / totalDocumentCount) * 100}%`,
+                  }}
+                />
+              ))}
           </div>
         )}
 
@@ -508,7 +522,7 @@ export function KnowledgeDocuments({
               projectId={projectId}
               knowledgeBaseId={knowledgeBaseId}
               entries={directoryEntries}
-              folderPaths={currentStatus ? folderPaths : undefined}
+              folderPaths={currentStatus || search ? folderPaths : undefined}
               selectedEntryKeys={selectedEntryKeys}
               onSelectionChange={selectEntries}
               getDocumentHref={(documentId) =>
@@ -519,6 +533,7 @@ export function KnowledgeDocuments({
                   currentPage,
                   currentFolderId,
                   currentStatus,
+                  search,
                 )
               }
               renderActions={(entry) => (
@@ -534,6 +549,7 @@ export function KnowledgeDocuments({
               1,
               currentFolderId,
               currentStatus,
+              search,
             )}
           />
         ) : (
@@ -543,9 +559,13 @@ export function KnowledgeDocuments({
                 <FolderOpenIcon aria-hidden="true" />
               </EmptyMedia>
               <EmptyTitle>
-                {currentStatus ? "暂无此状态文档" : "此文件夹为空"}
+                {search
+                  ? "未找到匹配的文档"
+                  : currentStatus
+                    ? "暂无此状态文档"
+                    : "此文件夹为空"}
               </EmptyTitle>
-              {!currentStatus && (
+              {!currentStatus && !search && (
                 <EmptyDescription>
                   上传文件、添加网页或新建文件夹。
                 </EmptyDescription>
@@ -566,6 +586,7 @@ export function KnowledgeDocuments({
             page,
             currentFolderId,
             currentStatus,
+            search,
           )
         }
       />

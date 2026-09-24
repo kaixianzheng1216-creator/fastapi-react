@@ -8,21 +8,21 @@ from app.mcp.operations import (
     PROJECT_OPERATIONS,
     READ_ONLY_KNOWLEDGE_OPERATIONS,
 )
-from app.modules.brand_marketing.router import router as brand_marketing_router
-from app.modules.content_operations.router import router as content_operations_router
-from app.modules.influencer_marketing.router import (
-    router as influencer_marketing_router,
-)
 from app.modules.knowledge.router import document_router as knowledge_document_router
 from app.modules.knowledge.router import router as knowledge_router
 from app.modules.mcp_keys.schemas import McpToolPublic
 
+# 业务数据工具暂不对 MCP 开放；恢复时取消这些导入和 PROJECT_ROUTERS 中的注册。
+# from app.modules.brand_marketing.router import router as brand_marketing_router
+# from app.modules.content_operations.router import router as content_operations_router
+# from app.modules.influencer_marketing.router import router as influencer_marketing_router
+
 PROJECT_ROUTERS = (
     knowledge_router,
     knowledge_document_router,
-    brand_marketing_router,
-    content_operations_router,
-    influencer_marketing_router,
+    # brand_marketing_router,
+    # content_operations_router,
+    # influencer_marketing_router,
 )
 
 

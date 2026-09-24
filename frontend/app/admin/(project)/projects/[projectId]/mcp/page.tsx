@@ -96,7 +96,6 @@ export default function McpPage() {
             onCloseAutoFocus={restoreActionFocus}
             project={project}
             endpoint={endpoint}
-            serverId={serverId}
             createOpen={createOpen}
             onCreateClose={() => setCreateOpen(false)}
           />
@@ -196,7 +195,10 @@ function AccessHelpDialog({
               </div>
             )}
             {toolsQuery.data &&
-              (["knowledge", "business"] as const).map((group) => (
+              ([
+                "knowledge",
+                // "business", // 业务数据工具暂不对 MCP 开放。
+              ] as const).map((group) => (
                 <section
                   key={group}
                   className="flex flex-col gap-2"

@@ -68,6 +68,7 @@ import {
   mcpKeysReadMcpApiKeys,
   type McpApiKeyCreated,
   type McpApiKeyPublic,
+  type ProjectPublic,
 } from "@/lib/client";
 
 const KEY_QUERY_PREFIX = "mcp-api-keys";
@@ -77,8 +78,7 @@ const dateFormatter = new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium" });
 
 type KeyManagerProps = {
   endpoint: string;
-  serverId: string;
-  project: { id: string; name: string };
+  project: ProjectPublic;
   createOpen: boolean;
   onCreateClose: () => void;
   onCloseAutoFocus: (event: Event) => void;
@@ -87,7 +87,6 @@ type KeyManagerProps = {
 
 export function KeyManager({
   endpoint,
-  serverId,
   project,
   createOpen,
   onCreateClose,
@@ -157,6 +156,16 @@ export function KeyManager({
 
   function getPageHref(page: number): string {
     return getPaginationHref(pathname, page, searchParams);
+  }
+
+  function closeCreatedKey() {
+    if (!createdKey) return;
+
+    showingCreatedKey.current = false;
+    setCreatedKey(null);
+    if (createdKey.project_id !== project.id) {
+      router.push(`/admin/projects/${createdKey.project_id}/mcp`);
+    }
   }
 
   const deleteMutation = useMutation({
@@ -378,11 +387,13 @@ export function KeyManager({
             if (newKey) {
               showingCreatedKey.current = true;
               setCreatedKey(newKey);
-              router.replace(getPageHref(1), { scroll: false });
+              if (newKey.project_id === project.id) {
+                router.replace(getPageHref(1), { scroll: false });
+              }
             }
 
             void queryClient.invalidateQueries({
-              queryKey: [KEY_QUERY_PREFIX, project.id],
+              queryKey: [KEY_QUERY_PREFIX, newKey?.project_id ?? project.id],
             });
           }}
         />
@@ -392,10 +403,7 @@ export function KeyManager({
         <Dialog
           open
           onOpenChange={(open) => {
-            if (!open) {
-              showingCreatedKey.current = false;
-              setCreatedKey(null);
-            }
+            if (!open) closeCreatedKey();
           }}
         >
           <DialogContent
@@ -411,7 +419,7 @@ export function KeyManager({
             </DialogHeader>
 
             <ConnectionConfig
-              serverId={serverId}
+              serverId={`project-${createdKey.project_id}`}
               endpoint={endpoint}
               apiKey={createdKey.key}
             />
@@ -419,10 +427,7 @@ export function KeyManager({
             <DialogFooter>
               <Button
                 type="button"
-                onClick={() => {
-                  showingCreatedKey.current = false;
-                  setCreatedKey(null);
-                }}
+                onClick={closeCreatedKey}
               >
                 我已保存
               </Button>

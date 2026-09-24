@@ -2,11 +2,13 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { FormDialogFooter } from "@/components/common/form-dialog-footer";
+import { ProjectPicker } from "@/app/admin/_components/project-picker";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +33,7 @@ import {
   mcpKeysUpdateMcpApiKey,
   type McpApiKeyCreated,
   type McpApiKeyPublic,
+  type ProjectPublic,
 } from "@/lib/client";
 
 const keySchema = z.object({
@@ -46,7 +49,7 @@ const keySchema = z.object({
 type KeyValues = z.infer<typeof keySchema>;
 
 type KeyEditorDialogProps = {
-  project: { id: string; name: string };
+  project: ProjectPublic;
   apiKey?: McpApiKeyPublic;
   onClose: () => void;
   onCloseAutoFocus?: (event: Event) => void;
@@ -60,6 +63,7 @@ export function KeyEditorDialog({
   onCloseAutoFocus,
   onSaved,
 }: KeyEditorDialogProps) {
+  const [selectedProject, setSelectedProject] = useState(project);
   const form = useForm<KeyValues>({
     resolver: zodResolver(keySchema),
     defaultValues: {
@@ -91,7 +95,7 @@ export function KeyEditorDialog({
       const { data } = await mcpKeysCreateMcpApiKey({
         body: {
           name: values.name,
-          project_id: project.id,
+          project_id: selectedProject.id,
           permission: values.permission,
         },
         throwOnError: true,
@@ -135,7 +139,18 @@ export function KeyEditorDialog({
           onSubmit={form.handleSubmit((values) => saveMutation.mutate(values))}
         >
           <FieldGroup>
-            <FieldDescription>项目：{project.name}</FieldDescription>
+            <Field>
+              <FieldLabel>项目</FieldLabel>
+              {apiKey ? (
+                <FieldDescription>{project.name}</FieldDescription>
+              ) : (
+                <ProjectPicker
+                  current={selectedProject}
+                  onSelect={setSelectedProject}
+                  disabled={saveMutation.isPending}
+                />
+              )}
+            </Field>
             <Field data-invalid={!!form.formState.errors.name}>
               <FieldLabel htmlFor="mcp-key-name">名称</FieldLabel>
               <Input
@@ -168,7 +183,7 @@ export function KeyEditorDialog({
                     <ToggleGroupItem value="read_write">读写</ToggleGroupItem>
                   </ToggleGroup>
                   <FieldDescription>
-                    只读仅开放知识库列表和检索；读写可使用全部知识库及业务数据工具。
+                    只读仅开放知识库列表和检索；读写可使用全部知识库工具。
                   </FieldDescription>
                 </Field>
               )}

@@ -337,19 +337,25 @@ def read_directory(
     ] = None,
     document_status: Annotated[
         Literal["ready", "processing", "failed"] | None,
-        Query(description="按知识库内文档状态筛选；筛选时不返回文件夹"),
+        Query(description="按当前文件夹及子文件夹内文档状态筛选；筛选时不返回文件夹"),
+    ] = None,
+    search: Annotated[
+        str | None,
+        Query(max_length=100, description="按文件名搜索知识库内所有文件夹的文档"),
     ] = None,
     skip: Annotated[int, Query(ge=0, description="跳过的记录数")] = 0,
     limit: Annotated[int, Query(ge=1, le=100, description="返回的最大记录数")] = 20,
 ) -> KnowledgeDirectoryPublic:
-    """查询目录及全库文档状态数量。document_status 可筛选已完成、处理中或失败的文档。"""
+    """查询目录或跨文件夹搜索文档，返回当前文件夹范围的状态数量。"""
     access.base(session, knowledge_base_id, write=False)
+    search = search.strip() if search else None
 
     entries, count, status_counts = service.list_directory(
         session=session,
         knowledge_base_id=knowledge_base_id,
         folder_id=folder_id,
         document_status=document_status,
+        search=search,
         skip=skip,
         limit=limit,
     )

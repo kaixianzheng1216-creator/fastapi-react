@@ -23,9 +23,11 @@ import {
 export function ProjectPicker({
   current,
   onSelect,
+  disabled,
 }: {
   current?: ProjectPublic;
   onSelect: (project: ProjectPublic) => void;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -76,11 +78,13 @@ export function ProjectPicker({
     <Popover open={open} onOpenChange={changeOpen}>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant="outline"
           className="w-full justify-between"
           role="combobox"
           aria-expanded={open}
           aria-label="选择项目"
+          disabled={disabled}
         >
           <span className="truncate">{current?.name ?? "选择项目"}</span>
           <ChevronsUpDownIcon data-icon="inline-end" />

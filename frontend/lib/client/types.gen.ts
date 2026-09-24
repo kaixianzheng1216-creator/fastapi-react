@@ -3447,9 +3447,15 @@ export type KnowledgeBasesReadDirectoryData = {
         /**
          * Document Status
          *
-         * 按知识库内文档状态筛选；筛选时不返回文件夹
+         * 按当前文件夹及子文件夹内文档状态筛选；筛选时不返回文件夹
          */
         document_status?: 'ready' | 'processing' | 'failed' | null;
+        /**
+         * Search
+         *
+         * 按文件名搜索知识库内所有文件夹的文档
+         */
+        search?: string | null;
         /**
          * Skip
          *
