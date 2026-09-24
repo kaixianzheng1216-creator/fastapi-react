@@ -10,8 +10,8 @@ const nextConfig = {
   allowedDevOrigins: ["frontend"],
   async redirects() {
     return [
-      { source: "/", destination: "/admin/users", permanent: false },
-      { source: "/skills/:path*", destination: "/admin/users", permanent: false },
+      { source: "/", destination: "/admin", permanent: false },
+      { source: "/skills/:path*", destination: "/admin", permanent: false },
     ];
   },
   async rewrites() {

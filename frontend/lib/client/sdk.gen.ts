@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AgentArchiveConversationData, AgentArchiveConversationErrors, AgentArchiveConversationResponses, AgentCancelAgentRunData, AgentCancelAgentRunErrors, AgentCancelAgentRunResponses, AgentCreateAgentRunData, AgentCreateAgentRunErrors, AgentCreateAgentRunResponses, AgentCreateConversationData, AgentCreateConversationErrors, AgentCreateConversationResponses, AgentDeleteConversationData, AgentDeleteConversationErrors, AgentDeleteConversationResponses, AgentDownloadConversationReportPdfData, AgentDownloadConversationReportPdfErrors, AgentDownloadConversationReportPdfResponses, AgentGenerateConversationTitleData, AgentGenerateConversationTitleErrors, AgentGenerateConversationTitleResponses, AgentReadAgentRunResumeStateData, AgentReadAgentRunResumeStateErrors, AgentReadAgentRunResumeStateResponses, AgentReadConversationData, AgentReadConversationErrors, AgentReadConversationResponses, AgentReadConversationsData, AgentReadConversationsErrors, AgentReadConversationsResponses, AgentReadModelsData, AgentReadModelsErrors, AgentReadModelsResponses, AgentRenameConversationData, AgentRenameConversationErrors, AgentRenameConversationResponses, AgentResumeAgentRunData, AgentResumeAgentRunErrors, AgentResumeAgentRunResponses, AgentUnarchiveConversationData, AgentUnarchiveConversationErrors, AgentUnarchiveConversationResponses, BrandMarketingReadRegionalDataData, BrandMarketingReadRegionalDataErrors, BrandMarketingReadRegionalDataResponses, ContentOperationsReadBilibiliRankingData, ContentOperationsReadBilibiliRankingErrors, ContentOperationsReadBilibiliRankingResponses, DataRefreshReadCurrentRefreshData, DataRefreshReadCurrentRefreshErrors, DataRefreshReadCurrentRefreshResponses, DataRefreshReadRefreshStatusData, DataRefreshReadRefreshStatusErrors, DataRefreshReadRefreshStatusResponses, DataRefreshStartDataRefreshData, DataRefreshStartDataRefreshErrors, DataRefreshStartDataRefreshResponses, FileLibrariesCreateDocumentUploadData, FileLibrariesCreateDocumentUploadErrors, FileLibrariesCreateDocumentUploadResponses, FileLibrariesCreateFileLibraryData, FileLibrariesCreateFileLibraryErrors, FileLibrariesCreateFileLibraryResponses, FileLibrariesCreateFolderData, FileLibrariesCreateFolderErrors, FileLibrariesCreateFolderResponses, FileLibrariesDeleteDirectoryEntriesData, FileLibrariesDeleteDirectoryEntriesErrors, FileLibrariesDeleteDirectoryEntriesResponses, FileLibrariesDeleteFileLibraryData, FileLibrariesDeleteFileLibraryErrors, FileLibrariesDeleteFileLibraryResponses, FileLibrariesMoveFolderData, FileLibrariesMoveFolderErrors, FileLibrariesMoveFolderResponses, FileLibrariesReadDirectoryData, FileLibrariesReadDirectoryErrors, FileLibrariesReadDirectoryResponses, FileLibrariesReadFileLibrariesData, FileLibrariesReadFileLibrariesErrors, FileLibrariesReadFileLibrariesResponses, FileLibrariesReadFileLibraryData, FileLibrariesReadFileLibraryErrors, FileLibrariesReadFileLibraryResponses, FileLibrariesReadFoldersData, FileLibrariesReadFoldersErrors, FileLibrariesReadFoldersResponses, FileLibrariesUpdateFileLibraryData, FileLibrariesUpdateFileLibraryErrors, FileLibrariesUpdateFileLibraryResponses, FileLibrariesUpdateFolderData, FileLibrariesUpdateFolderErrors, FileLibrariesUpdateFolderResponses, FilesCompleteFileUploadData, FilesCompleteFileUploadErrors, FilesCompleteFileUploadResponses, FilesCreateFileUploadData, FilesCreateFileUploadErrors, FilesCreateFileUploadResponses, FilesDeleteUnreferencedFileData, FilesDeleteUnreferencedFileErrors, FilesDeleteUnreferencedFileResponses, FilesGetFileDownloadUrlData, FilesGetFileDownloadUrlErrors, FilesGetFileDownloadUrlResponses, InfluencerMarketingReadInfluencerAccountsData, InfluencerMarketingReadInfluencerAccountsErrors, InfluencerMarketingReadInfluencerAccountsResponses, KnowledgeBasesCreateDocumentUploadData, KnowledgeBasesCreateDocumentUploadErrors, KnowledgeBasesCreateDocumentUploadResponses, KnowledgeBasesCreateDocumentUploadsData, KnowledgeBasesCreateDocumentUploadsErrors, KnowledgeBasesCreateDocumentUploadsResponses, KnowledgeBasesCreateFolderData, KnowledgeBasesCreateFolderErrors, KnowledgeBasesCreateFolderResponses, KnowledgeBasesCreateKnowledgeBaseData, KnowledgeBasesCreateKnowledgeBaseErrors, KnowledgeBasesCreateKnowledgeBaseResponses, KnowledgeBasesCreateWebpageDocumentData, KnowledgeBasesCreateWebpageDocumentErrors, KnowledgeBasesCreateWebpageDocumentResponses, KnowledgeBasesDeleteDirectoryEntriesData, KnowledgeBasesDeleteDirectoryEntriesErrors, KnowledgeBasesDeleteDirectoryEntriesResponses, KnowledgeBasesDeleteKnowledgeBaseData, KnowledgeBasesDeleteKnowledgeBaseErrors, KnowledgeBasesDeleteKnowledgeBaseResponses, KnowledgeBasesMoveFolderData, KnowledgeBasesMoveFolderErrors, KnowledgeBasesMoveFolderResponses, KnowledgeBasesReadDirectoryData, KnowledgeBasesReadDirectoryErrors, KnowledgeBasesReadDirectoryResponses, KnowledgeBasesReadFoldersData, KnowledgeBasesReadFoldersErrors, KnowledgeBasesReadFoldersResponses, KnowledgeBasesReadKnowledgeBaseData, KnowledgeBasesReadKnowledgeBaseErrors, KnowledgeBasesReadKnowledgeBaseResponses, KnowledgeBasesReadKnowledgeBasesData, KnowledgeBasesReadKnowledgeBasesErrors, KnowledgeBasesReadKnowledgeBasesResponses, KnowledgeBasesSearchKnowledgeBaseData, KnowledgeBasesSearchKnowledgeBaseErrors, KnowledgeBasesSearchKnowledgeBaseResponses, KnowledgeBasesUpdateFolderData, KnowledgeBasesUpdateFolderErrors, KnowledgeBasesUpdateFolderResponses, KnowledgeBasesUpdateKnowledgeBaseData, KnowledgeBasesUpdateKnowledgeBaseErrors, KnowledgeBasesUpdateKnowledgeBaseResponses, KnowledgeDocumentsCompleteDocumentUploadData, KnowledgeDocumentsCompleteDocumentUploadErrors, KnowledgeDocumentsCompleteDocumentUploadResponses, KnowledgeDocumentsCompleteDocumentUploadsData, KnowledgeDocumentsCompleteDocumentUploadsErrors, KnowledgeDocumentsCompleteDocumentUploadsResponses, KnowledgeDocumentsDeleteDocumentData, KnowledgeDocumentsDeleteDocumentErrors, KnowledgeDocumentsDeleteDocumentResponses, KnowledgeDocumentsDownloadOriginalDocumentData, KnowledgeDocumentsDownloadOriginalDocumentErrors, KnowledgeDocumentsDownloadOriginalDocumentResponses, KnowledgeDocumentsMoveDocumentData, KnowledgeDocumentsMoveDocumentErrors, KnowledgeDocumentsMoveDocumentResponses, KnowledgeDocumentsReadDocumentChunksData, KnowledgeDocumentsReadDocumentChunksErrors, KnowledgeDocumentsReadDocumentChunksResponses, KnowledgeDocumentsReadDocumentData, KnowledgeDocumentsReadDocumentErrors, KnowledgeDocumentsReadDocumentPreviewData, KnowledgeDocumentsReadDocumentPreviewErrors, KnowledgeDocumentsReadDocumentPreviewResponses, KnowledgeDocumentsReadDocumentResponses, KnowledgeDocumentsRetryDocumentData, KnowledgeDocumentsRetryDocumentErrors, KnowledgeDocumentsRetryDocumentResponses, LibraryDocumentsCompleteDocumentUploadData, LibraryDocumentsCompleteDocumentUploadErrors, LibraryDocumentsCompleteDocumentUploadResponses, LibraryDocumentsDeleteDocumentData, LibraryDocumentsDeleteDocumentErrors, LibraryDocumentsDeleteDocumentResponses, LibraryDocumentsDownloadOriginalDocumentData, LibraryDocumentsDownloadOriginalDocumentErrors, LibraryDocumentsDownloadOriginalDocumentResponses, LibraryDocumentsMoveDocumentData, LibraryDocumentsMoveDocumentErrors, LibraryDocumentsMoveDocumentResponses, LibraryDocumentsReadDocumentData, LibraryDocumentsReadDocumentErrors, LibraryDocumentsReadDocumentResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginTestTokenData, LoginTestTokenErrors, LoginTestTokenResponses, McpKeysCreateMcpApiKeyData, McpKeysCreateMcpApiKeyErrors, McpKeysCreateMcpApiKeyResponses, McpKeysDeleteMcpApiKeyData, McpKeysDeleteMcpApiKeyErrors, McpKeysDeleteMcpApiKeyResponses, McpKeysReadMcpApiKeysData, McpKeysReadMcpApiKeysErrors, McpKeysReadMcpApiKeysResponses, McpKeysUpdateMcpApiKeyData, McpKeysUpdateMcpApiKeyErrors, McpKeysUpdateMcpApiKeyResponses, SkillsCreateMdSkillData, SkillsCreateMdSkillErrors, SkillsCreateMdSkillResponses, SkillsCreateZipSkillData, SkillsCreateZipSkillErrors, SkillsCreateZipSkillResponses, SkillsDeleteSkillData, SkillsDeleteSkillErrors, SkillsDeleteSkillResponses, SkillsReadSkillData, SkillsReadSkillErrors, SkillsReadSkillFileData, SkillsReadSkillFileErrors, SkillsReadSkillFileResponses, SkillsReadSkillResponses, SkillsReadSkillsData, SkillsReadSkillsErrors, SkillsReadSkillsResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeErrors, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeErrors, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
+import type { AgentArchiveConversationData, AgentArchiveConversationErrors, AgentArchiveConversationResponses, AgentCancelAgentRunData, AgentCancelAgentRunErrors, AgentCancelAgentRunResponses, AgentCreateAgentRunData, AgentCreateAgentRunErrors, AgentCreateAgentRunResponses, AgentCreateConversationData, AgentCreateConversationErrors, AgentCreateConversationResponses, AgentDeleteConversationData, AgentDeleteConversationErrors, AgentDeleteConversationResponses, AgentDownloadConversationReportPdfData, AgentDownloadConversationReportPdfErrors, AgentDownloadConversationReportPdfResponses, AgentGenerateConversationTitleData, AgentGenerateConversationTitleErrors, AgentGenerateConversationTitleResponses, AgentReadAgentRunResumeStateData, AgentReadAgentRunResumeStateErrors, AgentReadAgentRunResumeStateResponses, AgentReadConversationData, AgentReadConversationErrors, AgentReadConversationResponses, AgentReadConversationsData, AgentReadConversationsErrors, AgentReadConversationsResponses, AgentReadModelsData, AgentReadModelsErrors, AgentReadModelsResponses, AgentRenameConversationData, AgentRenameConversationErrors, AgentRenameConversationResponses, AgentResumeAgentRunData, AgentResumeAgentRunErrors, AgentResumeAgentRunResponses, AgentUnarchiveConversationData, AgentUnarchiveConversationErrors, AgentUnarchiveConversationResponses, BrandMarketingReadRegionalDataData, BrandMarketingReadRegionalDataErrors, BrandMarketingReadRegionalDataResponses, ContentOperationsReadBilibiliRankingData, ContentOperationsReadBilibiliRankingErrors, ContentOperationsReadBilibiliRankingResponses, DataRefreshReadCurrentRefreshData, DataRefreshReadCurrentRefreshErrors, DataRefreshReadCurrentRefreshResponses, DataRefreshReadRefreshStatusData, DataRefreshReadRefreshStatusErrors, DataRefreshReadRefreshStatusResponses, DataRefreshStartDataRefreshData, DataRefreshStartDataRefreshErrors, DataRefreshStartDataRefreshResponses, FileLibrariesCreateDocumentUploadData, FileLibrariesCreateDocumentUploadErrors, FileLibrariesCreateDocumentUploadResponses, FileLibrariesCreateFileLibraryData, FileLibrariesCreateFileLibraryErrors, FileLibrariesCreateFileLibraryResponses, FileLibrariesCreateFolderData, FileLibrariesCreateFolderErrors, FileLibrariesCreateFolderResponses, FileLibrariesDeleteDirectoryEntriesData, FileLibrariesDeleteDirectoryEntriesErrors, FileLibrariesDeleteDirectoryEntriesResponses, FileLibrariesDeleteFileLibraryData, FileLibrariesDeleteFileLibraryErrors, FileLibrariesDeleteFileLibraryResponses, FileLibrariesMoveFolderData, FileLibrariesMoveFolderErrors, FileLibrariesMoveFolderResponses, FileLibrariesReadDirectoryData, FileLibrariesReadDirectoryErrors, FileLibrariesReadDirectoryResponses, FileLibrariesReadFileLibrariesData, FileLibrariesReadFileLibrariesErrors, FileLibrariesReadFileLibrariesResponses, FileLibrariesReadFileLibraryData, FileLibrariesReadFileLibraryErrors, FileLibrariesReadFileLibraryResponses, FileLibrariesReadFoldersData, FileLibrariesReadFoldersErrors, FileLibrariesReadFoldersResponses, FileLibrariesUpdateFileLibraryData, FileLibrariesUpdateFileLibraryErrors, FileLibrariesUpdateFileLibraryResponses, FileLibrariesUpdateFolderData, FileLibrariesUpdateFolderErrors, FileLibrariesUpdateFolderResponses, FilesCompleteFileUploadData, FilesCompleteFileUploadErrors, FilesCompleteFileUploadResponses, FilesCreateFileUploadData, FilesCreateFileUploadErrors, FilesCreateFileUploadResponses, FilesDeleteUnreferencedFileData, FilesDeleteUnreferencedFileErrors, FilesDeleteUnreferencedFileResponses, FilesGetFileDownloadUrlData, FilesGetFileDownloadUrlErrors, FilesGetFileDownloadUrlResponses, InfluencerMarketingReadInfluencerAccountsData, InfluencerMarketingReadInfluencerAccountsErrors, InfluencerMarketingReadInfluencerAccountsResponses, KnowledgeBasesCreateDocumentUploadData, KnowledgeBasesCreateDocumentUploadErrors, KnowledgeBasesCreateDocumentUploadResponses, KnowledgeBasesCreateDocumentUploadsData, KnowledgeBasesCreateDocumentUploadsErrors, KnowledgeBasesCreateDocumentUploadsResponses, KnowledgeBasesCreateFolderData, KnowledgeBasesCreateFolderErrors, KnowledgeBasesCreateFolderResponses, KnowledgeBasesCreateKnowledgeBaseData, KnowledgeBasesCreateKnowledgeBaseErrors, KnowledgeBasesCreateKnowledgeBaseResponses, KnowledgeBasesCreateWebpageDocumentData, KnowledgeBasesCreateWebpageDocumentErrors, KnowledgeBasesCreateWebpageDocumentResponses, KnowledgeBasesDeleteDirectoryEntriesData, KnowledgeBasesDeleteDirectoryEntriesErrors, KnowledgeBasesDeleteDirectoryEntriesResponses, KnowledgeBasesDeleteKnowledgeBaseData, KnowledgeBasesDeleteKnowledgeBaseErrors, KnowledgeBasesDeleteKnowledgeBaseResponses, KnowledgeBasesMoveFolderData, KnowledgeBasesMoveFolderErrors, KnowledgeBasesMoveFolderResponses, KnowledgeBasesReadDirectoryData, KnowledgeBasesReadDirectoryErrors, KnowledgeBasesReadDirectoryResponses, KnowledgeBasesReadFoldersData, KnowledgeBasesReadFoldersErrors, KnowledgeBasesReadFoldersResponses, KnowledgeBasesReadKnowledgeBaseData, KnowledgeBasesReadKnowledgeBaseErrors, KnowledgeBasesReadKnowledgeBaseResponses, KnowledgeBasesReadKnowledgeBasesData, KnowledgeBasesReadKnowledgeBasesErrors, KnowledgeBasesReadKnowledgeBasesResponses, KnowledgeBasesSearchKnowledgeBaseData, KnowledgeBasesSearchKnowledgeBaseErrors, KnowledgeBasesSearchKnowledgeBaseResponses, KnowledgeBasesUpdateFolderData, KnowledgeBasesUpdateFolderErrors, KnowledgeBasesUpdateFolderResponses, KnowledgeBasesUpdateKnowledgeBaseData, KnowledgeBasesUpdateKnowledgeBaseErrors, KnowledgeBasesUpdateKnowledgeBaseResponses, KnowledgeDocumentsCompleteDocumentUploadData, KnowledgeDocumentsCompleteDocumentUploadErrors, KnowledgeDocumentsCompleteDocumentUploadResponses, KnowledgeDocumentsCompleteDocumentUploadsData, KnowledgeDocumentsCompleteDocumentUploadsErrors, KnowledgeDocumentsCompleteDocumentUploadsResponses, KnowledgeDocumentsDeleteDocumentData, KnowledgeDocumentsDeleteDocumentErrors, KnowledgeDocumentsDeleteDocumentResponses, KnowledgeDocumentsDownloadOriginalDocumentData, KnowledgeDocumentsDownloadOriginalDocumentErrors, KnowledgeDocumentsDownloadOriginalDocumentResponses, KnowledgeDocumentsMoveDocumentData, KnowledgeDocumentsMoveDocumentErrors, KnowledgeDocumentsMoveDocumentResponses, KnowledgeDocumentsReadDocumentChunksData, KnowledgeDocumentsReadDocumentChunksErrors, KnowledgeDocumentsReadDocumentChunksResponses, KnowledgeDocumentsReadDocumentData, KnowledgeDocumentsReadDocumentErrors, KnowledgeDocumentsReadDocumentPreviewData, KnowledgeDocumentsReadDocumentPreviewErrors, KnowledgeDocumentsReadDocumentPreviewResponses, KnowledgeDocumentsReadDocumentResponses, KnowledgeDocumentsRetryDocumentData, KnowledgeDocumentsRetryDocumentErrors, KnowledgeDocumentsRetryDocumentResponses, LibraryDocumentsCompleteDocumentUploadData, LibraryDocumentsCompleteDocumentUploadErrors, LibraryDocumentsCompleteDocumentUploadResponses, LibraryDocumentsDeleteDocumentData, LibraryDocumentsDeleteDocumentErrors, LibraryDocumentsDeleteDocumentResponses, LibraryDocumentsDownloadOriginalDocumentData, LibraryDocumentsDownloadOriginalDocumentErrors, LibraryDocumentsDownloadOriginalDocumentResponses, LibraryDocumentsMoveDocumentData, LibraryDocumentsMoveDocumentErrors, LibraryDocumentsMoveDocumentResponses, LibraryDocumentsReadDocumentData, LibraryDocumentsReadDocumentErrors, LibraryDocumentsReadDocumentResponses, LoginLoginAccessTokenData, LoginLoginAccessTokenErrors, LoginLoginAccessTokenResponses, LoginTestTokenData, LoginTestTokenErrors, LoginTestTokenResponses, McpKeysCreateMcpApiKeyData, McpKeysCreateMcpApiKeyErrors, McpKeysCreateMcpApiKeyResponses, McpKeysDeleteMcpApiKeyData, McpKeysDeleteMcpApiKeyErrors, McpKeysDeleteMcpApiKeyResponses, McpKeysReadMcpApiKeysData, McpKeysReadMcpApiKeysErrors, McpKeysReadMcpApiKeysResponses, McpKeysReadProjectMcpToolsData, McpKeysReadProjectMcpToolsErrors, McpKeysReadProjectMcpToolsResponses, McpKeysUpdateMcpApiKeyData, McpKeysUpdateMcpApiKeyErrors, McpKeysUpdateMcpApiKeyResponses, ProjectsAddMembersData, ProjectsAddMembersErrors, ProjectsAddMembersResponses, ProjectsCreateProjectData, ProjectsCreateProjectErrors, ProjectsCreateProjectResponses, ProjectsDeleteProjectData, ProjectsDeleteProjectErrors, ProjectsDeleteProjectResponses, ProjectsReadMemberCandidatesData, ProjectsReadMemberCandidatesErrors, ProjectsReadMemberCandidatesResponses, ProjectsReadMembersData, ProjectsReadMembersErrors, ProjectsReadMembersResponses, ProjectsReadProjectData, ProjectsReadProjectErrors, ProjectsReadProjectResponses, ProjectsReadProjectsData, ProjectsReadProjectsErrors, ProjectsReadProjectsResponses, ProjectsRemoveMemberData, ProjectsRemoveMemberErrors, ProjectsRemoveMemberResponses, ProjectsUpdateMemberData, ProjectsUpdateMemberErrors, ProjectsUpdateMemberResponses, ProjectsUpdateProjectData, ProjectsUpdateProjectErrors, ProjectsUpdateProjectResponses, SkillsCreateMdSkillData, SkillsCreateMdSkillErrors, SkillsCreateMdSkillResponses, SkillsCreateZipSkillData, SkillsCreateZipSkillErrors, SkillsCreateZipSkillResponses, SkillsDeleteSkillData, SkillsDeleteSkillErrors, SkillsDeleteSkillResponses, SkillsReadSkillData, SkillsReadSkillErrors, SkillsReadSkillFileData, SkillsReadSkillFileErrors, SkillsReadSkillFileResponses, SkillsReadSkillResponses, SkillsReadSkillsData, SkillsReadSkillsErrors, SkillsReadSkillsResponses, UsersCreateUserData, UsersCreateUserErrors, UsersCreateUserResponses, UsersDeleteUserData, UsersDeleteUserErrors, UsersDeleteUserMeData, UsersDeleteUserMeErrors, UsersDeleteUserMeResponses, UsersDeleteUserResponses, UsersReadUserByIdData, UsersReadUserByIdErrors, UsersReadUserByIdResponses, UsersReadUserMeData, UsersReadUserMeErrors, UsersReadUserMeResponses, UsersReadUsersData, UsersReadUsersErrors, UsersReadUsersResponses, UsersRegisterUserData, UsersRegisterUserErrors, UsersRegisterUserResponses, UsersUpdatePasswordMeData, UsersUpdatePasswordMeErrors, UsersUpdatePasswordMeResponses, UsersUpdateUserData, UsersUpdateUserErrors, UsersUpdateUserMeData, UsersUpdateUserMeErrors, UsersUpdateUserMeResponses, UsersUpdateUserResponses, UtilsHealthCheckData, UtilsHealthCheckResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -1089,9 +1089,16 @@ export const dataRefreshReadRefreshStatus = <ThrowOnError extends boolean = fals
 });
 
 /**
+ * Read Project Mcp Tools
+ */
+export const mcpKeysReadProjectMcpTools = <ThrowOnError extends boolean = false>(options?: Options<McpKeysReadProjectMcpToolsData, ThrowOnError>): RequestResult<McpKeysReadProjectMcpToolsResponses, McpKeysReadProjectMcpToolsErrors, ThrowOnError> => (options?.client ?? client).get<McpKeysReadProjectMcpToolsResponses, McpKeysReadProjectMcpToolsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/mcp/keys/tools',
+    ...options
+});
+
+/**
  * Read Mcp Api Keys
- *
- * 按内部或外部用途查询密钥，不返回密钥摘要或明文。
  */
 export const mcpKeysReadMcpApiKeys = <ThrowOnError extends boolean = false>(options: Options<McpKeysReadMcpApiKeysData, ThrowOnError>): RequestResult<McpKeysReadMcpApiKeysResponses, McpKeysReadMcpApiKeysErrors, ThrowOnError> => (options.client ?? client).get<McpKeysReadMcpApiKeysResponses, McpKeysReadMcpApiKeysErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1128,11 +1135,117 @@ export const mcpKeysDeleteMcpApiKey = <ThrowOnError extends boolean = false>(opt
 /**
  * Update Mcp Api Key
  *
- * 修改密钥名称和启用状态，用途不可变更。
+ * 修改名称、启用状态及权限，所属项目不可变更。
  */
 export const mcpKeysUpdateMcpApiKey = <ThrowOnError extends boolean = false>(options: Options<McpKeysUpdateMcpApiKeyData, ThrowOnError>): RequestResult<McpKeysUpdateMcpApiKeyResponses, McpKeysUpdateMcpApiKeyErrors, ThrowOnError> => (options.client ?? client).put<McpKeysUpdateMcpApiKeyResponses, McpKeysUpdateMcpApiKeyErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/v1/mcp/keys/{key_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Read Projects
+ */
+export const projectsReadProjects = <ThrowOnError extends boolean = false>(options?: Options<ProjectsReadProjectsData, ThrowOnError>): RequestResult<ProjectsReadProjectsResponses, ProjectsReadProjectsErrors, ThrowOnError> => (options?.client ?? client).get<ProjectsReadProjectsResponses, ProjectsReadProjectsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/projects',
+    ...options
+});
+
+/**
+ * Create Project
+ */
+export const projectsCreateProject = <ThrowOnError extends boolean = false>(options: Options<ProjectsCreateProjectData, ThrowOnError>): RequestResult<ProjectsCreateProjectResponses, ProjectsCreateProjectErrors, ThrowOnError> => (options.client ?? client).post<ProjectsCreateProjectResponses, ProjectsCreateProjectErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/projects',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete Project
+ */
+export const projectsDeleteProject = <ThrowOnError extends boolean = false>(options: Options<ProjectsDeleteProjectData, ThrowOnError>): RequestResult<ProjectsDeleteProjectResponses, ProjectsDeleteProjectErrors, ThrowOnError> => (options.client ?? client).delete<ProjectsDeleteProjectResponses, ProjectsDeleteProjectErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/projects/{project_id}',
+    ...options
+});
+
+/**
+ * Read Project
+ */
+export const projectsReadProject = <ThrowOnError extends boolean = false>(options: Options<ProjectsReadProjectData, ThrowOnError>): RequestResult<ProjectsReadProjectResponses, ProjectsReadProjectErrors, ThrowOnError> => (options.client ?? client).get<ProjectsReadProjectResponses, ProjectsReadProjectErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/projects/{project_id}',
+    ...options
+});
+
+/**
+ * Update Project
+ */
+export const projectsUpdateProject = <ThrowOnError extends boolean = false>(options: Options<ProjectsUpdateProjectData, ThrowOnError>): RequestResult<ProjectsUpdateProjectResponses, ProjectsUpdateProjectErrors, ThrowOnError> => (options.client ?? client).patch<ProjectsUpdateProjectResponses, ProjectsUpdateProjectErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/projects/{project_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Read Members
+ */
+export const projectsReadMembers = <ThrowOnError extends boolean = false>(options: Options<ProjectsReadMembersData, ThrowOnError>): RequestResult<ProjectsReadMembersResponses, ProjectsReadMembersErrors, ThrowOnError> => (options.client ?? client).get<ProjectsReadMembersResponses, ProjectsReadMembersErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/projects/{project_id}/members',
+    ...options
+});
+
+/**
+ * Add Members
+ */
+export const projectsAddMembers = <ThrowOnError extends boolean = false>(options: Options<ProjectsAddMembersData, ThrowOnError>): RequestResult<ProjectsAddMembersResponses, ProjectsAddMembersErrors, ThrowOnError> => (options.client ?? client).post<ProjectsAddMembersResponses, ProjectsAddMembersErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/projects/{project_id}/members',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Read Member Candidates
+ */
+export const projectsReadMemberCandidates = <ThrowOnError extends boolean = false>(options: Options<ProjectsReadMemberCandidatesData, ThrowOnError>): RequestResult<ProjectsReadMemberCandidatesResponses, ProjectsReadMemberCandidatesErrors, ThrowOnError> => (options.client ?? client).get<ProjectsReadMemberCandidatesResponses, ProjectsReadMemberCandidatesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/projects/{project_id}/member-candidates',
+    ...options
+});
+
+/**
+ * Remove Member
+ */
+export const projectsRemoveMember = <ThrowOnError extends boolean = false>(options: Options<ProjectsRemoveMemberData, ThrowOnError>): RequestResult<ProjectsRemoveMemberResponses, ProjectsRemoveMemberErrors, ThrowOnError> => (options.client ?? client).delete<ProjectsRemoveMemberResponses, ProjectsRemoveMemberErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/projects/{project_id}/members/{user_id}',
+    ...options
+});
+
+/**
+ * Update Member
+ */
+export const projectsUpdateMember = <ThrowOnError extends boolean = false>(options: Options<ProjectsUpdateMemberData, ThrowOnError>): RequestResult<ProjectsUpdateMemberResponses, ProjectsUpdateMemberErrors, ThrowOnError> => (options.client ?? client).patch<ProjectsUpdateMemberResponses, ProjectsUpdateMemberErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/api/v1/admin/projects/{project_id}/members/{user_id}',
     ...options,
     headers: {
         'Content-Type': 'application/json',

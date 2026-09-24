@@ -58,6 +58,36 @@ export type AddToolResultCommand = {
 };
 
 /**
+ * AdminUserCreate
+ */
+export type AdminUserCreate = {
+    /**
+     * Username
+     */
+    username: string;
+    /**
+     * Is Active
+     */
+    is_active?: boolean;
+    /**
+     * Is Superuser
+     */
+    is_superuser?: boolean;
+    /**
+     * Full Name
+     */
+    full_name?: string | null;
+    /**
+     * Password
+     */
+    password: string;
+    /**
+     * Projects
+     */
+    projects?: Array<ProjectAssignment>;
+};
+
+/**
  * AgentChatRequest
  */
 export type AgentChatRequest = {
@@ -284,6 +314,42 @@ export type BodySkillsCreateZipSkill = {
      * Skill Zip
      */
     skill_zip: Blob | File;
+};
+
+/**
+ * CandidatePublic
+ */
+export type CandidatePublic = {
+    /**
+     * User Id
+     */
+    user_id: string;
+    /**
+     * Username
+     */
+    username: string;
+    /**
+     * Full Name
+     */
+    full_name: string | null;
+    /**
+     * Is Member
+     */
+    is_member: boolean;
+};
+
+/**
+ * CandidatesPublic
+ */
+export type CandidatesPublic = {
+    /**
+     * Data
+     */
+    data: Array<CandidatePublic>;
+    /**
+     * Count
+     */
+    count: number;
 };
 
 /**
@@ -725,6 +791,12 @@ export type JsonValue = unknown;
  */
 export type KnowledgeBaseCreate = {
     /**
+     * Project Id
+     *
+     * 所属项目 ID；后台必填，MCP 由密钥确定
+     */
+    project_id?: string | null;
+    /**
      * Name
      *
      * 知识库名称
@@ -742,6 +814,10 @@ export type KnowledgeBaseCreate = {
  * KnowledgeBasePublic
  */
 export type KnowledgeBasePublic = {
+    /**
+     * Project Id
+     */
+    project_id: string;
     /**
      * Id
      */
@@ -959,9 +1035,9 @@ export type KnowledgeDocumentMove = {
     /**
      * Folder Id
      *
-     * 目标文件夹 ID；传 null 表示移动到根目录
+     * 目标文件夹 ID；不传表示移动到根目录
      */
-    folder_id: string | null;
+    folder_id?: string | null;
 };
 
 /**
@@ -1138,9 +1214,9 @@ export type KnowledgeFolderMove = {
     /**
      * Parent Id
      *
-     * 目标父文件夹 ID；传 null 表示移动到根目录
+     * 目标父文件夹 ID；不传表示移动到根目录
      */
-    parent_id: string | null;
+    parent_id?: string | null;
 };
 
 /**
@@ -1545,13 +1621,26 @@ export type McpApiKeyCreate = {
      * Name
      */
     name: string;
-    scope: McpScope;
+    /**
+     * Project Id
+     */
+    project_id: string;
+    permission: McpPermission;
 };
 
 /**
  * McpApiKeyCreated
  */
 export type McpApiKeyCreated = {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Created By
+     */
+    created_by: string;
+    permission: McpPermission;
     /**
      * Id
      */
@@ -1560,7 +1649,6 @@ export type McpApiKeyCreated = {
      * Name
      */
     name: string;
-    scope: McpScope;
     /**
      * Key Prefix
      */
@@ -1592,6 +1680,15 @@ export type McpApiKeyCreated = {
  */
 export type McpApiKeyPublic = {
     /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Created By
+     */
+    created_by: string;
+    permission: McpPermission;
+    /**
      * Id
      */
     id: string;
@@ -1599,7 +1696,6 @@ export type McpApiKeyPublic = {
      * Name
      */
     name: string;
-    scope: McpScope;
     /**
      * Key Prefix
      */
@@ -1634,6 +1730,7 @@ export type McpApiKeyUpdate = {
      * Is Active
      */
     is_active: boolean;
+    permission: McpPermission;
 };
 
 /**
@@ -1644,12 +1741,92 @@ export type McpApiKeysPublic = {
      * Data
      */
     data: Array<McpApiKeyPublic>;
+    /**
+     * Count
+     */
+    count?: number;
 };
 
 /**
- * McpScope
+ * McpPermission
  */
-export type McpScope = 'internal' | 'external';
+export type McpPermission = 'read_only' | 'read_write';
+
+/**
+ * McpToolPublic
+ */
+export type McpToolPublic = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Group
+     */
+    group: 'knowledge' | 'business';
+    /**
+     * Read Only
+     */
+    read_only: boolean;
+};
+
+/**
+ * MemberPublic
+ */
+export type MemberPublic = {
+    /**
+     * User Id
+     */
+    user_id: string;
+    /**
+     * Username
+     */
+    username: string;
+    /**
+     * Full Name
+     */
+    full_name: string | null;
+    role: ProjectRole;
+    /**
+     * Created At
+     */
+    created_at: string;
+};
+
+/**
+ * MemberUpdate
+ */
+export type MemberUpdate = {
+    role: ProjectRole;
+};
+
+/**
+ * MembersAdd
+ */
+export type MembersAdd = {
+    /**
+     * User Ids
+     */
+    user_ids: Array<string>;
+};
+
+/**
+ * MembersPublic
+ */
+export type MembersPublic = {
+    /**
+     * Data
+     */
+    data: Array<MemberPublic>;
+    /**
+     * Count
+     */
+    count: number;
+};
 
 /**
  * Message
@@ -1673,6 +1850,103 @@ export type MessageOutput = {
      * Message
      */
     message: string;
+};
+
+/**
+ * ProjectAssignment
+ */
+export type ProjectAssignment = {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    role?: ProjectRole;
+};
+
+/**
+ * ProjectCreate
+ */
+export type ProjectCreate = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Admin Ids
+     */
+    admin_ids?: Array<string>;
+};
+
+/**
+ * ProjectPublic
+ */
+export type ProjectPublic = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+    role?: ProjectRole | null;
+    /**
+     * Member Count
+     */
+    member_count?: number;
+    /**
+     * Knowledge Base Count
+     */
+    knowledge_base_count?: number;
+};
+
+/**
+ * ProjectRole
+ */
+export type ProjectRole = 'admin' | 'member';
+
+/**
+ * ProjectUpdate
+ */
+export type ProjectUpdate = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+};
+
+/**
+ * ProjectsPublic
+ */
+export type ProjectsPublic = {
+    /**
+     * Data
+     */
+    data: Array<ProjectPublic>;
+    /**
+     * Count
+     */
+    count: number;
 };
 
 /**
@@ -1996,32 +2270,6 @@ export type UpdatePassword = {
      * New Password
      */
     new_password: string;
-};
-
-/**
- * UserCreate
- */
-export type UserCreate = {
-    /**
-     * Username
-     */
-    username: string;
-    /**
-     * Is Active
-     */
-    is_active?: boolean;
-    /**
-     * Is Superuser
-     */
-    is_superuser?: boolean;
-    /**
-     * Full Name
-     */
-    full_name?: string | null;
-    /**
-     * Password
-     */
-    password: string;
 };
 
 /**
@@ -2596,7 +2844,7 @@ export type UsersReadUsersResponses = {
 export type UsersReadUsersResponse = UsersReadUsersResponses[keyof UsersReadUsersResponses];
 
 export type UsersCreateUserData = {
-    body: UserCreate;
+    body: AdminUserCreate;
     path?: never;
     query?: never;
     url: '/api/v1/users';
@@ -2705,6 +2953,12 @@ export type KnowledgeBasesReadKnowledgeBasesData = {
     path?: never;
     query?: {
         /**
+         * Project Id
+         *
+         * 所属项目 ID；后台必填，MCP 由密钥确定
+         */
+        project_id?: string | null;
+        /**
          * Skip
          *
          * 跳过的记录数
@@ -2719,7 +2973,7 @@ export type KnowledgeBasesReadKnowledgeBasesData = {
         /**
          * Search
          *
-         * 按知识库名称搜索
+         * 按知识库名称、描述搜索
          */
         search?: string | null;
         /**
@@ -3110,7 +3364,7 @@ export type KnowledgeBasesUpdateFolderResponses = {
 export type KnowledgeBasesUpdateFolderResponse = KnowledgeBasesUpdateFolderResponses[keyof KnowledgeBasesUpdateFolderResponses];
 
 export type KnowledgeBasesMoveFolderData = {
-    body: KnowledgeFolderMove;
+    body?: KnowledgeFolderMove;
     path: {
         /**
          * Knowledge Base Id
@@ -3886,7 +4140,7 @@ export type KnowledgeDocumentsDownloadOriginalDocumentResponses = {
 export type KnowledgeDocumentsDownloadOriginalDocumentResponse = KnowledgeDocumentsDownloadOriginalDocumentResponses[keyof KnowledgeDocumentsDownloadOriginalDocumentResponses];
 
 export type KnowledgeDocumentsMoveDocumentData = {
-    body: KnowledgeDocumentMove;
+    body?: KnowledgeDocumentMove;
     path: {
         /**
          * Document Id
@@ -6077,11 +6331,73 @@ export type DataRefreshReadRefreshStatusResponses = {
 
 export type DataRefreshReadRefreshStatusResponse = DataRefreshReadRefreshStatusResponses[keyof DataRefreshReadRefreshStatusResponses];
 
+export type McpKeysReadProjectMcpToolsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/mcp/keys/tools';
+};
+
+export type McpKeysReadProjectMcpToolsErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+};
+
+export type McpKeysReadProjectMcpToolsError = McpKeysReadProjectMcpToolsErrors[keyof McpKeysReadProjectMcpToolsErrors];
+
+export type McpKeysReadProjectMcpToolsResponses = {
+    /**
+     * Response Mcp Keys-Read Project Mcp Tools
+     *
+     * Successful Response
+     */
+    200: Array<McpToolPublic>;
+};
+
+export type McpKeysReadProjectMcpToolsResponse = McpKeysReadProjectMcpToolsResponses[keyof McpKeysReadProjectMcpToolsResponses];
+
 export type McpKeysReadMcpApiKeysData = {
     body?: never;
     path?: never;
     query: {
-        scope: McpScope;
+        /**
+         * Project Id
+         */
+        project_id: string;
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Search
+         */
+        search?: string | null;
+        /**
+         * Permission
+         */
+        permission?: McpPermission | null;
+        /**
+         * Is Active
+         */
+        is_active?: boolean | null;
     };
     url: '/api/v1/mcp/keys';
 };
@@ -6252,3 +6568,544 @@ export type McpKeysUpdateMcpApiKeyResponses = {
 };
 
 export type McpKeysUpdateMcpApiKeyResponse = McpKeysUpdateMcpApiKeyResponses[keyof McpKeysUpdateMcpApiKeyResponses];
+
+export type ProjectsReadProjectsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Search
+         */
+        search?: string | null;
+    };
+    url: '/api/v1/admin/projects';
+};
+
+export type ProjectsReadProjectsErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ProjectsReadProjectsError = ProjectsReadProjectsErrors[keyof ProjectsReadProjectsErrors];
+
+export type ProjectsReadProjectsResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProjectsPublic;
+};
+
+export type ProjectsReadProjectsResponse = ProjectsReadProjectsResponses[keyof ProjectsReadProjectsResponses];
+
+export type ProjectsCreateProjectData = {
+    body: ProjectCreate;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/projects';
+};
+
+export type ProjectsCreateProjectErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ProjectsCreateProjectError = ProjectsCreateProjectErrors[keyof ProjectsCreateProjectErrors];
+
+export type ProjectsCreateProjectResponses = {
+    /**
+     * Successful Response
+     */
+    201: ProjectPublic;
+};
+
+export type ProjectsCreateProjectResponse = ProjectsCreateProjectResponses[keyof ProjectsCreateProjectResponses];
+
+export type ProjectsDeleteProjectData = {
+    body?: never;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/projects/{project_id}';
+};
+
+export type ProjectsDeleteProjectErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ProjectsDeleteProjectError = ProjectsDeleteProjectErrors[keyof ProjectsDeleteProjectErrors];
+
+export type ProjectsDeleteProjectResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type ProjectsDeleteProjectResponse = ProjectsDeleteProjectResponses[keyof ProjectsDeleteProjectResponses];
+
+export type ProjectsReadProjectData = {
+    body?: never;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/projects/{project_id}';
+};
+
+export type ProjectsReadProjectErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ProjectsReadProjectError = ProjectsReadProjectErrors[keyof ProjectsReadProjectErrors];
+
+export type ProjectsReadProjectResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProjectPublic;
+};
+
+export type ProjectsReadProjectResponse = ProjectsReadProjectResponses[keyof ProjectsReadProjectResponses];
+
+export type ProjectsUpdateProjectData = {
+    body: ProjectUpdate;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/projects/{project_id}';
+};
+
+export type ProjectsUpdateProjectErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ProjectsUpdateProjectError = ProjectsUpdateProjectErrors[keyof ProjectsUpdateProjectErrors];
+
+export type ProjectsUpdateProjectResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProjectPublic;
+};
+
+export type ProjectsUpdateProjectResponse = ProjectsUpdateProjectResponses[keyof ProjectsUpdateProjectResponses];
+
+export type ProjectsReadMembersData = {
+    body?: never;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: {
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Search
+         */
+        search?: string | null;
+        /**
+         * Role
+         */
+        role?: ProjectRole | null;
+    };
+    url: '/api/v1/admin/projects/{project_id}/members';
+};
+
+export type ProjectsReadMembersErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ProjectsReadMembersError = ProjectsReadMembersErrors[keyof ProjectsReadMembersErrors];
+
+export type ProjectsReadMembersResponses = {
+    /**
+     * Successful Response
+     */
+    200: MembersPublic;
+};
+
+export type ProjectsReadMembersResponse = ProjectsReadMembersResponses[keyof ProjectsReadMembersResponses];
+
+export type ProjectsAddMembersData = {
+    body: MembersAdd;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/projects/{project_id}/members';
+};
+
+export type ProjectsAddMembersErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ProjectsAddMembersError = ProjectsAddMembersErrors[keyof ProjectsAddMembersErrors];
+
+export type ProjectsAddMembersResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type ProjectsAddMembersResponse = ProjectsAddMembersResponses[keyof ProjectsAddMembersResponses];
+
+export type ProjectsReadMemberCandidatesData = {
+    body?: never;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: {
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Search
+         */
+        search?: string | null;
+    };
+    url: '/api/v1/admin/projects/{project_id}/member-candidates';
+};
+
+export type ProjectsReadMemberCandidatesErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ProjectsReadMemberCandidatesError = ProjectsReadMemberCandidatesErrors[keyof ProjectsReadMemberCandidatesErrors];
+
+export type ProjectsReadMemberCandidatesResponses = {
+    /**
+     * Successful Response
+     */
+    200: CandidatesPublic;
+};
+
+export type ProjectsReadMemberCandidatesResponse = ProjectsReadMemberCandidatesResponses[keyof ProjectsReadMemberCandidatesResponses];
+
+export type ProjectsRemoveMemberData = {
+    body?: never;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/projects/{project_id}/members/{user_id}';
+};
+
+export type ProjectsRemoveMemberErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ProjectsRemoveMemberError = ProjectsRemoveMemberErrors[keyof ProjectsRemoveMemberErrors];
+
+export type ProjectsRemoveMemberResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type ProjectsRemoveMemberResponse = ProjectsRemoveMemberResponses[keyof ProjectsRemoveMemberResponses];
+
+export type ProjectsUpdateMemberData = {
+    body: MemberUpdate;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/projects/{project_id}/members/{user_id}';
+};
+
+export type ProjectsUpdateMemberErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ProjectsUpdateMemberError = ProjectsUpdateMemberErrors[keyof ProjectsUpdateMemberErrors];
+
+export type ProjectsUpdateMemberResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type ProjectsUpdateMemberResponse = ProjectsUpdateMemberResponses[keyof ProjectsUpdateMemberResponses];
