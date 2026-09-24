@@ -70,7 +70,7 @@ def list_knowledge_bases(
     statement = (
         select(KnowledgeBase)
         .where(*filters)
-        .order_by(col(KnowledgeBase.created_at).desc())
+        .order_by(col(KnowledgeBase.name), col(KnowledgeBase.id))
         .offset(skip)
         .limit(limit)
     )
