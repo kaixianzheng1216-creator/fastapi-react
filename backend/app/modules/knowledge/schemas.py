@@ -19,6 +19,9 @@ KnowledgeFolderName = Annotated[
 
 
 class KnowledgeBaseCreate(SQLModel):
+    project_id: uuid.UUID | None = Field(
+        default=None, description="所属项目 ID；后台必填，MCP 由密钥确定"
+    )
     name: KnowledgeBaseName = Field(description="知识库名称")
     description: str | None = Field(
         default=None,
@@ -57,6 +60,7 @@ class KnowledgeBaseUpdate(SQLModel):
 
 
 class KnowledgeBasePublic(SQLModel):
+    project_id: uuid.UUID
     id: uuid.UUID
     name: str
     description: str | None
@@ -95,7 +99,8 @@ class KnowledgeFolderUpdate(SQLModel):
 
 class KnowledgeFolderMove(SQLModel):
     parent_id: uuid.UUID | None = Field(
-        description="目标父文件夹 ID；传 null 表示移动到根目录"
+        default=None,
+        description="目标父文件夹 ID；不传表示移动到根目录",
     )
 
 
@@ -119,7 +124,8 @@ class KnowledgeWebpageCreate(SQLModel):
 
 class KnowledgeDocumentMove(SQLModel):
     folder_id: uuid.UUID | None = Field(
-        description="目标文件夹 ID；传 null 表示移动到根目录"
+        default=None,
+        description="目标文件夹 ID；不传表示移动到根目录",
     )
 
 

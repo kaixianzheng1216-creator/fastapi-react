@@ -31,7 +31,6 @@ from app.modules.knowledge.schemas import (
     KnowledgeDocumentPublic,
     KnowledgeDocumentUploadPublic,
 )
-from app.modules.users.models import User
 
 DOCUMENT_JSON_PATH = "knowledge/{document_id}/document.json"
 DOCUMENT_PREVIEW_PATH = "knowledge/{document_id}/preview.md"
@@ -51,7 +50,7 @@ def document_preview_key(document_id: uuid.UUID) -> str:
 def create_upload(
     *,
     session: Session,
-    current_user: User,
+    owner_id: uuid.UUID,
     knowledge_base_id: uuid.UUID,
     folder_id: uuid.UUID | None,
     upload_request: FileUploadRequest,
@@ -63,13 +62,13 @@ def create_upload(
     file_id = uuid.uuid4()
 
     object_key = object_storage.create_object_key(
-        owner_id=current_user.id,
+        owner_id=owner_id,
         file_id=file_id,
     )
 
     stored_file = StoredFile(
         id=file_id,
-        owner_id=current_user.id,
+        owner_id=owner_id,
         object_key=object_key,
         filename=upload_request.filename,
         content_type=upload_request.content_type,
@@ -156,7 +155,7 @@ async def complete_upload(
 async def create_webpage(
     *,
     session: Session,
-    current_user: User,
+    owner_id: uuid.UUID,
     knowledge_base_id: uuid.UUID,
     folder_id: uuid.UUID | None,
     source_url: str,
@@ -169,7 +168,7 @@ async def create_webpage(
     file_id = uuid.uuid4()
 
     object_key = object_storage.create_object_key(
-        owner_id=current_user.id,
+        owner_id=owner_id,
         file_id=file_id,
     )
 
@@ -181,7 +180,7 @@ async def create_webpage(
 
     stored_file = StoredFile(
         id=file_id,
-        owner_id=current_user.id,
+        owner_id=owner_id,
         object_key=object_key,
         filename=filename,
         content_type="text/markdown",

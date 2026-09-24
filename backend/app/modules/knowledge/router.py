@@ -1,12 +1,11 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, Path, Query, status
+from fastapi import APIRouter, Body, Path, Query, status
 
 from app.api.dependencies import SessionDep
 from app.api.responses import error_responses
 from app.common.exceptions import ApplicationError
-from app.modules.auth.dependencies import CurrentUser, get_current_active_superuser
 from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
 from app.modules.files import object_storage
 from app.modules.files.exceptions import (
@@ -17,6 +16,7 @@ from app.modules.files.exceptions import (
 )
 from app.modules.files.schemas import FileCompletePublic, FileUploadRequest
 from app.modules.knowledge import documents, retrieval, service
+from app.modules.knowledge.access import KnowledgeAccessDep
 from app.modules.knowledge.exceptions import (
     KnowledgeBaseAlreadyExistsError,
     KnowledgeBaseNotFoundError,
@@ -54,6 +54,7 @@ from app.modules.knowledge.schemas import (
     KnowledgeSearchResultsPublic,
     KnowledgeWebpageCreate,
 )
+from app.modules.mcp_keys.models import McpPermission
 from app.modules.users.exceptions import InsufficientPrivilegesError
 
 ADMIN_ERROR_RESPONSES = error_responses(
@@ -65,14 +66,12 @@ ADMIN_ERROR_RESPONSES = error_responses(
 router = APIRouter(
     prefix="/admin/knowledge-bases",
     tags=["knowledge-bases"],
-    dependencies=[Depends(get_current_active_superuser)],
     responses=ADMIN_ERROR_RESPONSES,
 )
 
 document_router = APIRouter(
     prefix="/admin/knowledge-documents",
     tags=["knowledge-documents"],
-    dependencies=[Depends(get_current_active_superuser)],
     responses=ADMIN_ERROR_RESPONSES,
 )
 
@@ -84,9 +83,13 @@ document_router = APIRouter(
     responses=error_responses(KnowledgeBaseAlreadyExistsError),
 )
 def create_knowledge_base(
-    *, session: SessionDep, body: KnowledgeBaseCreate
+    *, session: SessionDep, access: KnowledgeAccessDep, body: KnowledgeBaseCreate
 ) -> KnowledgeBasePublic:
     """创建知识库。"""
+    body = body.model_copy(
+        update={"project_id": access.project(session, body.project_id, write=True)}
+    )
+
     knowledge_base = service.create_knowledge_base(
         session=session, knowledge_base_create=body
     )
@@ -97,11 +100,15 @@ def create_knowledge_base(
 @router.get("", response_model=KnowledgeBasesPublic)
 def read_knowledge_bases(
     session: SessionDep,
+    access: KnowledgeAccessDep,
+    project_id: Annotated[
+        uuid.UUID | None, Query(description="所属项目 ID；后台必填，MCP 由密钥确定")
+    ] = None,
     skip: Annotated[int, Query(ge=0, description="跳过的记录数")] = 0,
     limit: Annotated[int, Query(ge=1, le=100, description="返回的最大记录数")] = 20,
     search: Annotated[
         str | None,
-        Query(max_length=100, description="按知识库名称搜索"),
+        Query(max_length=100, description="按知识库名称、描述搜索"),
     ] = None,
     is_enabled: Annotated[
         bool | None,
@@ -109,12 +116,20 @@ def read_knowledge_bases(
     ] = None,
 ) -> KnowledgeBasesPublic:
     """查询知识库列表。"""
+    project_id = access.project(session, project_id)
+
+    enabled_filter = is_enabled
+
+    if access.key is not None and access.key.permission == McpPermission.READ_ONLY:
+        enabled_filter = True
+
     knowledge_bases, count = service.list_knowledge_bases(
         session=session,
         skip=skip,
         limit=limit,
         search=search,
-        is_enabled=is_enabled,
+        is_enabled=enabled_filter,
+        project_id=project_id,
     )
 
     return KnowledgeBasesPublic(
@@ -133,12 +148,11 @@ def read_knowledge_bases(
 )
 def read_knowledge_base(
     session: SessionDep,
+    access: KnowledgeAccessDep,
     knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
 ) -> KnowledgeBasePublic:
     """根据 ID 获取指定知识库。"""
-    knowledge_base = service.get_knowledge_base(
-        session=session, knowledge_base_id=knowledge_base_id
-    )
+    knowledge_base = access.base(session, knowledge_base_id)
 
     return KnowledgeBasePublic.model_validate(knowledge_base)
 
@@ -154,13 +168,16 @@ def read_knowledge_base(
 def update_knowledge_base(
     *,
     session: SessionDep,
+    access: KnowledgeAccessDep,
     knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
     body: KnowledgeBaseUpdate,
 ) -> KnowledgeBasePublic:
     """更新知识库。"""
+    knowledge_base = access.base(session, knowledge_base_id, write=True)
+
     knowledge_base = service.update_knowledge_base(
         session=session,
-        knowledge_base_id=knowledge_base_id,
+        knowledge_base=knowledge_base,
         knowledge_base_update=body,
     )
 
@@ -174,9 +191,12 @@ def update_knowledge_base(
 )
 def delete_knowledge_base(
     session: SessionDep,
+    access: KnowledgeAccessDep,
     knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
 ) -> None:
     """删除知识库。"""
+    access.base(session, knowledge_base_id, write=True)
+
     service.delete_knowledge_base(session=session, knowledge_base_id=knowledge_base_id)
 
 
@@ -193,10 +213,13 @@ def delete_knowledge_base(
 def create_folder(
     *,
     session: SessionDep,
+    access: KnowledgeAccessDep,
     knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
     body: KnowledgeFolderCreate,
 ) -> KnowledgeFolderPublic:
     """创建知识库文件夹。"""
+    access.base(session, knowledge_base_id, write=True)
+
     folder = service.create_folder(
         session=session,
         knowledge_base_id=knowledge_base_id,
@@ -213,9 +236,12 @@ def create_folder(
 )
 def read_folders(
     session: SessionDep,
+    access: KnowledgeAccessDep,
     knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
 ) -> KnowledgeFoldersPublic:
     """查询知识库文件夹列表。"""
+    access.base(session, knowledge_base_id, write=False)
+
     folders = service.list_folders(
         session=session,
         knowledge_base_id=knowledge_base_id,
@@ -244,11 +270,14 @@ def read_folders(
 def update_folder(
     *,
     session: SessionDep,
+    access: KnowledgeAccessDep,
     knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
     folder_id: Annotated[uuid.UUID, Path(description="文件夹 ID")],
     body: KnowledgeFolderUpdate,
 ) -> KnowledgeFolderPublic:
     """重命名知识库文件夹。"""
+    access.base(session, knowledge_base_id, write=True)
+
     folder = service.update_folder(
         session=session,
         knowledge_base_id=knowledge_base_id,
@@ -272,11 +301,14 @@ def update_folder(
 def move_folder(
     *,
     session: SessionDep,
+    access: KnowledgeAccessDep,
     knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
     folder_id: Annotated[uuid.UUID, Path(description="文件夹 ID")],
-    body: KnowledgeFolderMove,
+    body: KnowledgeFolderMove = Body(default_factory=KnowledgeFolderMove),
 ) -> KnowledgeFolderPublic:
     """移动知识库文件夹。"""
+    access.base(session, knowledge_base_id, write=True)
+
     folder = service.move_folder(
         session=session,
         knowledge_base_id=knowledge_base_id,
@@ -297,6 +329,7 @@ def move_folder(
 )
 def read_directory(
     session: SessionDep,
+    access: KnowledgeAccessDep,
     knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
     folder_id: Annotated[
         uuid.UUID | None,
@@ -306,6 +339,8 @@ def read_directory(
     limit: Annotated[int, Query(ge=1, le=100, description="返回的最大记录数")] = 20,
 ) -> KnowledgeDirectoryPublic:
     """查询知识库目录，文件夹优先排列。"""
+    access.base(session, knowledge_base_id, write=False)
+
     entries, count = service.list_directory(
         session=session,
         knowledge_base_id=knowledge_base_id,
@@ -328,10 +363,13 @@ def read_directory(
 )
 def delete_directory_entries(
     session: SessionDep,
+    access: KnowledgeAccessDep,
     knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
     body: KnowledgeDirectoryDelete,
 ) -> None:
     """批量删除知识库文件夹和文档。"""
+    access.base(session, knowledge_base_id, write=True)
+
     service.delete_directory_entries(
         session=session,
         knowledge_base_id=knowledge_base_id,
@@ -354,7 +392,7 @@ def delete_directory_entries(
 def create_document_upload(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    access: KnowledgeAccessDep,
     knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
     folder_id: Annotated[
         uuid.UUID | None,
@@ -367,9 +405,10 @@ def create_document_upload(
     使用返回的 uploadUrl 和 uploadHeaders 通过 HTTP PUT 上传完整文件内容，
     然后调用 knowledge_document_upload_complete 确认上传。
     """
+    access.base(session, knowledge_base_id, write=True)
     return service.create_document_upload(
         session=session,
-        current_user=current_user,
+        owner_id=access.owner_id,
         knowledge_base_id=knowledge_base_id,
         folder_id=folder_id,
         upload_request=body,
@@ -383,7 +422,7 @@ def create_document_upload(
 def create_document_uploads(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    access: KnowledgeAccessDep,
     knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
     body: Annotated[list[FileUploadRequest], Body(min_length=1, max_length=100)],
     folder_id: Annotated[
@@ -397,13 +436,15 @@ def create_document_uploads(
     使用 HTTP PUT 上传原始文件内容，再调用 knowledge_document_uploads_complete。
     单项失败不影响其他项，只需重试失败项，避免重复创建成功项。
     """
+    access.base(session, knowledge_base_id, write=True)
+
     results = []
 
     for upload_request in body:
         try:
             upload = service.create_document_upload(
                 session=session,
-                current_user=current_user,
+                owner_id=access.owner_id,
                 knowledge_base_id=knowledge_base_id,
                 folder_id=folder_id,
                 upload_request=upload_request,
@@ -431,6 +472,7 @@ def create_document_uploads(
 )
 async def complete_document_uploads(
     session: SessionDep,
+    access: KnowledgeAccessDep,
     body: Annotated[
         list[uuid.UUID],
         Body(min_length=1, max_length=100, description="已完成 HTTP PUT 上传的文档 ID"),
@@ -446,6 +488,8 @@ async def complete_document_uploads(
 
     for document_id in body:
         try:
+            access.document(session, document_id, write=True)
+
             document = await documents.complete_upload(
                 session=session, document_id=document_id
             )
@@ -474,6 +518,7 @@ async def complete_document_uploads(
 )
 async def complete_document_upload(
     session: SessionDep,
+    access: KnowledgeAccessDep,
     document_id: Annotated[uuid.UUID, Path(description="待确认上传的文档 ID")],
 ) -> KnowledgeDocumentPublic:
     """确认知识库文档上传。
@@ -481,6 +526,8 @@ async def complete_document_upload(
     仅在文件已通过 knowledge_document_upload_create 返回的 uploadUrl 上传后调用。
     确认成功后，文档进入处理流程。
     """
+    access.document(session, document_id, write=True)
+
     return await documents.complete_upload(
         session=session,
         document_id=document_id,
@@ -503,7 +550,7 @@ async def complete_document_upload(
 async def create_webpage_document(
     *,
     session: SessionDep,
-    current_user: CurrentUser,
+    access: KnowledgeAccessDep,
     knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
     folder_id: Annotated[
         uuid.UUID | None,
@@ -512,9 +559,10 @@ async def create_webpage_document(
     body: KnowledgeWebpageCreate,
 ) -> KnowledgeDocumentPublic:
     """从网页导入知识库文档。"""
+    access.base(session, knowledge_base_id, write=True)
     return await service.create_webpage_document(
         session=session,
-        current_user=current_user,
+        owner_id=access.owner_id,
         knowledge_base_id=knowledge_base_id,
         folder_id=folder_id,
         url=str(body.url),
@@ -528,9 +576,12 @@ async def create_webpage_document(
 )
 def read_document(
     session: SessionDep,
+    access: KnowledgeAccessDep,
     document_id: Annotated[uuid.UUID, Path(description="知识库文档 ID")],
 ) -> KnowledgeDocumentPublic:
     """根据 ID 获取指定知识库文档。"""
+    access.document(session, document_id, write=False)
+
     return documents.get_document(session=session, document_id=document_id)
 
 
@@ -545,9 +596,12 @@ def read_document(
 )
 def read_document_preview(
     session: SessionDep,
+    access: KnowledgeAccessDep,
     document_id: Annotated[uuid.UUID, Path(description="知识库文档 ID")],
 ) -> KnowledgeDocumentPreviewPublic:
     """获取知识库文档 Markdown 预览。"""
+    access.document(session, document_id, write=False)
+
     return documents.get_preview(session=session, document_id=document_id)
 
 
@@ -561,6 +615,7 @@ def read_document_preview(
 )
 def read_document_chunks(
     session: SessionDep,
+    access: KnowledgeAccessDep,
     document_id: Annotated[uuid.UUID, Path(description="知识库文档 ID")],
     skip: Annotated[int, Query(ge=0, description="跳过的切片数")] = 0,
     limit: Annotated[
@@ -569,6 +624,8 @@ def read_document_chunks(
     ] = 20,
 ) -> KnowledgeDocumentChunksPublic:
     """获取知识库文档切片列表。"""
+    access.document(session, document_id, write=False)
+
     chunks, count = documents.list_document_chunks(
         session=session,
         document_id=document_id,
@@ -590,9 +647,12 @@ def read_document_chunks(
 )
 def download_original_document(
     session: SessionDep,
+    access: KnowledgeAccessDep,
     document_id: Annotated[uuid.UUID, Path(description="知识库文档 ID")],
 ) -> FileCompletePublic:
     """获取知识库文档原文件下载地址。"""
+    access.document(session, document_id, write=False)
+
     stored_file = documents.get_original_file(
         session=session,
         document_id=document_id,
@@ -619,10 +679,13 @@ def download_original_document(
 def move_document(
     *,
     session: SessionDep,
+    access: KnowledgeAccessDep,
     document_id: Annotated[uuid.UUID, Path(description="知识库文档 ID")],
-    body: KnowledgeDocumentMove,
+    body: KnowledgeDocumentMove = Body(default_factory=KnowledgeDocumentMove),
 ) -> KnowledgeDocumentPublic:
     """移动知识库文档。"""
+    access.document(session, document_id, write=True)
+
     return service.move_document(
         session=session,
         document_id=document_id,
@@ -640,9 +703,12 @@ def move_document(
 )
 def retry_document(
     session: SessionDep,
+    access: KnowledgeAccessDep,
     document_id: Annotated[uuid.UUID, Path(description="知识库文档 ID")],
 ) -> None:
     """重试知识库文档处理。"""
+    access.document(session, document_id, write=True)
+
     documents.retry_document(session=session, document_id=document_id)
 
 
@@ -653,9 +719,12 @@ def retry_document(
 )
 def delete_document(
     session: SessionDep,
+    access: KnowledgeAccessDep,
     document_id: Annotated[uuid.UUID, Path(description="知识库文档 ID")],
 ) -> None:
     """删除知识库文档。"""
+    access.document(session, document_id, write=True)
+
     documents.delete_document(session=session, document_id=document_id)
 
 
@@ -669,10 +738,13 @@ def delete_document(
 )
 def search_knowledge_base(
     session: SessionDep,
+    access: KnowledgeAccessDep,
     knowledge_base_id: Annotated[uuid.UUID, Path(description="知识库 ID")],
     body: KnowledgeSearchRequest,
 ) -> KnowledgeSearchResultsPublic:
     """检索知识库内容。"""
+    access.base(session, knowledge_base_id, write=False)
+
     search_results = retrieval.search_knowledge_base(
         session=session,
         knowledge_base_id=knowledge_base_id,

@@ -37,22 +37,27 @@ from app.modules.knowledge.schemas import (
     KnowledgeFolderEntryPublic,
     KnowledgeFolderUpdate,
 )
-from app.modules.users.models import User
 
 
 def list_knowledge_bases(
     *,
     session: Session,
+    project_id: uuid.UUID,
     skip: int,
     limit: int,
     search: str | None = None,
     is_enabled: bool | None = None,
 ) -> tuple[Sequence[KnowledgeBase], int]:
-    filters: list[ColumnElement[bool]] = []
+    filters: list[ColumnElement[bool]] = [col(KnowledgeBase.project_id) == project_id]
 
     if search:
         filters.append(
-            col(KnowledgeBase.name).icontains(search.strip(), autoescape=True)
+            or_(
+                col(KnowledgeBase.name).icontains(search.strip(), autoescape=True),
+                col(KnowledgeBase.description).icontains(
+                    search.strip(), autoescape=True
+                ),
+            )
         )
 
     if is_enabled is not None:
@@ -109,14 +114,9 @@ def create_knowledge_base(
 def update_knowledge_base(
     *,
     session: Session,
-    knowledge_base_id: uuid.UUID,
+    knowledge_base: KnowledgeBase,
     knowledge_base_update: KnowledgeBaseUpdate,
 ) -> KnowledgeBase:
-    knowledge_base = get_knowledge_base(
-        session=session,
-        knowledge_base_id=knowledge_base_id,
-    )
-
     knowledge_base.sqlmodel_update(knowledge_base_update.model_dump(exclude_unset=True))
 
     _commit(session)
@@ -360,7 +360,7 @@ def move_folder(
 def create_document_upload(
     *,
     session: Session,
-    current_user: User,
+    owner_id: uuid.UUID,
     knowledge_base_id: uuid.UUID,
     folder_id: uuid.UUID | None,
     upload_request: FileUploadRequest,
@@ -379,7 +379,7 @@ def create_document_upload(
 
     return documents.create_upload(
         session=session,
-        current_user=current_user,
+        owner_id=owner_id,
         knowledge_base_id=knowledge_base_id,
         folder_id=folder_id,
         upload_request=upload_request,
@@ -389,7 +389,7 @@ def create_document_upload(
 async def create_webpage_document(
     *,
     session: Session,
-    current_user: User,
+    owner_id: uuid.UUID,
     knowledge_base_id: uuid.UUID,
     folder_id: uuid.UUID | None,
     url: str,
@@ -426,7 +426,7 @@ async def create_webpage_document(
 
     return await documents.create_webpage(
         session=session,
-        current_user=current_user,
+        owner_id=owner_id,
         knowledge_base_id=knowledge_base_id,
         folder_id=folder_id,
         source_url=url,

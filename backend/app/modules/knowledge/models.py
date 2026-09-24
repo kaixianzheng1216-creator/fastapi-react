@@ -17,9 +17,13 @@ from app.db.timestamps import TimestampMixin
 
 class KnowledgeBase(TimestampMixin, table=True):
     __tablename__ = "knowledge_base"
+    __table_args__ = (
+        UniqueConstraint("project_id", "name", name="uq_knowledge_base_project_name"),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    name: str = Field(max_length=100, unique=True)
+    project_id: uuid.UUID = Field(foreign_key="project.id")
+    name: str = Field(max_length=100)
     description: str | None = Field(default=None, max_length=500)
     is_enabled: bool = False
 
