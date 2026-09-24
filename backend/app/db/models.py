@@ -1,6 +1,7 @@
 # ruff: noqa: I001
 
 from sqlmodel import SQLModel
+from app.modules.projects.models import Project, ProjectMember  # noqa: F401
 
 from app.modules.users.models import User  # noqa: F401
 from app.modules.files.models import StoredFile  # noqa: F401
