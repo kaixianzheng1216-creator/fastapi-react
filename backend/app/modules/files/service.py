@@ -207,13 +207,7 @@ def remove_unreferenced_file(
 
     conversation_reference = session.get(ConversationFile, stored_file.id)
 
-    knowledge_reference = session.exec(
-        select(KnowledgeDocument.id).where(
-            col(KnowledgeDocument.stored_file_id) == stored_file.id
-        )
-    ).first()
-
-    if conversation_reference is not None or knowledge_reference is not None:
+    if conversation_reference is not None:
         raise SentFileDeletionForbiddenError
 
     session.delete(stored_file)
@@ -264,6 +258,16 @@ def _get_file_for_owner(
     )
 
     stored_file = session.exec(statement).first()
+
+    if (
+        session.exec(
+            select(KnowledgeDocument.id).where(
+                KnowledgeDocument.stored_file_id == file_id
+            )
+        ).first()
+        is not None
+    ):
+        raise FileNotFoundError
 
     if stored_file is None:
         raise FileNotFoundError

@@ -1,92 +1,70 @@
+from typing import Any
+
+import httpx
 from fastapi import FastAPI
 from fastmcp import FastMCP
+from fastmcp.server.auth import require_scopes
+from fastmcp.server.dependencies import get_access_token
 from fastmcp.server.providers.openapi import MCPType
+from fastmcp.server.providers.openapi.components import OpenAPITool
 from fastmcp.utilities.openapi import HTTPRoute
 
+from app.api.exception_handlers import add_exception_handlers
 from app.api.openapi import custom_generate_unique_id
 from app.core.config import API_V1_PREFIX
-from app.mcp.auth import DatabaseTokenVerifier, get_internal_mcp_user
-from app.mcp.external import router as external_knowledge_router
-from app.mcp.operations import EXTERNAL_OPERATIONS, INTERNAL_OPERATIONS
-from app.modules.auth.dependencies import (
-    get_current_active_superuser,
-    get_current_user,
-)
-from app.modules.brand_marketing.router import router as brand_marketing_router
-from app.modules.content_operations.router import router as content_operations_router
-from app.modules.influencer_marketing.router import (
-    router as influencer_marketing_router,
-)
-from app.modules.knowledge.router import document_router as knowledge_document_router
-from app.modules.knowledge.router import router as knowledge_router
-from app.modules.mcp_keys.models import McpScope
+from app.mcp.auth import DatabaseTokenVerifier, get_project_mcp_access
+from app.mcp.catalog import PROJECT_ROUTERS
+from app.mcp.operations import PROJECT_OPERATIONS, READ_ONLY_KNOWLEDGE_OPERATIONS
+from app.modules.auth.dependencies import get_current_active_superuser
+from app.modules.knowledge.access import get_knowledge_access
+from app.modules.mcp_keys.models import McpPermission
 
 
-def create_mcp_servers() -> tuple[FastMCP, FastMCP]:
-    internal = _create_server(
-        _create_internal_api(),
-        name="Data Hub Internal",
-        operations=INTERNAL_OPERATIONS,
-        scope=McpScope.INTERNAL,
-    )
-
-    external = _create_server(
-        _create_external_api(),
-        name="Data Hub External",
-        operations=EXTERNAL_OPERATIONS,
-        scope=McpScope.EXTERNAL,
-    )
-
-    return internal, external
-
-
-def _create_internal_api() -> FastAPI:
-    app = FastAPI(generate_unique_id_function=custom_generate_unique_id)
-    app.dependency_overrides[get_current_user] = get_internal_mcp_user
-    app.dependency_overrides[get_current_active_superuser] = get_internal_mcp_user
-
-    app.include_router(knowledge_router, prefix=API_V1_PREFIX)
-    app.include_router(knowledge_document_router, prefix=API_V1_PREFIX)
-    app.include_router(brand_marketing_router, prefix=API_V1_PREFIX)
-    app.include_router(content_operations_router, prefix=API_V1_PREFIX)
-    app.include_router(influencer_marketing_router, prefix=API_V1_PREFIX)
-
-    return app
-
-
-def _create_external_api() -> FastAPI:
-    app = FastAPI(generate_unique_id_function=custom_generate_unique_id)
-    app.dependency_overrides[get_current_active_superuser] = _external_mcp_authenticated
-
-    app.include_router(external_knowledge_router, prefix=API_V1_PREFIX)
-    app.include_router(brand_marketing_router, prefix=API_V1_PREFIX)
-    app.include_router(content_operations_router, prefix=API_V1_PREFIX)
-    app.include_router(influencer_marketing_router, prefix=API_V1_PREFIX)
-
-    return app
-
-
-def _external_mcp_authenticated() -> None:
-    return None
-
-
-def _create_server(
-    app: FastAPI,
-    *,
-    name: str,
-    operations: dict[str, str],
-    scope: McpScope,
-) -> FastMCP:
+def create_mcp_server() -> FastMCP:
     def map_route(route: HTTPRoute, _: MCPType) -> MCPType:
-        if route.operation_id in operations:
+        if route.operation_id in PROJECT_OPERATIONS:
             return MCPType.TOOL
 
         return MCPType.EXCLUDE
 
     return FastMCP.from_fastapi(
-        app=app,
-        name=name,
-        auth=DatabaseTokenVerifier(scope),
+        app=_create_project_api(),
+        name="Data Hub Project",
+        auth=DatabaseTokenVerifier(),
         route_map_fn=map_route,
-        mcp_names=operations,
+        mcp_names=PROJECT_OPERATIONS,
+        mcp_component_fn=_configure_project_tool,
+        httpx_client_kwargs={"event_hooks": {"request": [_forward_project_token]}},
     )
+
+
+def _create_project_api() -> FastAPI:
+    app = FastAPI(generate_unique_id_function=custom_generate_unique_id)
+
+    add_exception_handlers(app)
+
+    app.dependency_overrides[get_knowledge_access] = get_project_mcp_access
+
+    app.dependency_overrides[get_current_active_superuser] = get_project_mcp_access
+
+    for router in PROJECT_ROUTERS:
+        app.include_router(router, prefix=API_V1_PREFIX)
+
+    return app
+
+
+def _configure_project_tool(route: HTTPRoute, component: Any) -> None:
+    if (
+        isinstance(component, OpenAPITool)
+        and route.operation_id not in READ_ONLY_KNOWLEDGE_OPERATIONS
+    ):
+        component.auth = require_scopes(McpPermission.READ_WRITE.value)
+
+
+async def _forward_project_token(request: httpx.Request) -> None:
+    token = get_access_token()
+
+    if token is None:
+        raise PermissionError("需要项目 MCP 密钥认证")
+
+    request.headers["Authorization"] = f"Bearer {token.token}"

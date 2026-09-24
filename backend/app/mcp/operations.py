@@ -1,4 +1,17 @@
-INTERNAL_OPERATIONS = {
+BUSINESS_OPERATIONS = {
+    "brand-marketing-read_regional_data": "regional_data_query",
+    "content-operations-read_bilibili_ranking": "bilibili_ranking_query",
+    "influencer-marketing-read_influencer_accounts": "influencer_accounts_query",
+}
+
+READ_ONLY_KNOWLEDGE_OPERATIONS = {
+    "knowledge-bases-read_knowledge_bases",
+    "knowledge-bases-search_knowledge_base",
+}
+
+
+PROJECT_OPERATIONS = {
+    **BUSINESS_OPERATIONS,
     "knowledge-bases-read_knowledge_bases": "knowledge_bases_list",
     "knowledge-bases-create_knowledge_base": "knowledge_base_create",
     "knowledge-bases-read_knowledge_base": "knowledge_base_get",
@@ -23,15 +36,4 @@ INTERNAL_OPERATIONS = {
     "knowledge-documents-delete_document": "knowledge_document_delete",
     "knowledge-bases-create_webpage_document": "knowledge_webpage_import",
     "knowledge-bases-search_knowledge_base": "knowledge_search",
-    "brand-marketing-read_regional_data": "regional_data_query",
-    "content-operations-read_bilibili_ranking": "bilibili_ranking_query",
-    "influencer-marketing-read_influencer_accounts": "influencer_accounts_query",
-}
-
-EXTERNAL_OPERATIONS = {
-    "external-knowledge-read_external_knowledge_bases": "knowledge_bases_list",
-    "external-knowledge-search_external_knowledge_base": "knowledge_search",
-    "brand-marketing-read_regional_data": "regional_data_query",
-    "content-operations-read_bilibili_ranking": "bilibili_ranking_query",
-    "influencer-marketing-read_influencer_accounts": "influencer_accounts_query",
 }
