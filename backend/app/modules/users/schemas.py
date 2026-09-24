@@ -3,11 +3,21 @@ from datetime import datetime
 
 from sqlmodel import Field, SQLModel
 
+from app.modules.projects.models import ProjectRole
 from app.modules.users.models import UserBase
 
 
 class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=128)
+
+
+class ProjectAssignment(SQLModel):
+    project_id: uuid.UUID
+    role: ProjectRole = ProjectRole.MEMBER
+
+
+class AdminUserCreate(UserCreate):
+    projects: list[ProjectAssignment] = Field(default_factory=list, max_length=100)
 
 
 class UserRegister(SQLModel):

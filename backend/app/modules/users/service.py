@@ -2,12 +2,17 @@ import uuid
 from collections.abc import Sequence
 from typing import Any
 
+from fastapi import HTTPException
+from psycopg.errors import UniqueViolation
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.elements import ColumnElement
 from sqlmodel import Session, col, func, select
 
 from app.core.security import get_password_hash, verify_password
 from app.db.timestamps import utc_now
+from app.modules.projects.exceptions import ProjectNotFoundError
+from app.modules.projects.models import Project, ProjectMember
 from app.modules.users.exceptions import (
     IncorrectPasswordError,
     InsufficientPrivilegesError,
@@ -18,7 +23,12 @@ from app.modules.users.exceptions import (
     UserNotFoundError,
 )
 from app.modules.users.models import User
-from app.modules.users.schemas import UserCreate, UserUpdate, UserUpdateMe
+from app.modules.users.schemas import (
+    AdminUserCreate,
+    UserCreate,
+    UserUpdate,
+    UserUpdateMe,
+)
 
 
 def create_unique_user(*, session: Session, user_create: UserCreate) -> User:
@@ -205,3 +215,45 @@ def _soft_delete_user(*, session: Session, user: User) -> None:
     user.deleted_at = utc_now()
     session.add(user)
     session.commit()
+
+
+def create_admin_user(*, session: Session, body: AdminUserCreate) -> User:
+    ids = [assignment.project_id for assignment in body.projects]
+
+    if len(ids) != len(set(ids)):
+        raise HTTPException(status_code=422, detail="项目不能重复分配")
+
+    if ids and set(
+        session.exec(select(Project.id).where(col(Project.id).in_(ids))).all()
+    ) != set(ids):
+        raise ProjectNotFoundError
+
+    user = User.model_validate(
+        body, update={"hashed_password": get_password_hash(body.password)}
+    )
+
+    session.add(user)
+
+    try:
+        session.flush()
+
+        for assignment in body.projects:
+            session.add(
+                ProjectMember(
+                    project_id=assignment.project_id,
+                    user_id=user.id,
+                    role=assignment.role,
+                )
+            )
+
+        session.commit()
+    except IntegrityError as error:
+        session.rollback()
+
+        if isinstance(error.orig, UniqueViolation):
+            raise UserAlreadyExistsError from error
+        raise
+
+    session.refresh(user)
+
+    return user

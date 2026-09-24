@@ -23,6 +23,7 @@ from app.modules.users.exceptions import (
     UserNotFoundError,
 )
 from app.modules.users.schemas import (
+    AdminUserCreate,
     UpdatePassword,
     UserCreate,
     UserPublic,
@@ -132,9 +133,9 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> None:
     status_code=status.HTTP_201_CREATED,
     responses=error_responses(UserAlreadyExistsError),
 )
-def create_user(*, session: SessionDep, user_in: UserCreate) -> UserPublic:
+def create_user(*, session: SessionDep, user_in: AdminUserCreate) -> UserPublic:
     """创建新用户。"""
-    user = service.create_unique_user(session=session, user_create=user_in)
+    user = service.create_admin_user(session=session, body=user_in)
 
     return UserPublic.model_validate(user)
 
