@@ -21,7 +21,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -32,6 +31,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { ContentSkeleton } from "./content-skeleton";
+import { ChunkLocation } from "./chunk-location";
 import { getQueryViewState } from "@/lib/query-view-state";
 import { ButtonContent } from "@/components/common/button-content";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -403,9 +403,10 @@ function DocumentChunksView({
         <Card key={chunk.chunk_index} className="min-w-0 wrap-anywhere">
           <CardHeader>
             <CardTitle>切片 {chunk.chunk_index + 1}</CardTitle>
-            <CardDescription>
-              {formatChunkLocation(chunk.section_path, chunk.page_numbers)}
-            </CardDescription>
+            <ChunkLocation
+              pageNumbers={chunk.page_numbers}
+              sectionPath={chunk.section_path}
+            />
           </CardHeader>
           <CardContent className="flex min-w-0 flex-col gap-4">
             {chunk.image_urls.length > 0 && (
@@ -437,16 +438,4 @@ function DocumentChunksView({
       />
     </CollectionContent>
   );
-}
-
-function formatChunkLocation(
-  sectionPath: string[],
-  pageNumbers: number[],
-): string {
-  const parts = [
-    pageNumbers.length > 0 ? `第 ${pageNumbers.join("、")} 页` : undefined,
-    sectionPath.length > 0 ? sectionPath.join(" / ") : undefined,
-  ].filter(Boolean);
-
-  return parts.join(" · ") || "未标注位置";
 }

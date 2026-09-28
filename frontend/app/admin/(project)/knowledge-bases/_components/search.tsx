@@ -5,6 +5,7 @@ import { SearchIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LoadError } from "@/components/common/load-error";
 import { ContentSkeleton } from "./content-skeleton";
+import { ChunkLocation } from "./chunk-location";
 import { getQueryViewState } from "@/lib/query-view-state";
 import { MarkdownContent } from "@/components/common/markdown-content";
 import { SearchToolbar } from "@/components/common/search-toolbar";
@@ -13,7 +14,6 @@ import {
   Card,
   CardAction,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -139,20 +139,10 @@ export function KnowledgeSearch({
               <CardTitle>
                 {result.knowledge_base_name} · {result.filename}
               </CardTitle>
-              <CardDescription className="flex flex-wrap gap-x-4 gap-y-1">
-                <span>
-                  页码：
-                  {result.page_numbers.length > 0
-                    ? `第 ${result.page_numbers.join("、")} 页`
-                    : "未标注"}
-                </span>
-                <span>
-                  章节：
-                  {result.section_path.length > 0
-                    ? result.section_path.join(" / ")
-                    : "未标注"}
-                </span>
-              </CardDescription>
+              <ChunkLocation
+                pageNumbers={result.page_numbers}
+                sectionPath={result.section_path}
+              />
               <CardAction>
                 <Badge variant="secondary" className="tabular-nums">
                   相关度 {similarityFormatter.format(result.score)}
