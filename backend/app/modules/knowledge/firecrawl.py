@@ -1,4 +1,5 @@
 import asyncio
+from urllib.parse import urlsplit
 
 import httpx
 from pydantic import BaseModel
@@ -74,7 +75,7 @@ class _ScrapeResponse(BaseModel):
     data: _ScrapeData | None = None
 
 
-async def scrape(url: str) -> tuple[str, str | None]:
+async def scrape(url: str) -> tuple[str, str]:
     """抓取单个网页并返回 Markdown 和标题。"""
     try:
         async with httpx.AsyncClient(timeout=SCRAPE_TIMEOUT_SECONDS) as client:
@@ -102,4 +103,9 @@ async def scrape(url: str) -> tuple[str, str | None]:
     if not result.success or result.data is None or not result.data.markdown.strip():
         raise WebpageScrapeError
 
-    return result.data.markdown, result.data.metadata.title
+    title = " ".join((result.data.metadata.title or "").split())
+
+    if not title:
+        title = urlsplit(url).netloc
+
+    return result.data.markdown, title

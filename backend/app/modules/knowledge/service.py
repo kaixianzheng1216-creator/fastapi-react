@@ -1,8 +1,6 @@
 import uuid
 from collections.abc import Sequence
-from pathlib import PurePosixPath
 from typing import Literal
-from urllib.parse import unquote, urlsplit
 
 from psycopg.errors import UniqueViolation
 from sqlalchemy import or_
@@ -12,7 +10,7 @@ from sqlmodel import Session, col, delete, func, select
 
 from app.modules.files.models import StoredFile
 from app.modules.files.schemas import MAX_FILE_SIZE, FileUploadRequest
-from app.modules.knowledge import documents, firecrawl
+from app.modules.knowledge import documents, firecrawl, justoneapi
 from app.modules.knowledge.exceptions import (
     KnowledgeBaseAlreadyExistsError,
     KnowledgeBaseNotFoundError,
@@ -479,6 +477,7 @@ async def create_webpage_document(
     knowledge_base_id: uuid.UUID,
     folder_id: uuid.UUID | None,
     url: str,
+    source: Literal["web", "xiaohongshu", "douyin"] = "web",
 ) -> KnowledgeDocumentPublic:
     """抓取网页并创建知识库文档。"""
     get_knowledge_base(session=session, knowledge_base_id=knowledge_base_id)
@@ -491,7 +490,22 @@ async def create_webpage_document(
 
     session.rollback()
 
-    markdown, title = await firecrawl.scrape(url)
+    markdown, title = (
+        await firecrawl.scrape(url)
+        if source == "web"
+        else await justoneapi.content(url, source)
+    )
+
+    markdown = markdown.strip()
+
+    first_line, _, remainder = markdown.partition("\n")
+
+    if first_line.strip() == f"# {title}":
+        markdown = remainder.lstrip()
+
+    source_name = {"web": "网络", "xiaohongshu": "小红书", "douyin": "抖音"}[source]
+
+    markdown = f"# {title}\n\n{markdown}\n\n来源：{source_name}\n\n原文链接：<{url}>\n"
 
     content = markdown.encode("utf-8")
 
@@ -516,7 +530,7 @@ async def create_webpage_document(
         knowledge_base_id=knowledge_base_id,
         folder_id=folder_id,
         source_url=url,
-        filename=_create_webpage_filename(url, title),
+        filename=f"{title[:252]}.md",
         content=content,
     )
 
@@ -701,21 +715,3 @@ def _commit_folder(session: Session) -> None:
             raise KnowledgeFolderAlreadyExistsError from error
 
         raise
-
-
-def _create_webpage_filename(url: str, title: str | None) -> str:
-    if title:
-        normalized_title = " ".join(title.split())
-
-        if normalized_title:
-            return f"{normalized_title[:252]}.md"
-
-    parsed_url = urlsplit(url)
-
-    assert parsed_url.hostname is not None
-
-    path_name = PurePosixPath(unquote(parsed_url.path)).stem
-
-    base_name = path_name or parsed_url.hostname
-
-    return f"{base_name[:252]}.md"
