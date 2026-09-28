@@ -19,6 +19,7 @@ import {
 import { KnowledgeDirectoryTable } from "@/app/admin/(project)/knowledge-bases/_components/directory-table";
 import {
   getDirectoryEntryKey,
+  documentStatusLabels,
   type DirectoryEntry,
   type DirectoryChange,
   KNOWLEDGE_FOLDERS_QUERY_KEY,
@@ -37,6 +38,8 @@ import { LoadError } from "@/components/common/load-error";
 import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
 import { Button } from "@/components/ui/button";
+import { FilterGroup } from "@/app/admin/_components/filter-group";
+import { ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -70,11 +73,7 @@ const EMPTY_ENTRY_KEYS = new Set<string>();
 
 type DocumentStatus = "ready" | "processing" | "failed";
 
-const statusOptions: { value: DocumentStatus; label: string; color: string }[] = [
-  { value: "ready", label: "已完成", color: "bg-emerald-500/50" },
-  { value: "processing", label: "处理中", color: "bg-blue-500/50" },
-  { value: "failed", label: "失败", color: "bg-destructive/50" },
-];
+const statusOptions: DocumentStatus[] = ["ready", "processing", "failed"];
 
 export function KnowledgeDocuments({
   projectId,
@@ -189,9 +188,6 @@ export function KnowledgeDocuments({
 
   const directoryEntries = directoryQuery.data?.data ?? EMPTY_DIRECTORY_ENTRIES;
   const statusCounts = directoryQuery.data?.status_counts;
-  const totalDocumentCount = statusCounts
-    ? statusCounts.ready + statusCounts.processing + statusCounts.failed
-    : 0;
   const totalEntryCount = directoryQuery.data?.count ?? 0;
   const pageCount = Math.ceil(totalEntryCount / PAGE_SIZE);
   const pageOutOfRange = totalEntryCount > 0 && directoryEntries.length === 0;
@@ -388,11 +384,7 @@ export function KnowledgeDocuments({
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
                     <BreadcrumbPage>
-                      {
-                        statusOptions.find(
-                          (option) => option.value === currentStatus,
-                        )?.label
-                      }
+                      {documentStatusLabels[currentStatus]}
                     </BreadcrumbPage>
                   </BreadcrumbItem>
                 </>
@@ -475,56 +467,24 @@ export function KnowledgeDocuments({
               />
 
               {!directoryLoadFailed && !directoryPending && statusCounts && (
-                <div className="flex flex-wrap gap-2" role="group" aria-label="文档状态筛选">
-                  {statusOptions.map((option) => (
-                    <Button
-                      key={option.value}
-                      variant={currentStatus === option.value ? "secondary" : "outline"}
-                      size="sm"
-                      asChild
-                    >
-                      <Link
-                        href={getKnowledgeDirectoryHref(
-                          projectId,
-                          knowledgeBaseId,
-                          1,
-                          currentFolderId,
-                          option.value,
-                          search,
-                        )}
-                      >
-                        <span
-                          className={`size-2 rounded-full ${option.color}`}
-                          aria-hidden="true"
-                        />
-                        {option.label} {statusCounts[option.value]}
-                      </Link>
-                    </Button>
+                <FilterGroup
+                  label="状态筛选"
+                  value={currentStatus ?? "all"}
+                  onValueChange={(value) =>
+                    update({ status: value === "all" ? "" : value })
+                  }
+                >
+                  <ToggleGroupItem value="all">全部</ToggleGroupItem>
+                  {statusOptions.map((status) => (
+                    <ToggleGroupItem key={status} value={status}>
+                      {documentStatusLabels[status]} {statusCounts[status]}
+                    </ToggleGroupItem>
                   ))}
-                </div>
+                </FilterGroup>
               )}
             </>
           )}
         </div>
-
-        {!directoryLoadFailed && !directoryPending && statusCounts && (
-          <div
-            className="flex h-2 overflow-hidden rounded-full bg-muted"
-            role="img"
-            aria-label={`已完成 ${statusCounts.ready}，处理中 ${statusCounts.processing}，失败 ${statusCounts.failed}`}
-          >
-            {totalDocumentCount > 0 &&
-              statusOptions.map((option) => (
-                <div
-                  key={option.value}
-                  className={option.color}
-                  style={{
-                    width: `${(statusCounts[option.value] / totalDocumentCount) * 100}%`,
-                  }}
-                />
-              ))}
-          </div>
-        )}
 
         {directoryLoadFailed ? (
           <LoadError

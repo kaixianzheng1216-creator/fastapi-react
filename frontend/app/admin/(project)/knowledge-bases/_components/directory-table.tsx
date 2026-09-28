@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 
 import {
   getDirectoryEntryKey,
+  documentStatusLabels,
   type DirectoryEntry,
 } from "@/app/admin/(project)/knowledge-bases/_lib/directory";
 import { getKnowledgeDirectoryHref } from "@/app/admin/(project)/knowledge-bases/_lib/navigation";
@@ -24,7 +25,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { KnowledgeDocumentPublic } from "@/lib/client";
 import { formatFileSize } from "@/lib/file-types";
 
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
@@ -32,14 +32,6 @@ const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
   timeStyle: "medium",
   hour12: false,
 });
-
-const statusLabels: Record<KnowledgeDocumentPublic["status"], string> = {
-  pending: "等待处理",
-  processing: "处理中",
-  ready: "可用",
-  failed: "失败",
-  timed_out: "已超时",
-};
 
 function formatProcessingDuration(seconds: number | null | undefined): string {
   if (seconds == null) return "—";
@@ -219,7 +211,7 @@ export function KnowledgeDirectoryTable({
                       )}
                       {entry.status === "pending" && !entry.uploaded
                         ? "等待确认上传"
-                        : statusLabels[entry.status]}
+                        : documentStatusLabels[entry.status]}
                     </Badge>
                   )}
                 </TableCell>
