@@ -1,16 +1,49 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
-import { useRef, useState } from "react";
 import {
   keepPreviousData,
-  useQuery,
   useMutation,
+  useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { MoreHorizontalIcon, PlusIcon, UsersIcon } from "lucide-react";
+import { MoreHorizontalIcon, PlusIcon } from "lucide-react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { FilterGroup } from "@/app/admin/_components/filter-group";
+import { useProject } from "@/app/admin/_components/project-context";
+import { ButtonContent } from "@/components/common/button-content";
+import { CollectionContent } from "@/components/common/collection-content";
+import { DeleteDialog } from "@/components/common/delete-dialog";
+import { LoadError } from "@/components/common/load-error";
+import { PagePagination } from "@/components/common/page-pagination";
+import { SearchToolbar } from "@/components/common/search-toolbar";
+import { TableEmptyRow } from "@/components/common/table-empty-row";
+import { TableSkeletonBody } from "@/components/common/table-skeleton";
+import { AppHeader } from "@/components/layout/app-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useActionFocus } from "@/hooks/use-action-focus";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { useListParams } from "@/hooks/use-list-params";
+import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
+import { getApiErrorMessage } from "@/lib/api-error";
 import {
   projectsReadMembers,
   projectsRemoveMember,
@@ -18,48 +51,8 @@ import {
   type MemberPublic,
   type ProjectRole,
 } from "@/lib/client";
-import { FilterGroup } from "@/app/admin/_components/filter-group";
-import { getApiErrorMessage } from "@/lib/api-error";
-import { useCurrentUser } from "@/hooks/use-current-user";
-import { useActionFocus } from "@/hooks/use-action-focus";
-import { useListParams } from "@/hooks/use-list-params";
-import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
-import { useProject } from "@/app/admin/_components/project-context";
-import { AppHeader } from "@/components/layout/app-header";
-import { SearchToolbar } from "@/components/common/search-toolbar";
-import { PageOutOfRange } from "@/components/common/page-out-of-range";
-import { PagePagination } from "@/components/common/page-pagination";
-import { DeleteDialog } from "@/components/common/delete-dialog";
+import { getPaginationHref, parsePage } from "@/lib/pagination";
 import { getQueryViewState } from "@/lib/query-view-state";
-import { LoadError } from "@/components/common/load-error";
-import { TableSkeletonBody } from "@/components/common/table-skeleton";
-import { parsePage, getPaginationHref } from "@/lib/pagination";
-import { CollectionContent } from "@/components/common/collection-content";
-import { ButtonContent } from "@/components/common/button-content";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableHeader,
-  TableHead,
-  TableRow,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import { ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
 
 import { AddMembersDialog } from "./add-members-dialog";
 
@@ -68,8 +61,6 @@ export function MemberManager() {
   const { rememberActionTrigger, restoreActionFocus } =
     useActionFocus(createButtonRef);
 
-  const router = useRouter();
-  const pathname = usePathname();
   const project = useProject()!;
   const user = useCurrentUser()!;
   const canManage = user.is_superuser || project.role === "admin";
@@ -118,11 +109,6 @@ export function MemberManager() {
     },
     onSuccess: () => {
       setDeleting(undefined);
-      if (query.data?.data.length === 1 && page > 1) {
-        router.replace(getPaginationHref(pathname, page - 1, params), {
-          scroll: false,
-        });
-      }
       refresh();
       toast.success("成员已移出");
     },
@@ -196,28 +182,6 @@ export function MemberManager() {
               isRetrying={query.isFetching}
               onRetry={() => void query.refetch()}
             />
-          ) : viewState === "ready" &&
-            query.data &&
-            query.data.count > 0 &&
-            !query.data.data.length ? (
-            <PageOutOfRange
-              href={getPaginationHref(
-                `/admin/projects/${project.id}/members`,
-                1,
-                params,
-              )}
-            />
-          ) : viewState === "ready" && query.data?.data.length === 0 ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <UsersIcon aria-hidden="true" />
-                </EmptyMedia>
-                <EmptyTitle>
-                  {search || role ? "未找到符合条件的成员" : "暂无成员"}
-                </EmptyTitle>
-              </EmptyHeader>
-            </Empty>
           ) : (
             <CollectionContent
               inert={viewState === "ready" && query.isPlaceholderData}
@@ -238,6 +202,12 @@ export function MemberManager() {
                   <TableSkeletonBody columns={canManage ? 3 : 2} />
                 ) : (
                   <TableBody>
+                    {query.data?.data.length === 0 && (
+                      <TableEmptyRow colSpan={canManage ? 3 : 2}>
+                        {search || role ? "未找到符合条件的成员" : "暂无成员"}
+                      </TableEmptyRow>
+                    )}
+
                     {query.data?.data.map((member) => {
                       const isUpdating =
                         changeRole.isPending &&
@@ -335,6 +305,7 @@ export function MemberManager() {
             className="mt-auto"
             currentPage={page}
             pageCount={Math.ceil((query.data?.count ?? 0) / 20)}
+            pending={query.data === undefined || query.isPlaceholderData}
             getPageHref={(page) =>
               getPaginationHref(
                 `/admin/projects/${project.id}/members`,

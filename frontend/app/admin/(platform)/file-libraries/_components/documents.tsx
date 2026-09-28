@@ -5,7 +5,6 @@ import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
 import { CollectionContent } from "@/components/common/collection-content";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FolderOpenIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useRef, useState } from "react";
@@ -16,20 +15,18 @@ import {
   useDirectoryActions,
 } from "@/app/admin/(platform)/file-libraries/_components/directory-actions";
 import { LibraryDirectoryTable } from "@/app/admin/(platform)/file-libraries/_components/directory-table";
+import { LibraryDocumentImport } from "@/app/admin/(platform)/file-libraries/_components/document-import";
 import {
-  getDirectoryEntryKey,
-  type DirectoryEntry,
   type DirectoryChange,
-  LIBRARY_FOLDERS_QUERY_KEY,
+  type DirectoryEntry,
   LIBRARY_DIRECTORY_QUERY_KEY,
+  LIBRARY_FOLDERS_QUERY_KEY,
+  getDirectoryEntryKey,
 } from "@/app/admin/(platform)/file-libraries/_lib/directory";
 import { getLibraryDirectoryHref } from "@/app/admin/(platform)/file-libraries/_lib/navigation";
-import { LibraryDocumentImport } from "@/app/admin/(platform)/file-libraries/_components/document-import";
 import { DirectoryToolbar } from "@/components/common/directory-toolbar";
 import { FolderActions } from "@/components/common/folder-actions";
-import { getQueryViewState } from "@/lib/query-view-state";
 import { LoadError } from "@/components/common/load-error";
-import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
 import {
   Breadcrumb,
@@ -40,19 +37,13 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
-import {
   type LibraryFolderPublic,
   fileLibrariesReadDirectory,
   fileLibrariesReadFolders,
 } from "@/lib/client";
 import { getFolderAncestors } from "@/lib/folders";
 import { parsePage } from "@/lib/pagination";
+import { getQueryViewState } from "@/lib/query-view-state";
 
 const PAGE_SIZE = 20;
 
@@ -124,7 +115,6 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
   const directoryEntries = directoryQuery.data?.data ?? EMPTY_DIRECTORY_ENTRIES;
   const totalEntryCount = directoryQuery.data?.count ?? 0;
   const pageCount = Math.ceil(totalEntryCount / PAGE_SIZE);
-  const pageOutOfRange = totalEntryCount > 0 && directoryEntries.length === 0;
 
   const foldersState = getQueryViewState(foldersQuery);
   const directoryState = getQueryViewState(
@@ -350,7 +340,7 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
               void directoryQuery.refetch();
             }}
           />
-        ) : directoryPending || directoryEntries.length > 0 ? (
+        ) : (
           <CollectionContent
             busy={directoryState !== "loading" && directoryQuery.isFetching}
             inert={
@@ -359,6 +349,7 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
             className="md:min-h-0 md:h-full md:flex-1"
           >
             <LibraryDirectoryTable
+              emptyMessage="此文件夹为空"
               loading={directoryPending}
               currentPage={currentPage}
               fileLibraryId={fileLibraryId}
@@ -370,20 +361,6 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
               )}
             />
           </CollectionContent>
-        ) : pageOutOfRange ? (
-          <PageOutOfRange
-            href={getLibraryDirectoryHref(fileLibraryId, 1, currentFolderId)}
-          />
-        ) : (
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <FolderOpenIcon aria-hidden="true" />
-              </EmptyMedia>
-              <EmptyTitle>此文件夹为空</EmptyTitle>
-              <EmptyDescription>上传文件或新建文件夹。</EmptyDescription>
-            </EmptyHeader>
-          </Empty>
         )}
       </section>
       <PagePagination
@@ -391,6 +368,9 @@ export function LibraryDocuments({ fileLibraryId }: { fileLibraryId: string }) {
         ariaLabel="文件库目录分页"
         currentPage={currentPage}
         pageCount={pageCount}
+        pending={
+          directoryQuery.data === undefined || directoryQuery.isPlaceholderData
+        }
         getPageHref={(page) =>
           getLibraryDirectoryHref(fileLibraryId, page, currentFolderId)
         }

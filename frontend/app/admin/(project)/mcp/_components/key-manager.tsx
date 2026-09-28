@@ -6,20 +6,20 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { MoreHorizontalIcon, KeyRoundIcon } from "lucide-react";
+import { MoreHorizontalIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useRef, useState, type SyntheticEvent } from "react";
 import { toast } from "sonner";
 
-import { FilterGroup } from "@/app/admin/_components/filter-group";
 import { ConnectionConfig } from "@/app/admin/(project)/mcp/_components/connection-config";
 import { KeyEditorDialog } from "@/app/admin/(project)/mcp/_components/key-editor-dialog";
-import { DeleteDialog } from "@/components/common/delete-dialog";
-import { getQueryViewState } from "@/lib/query-view-state";
-import { LoadError } from "@/components/common/load-error";
-import { PageOutOfRange } from "@/components/common/page-out-of-range";
-import { PagePagination } from "@/components/common/page-pagination";
+import { FilterGroup } from "@/app/admin/_components/filter-group";
 import { CollectionContent } from "@/components/common/collection-content";
+import { DeleteDialog } from "@/components/common/delete-dialog";
+import { LoadError } from "@/components/common/load-error";
+import { PagePagination } from "@/components/common/page-pagination";
+import { SearchToolbar } from "@/components/common/search-toolbar";
+import { TableEmptyRow } from "@/components/common/table-empty-row";
 import { TableSkeletonBody } from "@/components/common/table-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,12 +32,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -46,23 +46,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { SearchToolbar } from "@/components/common/search-toolbar";
 import { useListParams } from "@/hooks/use-list-params";
-import { ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import { getApiErrorMessage } from "@/lib/api-error";
-import { getPaginationHref, parsePage } from "@/lib/pagination";
 import {
   mcpKeysDeleteMcpApiKey,
   mcpKeysReadMcpApiKeys,
@@ -70,6 +61,8 @@ import {
   type McpApiKeyPublic,
   type ProjectPublic,
 } from "@/lib/client";
+import { getPaginationHref, parsePage } from "@/lib/pagination";
+import { getQueryViewState } from "@/lib/query-view-state";
 
 const KEY_QUERY_PREFIX = "mcp-api-keys";
 const PAGE_SIZE = 10;
@@ -180,9 +173,6 @@ export function KeyManager({
       toast.success("密钥已删除");
       setKeyToDelete(null);
 
-      if (keysQuery.data?.data.length === 1 && currentPage > 1)
-        router.replace(getPageHref(currentPage - 1), { scroll: false });
-
       void queryClient.invalidateQueries({
         queryKey: [KEY_QUERY_PREFIX, project.id],
       });
@@ -239,28 +229,6 @@ export function KeyManager({
           isRetrying={keysQuery.isFetching}
           onRetry={() => void keysQuery.refetch()}
         />
-      ) : viewState !== "loading" &&
-        keysQuery.data?.data.length === 0 &&
-        (keysQuery.data.count ?? 0) > 0 ? (
-        <PageOutOfRange href={getPageHref(1)} />
-      ) : viewState !== "loading" && keysQuery.data?.data.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <KeyRoundIcon aria-hidden="true" />
-            </EmptyMedia>
-            <EmptyTitle>
-              {search || permission || status !== "all"
-                ? "未找到符合条件的密钥"
-                : "暂无密钥"}
-            </EmptyTitle>
-            <EmptyDescription>
-              {search || permission || status !== "all"
-                ? "尝试调整搜索或筛选条件。"
-                : "创建密钥后，即可复制配置连接 MCP。"}
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
       ) : (
         <CollectionContent
           inert={viewState === "ready" && keysQuery.isPlaceholderData}
@@ -286,6 +254,14 @@ export function KeyManager({
               <TableSkeletonBody columns={6} />
             ) : (
               <TableBody>
+                {keysQuery.data?.data.length === 0 && (
+                  <TableEmptyRow colSpan={6}>
+                    {search || permission || status !== "all"
+                      ? "未找到符合条件的密钥"
+                      : "暂无密钥"}
+                  </TableEmptyRow>
+                )}
+
                 {keysQuery.data?.data.map((apiKey) => (
                   <TableRow key={apiKey.id}>
                     <TableCell>
@@ -365,6 +341,7 @@ export function KeyManager({
         ariaLabel="访问密钥分页"
         currentPage={currentPage}
         pageCount={pageCount}
+        pending={keysQuery.data === undefined || keysQuery.isPlaceholderData}
         getPageHref={getPageHref}
       />
 
@@ -418,16 +395,10 @@ export function KeyManager({
               </DialogDescription>
             </DialogHeader>
 
-            <ConnectionConfig
-              endpoint={endpoint}
-              apiKey={createdKey.key}
-            />
+            <ConnectionConfig endpoint={endpoint} apiKey={createdKey.key} />
 
             <DialogFooter>
-              <Button
-                type="button"
-                onClick={closeCreatedKey}
-              >
+              <Button type="button" onClick={closeCreatedKey}>
                 我已保存
               </Button>
             </DialogFooter>

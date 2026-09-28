@@ -11,29 +11,20 @@ import { redirect, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { getKnowledgeDirectoryHref } from "@/app/admin/(project)/knowledge-bases/_lib/navigation";
+import { ButtonContent } from "@/components/common/button-content";
 import { CollectionContent } from "@/components/common/collection-content";
 import { LoadError } from "@/components/common/load-error";
 import { MarkdownContent } from "@/components/common/markdown-content";
-import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
 import { AppHeader } from "@/components/layout/app-header";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Empty,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { ContentSkeleton } from "./content-skeleton";
-import { ChunkLocation } from "./chunk-location";
-import { getQueryViewState } from "@/lib/query-view-state";
-import { ButtonContent } from "@/components/common/button-content";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
@@ -47,6 +38,9 @@ import {
   downloadOriginalKnowledgeDocument,
 } from "@/lib/knowledge-document-download";
 import { getPaginationHref, parsePage } from "@/lib/pagination";
+import { getQueryViewState } from "@/lib/query-view-state";
+import { ChunkLocation } from "./chunk-location";
+import { ContentSkeleton } from "./content-skeleton";
 
 const CHUNK_PAGE_SIZE = 20;
 const PREVIEW_STALE_TIME_MS = 50 * 60 * 1000;
@@ -360,6 +354,16 @@ function DocumentChunksView({
     chunksQuery.data?.data.length === 0,
   );
 
+  const pagination = (
+    <PagePagination
+      ariaLabel="文档切片分页"
+      currentPage={page}
+      pageCount={Math.ceil((chunksQuery.data?.count ?? 0) / CHUNK_PAGE_SIZE)}
+      pending={chunksQuery.data === undefined || chunksQuery.isPlaceholderData}
+      getPageHref={getPageHref}
+    />
+  );
+
   if (chunksState === "loading") {
     return <ContentSkeleton />;
   }
@@ -376,22 +380,23 @@ function DocumentChunksView({
 
   if (!chunksQuery.data || chunksQuery.data.count === 0) {
     return (
-      <Empty>
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <LayersIcon aria-hidden="true" />
-          </EmptyMedia>
-          <EmptyTitle>暂无文档切片</EmptyTitle>
-        </EmptyHeader>
-      </Empty>
+      <>
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <LayersIcon aria-hidden="true" />
+            </EmptyMedia>
+            <EmptyTitle>暂无文档切片</EmptyTitle>
+          </EmptyHeader>
+        </Empty>
+        {pagination}
+      </>
     );
   }
 
   if (chunksQuery.data.data.length === 0) {
-    return <PageOutOfRange href={getPageHref(1)} />;
+    return pagination;
   }
-
-  const pageCount = Math.ceil(chunksQuery.data.count / CHUNK_PAGE_SIZE);
 
   return (
     <CollectionContent
@@ -430,12 +435,7 @@ function DocumentChunksView({
         </Card>
       ))}
 
-      <PagePagination
-        ariaLabel="文档切片分页"
-        currentPage={page}
-        pageCount={pageCount}
-        getPageHref={getPageHref}
-      />
+      {pagination}
     </CollectionContent>
   );
 }

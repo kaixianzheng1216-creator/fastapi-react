@@ -14,21 +14,14 @@ import {
   useTable,
 } from "@tanstack/react-table";
 import Link from "next/link";
-import { ChartNoAxesColumnIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { DataRefreshButton } from "@/app/admin/_components/data-refresh-button";
-import { AppHeader } from "@/components/layout/app-header";
-import { getQueryViewState } from "@/lib/query-view-state";
 import { LoadError } from "@/components/common/load-error";
-import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { TableEmptyRow } from "@/components/common/table-empty-row";
+import { TableSkeletonBody } from "@/components/common/table-skeleton";
+import { AppHeader } from "@/components/layout/app-header";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Select,
@@ -38,7 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TableSkeletonBody } from "@/components/common/table-skeleton";
 import {
   Table,
   TableBody,
@@ -54,6 +46,7 @@ import {
   contentOperationsReadBilibiliRanking,
 } from "@/lib/client";
 import { getPaginationHref, parsePage } from "@/lib/pagination";
+import { getQueryViewState } from "@/lib/query-view-state";
 
 const PAGE_SIZE = 20;
 const BILIBILI_QUERY_KEY = ["content-operations-bilibili-ranking"] as const;
@@ -233,7 +226,6 @@ export function PlatformRankings() {
 
   const rows = table.getRowModel().rows;
   const pageCount = table.getPageCount();
-  const pageOutOfRange = (ranking?.count ?? 0) > 0 && rows.length === 0;
 
   return (
     <>
@@ -348,21 +340,6 @@ export function PlatformRankings() {
                         isRetrying={rankingQuery.isFetching}
                         onRetry={() => void rankingQuery.refetch()}
                       />
-                    ) : viewState !== "loading" && rows.length === 0 ? (
-                      pageOutOfRange ? (
-                        <PageOutOfRange
-                          href={getRankingsHref("bilibili", 1, category)}
-                        />
-                      ) : (
-                        <Empty>
-                          <EmptyHeader>
-                            <EmptyMedia variant="icon">
-                              <ChartNoAxesColumnIcon aria-hidden="true" />
-                            </EmptyMedia>
-                            <EmptyTitle>暂无榜单数据</EmptyTitle>
-                          </EmptyHeader>
-                        </Empty>
-                      )
                     ) : (
                       <CollectionContent
                         inert={
@@ -405,6 +382,14 @@ export function PlatformRankings() {
                             />
                           ) : (
                             <TableBody>
+                              {rows.length === 0 && (
+                                <TableEmptyRow
+                                  colSpan={table.getAllLeafColumns().length}
+                                >
+                                  暂无榜单数据
+                                </TableEmptyRow>
+                              )}
+
                               {rows.map((row) => (
                                 <TableRow key={row.id}>
                                   {row.getAllCells().map((cell) => (
@@ -430,6 +415,10 @@ export function PlatformRankings() {
                       ariaLabel="B 站排行榜分页"
                       currentPage={currentPage}
                       pageCount={pageCount}
+                      pending={
+                        rankingQuery.data === undefined ||
+                        rankingQuery.isPlaceholderData
+                      }
                       getPageHref={(page) =>
                         getRankingsHref("bilibili", page, category)
                       }

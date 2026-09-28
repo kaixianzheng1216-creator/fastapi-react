@@ -18,29 +18,20 @@ import {
   ChevronDownIcon,
   ChevronsUpDownIcon,
   ChevronUpIcon,
-  UsersIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 
 import { DataRefreshButton } from "@/app/admin/_components/data-refresh-button";
-import { AppHeader } from "@/components/layout/app-header";
-import { getQueryViewState } from "@/lib/query-view-state";
 import { LoadError } from "@/components/common/load-error";
-import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
-import { useListParams } from "@/hooks/use-list-params";
 import { SearchToolbar } from "@/components/common/search-toolbar";
+import { TableEmptyRow } from "@/components/common/table-empty-row";
+import { TableSkeletonBody } from "@/components/common/table-skeleton";
+import { AppHeader } from "@/components/layout/app-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
-import { TableSkeletonBody } from "@/components/common/table-skeleton";
 import {
   Table,
   TableBody,
@@ -50,14 +41,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getPaginationHref, parsePage } from "@/lib/pagination";
+import { useListParams } from "@/hooks/use-list-params";
 import {
   type InfluencerAccountPublic,
   type InfluencerAccountSortBy,
+  influencerMarketingReadInfluencerAccounts,
   type InfluencerPlatformCode,
   type InfluencerSortOrder,
-  influencerMarketingReadInfluencerAccounts,
 } from "@/lib/client";
+import { getPaginationHref, parsePage } from "@/lib/pagination";
+import { getQueryViewState } from "@/lib/query-view-state";
 
 const PAGE_SIZE = 20;
 const DEFAULT_SORT_BY: InfluencerAccountSortBy = "followers";
@@ -223,8 +216,6 @@ export function InfluencerResourceManager() {
 
   const rows = table.getRowModel().rows;
   const pageCount = table.getPageCount();
-  const pageOutOfRange =
-    (accountsQuery.data?.count ?? 0) > 0 && rows.length === 0;
 
   return (
     <>
@@ -316,29 +307,6 @@ export function InfluencerResourceManager() {
                         isRetrying={accountsQuery.isFetching}
                         onRetry={() => void accountsQuery.refetch()}
                       />
-                    ) : viewState !== "loading" && rows.length === 0 ? (
-                      pageOutOfRange ? (
-                        <PageOutOfRange
-                          href={getInfluencerResourcesHref(
-                            platform,
-                            1,
-                            search,
-                            sortBy,
-                            sortOrder,
-                          )}
-                        />
-                      ) : (
-                        <Empty>
-                          <EmptyHeader>
-                            <EmptyMedia variant="icon">
-                              <UsersIcon aria-hidden="true" />
-                            </EmptyMedia>
-                            <EmptyTitle>
-                              {search ? "未找到符合条件的达人" : "暂无达人数据"}
-                            </EmptyTitle>
-                          </EmptyHeader>
-                        </Empty>
-                      )
                     ) : (
                       <CollectionContent
                         inert={
@@ -391,6 +359,16 @@ export function InfluencerResourceManager() {
                             />
                           ) : (
                             <TableBody>
+                              {rows.length === 0 && (
+                                <TableEmptyRow
+                                  colSpan={table.getAllLeafColumns().length}
+                                >
+                                  {search
+                                    ? "未找到符合条件的达人"
+                                    : "暂无达人数据"}
+                                </TableEmptyRow>
+                              )}
+
                               {rows.map((row) => (
                                 <TableRow key={row.id}>
                                   {row.getAllCells().map((cell) => (
@@ -416,6 +394,10 @@ export function InfluencerResourceManager() {
                       ariaLabel={`${platformName}达人分页`}
                       currentPage={currentPage}
                       pageCount={pageCount}
+                      pending={
+                        accountsQuery.data === undefined ||
+                        accountsQuery.isPlaceholderData
+                      }
                       getPageHref={(page) =>
                         getInfluencerResourcesHref(
                           platform,

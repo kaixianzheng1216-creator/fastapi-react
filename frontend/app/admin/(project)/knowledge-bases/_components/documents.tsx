@@ -5,7 +5,7 @@ import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
 import { CollectionContent } from "@/components/common/collection-content";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FolderOpenIcon, PlusIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useRef, useState } from "react";
@@ -17,29 +17,25 @@ import {
   useDirectoryActions,
 } from "@/app/admin/(project)/knowledge-bases/_components/directory-actions";
 import { KnowledgeDirectoryTable } from "@/app/admin/(project)/knowledge-bases/_components/directory-table";
+import { KnowledgeDocumentImport } from "@/app/admin/(project)/knowledge-bases/_components/document-import";
 import {
-  getDirectoryEntryKey,
-  documentStatusLabels,
-  type DirectoryEntry,
   type DirectoryChange,
-  KNOWLEDGE_FOLDERS_QUERY_KEY,
+  type DirectoryEntry,
   KNOWLEDGE_DIRECTORY_QUERY_KEY,
+  KNOWLEDGE_FOLDERS_QUERY_KEY,
   KNOWLEDGE_SEARCH_QUERY_KEY,
+  documentStatusLabels,
+  getDirectoryEntryKey,
 } from "@/app/admin/(project)/knowledge-bases/_lib/directory";
 import {
   getKnowledgeDirectoryHref,
   getKnowledgeDocumentHref,
 } from "@/app/admin/(project)/knowledge-bases/_lib/navigation";
-import { KnowledgeDocumentImport } from "@/app/admin/(project)/knowledge-bases/_components/document-import";
-import { SearchToolbar } from "@/components/common/search-toolbar";
-import { FolderActions } from "@/components/common/folder-actions";
-import { getQueryViewState } from "@/lib/query-view-state";
-import { LoadError } from "@/components/common/load-error";
-import { PageOutOfRange } from "@/components/common/page-out-of-range";
-import { PagePagination } from "@/components/common/page-pagination";
-import { Button } from "@/components/ui/button";
 import { FilterGroup } from "@/app/admin/_components/filter-group";
-import { ToggleGroupItem } from "@/components/ui/toggle-group";
+import { FolderActions } from "@/components/common/folder-actions";
+import { LoadError } from "@/components/common/load-error";
+import { PagePagination } from "@/components/common/page-pagination";
+import { SearchToolbar } from "@/components/common/search-toolbar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -48,13 +44,9 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { Button } from "@/components/ui/button";
+import { ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useListParams } from "@/hooks/use-list-params";
 import {
   type KnowledgeFolderPublic,
   knowledgeBasesReadDirectory,
@@ -62,7 +54,7 @@ import {
 } from "@/lib/client";
 import { getFolderAncestors } from "@/lib/folders";
 import { parsePage } from "@/lib/pagination";
-import { useListParams } from "@/hooks/use-list-params";
+import { getQueryViewState } from "@/lib/query-view-state";
 
 const PAGE_SIZE = 20;
 const DOCUMENT_POLL_INTERVAL_MS = 3000;
@@ -129,7 +121,10 @@ export function KnowledgeDocuments({
   if (currentStatus || search) {
     for (const folder of folders) {
       const ancestors = getFolderAncestors(folderById, folder.id);
-      folderPaths.set(folder.id, ancestors.map((item) => item.name).join(" / "));
+      folderPaths.set(
+        folder.id,
+        ancestors.map((item) => item.name).join(" / "),
+      );
     }
   }
 
@@ -190,7 +185,6 @@ export function KnowledgeDocuments({
   const statusCounts = directoryQuery.data?.status_counts;
   const totalEntryCount = directoryQuery.data?.count ?? 0;
   const pageCount = Math.ceil(totalEntryCount / PAGE_SIZE);
-  const pageOutOfRange = totalEntryCount > 0 && directoryEntries.length === 0;
 
   const foldersState = getQueryViewState(foldersQuery);
   const directoryState = getQueryViewState(
@@ -337,7 +331,10 @@ export function KnowledgeDocuments({
                 {currentFolderId || currentStatus ? (
                   <BreadcrumbLink asChild>
                     <Link
-                      href={getKnowledgeDirectoryHref(projectId, knowledgeBaseId)}
+                      href={getKnowledgeDirectoryHref(
+                        projectId,
+                        knowledgeBaseId,
+                      )}
                     >
                       全部文档
                     </Link>
@@ -440,8 +437,14 @@ export function KnowledgeDocuments({
           {selectedEntries.length > 0 ? (
             <>
               <div className="flex items-center gap-2">
-                <span className="text-sm" role="status">已选 {selectedEntries.length} 项</span>
-                <Button variant="ghost" size="sm" onClick={() => selectEntries(new Set())}>
+                <span className="text-sm" role="status">
+                  已选 {selectedEntries.length} 项
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => selectEntries(new Set())}
+                >
                   取消选择
                 </Button>
               </div>
@@ -495,7 +498,7 @@ export function KnowledgeDocuments({
               void directoryQuery.refetch();
             }}
           />
-        ) : directoryPending || directoryEntries.length > 0 ? (
+        ) : (
           <CollectionContent
             busy={directoryState !== "loading" && directoryQuery.isFetching}
             inert={
@@ -504,6 +507,13 @@ export function KnowledgeDocuments({
             className="md:min-h-0 md:h-full md:flex-1"
           >
             <KnowledgeDirectoryTable
+              emptyMessage={
+                search
+                  ? "未找到匹配的文档"
+                  : currentStatus
+                    ? "暂无此状态文档"
+                    : "此文件夹为空"
+              }
               loading={directoryPending}
               currentPage={currentPage}
               projectId={projectId}
@@ -528,37 +538,6 @@ export function KnowledgeDocuments({
               )}
             />
           </CollectionContent>
-        ) : pageOutOfRange ? (
-          <PageOutOfRange
-            href={getKnowledgeDirectoryHref(
-              projectId,
-              knowledgeBaseId,
-              1,
-              currentFolderId,
-              currentStatus,
-              search,
-            )}
-          />
-        ) : (
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <FolderOpenIcon aria-hidden="true" />
-              </EmptyMedia>
-              <EmptyTitle>
-                {search
-                  ? "未找到匹配的文档"
-                  : currentStatus
-                    ? "暂无此状态文档"
-                    : "此文件夹为空"}
-              </EmptyTitle>
-              {!currentStatus && !search && (
-                <EmptyDescription>
-                  上传文件、添加网页或新建文件夹。
-                </EmptyDescription>
-              )}
-            </EmptyHeader>
-          </Empty>
         )}
       </section>
       <PagePagination
@@ -566,6 +545,11 @@ export function KnowledgeDocuments({
         ariaLabel="知识库目录分页"
         currentPage={currentPage}
         pageCount={pageCount}
+        pending={
+          activeView !== "documents" ||
+          directoryQuery.data === undefined ||
+          directoryQuery.isPlaceholderData
+        }
         getPageHref={(page) =>
           getKnowledgeDirectoryHref(
             projectId,

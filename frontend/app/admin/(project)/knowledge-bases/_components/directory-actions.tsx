@@ -285,7 +285,7 @@ export function DirectoryBatchActions({
             aria-busy={downloading}
           >
             <ButtonContent loading={downloading} icon={DownloadIcon}>
-              {downloading ? "发起中…" : "下载"}
+              {downloading ? "发起中…" : "下载文档"}
             </ButtonContent>
           </Button>
         </DropdownMenuTrigger>
@@ -333,7 +333,7 @@ export function DirectoryBatchActions({
         onClick={() => actions.openDeleteEntries(entries)}
       >
         <ButtonContent loading={actions.deleteEntriesMutation.isPending} icon={TrashIcon}>
-          删除
+          删除文档
         </ButtonContent>
       </Button>
     </>

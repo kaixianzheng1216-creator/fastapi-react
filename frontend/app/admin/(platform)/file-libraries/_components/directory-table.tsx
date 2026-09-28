@@ -12,6 +12,7 @@ import {
 } from "@/app/admin/(platform)/file-libraries/_lib/directory";
 import { getLibraryDirectoryHref } from "@/app/admin/(platform)/file-libraries/_lib/navigation";
 
+import { TableEmptyRow } from "@/components/common/table-empty-row";
 import { TableSkeletonBody } from "@/components/common/table-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -36,6 +37,7 @@ export function LibraryDirectoryTable({
   loading,
   fileLibraryId,
   entries,
+  emptyMessage,
   selectedEntryKeys,
   onSelectionChange,
   renderActions,
@@ -44,6 +46,7 @@ export function LibraryDirectoryTable({
   loading: boolean;
   fileLibraryId: string;
   entries: DirectoryEntry[];
+  emptyMessage: string;
   selectedEntryKeys: ReadonlySet<string>;
   onSelectionChange: (keys: Set<string>) => void;
   renderActions: (entry: DirectoryEntry) => ReactNode;
@@ -69,7 +72,7 @@ export function LibraryDirectoryTable({
           <TableHead className="w-10">
             <Checkbox
               aria-label="选择当前页全部项目"
-              disabled={loading}
+              disabled={loading || entries.length === 0}
               checked={
                 allEntriesSelected
                   ? true
@@ -98,6 +101,9 @@ export function LibraryDirectoryTable({
         <TableSkeletonBody columns={6} />
       ) : (
         <TableBody>
+          {entries.length === 0 && (
+            <TableEmptyRow colSpan={6}>{emptyMessage}</TableEmptyRow>
+          )}
           {entries.map((entry) => {
             const key = getDirectoryEntryKey(entry);
             const name = entry.type === "folder" ? entry.name : entry.filename;

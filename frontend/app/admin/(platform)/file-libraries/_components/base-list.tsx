@@ -9,27 +9,21 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { FolderOpenIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 import {
   CARD_PAGE_SIZE,
   CardGrid,
 } from "@/components/common/collection-content";
+import { DeleteDialog } from "@/components/common/delete-dialog";
+import { LoadError } from "@/components/common/load-error";
+import { PagePagination } from "@/components/common/page-pagination";
 import {
   ResourceCard,
   ResourceCardsSkeleton,
 } from "@/components/common/resource-card";
-import { AppHeader } from "@/components/layout/app-header";
-import { LibraryDialog } from "./library-dialog";
-import { getQueryViewState } from "@/lib/query-view-state";
-import { LoadError } from "@/components/common/load-error";
-import { PageOutOfRange } from "@/components/common/page-out-of-range";
-import { useActionFocus } from "@/hooks/use-action-focus";
-import { useListParams } from "@/hooks/use-list-params";
 import { SearchToolbar } from "@/components/common/search-toolbar";
-import { PagePagination } from "@/components/common/page-pagination";
-import { DeleteDialog } from "@/components/common/delete-dialog";
+import { AppHeader } from "@/components/layout/app-header";
 import { Button } from "@/components/ui/button";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import {
@@ -38,6 +32,10 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { useActionFocus } from "@/hooks/use-action-focus";
+import { useListParams } from "@/hooks/use-list-params";
+import { getQueryViewState } from "@/lib/query-view-state";
+import { LibraryDialog } from "./library-dialog";
 
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
@@ -56,7 +54,6 @@ export function FileLibraryManager() {
   const { rememberActionTrigger, restoreActionFocus } =
     useActionFocus(createButtonRef);
 
-  const router = useRouter();
   const { params: searchParams, update } = useListParams();
   const queryClient = useQueryClient();
 
@@ -113,9 +110,6 @@ export function FileLibraryManager() {
     },
     onSuccess: () => {
       toast.success("文件库已删除");
-      if (fileLibrariesQuery.data?.data.length === 1 && currentPage > 1) {
-        router.replace(getFileLibrariesHref(currentPage - 1, search));
-      }
 
       setFileLibraryToDelete(undefined);
 
@@ -129,8 +123,6 @@ export function FileLibraryManager() {
   const pageCount = Math.ceil(
     (fileLibrariesQuery.data?.count ?? 0) / CARD_PAGE_SIZE,
   );
-  const pageOutOfRange =
-    (fileLibrariesQuery.data?.count ?? 0) > 0 && fileLibraries.length === 0;
 
   return (
     <>
@@ -175,20 +167,16 @@ export function FileLibraryManager() {
               onRetry={() => void fileLibrariesQuery.refetch()}
             />
           ) : fileLibraries.length === 0 ? (
-            pageOutOfRange ? (
-              <PageOutOfRange href={getFileLibrariesHref(1, search)} />
-            ) : (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <FolderOpenIcon aria-hidden="true" />
-                  </EmptyMedia>
-                  <EmptyTitle>
-                    {search ? "未找到符合条件的文件库" : "暂无文件库"}
-                  </EmptyTitle>
-                </EmptyHeader>
-              </Empty>
-            )
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FolderOpenIcon aria-hidden="true" />
+                </EmptyMedia>
+                <EmptyTitle>
+                  {search ? "未找到符合条件的文件库" : "暂无文件库"}
+                </EmptyTitle>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <CardGrid
               inert={
@@ -206,7 +194,6 @@ export function FileLibraryManager() {
                     href={`/admin/file-libraries/${fileLibrary.id}`}
                     createdAt={fileLibrary.created_at}
                     icon={FolderOpenIcon}
-
                     actions={
                       <>
                         <DropdownMenuItem
@@ -237,6 +224,10 @@ export function FileLibraryManager() {
             ariaLabel="文件库分页"
             currentPage={currentPage}
             pageCount={pageCount}
+            pending={
+              fileLibrariesQuery.data === undefined ||
+              fileLibrariesQuery.isPlaceholderData
+            }
             getPageHref={(page) => getFileLibrariesHref(page, search)}
           />
         </section>

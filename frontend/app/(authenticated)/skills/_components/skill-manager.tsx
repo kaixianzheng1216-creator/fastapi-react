@@ -1,6 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { ThreadListPopover } from "@/app/(authenticated)/_components/thread-list-popover";
+import { SkillCreateDialog } from "@/app/(authenticated)/skills/_components/skill-create-dialog";
+import {
+  CARD_PAGE_SIZE,
+  CardGrid,
+} from "@/components/common/collection-content";
+import { DeleteDialog } from "@/components/common/delete-dialog";
+import { LoadError } from "@/components/common/load-error";
+import { PagePagination } from "@/components/common/page-pagination";
+import {
+  ResourceCard,
+  ResourceCardsSkeleton,
+} from "@/components/common/resource-card";
+import { SearchToolbar } from "@/components/common/search-toolbar";
+import { AppHeader } from "@/components/layout/app-header";
+import { Button } from "@/components/ui/button";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { useListParams } from "@/hooks/use-list-params";
+import { getApiErrorMessage } from "@/lib/api-error";
+import {
+  skillsDeleteSkill,
+  skillsReadSkills,
+  type SkillSummaryPublic,
+} from "@/lib/client";
+import { getPaginationHref, parsePage } from "@/lib/pagination";
+import { getQueryViewState } from "@/lib/query-view-state";
 import {
   keepPreviousData,
   useMutation,
@@ -9,39 +40,7 @@ import {
 } from "@tanstack/react-query";
 import { PlusIcon, PuzzleIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { DeleteDialog } from "@/components/common/delete-dialog";
-import { Button } from "@/components/ui/button";
-import { getQueryViewState } from "@/lib/query-view-state";
-import { LoadError } from "@/components/common/load-error";
-import { PageOutOfRange } from "@/components/common/page-out-of-range";
-import { PagePagination } from "@/components/common/page-pagination";
-import { useListParams } from "@/hooks/use-list-params";
-import { SearchToolbar } from "@/components/common/search-toolbar";
-import {
-  ResourceCard,
-  ResourceCardsSkeleton,
-} from "@/components/common/resource-card";
-import {
-  CARD_PAGE_SIZE,
-  CardGrid,
-} from "@/components/common/collection-content";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
-import { AppHeader } from "@/components/layout/app-header";
-import { ThreadListPopover } from "@/app/(authenticated)/_components/thread-list-popover";
-import { getApiErrorMessage } from "@/lib/api-error";
-import { getPaginationHref, parsePage } from "@/lib/pagination";
-import {
-  skillsDeleteSkill,
-  skillsReadSkills,
-  type SkillSummaryPublic,
-} from "@/lib/client";
-import { SkillCreateDialog } from "@/app/(authenticated)/skills/_components/skill-create-dialog";
+import { useState } from "react";
 import { toast } from "sonner";
 
 const SKILLS_QUERY_KEY = ["skills"] as const;
@@ -81,7 +80,6 @@ export function SkillManager() {
   const skills = skillsQuery.data?.data ?? [];
   const count = skillsQuery.data?.count ?? 0;
   const totalPages = Math.ceil(count / CARD_PAGE_SIZE);
-  const pageOutOfRange = count > 0 && skills.length === 0;
 
   const [createOpen, setCreateOpen] = useState(false);
   const [skillToDelete, setSkillToDelete] = useState<SkillSummaryPublic>();
@@ -97,10 +95,6 @@ export function SkillManager() {
       toast.success("技能已删除");
       setSkillToDelete(undefined);
       invalidateSkills();
-
-      if (skills.length === 1 && offset > 0) {
-        router.replace(getSkillsHref(currentPage - 1, searchQuery));
-      }
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "技能删除失败，请重试"));
@@ -154,20 +148,16 @@ export function SkillManager() {
               onRetry={() => void skillsQuery.refetch()}
             />
           ) : skills.length === 0 ? (
-            pageOutOfRange ? (
-              <PageOutOfRange href={getSkillsHref(1, searchQuery)} />
-            ) : (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <PuzzleIcon aria-hidden="true" />
-                  </EmptyMedia>
-                  <EmptyTitle>
-                    {searchQuery ? "未找到符合条件的技能" : "暂无技能"}
-                  </EmptyTitle>
-                </EmptyHeader>
-              </Empty>
-            )
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PuzzleIcon aria-hidden="true" />
+                </EmptyMedia>
+                <EmptyTitle>
+                  {searchQuery ? "未找到符合条件的技能" : "暂无技能"}
+                </EmptyTitle>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <CardGrid
               inert={viewState === "ready" && skillsQuery.isPlaceholderData}
@@ -203,6 +193,9 @@ export function SkillManager() {
             ariaLabel="技能分页"
             currentPage={currentPage}
             pageCount={totalPages}
+            pending={
+              skillsQuery.data === undefined || skillsQuery.isPlaceholderData
+            }
             getPageHref={(page) => getSkillsHref(page, searchQuery)}
           />
         </section>

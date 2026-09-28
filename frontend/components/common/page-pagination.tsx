@@ -1,3 +1,8 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 import {
   Pagination,
   PaginationContent,
@@ -13,6 +18,7 @@ type PagePaginationProps = {
   ariaLabel: string;
   currentPage: number;
   pageCount: number;
+  pending: boolean;
   getPageHref: (page: number) => string;
   className?: string;
 };
@@ -21,9 +27,22 @@ export function PagePagination({
   ariaLabel,
   currentPage,
   pageCount,
+  pending,
   getPageHref,
   className,
 }: PagePaginationProps) {
+  const router = useRouter();
+  const correctionHref =
+    !pending && currentPage > Math.max(1, pageCount)
+      ? getPageHref(Math.max(1, pageCount))
+      : undefined;
+
+  useEffect(() => {
+    if (correctionHref !== undefined) {
+      router.replace(correctionHref, { scroll: false });
+    }
+  }, [correctionHref, router]);
+
   if (pageCount < 1 || currentPage > pageCount) {
     return null;
   }
@@ -31,7 +50,12 @@ export function PagePagination({
   const pages = getPaginationPages(currentPage, pageCount);
 
   return (
-    <Pagination className={className} aria-label={ariaLabel}>
+    <Pagination
+      className={className}
+      aria-label={ariaLabel}
+      aria-busy={pending}
+      inert={pending}
+    >
       <PaginationContent>
         <PaginationItem>
           <PaginationPrevious

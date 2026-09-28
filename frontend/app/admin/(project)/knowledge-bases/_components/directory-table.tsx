@@ -7,12 +7,13 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import {
-  getDirectoryEntryKey,
   documentStatusLabels,
+  getDirectoryEntryKey,
   type DirectoryEntry,
 } from "@/app/admin/(project)/knowledge-bases/_lib/directory";
 import { getKnowledgeDirectoryHref } from "@/app/admin/(project)/knowledge-bases/_lib/navigation";
 
+import { TableEmptyRow } from "@/components/common/table-empty-row";
 import { TableSkeletonBody } from "@/components/common/table-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -51,6 +52,7 @@ export function KnowledgeDirectoryTable({
   projectId,
   knowledgeBaseId,
   entries,
+  emptyMessage,
   folderPaths,
   selectedEntryKeys,
   onSelectionChange,
@@ -62,6 +64,7 @@ export function KnowledgeDirectoryTable({
   projectId: string;
   knowledgeBaseId: string;
   entries: DirectoryEntry[];
+  emptyMessage: string;
   folderPaths?: ReadonlyMap<string, string>;
   selectedEntryKeys: ReadonlySet<string>;
   onSelectionChange: (keys: Set<string>) => void;
@@ -89,7 +92,7 @@ export function KnowledgeDirectoryTable({
           <TableHead className="w-10">
             <Checkbox
               aria-label="选择当前页全部项目"
-              disabled={loading}
+              disabled={loading || entries.length === 0}
               checked={
                 allEntriesSelected
                   ? true
@@ -120,6 +123,11 @@ export function KnowledgeDirectoryTable({
         <TableSkeletonBody columns={folderPaths ? 8 : 7} />
       ) : (
         <TableBody>
+          {entries.length === 0 && (
+            <TableEmptyRow colSpan={folderPaths ? 8 : 7}>
+              {emptyMessage}
+            </TableEmptyRow>
+          )}
           {entries.map((entry) => {
             const key = getDirectoryEntryKey(entry);
             const name = entry.type === "folder" ? entry.name : entry.filename;

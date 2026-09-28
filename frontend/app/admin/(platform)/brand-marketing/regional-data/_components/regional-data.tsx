@@ -19,26 +19,19 @@ import {
   ChevronDownIcon,
   ChevronsUpDownIcon,
   ChevronUpIcon,
-  MapIcon,
   MinusIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
 import { DataRefreshButton } from "@/app/admin/_components/data-refresh-button";
-import { AppHeader } from "@/components/layout/app-header";
-import { getQueryViewState } from "@/lib/query-view-state";
 import { LoadError } from "@/components/common/load-error";
-import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
+import { TableEmptyRow } from "@/components/common/table-empty-row";
+import { TableSkeletonBody } from "@/components/common/table-skeleton";
+import { AppHeader } from "@/components/layout/app-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Select,
@@ -49,7 +42,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TableSkeletonBody } from "@/components/common/table-skeleton";
 import {
   Table,
   TableBody,
@@ -66,6 +58,7 @@ import {
   type RegionalSortOrder,
 } from "@/lib/client";
 import { getPaginationHref, parsePage } from "@/lib/pagination";
+import { getQueryViewState } from "@/lib/query-view-state";
 
 const PAGE_SIZE = 20;
 const DEFAULT_SORT_BY: RegionalIndicatorCode = "resident_population";
@@ -262,7 +255,6 @@ export function RegionalData() {
 
   const rows = table.getRowModel().rows;
   const pageCount = table.getPageCount();
-  const pageOutOfRange = (regionalData?.count ?? 0) > 0 && rows.length === 0;
 
   return (
     <>
@@ -334,21 +326,6 @@ export function RegionalData() {
               isRetrying={regionalDataQuery.isFetching}
               onRetry={() => void regionalDataQuery.refetch()}
             />
-          ) : viewState !== "loading" && rows.length === 0 ? (
-            pageOutOfRange ? (
-              <PageOutOfRange
-                href={getRegionalDataHref(1, year, sortBy, sortOrder)}
-              />
-            ) : (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <MapIcon aria-hidden="true" />
-                  </EmptyMedia>
-                  <EmptyTitle>暂无区域数据</EmptyTitle>
-                </EmptyHeader>
-              </Empty>
-            )
           ) : (
             <CollectionContent
               inert={
@@ -412,6 +389,12 @@ export function RegionalData() {
                   />
                 ) : (
                   <TableBody>
+                    {rows.length === 0 && (
+                      <TableEmptyRow colSpan={table.getAllLeafColumns().length}>
+                        暂无区域数据
+                      </TableEmptyRow>
+                    )}
+
                     {rows.map((row) => (
                       <TableRow key={row.id}>
                         {row.getAllCells().map((cell) => (
@@ -439,6 +422,10 @@ export function RegionalData() {
             ariaLabel="区域数据分页"
             currentPage={currentPage}
             pageCount={pageCount}
+            pending={
+              regionalDataQuery.data === undefined ||
+              regionalDataQuery.isPlaceholderData
+            }
             getPageHref={(page) =>
               getRegionalDataHref(page, year, sortBy, sortOrder)
             }

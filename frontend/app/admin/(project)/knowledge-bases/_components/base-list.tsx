@@ -17,35 +17,28 @@ import {
   PowerOffIcon,
   TrashIcon,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { FilterGroup } from "@/app/admin/_components/filter-group";
-import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
+import { useProject } from "@/app/admin/_components/project-context";
+import { ButtonContent } from "@/components/common/button-content";
 import {
   CARD_PAGE_SIZE,
   CardGrid,
   CollectionContent,
 } from "@/components/common/collection-content";
-import { ButtonContent } from "@/components/common/button-content";
-import { TableSkeletonBody } from "@/components/common/table-skeleton";
+import { DeleteDialog } from "@/components/common/delete-dialog";
+import { LoadError } from "@/components/common/load-error";
+import { PagePagination } from "@/components/common/page-pagination";
 import {
   ResourceCard,
   ResourceCardsSkeleton,
 } from "@/components/common/resource-card";
-import { AppHeader } from "@/components/layout/app-header";
-import { LibraryDialog } from "./library-dialog";
-import { getQueryViewState } from "@/lib/query-view-state";
-import { LoadError } from "@/components/common/load-error";
-import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { SearchToolbar } from "@/components/common/search-toolbar";
-import { useActionFocus } from "@/hooks/use-action-focus";
-import { useListParams } from "@/hooks/use-list-params";
-import { useProject } from "@/app/admin/_components/project-context";
-import { projectHref } from "@/lib/project-routes";
-import { PagePagination } from "@/components/common/page-pagination";
-import { DeleteDialog } from "@/components/common/delete-dialog";
+import { TableEmptyRow } from "@/components/common/table-empty-row";
+import { TableSkeletonBody } from "@/components/common/table-skeleton";
+import { AppHeader } from "@/components/layout/app-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,6 +49,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import {
   Table,
   TableBody,
   TableCell,
@@ -63,13 +62,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useActionFocus } from "@/hooks/use-action-focus";
+import { useListParams } from "@/hooks/use-list-params";
+import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   type KnowledgeBasePublic,
@@ -78,7 +74,10 @@ import {
   knowledgeBasesUpdateKnowledgeBase,
 } from "@/lib/client";
 import { getPaginationHref, parsePage } from "@/lib/pagination";
+import { projectHref } from "@/lib/project-routes";
+import { getQueryViewState } from "@/lib/query-view-state";
 import { toast } from "sonner";
+import { LibraryDialog } from "./library-dialog";
 
 const KNOWLEDGE_BASES_QUERY_KEY = ["admin-knowledge-bases"] as const;
 const EMPTY_KNOWLEDGE_BASES: KnowledgeBasePublic[] = [];
@@ -91,7 +90,6 @@ export function KnowledgeBaseManager() {
   const { rememberActionTrigger, restoreActionFocus } =
     useActionFocus(createButtonRef);
 
-  const router = useRouter();
   const project = useProject()!;
   const { params: searchParams, update } = useListParams();
   const getPageHref = (page: number) =>
@@ -185,9 +183,6 @@ export function KnowledgeBaseManager() {
     },
     onSuccess: () => {
       toast.success("知识库已删除");
-      if (knowledgeBasesQuery.data?.data.length === 1 && currentPage > 1) {
-        router.replace(getPageHref(currentPage - 1));
-      }
 
       setKnowledgeBaseToDelete(undefined);
 
@@ -201,13 +196,13 @@ export function KnowledgeBaseManager() {
   const pageCount = Math.ceil(
     (knowledgeBasesQuery.data?.count ?? 0) / CARD_PAGE_SIZE,
   );
-  const pageOutOfRange =
-    (knowledgeBasesQuery.data?.count ?? 0) > 0 && knowledgeBases.length === 0;
 
   function renderActions(knowledgeBase: KnowledgeBasePublic) {
     return (
       <>
-        <DropdownMenuItem onSelect={() => setKnowledgeBaseToEdit(knowledgeBase)}>
+        <DropdownMenuItem
+          onSelect={() => setKnowledgeBaseToEdit(knowledgeBase)}
+        >
           <PencilIcon aria-hidden="true" />
           编辑
         </DropdownMenuItem>
@@ -301,54 +296,44 @@ export function KnowledgeBaseManager() {
                   }
                 }}
               >
-                <ToggleGroupItem value="cards" aria-label="卡片视图" title="卡片视图">
+                <ToggleGroupItem
+                  value="cards"
+                  aria-label="卡片视图"
+                  title="卡片视图"
+                >
                   <LayoutGridIcon aria-hidden="true" />
                 </ToggleGroupItem>
-                <ToggleGroupItem value="list" aria-label="列表视图" title="列表视图">
+                <ToggleGroupItem
+                  value="list"
+                  aria-label="列表视图"
+                  title="列表视图"
+                >
                   <ListIcon aria-hidden="true" />
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
 
-            {viewState === "loading" ? (
-              view === "cards" ? (
-                <ResourceCardsSkeleton showMetadata />
-              ) : (
-                <Table loading>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>知识库</TableHead>
-                      <TableHead>状态</TableHead>
-                      <TableHead>创建时间</TableHead>
-                      <TableHead>操作</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableSkeletonBody columns={4} />
-                </Table>
-              )
+            {viewState === "loading" && view === "cards" ? (
+              <ResourceCardsSkeleton showMetadata />
             ) : viewState === "error" ? (
               <LoadError
                 title="知识库加载失败"
                 isRetrying={knowledgeBasesQuery.isFetching}
                 onRetry={() => void knowledgeBasesQuery.refetch()}
               />
-            ) : knowledgeBases.length === 0 ? (
-              pageOutOfRange ? (
-                <PageOutOfRange href={getPageHref(1)} />
-              ) : (
-                <Empty>
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                      <BookOpenIcon aria-hidden="true" />
-                    </EmptyMedia>
-                    <EmptyTitle>
-                      {search || status !== "all"
-                        ? "未找到符合条件的知识库"
-                        : "暂无知识库"}
-                    </EmptyTitle>
-                  </EmptyHeader>
-                </Empty>
-              )
+            ) : view === "cards" && knowledgeBases.length === 0 ? (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <BookOpenIcon aria-hidden="true" />
+                  </EmptyMedia>
+                  <EmptyTitle>
+                    {search || status !== "all"
+                      ? "未找到符合条件的知识库"
+                      : "暂无知识库"}
+                  </EmptyTitle>
+                </EmptyHeader>
+              </Empty>
             ) : view === "cards" ? (
               <CardGrid
                 inert={
@@ -386,10 +371,15 @@ export function KnowledgeBaseManager() {
               </CardGrid>
             ) : (
               <CollectionContent
-                inert={viewState === "ready" && knowledgeBasesQuery.isPlaceholderData}
+                inert={
+                  viewState === "ready" && knowledgeBasesQuery.isPlaceholderData
+                }
                 busy={knowledgeBasesQuery.isFetching}
               >
-                <Table className="min-w-[640px]">
+                <Table
+                  loading={viewState === "loading"}
+                  className="min-w-[640px]"
+                >
                   <TableHeader>
                     <TableRow>
                       <TableHead>知识库</TableHead>
@@ -398,75 +388,89 @@ export function KnowledgeBaseManager() {
                       <TableHead className="w-16">操作</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    {knowledgeBases.map((knowledgeBase) => {
-                      const pending =
-                        updateStatusMutation.isPending &&
-                        updateStatusMutation.variables?.id === knowledgeBase.id;
+                  {viewState === "loading" ? (
+                    <TableSkeletonBody columns={4} />
+                  ) : (
+                    <TableBody>
+                      {knowledgeBases.length === 0 && (
+                        <TableEmptyRow colSpan={4}>
+                          {search || status !== "all"
+                            ? "未找到符合条件的知识库"
+                            : "暂无知识库"}
+                        </TableEmptyRow>
+                      )}
+                      {knowledgeBases.map((knowledgeBase) => {
+                        const pending =
+                          updateStatusMutation.isPending &&
+                          updateStatusMutation.variables?.id ===
+                            knowledgeBase.id;
 
-                      return (
-                        <TableRow key={knowledgeBase.id}>
-                          <TableCell className="min-w-0">
-                            <Link
-                              className="block truncate font-medium hover:underline"
-                              href={`${projectHref(project.id)}/${knowledgeBase.id}`}
-                              title={knowledgeBase.name}
-                            >
-                              {knowledgeBase.name}
-                            </Link>
-                            <p className="truncate text-muted-foreground">
-                              {knowledgeBase.description || "暂无描述"}
-                            </p>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                knowledgeBase.is_enabled ? "outline" : "secondary"
-                              }
-                            >
-                              {knowledgeBase.is_enabled ? "已启用" : "已停用"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <time dateTime={knowledgeBase.created_at}>
-                              {new Date(
-                                knowledgeBase.created_at,
-                              ).toLocaleDateString("zh-CN", {
-                                dateStyle: "medium",
-                              })}
-                            </time>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger
-                                asChild
-                                onPointerDown={rememberActionTrigger}
-                                onFocus={rememberActionTrigger}
+                        return (
+                          <TableRow key={knowledgeBase.id}>
+                            <TableCell className="min-w-0">
+                              <Link
+                                className="block truncate font-medium hover:underline"
+                                href={`${projectHref(project.id)}/${knowledgeBase.id}`}
+                                title={knowledgeBase.name}
                               >
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  aria-label={`${knowledgeBase.name} 的更多操作`}
-                                  disabled={pending}
-                                  aria-busy={pending}
+                                {knowledgeBase.name}
+                              </Link>
+                              <p className="truncate text-muted-foreground">
+                                {knowledgeBase.description || "暂无描述"}
+                              </p>
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  knowledgeBase.is_enabled
+                                    ? "outline"
+                                    : "secondary"
+                                }
+                              >
+                                {knowledgeBase.is_enabled ? "已启用" : "已停用"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <time dateTime={knowledgeBase.created_at}>
+                                {new Date(
+                                  knowledgeBase.created_at,
+                                ).toLocaleDateString("zh-CN", {
+                                  dateStyle: "medium",
+                                })}
+                              </time>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger
+                                  asChild
+                                  onPointerDown={rememberActionTrigger}
+                                  onFocus={rememberActionTrigger}
                                 >
-                                  <ButtonContent
-                                    loading={pending}
-                                    icon={MoreHorizontalIcon}
-                                  />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuGroup>
-                                  {renderActions(knowledgeBase)}
-                                </DropdownMenuGroup>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    aria-label={`${knowledgeBase.name} 的更多操作`}
+                                    disabled={pending}
+                                    aria-busy={pending}
+                                  >
+                                    <ButtonContent
+                                      loading={pending}
+                                      icon={MoreHorizontalIcon}
+                                    />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuGroup>
+                                    {renderActions(knowledgeBase)}
+                                  </DropdownMenuGroup>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  )}
                 </Table>
               </CollectionContent>
             )}
@@ -477,6 +481,10 @@ export function KnowledgeBaseManager() {
             ariaLabel="知识库分页"
             currentPage={currentPage}
             pageCount={pageCount}
+            pending={
+              knowledgeBasesQuery.data === undefined ||
+              knowledgeBasesQuery.isPlaceholderData
+            }
             getPageHref={getPageHref}
           />
         </section>

@@ -13,27 +13,22 @@ import {
   PowerIcon,
   PowerOffIcon,
   TrashIcon,
-  UsersIcon,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
-import { FilterGroup } from "@/app/admin/_components/filter-group";
 import { UserCreateDialog } from "@/app/admin/(platform)/users/_components/user-create-dialog";
 import { UserEditDialog } from "@/app/admin/(platform)/users/_components/user-edit-dialog";
+import { FilterGroup } from "@/app/admin/_components/filter-group";
+import { ButtonContent } from "@/components/common/button-content";
 import { CollectionContent } from "@/components/common/collection-content";
-import { AppHeader } from "@/components/layout/app-header";
-import { getQueryViewState } from "@/lib/query-view-state";
+import { DeleteDialog } from "@/components/common/delete-dialog";
 import { LoadError } from "@/components/common/load-error";
-import { PageOutOfRange } from "@/components/common/page-out-of-range";
 import { PagePagination } from "@/components/common/page-pagination";
 import { SearchToolbar } from "@/components/common/search-toolbar";
-import { useActionFocus } from "@/hooks/use-action-focus";
-import { useListParams } from "@/hooks/use-list-params";
-import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
-import { DeleteDialog } from "@/components/common/delete-dialog";
+import { TableEmptyRow } from "@/components/common/table-empty-row";
+import { TableSkeletonBody } from "@/components/common/table-skeleton";
+import { AppHeader } from "@/components/layout/app-header";
 import { Badge } from "@/components/ui/badge";
-import { ButtonContent } from "@/components/common/button-content";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -43,13 +38,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
-import { TableSkeletonBody } from "@/components/common/table-skeleton";
-import {
   Table,
   TableBody,
   TableCell,
@@ -58,18 +46,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useActionFocus } from "@/hooks/use-action-focus";
 import {
   CURRENT_USER_QUERY_KEY,
   useCurrentUser,
 } from "@/hooks/use-current-user";
+import { useListParams } from "@/hooks/use-list-params";
+import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
 import { getApiErrorMessage } from "@/lib/api-error";
-import { getPaginationHref, parsePage } from "@/lib/pagination";
 import {
   type UserPublic,
   usersDeleteUser,
   usersReadUsers,
   usersUpdateUser,
 } from "@/lib/client";
+import { getPaginationHref, parsePage } from "@/lib/pagination";
+import { getQueryViewState } from "@/lib/query-view-state";
 import { toast } from "sonner";
 
 const PAGE_SIZE = 20;
@@ -88,7 +80,6 @@ export function UserManager() {
   const { rememberActionTrigger, restoreActionFocus } =
     useActionFocus(createButtonRef);
 
-  const router = useRouter();
   const { params: searchParams, update } = useListParams();
   const getPageHref = (page: number) =>
     getPaginationHref("/admin/users", page, searchParams);
@@ -158,9 +149,6 @@ export function UserManager() {
     },
     onSuccess: () => {
       toast.success("用户已删除");
-      if (usersQuery.data?.data.length === 1 && currentPage > 1) {
-        router.replace(getPageHref(currentPage - 1));
-      }
 
       setUserToDelete(undefined);
 
@@ -173,8 +161,6 @@ export function UserManager() {
 
   const users = usersQuery.data?.data ?? [];
   const pageCount = Math.ceil((usersQuery.data?.count ?? 0) / PAGE_SIZE);
-  const pageOutOfRange =
-    (usersQuery.data?.count ?? 0) > 0 && users.length === 0;
 
   function invalidateUsers(): void {
     for (const key of ["projects", "members", "member-candidates"])
@@ -207,7 +193,10 @@ export function UserManager() {
         }
       />
 
-      <main ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+      <main
+        ref={scrollRef}
+        className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6"
+      >
         <section className="mx-auto flex min-h-full w-full max-w-6xl flex-col gap-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <SearchToolbar
@@ -254,23 +243,6 @@ export function UserManager() {
               isRetrying={usersQuery.isFetching}
               onRetry={() => void usersQuery.refetch()}
             />
-          ) : viewState !== "loading" && users.length === 0 ? (
-            pageOutOfRange ? (
-              <PageOutOfRange href={getPageHref(1)} />
-            ) : (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <UsersIcon aria-hidden="true" />
-                  </EmptyMedia>
-                  <EmptyTitle>
-                    {search || role !== "all" || status !== "all"
-                      ? "未找到符合条件的用户"
-                      : "暂无用户"}
-                  </EmptyTitle>
-                </EmptyHeader>
-              </Empty>
-            )
           ) : (
             <CollectionContent
               inert={viewState === "ready" && usersQuery.isPlaceholderData}
@@ -293,6 +265,14 @@ export function UserManager() {
                   <TableSkeletonBody columns={5} />
                 ) : (
                   <TableBody>
+                    {users.length === 0 && (
+                      <TableEmptyRow colSpan={5}>
+                        {search || role !== "all" || status !== "all"
+                          ? "未找到符合条件的用户"
+                          : "暂无用户"}
+                      </TableEmptyRow>
+                    )}
+
                     {users.map((user) => {
                       const isUpdating =
                         updateStatusMutation.isPending &&
@@ -362,7 +342,9 @@ export function UserManager() {
                                   {user.id !== currentUser?.id && (
                                     <>
                                       <DropdownMenuItem
-                                        disabled={updateStatusMutation.isPending}
+                                        disabled={
+                                          updateStatusMutation.isPending
+                                        }
                                         onSelect={() =>
                                           updateStatusMutation.mutate(user)
                                         }
@@ -401,6 +383,9 @@ export function UserManager() {
             ariaLabel="用户分页"
             currentPage={currentPage}
             pageCount={pageCount}
+            pending={
+              usersQuery.data === undefined || usersQuery.isPlaceholderData
+            }
             getPageHref={getPageHref}
           />
         </section>
