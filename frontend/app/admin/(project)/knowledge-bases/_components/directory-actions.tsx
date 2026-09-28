@@ -46,6 +46,11 @@ import {
   downloadMarkdownKnowledgeDocument,
   downloadOriginalKnowledgeDocument,
 } from "@/lib/knowledge-document-download";
+import {
+  canRunDocumentAction,
+  runDocumentBatch,
+  type DocumentBatchAction,
+} from "../_lib/document-batch";
 
 type DirectoryDeleteTarget = {
   entries: DirectoryEntry[];
@@ -60,10 +65,6 @@ type UseDirectoryActionsOptions = {
 
 function showDocumentActionError(error: Error): void {
   toast.error(getApiErrorMessage(error, "文档操作失败，请重试"));
-}
-
-function showDownloadStarted(): void {
-  toast.success("文档已开始下载");
 }
 
 export function useDirectoryActions({
@@ -92,29 +93,49 @@ export function useDirectoryActions({
     onError: showDocumentActionError,
   });
 
-  const retryDocumentMutation = useMutation({
-    mutationFn: (documentId: string) =>
-      knowledgeDocumentsRetryDocument({
-        path: { document_id: documentId },
-        throwOnError: true,
-      }),
-    onSuccess: () => {
-      toast.success("文档已提交重新解析");
-      onChanged({ type: "documents" });
+  const documentMutation = useMutation({
+    mutationFn: ({
+      entries,
+      action,
+    }: {
+      entries: DirectoryEntry[];
+      action: DocumentBatchAction;
+    }) => runDocumentBatch(
+      entries,
+      action,
+      action === "retry"
+        ? (documentId) => knowledgeDocumentsRetryDocument({
+            path: { document_id: documentId },
+            throwOnError: true,
+          })
+        : action === "original"
+          ? downloadOriginalKnowledgeDocument
+          : downloadMarkdownKnowledgeDocument,
+    ),
+    onSuccess: ({ succeeded, failures, skipped }, { action }) => {
+      const summary = [
+        action === "retry"
+          ? `已提交 ${succeeded} 个文档重新解析`
+          : `已发起 ${succeeded} 个文档下载`,
+        failures.length > 0 ? `${failures.length} 个失败` : "",
+        skipped > 0 ? `已跳过 ${skipped} 个不适用项` : "",
+      ].filter(Boolean).join("，");
+
+      const firstFailure = failures[0];
+
+      const description = firstFailure
+        ? `${firstFailure.filename}：${getApiErrorMessage(firstFailure.error, "操作失败，请重试")}`
+        : action !== "retry" && succeeded > 1
+          ? "如浏览器询问，请允许此网站下载多个文件。"
+          : undefined;
+
+      if (failures.length > 0) toast.error(summary, { description });
+      else toast.success(summary, { description });
     },
     onError: showDocumentActionError,
-  });
-
-  const downloadOriginalMutation = useMutation({
-    mutationFn: downloadOriginalKnowledgeDocument,
-    onSuccess: showDownloadStarted,
-    onError: showDocumentActionError,
-  });
-
-  const downloadMarkdownMutation = useMutation({
-    mutationFn: downloadMarkdownKnowledgeDocument,
-    onSuccess: showDownloadStarted,
-    onError: showDocumentActionError,
+    onSettled: (_, __, { action }) => {
+      if (action === "retry") onChanged({ type: "documents" });
+    },
   });
 
   const [folderToEdit, setFolderToEdit] =
@@ -205,10 +226,14 @@ export function useDirectoryActions({
     rememberActionTrigger,
     restoreActionFocus,
     isUploading,
+    isActionPending: [
+      documentMutation,
+      completeDocumentMutation,
+      deleteEntriesMutation,
+      moveEntryMutation,
+    ].some((mutation) => mutation.isPending),
     completeDocumentMutation,
-    retryDocumentMutation,
-    downloadOriginalMutation,
-    downloadMarkdownMutation,
+    documentMutation,
     folderToEdit,
     editFolder: setFolderToEdit,
     onFolderSaved,
@@ -227,6 +252,94 @@ export function useDirectoryActions({
 
 type DirectoryActions = ReturnType<typeof useDirectoryActions>;
 
+export function DirectoryBatchActions({
+  entries,
+  actions,
+  disabled,
+}: {
+  entries: DirectoryEntry[];
+  actions: DirectoryActions;
+  disabled: boolean;
+}) {
+  const { documentMutation: mutation } = actions;
+  const canDownloadOriginal = entries.some((entry) => canRunDocumentAction(entry, "original"));
+  const canDownloadMarkdown = entries.some((entry) => canRunDocumentAction(entry, "markdown"));
+  const canRetry = entries.some((entry) => canRunDocumentAction(entry, "retry"));
+  const busy = disabled || actions.isActionPending;
+  const downloading = mutation.isPending && mutation.variables.action !== "retry";
+  const retrying = mutation.isPending && mutation.variables.action === "retry";
+
+  function run(action: DocumentBatchAction) {
+    mutation.mutate({ entries, action });
+  }
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={busy || (!canDownloadOriginal && !canDownloadMarkdown)}
+            aria-busy={downloading}
+          >
+            <ButtonContent loading={downloading} icon={DownloadIcon}>
+              {downloading ? "发起中…" : "下载"}
+            </ButtonContent>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              disabled={busy || !canDownloadOriginal}
+              onSelect={() => run("original")}
+            >
+              <DownloadIcon aria-hidden="true" />
+              下载原文件
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={busy || !canDownloadMarkdown}
+              onSelect={() => run("markdown")}
+            >
+              <FileTextIcon aria-hidden="true" />
+              下载 Markdown
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {canRetry && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={busy}
+          aria-busy={retrying}
+          onClick={() => run("retry")}
+        >
+          <ButtonContent loading={retrying} icon={RefreshCwIcon}>
+            {retrying ? "提交中…" : "重试"}
+          </ButtonContent>
+        </Button>
+      )}
+      <Button
+        type="button"
+        variant="destructive"
+        size="sm"
+        disabled={busy}
+        aria-busy={actions.deleteEntriesMutation.isPending}
+        onFocus={actions.rememberActionTrigger}
+        onPointerDown={actions.rememberActionTrigger}
+        onClick={() => actions.openDeleteEntries(entries)}
+      >
+        <ButtonContent loading={actions.deleteEntriesMutation.isPending} icon={TrashIcon}>
+          删除
+        </ButtonContent>
+      </Button>
+    </>
+  );
+}
+
 export function DirectoryEntryActions({
   entry,
   actions,
@@ -238,25 +351,23 @@ export function DirectoryEntryActions({
     rememberActionTrigger,
     isUploading,
     completeDocumentMutation,
-    retryDocumentMutation,
-    downloadOriginalMutation,
-    downloadMarkdownMutation,
+    documentMutation: mutation,
     openMoveEntry,
     editFolder,
     openDeleteEntry,
   } = actions;
 
-  const documentPending = [
-    completeDocumentMutation,
-    downloadOriginalMutation,
-    downloadMarkdownMutation,
-    retryDocumentMutation,
-  ].some((mutation) => mutation.isPending && mutation.variables === entry.id);
+  const documentPending = (mutation.isPending &&
+    mutation.variables.entries.some((document) =>
+      document.id === entry.id && canRunDocumentAction(document, mutation.variables.action),
+    )) ||
+    (completeDocumentMutation.isPending && completeDocumentMutation.variables === entry.id);
 
   return entry.type === "folder" ? (
     <FolderActions
       name={entry.name}
       variant="ghost"
+      disabled={actions.isActionPending}
       onTriggerInteraction={rememberActionTrigger}
       onMove={() => openMoveEntry(entry)}
       onRename={() => editFolder(entry)}
@@ -281,20 +392,17 @@ export function DirectoryEntryActions({
         <DropdownMenuGroup>
           {entry.status === "pending" && !entry.uploaded ? (
             <DropdownMenuItem
-              disabled={isUploading || completeDocumentMutation.isPending}
+              disabled={isUploading || actions.isActionPending}
               onSelect={() => completeDocumentMutation.mutate(entry.id)}
             >
               <UploadIcon aria-hidden="true" />
               确认上传
             </DropdownMenuItem>
           ) : null}
-          {entry.uploaded ? (
+          {canRunDocumentAction(entry, "original") ? (
             <DropdownMenuItem
-              disabled={
-                downloadOriginalMutation.isPending ||
-                downloadMarkdownMutation.isPending
-              }
-              onSelect={() => downloadOriginalMutation.mutate(entry.id)}
+              disabled={actions.isActionPending}
+              onSelect={() => mutation.mutate({ entries: [entry], action: "original" })}
             >
               <DownloadIcon aria-hidden="true" />
               下载原文件
@@ -308,33 +416,31 @@ export function DirectoryEntryActions({
               </a>
             </DropdownMenuItem>
           ) : null}
-          {entry.status === "ready" ? (
+          {canRunDocumentAction(entry, "markdown") ? (
             <DropdownMenuItem
-              disabled={
-                downloadOriginalMutation.isPending ||
-                downloadMarkdownMutation.isPending
-              }
-              onSelect={() => downloadMarkdownMutation.mutate(entry.id)}
+              disabled={actions.isActionPending}
+              onSelect={() => mutation.mutate({ entries: [entry], action: "markdown" })}
             >
               <FileTextIcon aria-hidden="true" />
               下载 Markdown
             </DropdownMenuItem>
           ) : null}
-          {entry.status === "failed" || entry.status === "timed_out" ? (
+          {canRunDocumentAction(entry, "retry") ? (
             <DropdownMenuItem
-              disabled={retryDocumentMutation.isPending}
-              onSelect={() => retryDocumentMutation.mutate(entry.id)}
+              disabled={actions.isActionPending}
+              onSelect={() => mutation.mutate({ entries: [entry], action: "retry" })}
             >
               <RefreshCwIcon aria-hidden="true" />
               重试
             </DropdownMenuItem>
           ) : null}
-          <DropdownMenuItem onSelect={() => openMoveEntry(entry)}>
+          <DropdownMenuItem disabled={actions.isActionPending} onSelect={() => openMoveEntry(entry)}>
             <FolderInputIcon aria-hidden="true" />
             移动到
           </DropdownMenuItem>
           <DropdownMenuItem
             variant="destructive"
+            disabled={actions.isActionPending}
             onSelect={() => openDeleteEntry(entry)}
           >
             <TrashIcon aria-hidden="true" />

@@ -5,13 +5,14 @@ import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
 import { CollectionContent } from "@/components/common/collection-content";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FolderOpenIcon } from "lucide-react";
+import { FolderOpenIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useRef, useState } from "react";
 
 import {
   DirectoryActionDialogs,
+  DirectoryBatchActions,
   DirectoryEntryActions,
   useDirectoryActions,
 } from "@/app/admin/(project)/knowledge-bases/_components/directory-actions";
@@ -29,7 +30,6 @@ import {
   getKnowledgeDocumentHref,
 } from "@/app/admin/(project)/knowledge-bases/_lib/navigation";
 import { KnowledgeDocumentImport } from "@/app/admin/(project)/knowledge-bases/_components/document-import";
-import { DirectoryToolbar } from "@/components/common/directory-toolbar";
 import { SearchToolbar } from "@/components/common/search-toolbar";
 import { FolderActions } from "@/components/common/folder-actions";
 import { getQueryViewState } from "@/lib/query-view-state";
@@ -189,9 +189,6 @@ export function KnowledgeDocuments({
 
   const directoryEntries = directoryQuery.data?.data ?? EMPTY_DIRECTORY_ENTRIES;
   const statusCounts = directoryQuery.data?.status_counts;
-  const totalDocumentCount = statusCounts
-    ? statusCounts.ready + statusCounts.processing + statusCounts.failed
-    : 0;
   const totalEntryCount = directoryQuery.data?.count ?? 0;
   const pageCount = Math.ceil(totalEntryCount / PAGE_SIZE);
   const pageOutOfRange = totalEntryCount > 0 && directoryEntries.length === 0;
@@ -401,18 +398,15 @@ export function KnowledgeDocuments({
           </Breadcrumb>
 
           <div className="flex flex-wrap items-center gap-2">
-            <DirectoryToolbar
-              selectedCount={selectedEntries.length}
+            <fieldset
               disabled={actionsDisabled}
-              deletePending={actions.deleteEntriesMutation.isPending}
-              onDelete={() => actions.openDeleteEntries(selectedEntries)}
-              onCreateFolder={() => actions.editFolder(null)}
-              onTriggerInteraction={actions.rememberActionTrigger}
+              className="flex flex-wrap items-center gap-2"
             >
               {currentFolder ? (
                 <FolderActions
                   name={currentFolder.name}
                   variant="outline"
+                  disabled={actions.isActionPending}
                   onTriggerInteraction={actions.rememberActionTrigger}
                   onMove={() =>
                     actions.openMoveEntry({ ...currentFolder, type: "folder" })
@@ -426,7 +420,17 @@ export function KnowledgeDocuments({
                   }
                 />
               ) : null}
-            </DirectoryToolbar>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => actions.editFolder(null)}
+                onFocus={actions.rememberActionTrigger}
+                onPointerDown={actions.rememberActionTrigger}
+              >
+                <PlusIcon data-icon="inline-start" aria-hidden="true" />
+                新建文件夹
+              </Button>
+            </fieldset>
             <KnowledgeDocumentImport
               key={currentFolderId ?? "root"}
               knowledgeBaseId={knowledgeBaseId}
@@ -437,67 +441,68 @@ export function KnowledgeDocuments({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <SearchToolbar
-            label="搜索文档名称"
-            placeholder="搜索文档名称…"
-            maxLength={100}
-            value={search}
-            onSearch={(value) => {
-              if (value === search) void directoryQuery.refetch();
-              else update({ search: value, folder: "" });
-            }}
-          />
-
-          {!directoryLoadFailed && !directoryPending && statusCounts && (
-            <div className="flex flex-wrap gap-2" role="group" aria-label="文档状态筛选">
-              {statusOptions.map((option) => (
-                <Button
-                  key={option.value}
-                  variant={currentStatus === option.value ? "secondary" : "outline"}
-                  size="sm"
-                  asChild
-                >
-                  <Link
-                    href={getKnowledgeDirectoryHref(
-                      projectId,
-                      knowledgeBaseId,
-                      1,
-                      currentFolderId,
-                      option.value,
-                      search,
-                    )}
-                  >
-                    <span
-                      className={`size-2 rounded-full ${option.color}`}
-                      aria-hidden="true"
-                    />
-                    {option.label} {statusCounts[option.value]}
-                  </Link>
+        <div className="flex min-h-9 flex-wrap items-center justify-between gap-3">
+          {selectedEntries.length > 0 ? (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="text-sm" role="status">已选 {selectedEntries.length} 项</span>
+                <Button variant="ghost" size="sm" onClick={() => selectEntries(new Set())}>
+                  取消选择
                 </Button>
-              ))}
-            </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <DirectoryBatchActions
+                  entries={selectedEntries}
+                  actions={actions}
+                  disabled={actionsDisabled || directoryQuery.isPlaceholderData}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <SearchToolbar
+                label="搜索文档名称"
+                placeholder="搜索文档名称…"
+                maxLength={100}
+                value={search}
+                onSearch={(value) => {
+                  if (value === search) void directoryQuery.refetch();
+                  else update({ search: value, folder: "" });
+                }}
+              />
+
+              {!directoryLoadFailed && !directoryPending && statusCounts && (
+                <div className="flex flex-wrap gap-2" role="group" aria-label="文档状态筛选">
+                  {statusOptions.map((option) => (
+                    <Button
+                      key={option.value}
+                      variant={currentStatus === option.value ? "secondary" : "outline"}
+                      size="sm"
+                      asChild
+                    >
+                      <Link
+                        href={getKnowledgeDirectoryHref(
+                          projectId,
+                          knowledgeBaseId,
+                          1,
+                          currentFolderId,
+                          option.value,
+                          search,
+                        )}
+                      >
+                        <span
+                          className={`size-2 rounded-full ${option.color}`}
+                          aria-hidden="true"
+                        />
+                        {option.label} {statusCounts[option.value]}
+                      </Link>
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
-
-        {!directoryLoadFailed && !directoryPending && statusCounts && (
-          <div
-            className="flex h-2 overflow-hidden rounded-full bg-muted"
-            role="img"
-            aria-label={`已完成 ${statusCounts.ready}，处理中 ${statusCounts.processing}，失败 ${statusCounts.failed}`}
-          >
-            {totalDocumentCount > 0 &&
-              statusOptions.map((option) => (
-                <div
-                  key={option.value}
-                  className={option.color}
-                  style={{
-                    width: `${(statusCounts[option.value] / totalDocumentCount) * 100}%`,
-                  }}
-                />
-              ))}
-          </div>
-        )}
 
         {directoryLoadFailed ? (
           <LoadError

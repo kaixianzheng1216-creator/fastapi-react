@@ -15,6 +15,7 @@ import {
 export function FolderActions({
   name,
   variant,
+  disabled = false,
   onTriggerInteraction,
   onMove,
   onRename,
@@ -22,6 +23,7 @@ export function FolderActions({
 }: {
   name: string;
   variant: "outline" | "ghost";
+  disabled?: boolean;
   onTriggerInteraction: ReactEventHandler<HTMLButtonElement>;
   onMove: () => void;
   onRename: () => void;
@@ -32,6 +34,7 @@ export function FolderActions({
       <DropdownMenuTrigger asChild>
         <Button
           variant={variant}
+          disabled={disabled}
           size="icon-sm"
           aria-label={`${name} 的更多操作`}
           onFocus={onTriggerInteraction}
@@ -42,15 +45,15 @@ export function FolderActions({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuGroup>
-          <DropdownMenuItem onSelect={onMove}>
+          <DropdownMenuItem disabled={disabled} onSelect={onMove}>
             <FolderInputIcon aria-hidden="true" />
             移动到
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={onRename}>
+          <DropdownMenuItem disabled={disabled} onSelect={onRename}>
             <PencilIcon aria-hidden="true" />
             重命名
           </DropdownMenuItem>
-          <DropdownMenuItem variant="destructive" onSelect={onDelete}>
+          <DropdownMenuItem variant="destructive" disabled={disabled} onSelect={onDelete}>
             <TrashIcon aria-hidden="true" />
             删除
           </DropdownMenuItem>

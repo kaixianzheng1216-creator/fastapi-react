@@ -11,7 +11,17 @@ export async function downloadOriginalKnowledgeDocument(
     throwOnError: true,
   });
 
-  window.location.assign(data.downloadUrl);
+  const frame = document.createElement("iframe");
+
+  frame.hidden = true;
+
+  frame.title = "下载原文件";
+
+  frame.src = data.downloadUrl;
+
+  document.body.appendChild(frame);
+
+  window.setTimeout(() => frame.remove(), 60_000);
 }
 
 export async function downloadMarkdownKnowledgeDocument(
@@ -27,15 +37,25 @@ export async function downloadMarkdownKnowledgeDocument(
 
 function saveMarkdownDocument(filename: string, content: string): void {
   const extensionIndex = filename.lastIndexOf(".");
+
   const basename =
     extensionIndex > 0 ? filename.slice(0, extensionIndex) : filename;
+
   const blobUrl = URL.createObjectURL(
     new Blob([content], { type: "text/markdown;charset=utf-8" }),
   );
+
   const anchor = document.createElement("a");
 
   anchor.href = blobUrl;
+
   anchor.download = `${basename}.md`;
+
+  document.body.appendChild(anchor);
+
   anchor.click();
-  URL.revokeObjectURL(blobUrl);
+
+  anchor.remove();
+
+  window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
 }
