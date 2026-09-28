@@ -1,9 +1,15 @@
 "use client";
 
 import { UploadIcon, XIcon } from "lucide-react";
-import { useId } from "react";
+import { type ReactNode, useId } from "react";
 import { toast } from "sonner";
 
+import {
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty";
 import { Button } from "@/components/ui/button";
 import { FieldDescription, FieldError } from "@/components/ui/field";
 import {
@@ -19,18 +25,22 @@ import {
 import { deduplicateUploadFiles } from "@/lib/file-types";
 
 export function FileDropzone({
+  children,
   files,
   onFilesChange,
   accept,
   description,
   disabled = false,
+  showSelectButton = true,
   failures = [],
 }: {
+  children?: ReactNode;
   files: File[];
   onFilesChange: (files: File[]) => void;
   accept?: string;
   description: string;
   disabled?: boolean;
+  showSelectButton?: boolean;
   failures?: { file: File; error?: string }[];
 }) {
   const descriptionId = useId();
@@ -49,21 +59,22 @@ export function FileDropzone({
       }
       multiple
     >
+      {children}
       <FileUploadDropzone aria-describedby={descriptionId}>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <div className="flex items-center justify-center rounded-full border p-2.5">
-            <UploadIcon className="size-6 text-muted-foreground" aria-hidden="true" />
-          </div>
-          <p className="text-sm font-medium">拖拽文件到此处</p>
-          <p id={descriptionId} className="text-xs text-muted-foreground">
-            {description}
-          </p>
-        </div>
-        <FileUploadTrigger asChild>
-          <Button variant="outline" size="sm" className="mt-2 w-fit">
-            选择文件
-          </Button>
-        </FileUploadTrigger>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <UploadIcon aria-hidden="true" />
+          </EmptyMedia>
+          <EmptyTitle>拖拽文件到此处</EmptyTitle>
+          <EmptyDescription id={descriptionId}>{description}</EmptyDescription>
+        </EmptyHeader>
+        {showSelectButton && (
+          <FileUploadTrigger asChild>
+            <Button variant="outline" size="sm">
+              选择文件
+            </Button>
+          </FileUploadTrigger>
+        )}
       </FileUploadDropzone>
       <FileUploadList className="scroll-content-y max-h-[clamp(8rem,30svh,15rem)] overscroll-contain">
         {files.map((file) => (

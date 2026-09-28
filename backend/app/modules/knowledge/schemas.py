@@ -18,6 +18,43 @@ KnowledgeFolderName = Annotated[
 ]
 
 
+class WebSearchRequest(SQLModel):
+    source: Literal["web", "xiaohongshu", "douyin"] = "web"
+    query: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=1000)
+    ]
+    page: int = Field(default=1, ge=1)
+    search_id: str | None = Field(default=None, min_length=1)
+
+    @model_validator(mode="after")
+    def validate_pagination(self) -> WebSearchRequest:
+        if self.source == "web" and self.page != 1:
+            raise ValueError("全网搜索不支持分页")
+
+        if self.source == "douyin" and self.page > 1 and not self.search_id:
+            raise ValueError("抖音后续页需要 search_id")
+
+        return self
+
+
+class WebSearchResult(SQLModel):
+    url: HttpUrl
+    title: str
+    description: str = ""
+    cover_url: HttpUrl | None = None
+    author: str | None = None
+    published_at: int | None = None
+    likes: int | None = None
+    comments: int | None = None
+    collects: int | None = None
+
+
+class WebSearchPage(SQLModel):
+    items: list[WebSearchResult]
+    next_page: int | None = None
+    search_id: str | None = None
+
+
 class KnowledgeBaseCreate(SQLModel):
     project_id: uuid.UUID | None = Field(
         default=None, description="所属项目 ID；后台必填，MCP 由密钥确定"
@@ -120,6 +157,7 @@ class KnowledgeFoldersPublic(SQLModel):
 
 class KnowledgeWebpageCreate(SQLModel):
     url: HttpUrl = Field(description="需要导入的网页 URL")
+    source: Literal["web", "xiaohongshu", "douyin"] = "web"
 
 
 class KnowledgeDocumentMove(SQLModel):

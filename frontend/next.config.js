@@ -8,12 +8,18 @@ if (!backendUrl) throw new Error("BACKEND_API_URL 未配置");
 const nextConfig = {
   output: "standalone",
   allowedDevOrigins: ["frontend"],
+
+  experimental: {
+    proxyTimeout: 75_000,
+  },
+
   async redirects() {
     return [
       { source: "/", destination: "/admin", permanent: false },
       { source: "/skills/:path*", destination: "/admin", permanent: false },
     ];
   },
+
   async rewrites() {
     return [
       {

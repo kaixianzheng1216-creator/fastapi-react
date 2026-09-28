@@ -1359,6 +1359,10 @@ export type KnowledgeWebpageCreate = {
      * 需要导入的网页 URL
      */
     url: string;
+    /**
+     * Source
+     */
+    source?: 'web' | 'xiaohongshu' | 'douyin';
 };
 
 /**
@@ -2412,6 +2416,88 @@ export type ValidationError = {
     };
 };
 
+/**
+ * WebSearchPage
+ */
+export type WebSearchPage = {
+    /**
+     * Items
+     */
+    items: Array<WebSearchResult>;
+    /**
+     * Next Page
+     */
+    next_page?: number | null;
+    /**
+     * Search Id
+     */
+    search_id?: string | null;
+};
+
+/**
+ * WebSearchRequest
+ */
+export type WebSearchRequest = {
+    /**
+     * Source
+     */
+    source?: 'web' | 'xiaohongshu' | 'douyin';
+    /**
+     * Query
+     */
+    query: string;
+    /**
+     * Page
+     */
+    page?: number;
+    /**
+     * Search Id
+     */
+    search_id?: string | null;
+};
+
+/**
+ * WebSearchResult
+ */
+export type WebSearchResult = {
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Description
+     */
+    description?: string;
+    /**
+     * Cover Url
+     */
+    cover_url?: string | null;
+    /**
+     * Author
+     */
+    author?: string | null;
+    /**
+     * Published At
+     */
+    published_at?: number | null;
+    /**
+     * Likes
+     */
+    likes?: number | null;
+    /**
+     * Comments
+     */
+    comments?: number | null;
+    /**
+     * Collects
+     */
+    collects?: number | null;
+};
+
 export type LoginLoginAccessTokenData = {
     body: BodyLoginLoginAccessToken;
     path?: never;
@@ -2953,6 +3039,56 @@ export type BrandMarketingReadRegionalDataResponses = {
 };
 
 export type BrandMarketingReadRegionalDataResponse = BrandMarketingReadRegionalDataResponses[keyof BrandMarketingReadRegionalDataResponses];
+
+export type KnowledgeBasesSearchWebSourcesData = {
+    body: WebSearchRequest;
+    path: {
+        /**
+         * Knowledge Base Id
+         */
+        knowledge_base_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/knowledge-bases/{knowledge_base_id}/web-search';
+};
+
+export type KnowledgeBasesSearchWebSourcesErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponse;
+};
+
+export type KnowledgeBasesSearchWebSourcesError = KnowledgeBasesSearchWebSourcesErrors[keyof KnowledgeBasesSearchWebSourcesErrors];
+
+export type KnowledgeBasesSearchWebSourcesResponses = {
+    /**
+     * Successful Response
+     */
+    200: WebSearchPage;
+};
+
+export type KnowledgeBasesSearchWebSourcesResponse = KnowledgeBasesSearchWebSourcesResponses[keyof KnowledgeBasesSearchWebSourcesResponses];
 
 export type KnowledgeBasesReadKnowledgeBasesData = {
     body?: never;
@@ -6349,45 +6485,6 @@ export type DataRefreshReadRefreshStatusResponses = {
 
 export type DataRefreshReadRefreshStatusResponse = DataRefreshReadRefreshStatusResponses[keyof DataRefreshReadRefreshStatusResponses];
 
-export type McpKeysReadProjectMcpToolsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/mcp/keys/tools';
-};
-
-export type McpKeysReadProjectMcpToolsErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
-     * Unauthorized
-     */
-    401: ErrorResponse;
-    /**
-     * Forbidden
-     */
-    403: ErrorResponse;
-    /**
-     * Not Found
-     */
-    404: ErrorResponse;
-};
-
-export type McpKeysReadProjectMcpToolsError = McpKeysReadProjectMcpToolsErrors[keyof McpKeysReadProjectMcpToolsErrors];
-
-export type McpKeysReadProjectMcpToolsResponses = {
-    /**
-     * Response Mcp Keys-Read Project Mcp Tools
-     *
-     * Successful Response
-     */
-    200: Array<McpToolPublic>;
-};
-
-export type McpKeysReadProjectMcpToolsResponse = McpKeysReadProjectMcpToolsResponses[keyof McpKeysReadProjectMcpToolsResponses];
-
 export type McpKeysReadMcpApiKeysData = {
     body?: never;
     path?: never;
@@ -6586,6 +6683,45 @@ export type McpKeysUpdateMcpApiKeyResponses = {
 };
 
 export type McpKeysUpdateMcpApiKeyResponse = McpKeysUpdateMcpApiKeyResponses[keyof McpKeysUpdateMcpApiKeyResponses];
+
+export type McpKeysReadProjectMcpToolsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/mcp/keys/tools';
+};
+
+export type McpKeysReadProjectMcpToolsErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+};
+
+export type McpKeysReadProjectMcpToolsError = McpKeysReadProjectMcpToolsErrors[keyof McpKeysReadProjectMcpToolsErrors];
+
+export type McpKeysReadProjectMcpToolsResponses = {
+    /**
+     * Response Mcp Keys-Read Project Mcp Tools
+     *
+     * Successful Response
+     */
+    200: Array<McpToolPublic>;
+};
+
+export type McpKeysReadProjectMcpToolsResponse = McpKeysReadProjectMcpToolsResponses[keyof McpKeysReadProjectMcpToolsResponses];
 
 export type ProjectsReadProjectsData = {
     body?: never;

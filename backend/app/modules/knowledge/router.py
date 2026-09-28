@@ -15,7 +15,7 @@ from app.modules.files.exceptions import (
     FileUploadIncompleteError,
 )
 from app.modules.files.schemas import FileCompletePublic, FileUploadRequest
-from app.modules.knowledge import documents, retrieval, service
+from app.modules.knowledge import documents, firecrawl, justoneapi, retrieval, service
 from app.modules.knowledge.access import KnowledgeAccessDep
 from app.modules.knowledge.exceptions import (
     KnowledgeBaseAlreadyExistsError,
@@ -30,6 +30,7 @@ from app.modules.knowledge.exceptions import (
     WebpageScrapeError,
     WebpageScrapeUnavailableError,
     WebpageTooLargeError,
+    WebSearchUnavailableError,
 )
 from app.modules.knowledge.schemas import (
     KnowledgeBaseCreate,
@@ -53,6 +54,8 @@ from app.modules.knowledge.schemas import (
     KnowledgeSearchRequest,
     KnowledgeSearchResultsPublic,
     KnowledgeWebpageCreate,
+    WebSearchPage,
+    WebSearchRequest,
 )
 from app.modules.mcp_keys.models import McpPermission
 from app.modules.users.exceptions import InsufficientPrivilegesError
@@ -74,6 +77,28 @@ document_router = APIRouter(
     tags=["knowledge-documents"],
     responses=ADMIN_ERROR_RESPONSES,
 )
+
+
+@router.post(
+    "/{knowledge_base_id}/web-search",
+    response_model=WebSearchPage,
+    responses=error_responses(KnowledgeBaseNotFoundError, WebSearchUnavailableError),
+)
+async def search_web_sources(
+    session: SessionDep,
+    access: KnowledgeAccessDep,
+    knowledge_base_id: uuid.UUID,
+    body: WebSearchRequest,
+) -> WebSearchPage:
+    """搜索可添加到当前知识库的网络来源。"""
+    access.base(session, knowledge_base_id, write=True)
+
+    session.rollback()
+
+    if body.source == "web":
+        return WebSearchPage(items=await firecrawl.search(body.query))
+
+    return await justoneapi.search(body.query, body.source, body.page, body.search_id)
 
 
 @router.post(
@@ -573,12 +598,14 @@ async def create_webpage_document(
 ) -> KnowledgeDocumentPublic:
     """从网页导入知识库文档。"""
     access.base(session, knowledge_base_id, write=True)
+
     return await service.create_webpage_document(
         session=session,
         owner_id=access.owner_id,
         knowledge_base_id=knowledge_base_id,
         folder_id=folder_id,
         url=str(body.url),
+        source=body.source,
     )
 
 

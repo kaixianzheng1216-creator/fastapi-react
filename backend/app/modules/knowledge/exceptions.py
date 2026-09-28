@@ -53,6 +53,24 @@ class WebpageScrapeError(ApplicationError):
     detail = "无法抓取该网页"
 
 
+class WebSearchUnavailableError(ApplicationError):
+    status_code = status.HTTP_502_BAD_GATEWAY
+    detail = "搜索服务暂时不可用，请稍后重试"
+
+
+class WebSearchTimeoutError(WebSearchUnavailableError):
+    status_code = status.HTTP_504_GATEWAY_TIMEOUT
+    detail = "搜索耗时过长，请重试"
+
+
+class SourceConfigurationError(WebSearchUnavailableError):
+    detail = "社交平台服务未配置或凭证无效，请联系管理员检查 JustOneAPI 配置"
+
+
+class SourceQuotaExceededError(WebSearchUnavailableError):
+    detail = "社交平台服务今日额度已用完，请稍后再试或联系管理员调整额度"
+
+
 class WebpageScrapeUnavailableError(ApplicationError):
     status_code = status.HTTP_502_BAD_GATEWAY
     detail = "网页抓取服务暂时不可用"
