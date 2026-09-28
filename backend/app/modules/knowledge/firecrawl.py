@@ -31,7 +31,7 @@ async def search(query: str) -> list[WebSearchResult]:
     payload: dict[str, object] = {
         "query": query,
         "sources": ["web"],
-        "limit": 10,
+        "limit": 50,
     }
 
     try:

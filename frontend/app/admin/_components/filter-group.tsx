@@ -2,7 +2,7 @@
 
 import { useId, type ReactNode } from "react";
 
-import { FieldLegend, FieldSet } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { ToggleGroup } from "@/components/ui/toggle-group";
 
 export function FilterGroup({
@@ -19,10 +19,10 @@ export function FilterGroup({
   const labelId = useId();
 
   return (
-    <FieldSet>
-      <FieldLegend variant="label" id={labelId}>
+    <Field orientation="horizontal" className="w-auto">
+      <FieldLabel id={labelId}>
         {label}
-      </FieldLegend>
+      </FieldLabel>
       <ToggleGroup
         type="single"
         variant="outline"
@@ -34,6 +34,6 @@ export function FilterGroup({
       >
         {children}
       </ToggleGroup>
-    </FieldSet>
+    </Field>
   );
 }
