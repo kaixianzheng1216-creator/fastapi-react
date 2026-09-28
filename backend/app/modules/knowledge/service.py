@@ -498,11 +498,6 @@ async def create_webpage_document(
 
     markdown = markdown.strip()
 
-    first_line, _, remainder = markdown.partition("\n")
-
-    if first_line.strip() == f"# {title}":
-        markdown = remainder.lstrip()
-
     source_name = {"web": "网络", "xiaohongshu": "小红书", "douyin": "抖音"}[source]
 
     markdown = f"# {title}\n\n{markdown}\n\n来源：{source_name}\n\n原文链接：<{url}>\n"
