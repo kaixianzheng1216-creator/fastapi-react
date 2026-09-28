@@ -19,8 +19,9 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       queryCache: new QueryCache({
         onError: (error, query) => {
           if (
-            query.meta?.handlesInitialError === true &&
-            query.state.data === undefined
+            query.meta?.handlesError === true ||
+            (query.meta?.handlesInitialError === true &&
+              query.state.data === undefined)
           ) {
             return;
           }

@@ -189,6 +189,9 @@ export function KnowledgeDocuments({
 
   const directoryEntries = directoryQuery.data?.data ?? EMPTY_DIRECTORY_ENTRIES;
   const statusCounts = directoryQuery.data?.status_counts;
+  const totalDocumentCount = statusCounts
+    ? statusCounts.ready + statusCounts.processing + statusCounts.failed
+    : 0;
   const totalEntryCount = directoryQuery.data?.count ?? 0;
   const pageCount = Math.ceil(totalEntryCount / PAGE_SIZE);
   const pageOutOfRange = totalEntryCount > 0 && directoryEntries.length === 0;
@@ -503,6 +506,25 @@ export function KnowledgeDocuments({
             </>
           )}
         </div>
+
+        {!directoryLoadFailed && !directoryPending && statusCounts && (
+          <div
+            className="flex h-2 overflow-hidden rounded-full bg-muted"
+            role="img"
+            aria-label={`已完成 ${statusCounts.ready}，处理中 ${statusCounts.processing}，失败 ${statusCounts.failed}`}
+          >
+            {totalDocumentCount > 0 &&
+              statusOptions.map((option) => (
+                <div
+                  key={option.value}
+                  className={option.color}
+                  style={{
+                    width: `${(statusCounts[option.value] / totalDocumentCount) * 100}%`,
+                  }}
+                />
+              ))}
+          </div>
+        )}
 
         {directoryLoadFailed ? (
           <LoadError
