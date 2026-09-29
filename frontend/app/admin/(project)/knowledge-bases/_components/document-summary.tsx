@@ -1,20 +1,23 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertCircleIcon, SparklesIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  SparklesIcon,
+} from "lucide-react";
+import { useState } from "react";
 
-import { ButtonContent } from "@/components/common/button-content";
 import { MarkdownContent } from "@/components/common/markdown-content";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Spinner } from "@/components/ui/spinner";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   type KnowledgeDocumentPreviewPublic,
@@ -29,6 +32,7 @@ export function DocumentSummary({
   summary: string | null;
 }) {
   const queryClient = useQueryClient();
+  const [open, setOpen] = useState(true);
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -37,6 +41,7 @@ export function DocumentSummary({
         throwOnError: true,
       }),
     onSuccess: ({ data }) => {
+      setOpen(true);
       queryClient.setQueryData<KnowledgeDocumentPreviewPublic>(
         ["knowledge-document-preview", documentId],
         (preview) => preview && { ...preview, summary: data.content },
@@ -50,40 +55,61 @@ export function DocumentSummary({
   else if (mutation.isError) actionLabel = "重试";
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>AI 总结</CardTitle>
-        <CardDescription>基于当前文档生成概述和核心要点。</CardDescription>
-        <CardAction>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={mutation.isPending}
-            aria-busy={mutation.isPending}
-            onClick={() => mutation.mutate()}
-          >
-            <ButtonContent loading={mutation.isPending} icon={SparklesIcon}>
+    <Collapsible open={open} onOpenChange={setOpen} asChild>
+      <section
+        aria-label="AI 总结"
+        className="flex flex-col gap-4 rounded-lg bg-muted/75 p-4"
+      >
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="flex items-center gap-2 text-sm font-medium">
+            <SparklesIcon
+              aria-hidden="true"
+              className="size-4 text-muted-foreground"
+            />
+            AI 总结
+          </h2>
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={mutation.isPending}
+              aria-busy={mutation.isPending}
+              onClick={() => mutation.mutate()}
+            >
+              {mutation.isPending && <Spinner aria-hidden="true" />}
               {mutation.isPending ? "正在生成…" : actionLabel}
-            </ButtonContent>
-          </Button>
-        </CardAction>
-      </CardHeader>
-      {(summary || mutation.isError) && (
-        <CardContent className="flex flex-col gap-4">
-          {mutation.isError && (
-            <Alert variant="destructive">
-              <AlertCircleIcon aria-hidden="true" />
-              <AlertDescription>
-                {getApiErrorMessage(mutation.error, "AI 总结生成失败，请重试")}
-              </AlertDescription>
-            </Alert>
-          )}
-          {summary && (
-            <MarkdownContent className="max-w-none">{summary}</MarkdownContent>
-          )}
-        </CardContent>
-      )}
-    </Card>
+            </Button>
+            {summary && (
+              <CollapsibleTrigger asChild>
+                <Button type="button" variant="ghost" size="sm">
+                  {open ? (
+                    <ChevronUpIcon aria-hidden="true" />
+                  ) : (
+                    <ChevronDownIcon aria-hidden="true" />
+                  )}
+                  {open ? "收起" : "展开"}
+                </Button>
+              </CollapsibleTrigger>
+            )}
+          </div>
+        </div>
+        {mutation.isError && (
+          <Alert variant="destructive">
+            <AlertCircleIcon aria-hidden="true" />
+            <AlertDescription>
+              {getApiErrorMessage(mutation.error, "AI 总结生成失败，请重试")}
+            </AlertDescription>
+          </Alert>
+        )}
+        {summary && (
+          <CollapsibleContent>
+            <MarkdownContent className="prose-sm max-w-none [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm">
+              {summary}
+            </MarkdownContent>
+          </CollapsibleContent>
+        )}
+      </section>
+    </Collapsible>
   );
 }
