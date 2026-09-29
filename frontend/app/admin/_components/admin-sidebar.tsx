@@ -226,9 +226,9 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
                   <WaypointsIcon aria-hidden="true" className="size-4" />
                 </span>
                 <span className="grid flex-1 text-left leading-tight">
-                  <span className="truncate font-semibold">数据中台</span>
+                  <span className="truncate font-semibold">数据中心</span>
                   <span className="truncate text-[10px] font-medium tracking-[0.16em] text-muted-foreground">
-                    DATA HUB
+                    DATA CENTER
                   </span>
                 </span>
               </Link>

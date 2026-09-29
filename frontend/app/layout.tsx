@@ -6,8 +6,8 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: "AI 助手",
-  description: "基于 assistant-ui 构建的 AI 助手",
+  title: "数据中心",
+  description: "数据中心",
 };
 
 export default function RootLayout({
