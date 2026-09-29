@@ -244,7 +244,12 @@ def _parse_xiaohongshu(data: object, page: int) -> WebSearchPage:
             )
         )
 
-    return WebSearchPage(items=results, next_page=page + 1)
+    next_page: int | None = None
+
+    if search_response.items:
+        next_page = page + 1
+
+    return WebSearchPage(items=results, next_page=next_page)
 
 
 def _parse_douyin(data: object, page: int) -> WebSearchPage:

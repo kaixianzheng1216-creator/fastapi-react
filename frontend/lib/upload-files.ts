@@ -1,7 +1,6 @@
 import { getApiErrorMessage } from "@/lib/api-error";
 import { formatFileSize, MAX_FILE_SIZE } from "@/lib/file-types";
-
-const UPLOAD_CONCURRENCY = 3;
+import { mapConcurrent } from "@/lib/map-concurrent";
 
 export type UploadResult = { file: File; error?: string };
 
@@ -40,25 +39,18 @@ export async function uploadFiles(
   files: File[],
   upload: (file: File) => Promise<UploadResult>,
 ): Promise<UploadResult[]> {
-  const outcomes: UploadResult[] = [];
-  for (let start = 0; start < files.length; start += UPLOAD_CONCURRENCY) {
-    const batch = files.slice(start, start + UPLOAD_CONCURRENCY);
-    const results = await Promise.all(
-      batch.map(async (file): Promise<UploadResult> => {
-        if (file.size === 0 || file.size > MAX_FILE_SIZE) {
-          return {
-            file,
-            error: `文件大小须大于 0 且不超过 ${formatFileSize(MAX_FILE_SIZE)}`,
-          };
-        }
-        try {
-          return await upload(file);
-        } catch (error) {
-          return { file, error: getApiErrorMessage(error, "文件上传失败") };
-        }
-      }),
-    );
-    outcomes.push(...results);
-  }
-  return outcomes;
+  return mapConcurrent(files, async (file): Promise<UploadResult> => {
+    if (file.size === 0 || file.size > MAX_FILE_SIZE) {
+      return {
+        file,
+        error: `文件大小须大于 0 且不超过 ${formatFileSize(MAX_FILE_SIZE)}`,
+      };
+    }
+
+    try {
+      return await upload(file);
+    } catch (error) {
+      return { file, error: getApiErrorMessage(error, "文件上传失败") };
+    }
+  });
 }

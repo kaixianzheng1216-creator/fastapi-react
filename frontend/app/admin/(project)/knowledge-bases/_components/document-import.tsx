@@ -1,10 +1,18 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { UploadIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  LinkIcon,
+  ClipboardIcon,
+  UploadIcon,
+} from "lucide-react";
 import { type FormEvent, useId, useState } from "react";
+import { toast } from "sonner";
 
-import { KNOWLEDGE_DOCUMENT_UPLOAD_KEY } from "@/app/admin/(project)/knowledge-bases/_lib/directory";
+import { DocumentSearch, type SearchSource } from "./document-search";
+
+import { KNOWLEDGE_DOCUMENT_UPLOAD_KEY } from "../_lib/directory";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,17 +22,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { FileUploadTrigger } from "@/components/ui/file-upload";
 import { FileDropzone } from "@/components/common/file-dropzone";
+import { FormDialogFooter } from "@/components/common/form-dialog-footer";
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { FormDialogFooter } from "@/components/common/form-dialog-footer";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+
+import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/lib/api-error";
+import { mapConcurrent } from "@/lib/map-concurrent";
 import {
   knowledgeBasesCreateDocumentUpload,
   knowledgeBasesCreateWebpageDocument,
@@ -43,7 +55,15 @@ import {
   uploadFiles,
   type UploadResult,
 } from "@/lib/upload-files";
-import { toast } from "sonner";
+
+type ImportView = "files" | "webpage" | "text" | "search";
+
+const viewTitles: Record<ImportView, string> = {
+  files: "添加文档",
+  webpage: "网站链接",
+  text: "粘贴文字",
+  search: "搜索来源",
+};
 
 export function KnowledgeDocumentImport({
   knowledgeBaseId,
@@ -56,105 +76,154 @@ export function KnowledgeDocumentImport({
   onDocumentsChanged: () => void;
   disabled?: boolean;
 }) {
-  const webpageInputId = useId();
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [uploadFailures, setUploadFailures] = useState<UploadResult[]>([]);
+  const inputId = useId();
+
   const [open, setOpen] = useState(false);
+  const [view, setView] = useState<ImportView>("files");
 
-  const uploadDocumentMutation = useMutation({
-    mutationKey: [...KNOWLEDGE_DOCUMENT_UPLOAD_KEY, knowledgeBaseId],
-    mutationFn: (files: File[]) =>
-      uploadFiles(files, async (file) => {
-        const contentType = getFileContentType(file);
-        if (!contentType || !KNOWLEDGE_CONTENT_TYPES.includes(contentType)) {
-          return { file, error: "不支持该文件类型，请选择其他文件" };
-        }
-        return uploadKnowledgeDocument(
-          knowledgeBaseId,
-          folderId,
-          file,
-          contentType,
-        );
-      }),
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [urlInput, setUrlInput] = useState("");
+  const [text, setText] = useState("");
+  const [urlError, setUrlError] = useState("");
 
-    onSuccess: (results) => {
-      const failures = results.filter((result) => result.error);
+  function finishImport(failures: { error?: string }[], total: number) {
+    if (failures.length < total) onDocumentsChanged();
 
-      setUploadFailures(failures);
-      setSelectedFiles(failures.map((result) => result.file));
-
-      if (failures.length) {
-        toast.error(
-          `文件上传成功 ${results.length - failures.length} 个，失败 ${failures.length} 个`,
-          {
-            description: "失败文件已保留，可直接重试",
-          },
-        );
-      } else {
-        setOpen(false);
-        toast.success(`文件已上传 ${results.length} 个，正在处理`);
-      }
-
-      if (results.some((result) => !result.error)) {
-        onDocumentsChanged();
-      }
-    },
-
-    onError: () => {
-      toast.error("文件上传失败，请重试");
-    },
-  });
-
-  function submitUpload(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault();
-
-    if (!uploadDocumentMutation.isPending && selectedFiles.length > 0) {
-      uploadDocumentMutation.mutate(selectedFiles);
+    if (failures.length) {
+      toast.error("文档添加失败，请重试", {
+        description: failures[0].error,
+      });
+    } else {
+      toast.success("文档已添加，正在处理");
+      setOpen(false);
     }
   }
 
-  const [webpageUrl, setWebpageUrl] = useState("");
+  const uploadMutation = useMutation({
+    mutationKey: [...KNOWLEDGE_DOCUMENT_UPLOAD_KEY, knowledgeBaseId],
 
-  const createWebpageMutation = useMutation({
-    mutationFn: (url: string) =>
-      knowledgeBasesCreateWebpageDocument({
-        path: { knowledge_base_id: knowledgeBaseId },
-        query: { folder_id: folderId },
-        body: { url },
-        throwOnError: true,
-      }),
-    onSuccess: () => {
-      toast.success("网页已添加，正在处理");
-      setWebpageUrl("");
-      setOpen(false);
-      onDocumentsChanged();
+    mutationFn: async (files: File[]) => {
+      const results = await uploadFiles(files, (file) =>
+        uploadKnowledgeDocument(knowledgeBaseId, folderId, file),
+      );
+
+      return results.filter((result) => result.error);
     },
 
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "网页添加失败，请重试"));
+    onSuccess: (failures, files) => {
+      if (view === "files") {
+        setSelectedFiles(failures.map((result) => result.file));
+      }
+
+      finishImport(failures, files.length);
     },
   });
 
-  function submitWebpage(event: FormEvent<HTMLFormElement>): void {
+  const importUrlsMutation = useMutation({
+    mutationFn: async ({
+      urls,
+      source,
+    }: {
+      urls: string[];
+      source: SearchSource;
+    }) => {
+      const results = await mapConcurrent(urls, async (url) => {
+        try {
+          await knowledgeBasesCreateWebpageDocument({
+            path: { knowledge_base_id: knowledgeBaseId },
+            query: { folder_id: folderId },
+            body: { url, source },
+            throwOnError: true,
+          });
+        } catch (error) {
+          return {
+            url,
+            error: getApiErrorMessage(error, "内容添加失败，请重试"),
+          };
+        }
+      });
+
+      return results.filter((result) => result !== undefined);
+    },
+
+    onSuccess: (failures, { urls }) => {
+      if (view === "webpage") {
+        setUrlInput(failures.map(({ url }) => url).join("\n"));
+      }
+
+      finishImport(failures, urls.length);
+    },
+  });
+
+  const isPending = uploadMutation.isPending || importUrlsMutation.isPending;
+  const uploadFailures = uploadMutation.data ?? [];
+  const textError = uploadFailures[0]?.error;
+
+  function submitUpload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (createWebpageMutation.isPending) return;
-
-    createWebpageMutation.mutate(webpageUrl.trim());
+    uploadMutation.mutate(selectedFiles);
   }
 
-  const isPending =
-    uploadDocumentMutation.isPending || createWebpageMutation.isPending;
+  function submitText(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const documentName = text
+      .trim()
+      .split(/\r?\n/, 1)[0]
+      .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")
+      .slice(0, 80);
+
+    uploadMutation.mutate([
+      new File([text], `${documentName}.txt`, { type: "text/plain" }),
+    ]);
+  }
+
+  function submitWebpages(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const urls: string[] = [];
+    const lines = urlInput.split(/\r?\n/);
+
+    for (const [index, line] of lines.entries()) {
+      const address = line.trim();
+
+      if (!address) continue;
+
+      try {
+        const url = new URL(address);
+
+        if (!["http:", "https:"].includes(url.protocol)) throw new Error();
+
+        urls.push(url.href);
+      } catch {
+        setUrlError(`第 ${index + 1} 行不是有效的 http:// 或 https:// 网址`);
+
+        return;
+      }
+    }
+
+    importUrlsMutation.mutate({
+      urls: [...new Set(urls)],
+      source: "web",
+    });
+  }
 
   return (
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
         if (isPending) return;
+
         setOpen(nextOpen);
+        setView("files");
+
         setSelectedFiles([]);
-        setUploadFailures([]);
-        setWebpageUrl("");
+        uploadMutation.reset();
+
+        setUrlInput("");
+        setText("");
+        setUrlError("");
       }}
     >
       <DialogTrigger asChild>
@@ -163,90 +232,200 @@ export function KnowledgeDocumentImport({
           添加文档
         </Button>
       </DialogTrigger>
-      <DialogContent showCloseButton={!isPending}>
-        <DialogHeader>
-          <DialogTitle>添加文档</DialogTitle>
+
+      <DialogContent
+        showCloseButton={!isPending}
+        className={cn(
+          "max-h-[90svh] sm:max-w-[min(40rem,calc(100%-2rem))]",
+          view === "search" && "flex flex-col overflow-hidden",
+        )}
+      >
+        <DialogHeader className="shrink-0">
+          <div className="flex items-center gap-2">
+            {view !== "files" && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="返回添加文档"
+                disabled={isPending}
+                onClick={() => setView("files")}
+              >
+                <ArrowLeftIcon aria-hidden="true" />
+              </Button>
+            )}
+
+            <DialogTitle>{viewTitles[view]}</DialogTitle>
+          </div>
+
           <DialogDescription className="sr-only">
-            上传本地文件，或输入公开网页地址。
+            搜索网络资料、上传文件、添加网页或粘贴文字。
           </DialogDescription>
         </DialogHeader>
-        <Tabs defaultValue="files">
-          <TabsList>
-            <TabsTrigger value="files" disabled={isPending}>
-              上传文件
-            </TabsTrigger>
-            <TabsTrigger value="webpage" disabled={isPending}>
-              添加网页
-            </TabsTrigger>
-          </TabsList>
 
-          <TabsContent value="files">
-            <form
-              onSubmit={submitUpload}
-              className="flex flex-col gap-4"
-            >
-              <FieldGroup>
-                <Field>
-                  <FileDropzone
-                    files={selectedFiles}
-                    failures={uploadFailures}
-                    disabled={isPending}
-                    accept={KNOWLEDGE_FILE_ACCEPT}
-                    description={`支持 PDF、DOCX、XLSX、PPTX、TXT、MD、CSV、HTML、JPG/JPEG、PNG、WebP。单个文件最大 ${formatFileSize(MAX_FILE_SIZE)}。`}
-                    onFilesChange={(files) => {
-                      setUploadFailures([]);
-                      setSelectedFiles(files);
-                    }}
-                  />
-                </Field>
-              </FieldGroup>
-              <FormDialogFooter
-                isPending={isPending}
-                disabled={selectedFiles.length === 0}
-                submitLabel="确认上传"
-              />
-            </form>
-          </TabsContent>
+        {open && (
+          <DocumentSearch
+            knowledgeBaseId={knowledgeBaseId}
+            mode={
+              view === "search"
+                ? "results"
+                : view === "files"
+                  ? "input"
+                  : "hidden"
+            }
+            importing={isPending}
+            onSearch={() => setView("search")}
+            onImport={(urls, source) =>
+              importUrlsMutation.mutateAsync({ urls, source })
+            }
+          />
+        )}
 
-          <TabsContent value="webpage">
-            <form
-              onSubmit={submitWebpage}
-              className="flex flex-col gap-4"
-            >
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor={webpageInputId}>网页地址</FieldLabel>
-                  <Input
-                    id={webpageInputId}
-                    name="url"
-                    type="url"
-                    pattern={"\\s*[Hh][Tt][Tt][Pp][Ss]?://\\S+\\s*"}
-                    title="请输入以 http:// 或 https:// 开头的有效网页地址"
-                    inputMode="url"
-                    autoCapitalize="none"
-                    spellCheck={false}
-                    placeholder="https://example.com/article"
-                    value={webpageUrl}
-                    disabled={isPending}
-                    aria-describedby={`${webpageInputId}-hint`}
-                    onChange={(event) =>
-                      setWebpageUrl(event.currentTarget.value)
-                    }
-                    required
-                  />
-                  <FieldDescription id={`${webpageInputId}-hint`}>
-                    请使用 http:// 或 https://
-                    开头的公开网页地址。系统会抓取正文并创建文档，不支持需要登录的页面。
-                  </FieldDescription>
-                </Field>
-              </FieldGroup>
-              <FormDialogFooter
-                isPending={isPending}
-                submitLabel="确认添加"
-              />
-            </form>
-          </TabsContent>
-        </Tabs>
+        {view === "files" && (
+          <form onSubmit={submitUpload} className="flex flex-col gap-4">
+            <FieldGroup>
+              <Field>
+                <FileDropzone
+                  showSelectButton={false}
+                  files={selectedFiles}
+                  failures={uploadFailures}
+                  disabled={isPending}
+                  accept={KNOWLEDGE_FILE_ACCEPT}
+                  description={`支持 PDF、DOCX、XLSX、PPTX、TXT、MD、CSV、HTML、JPG/JPEG、PNG、WebP。单个文件最大 ${formatFileSize(MAX_FILE_SIZE)}。`}
+                  onFilesChange={(files) => {
+                    uploadMutation.reset();
+                    setSelectedFiles(files);
+                  }}
+                >
+                  <div className="flex flex-wrap gap-2">
+                    <FileUploadTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={isPending}
+                      >
+                        <UploadIcon
+                          data-icon="inline-start"
+                          aria-hidden="true"
+                        />
+                        上传文件
+                      </Button>
+                    </FileUploadTrigger>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isPending}
+                      onClick={() => setView("webpage")}
+                    >
+                      <LinkIcon data-icon="inline-start" aria-hidden="true" />
+                      网站链接
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isPending}
+                      onClick={() => {
+                        uploadMutation.reset();
+                        setView("text");
+                      }}
+                    >
+                      <ClipboardIcon
+                        data-icon="inline-start"
+                        aria-hidden="true"
+                      />
+                      粘贴文字
+                    </Button>
+                  </div>
+                </FileDropzone>
+              </Field>
+            </FieldGroup>
+
+            <FormDialogFooter
+              isPending={isPending}
+              disabled={selectedFiles.length === 0}
+              submitLabel="确认上传"
+            />
+          </form>
+        )}
+
+        {view === "webpage" && (
+          <form onSubmit={submitWebpages} className="flex flex-col gap-4">
+            <FieldGroup>
+              <Field data-invalid={!!urlError}>
+                <FieldLabel htmlFor={`${inputId}-url`}>网页地址</FieldLabel>
+
+                <Textarea
+                  id={`${inputId}-url`}
+                  className="min-h-40"
+                  placeholder="粘贴网址，每行一个……"
+                  value={urlInput}
+                  disabled={isPending}
+                  aria-invalid={!!urlError}
+                  aria-describedby={`${inputId}-url-hint`}
+                  onChange={(event) => {
+                    setUrlInput(event.target.value);
+                    setUrlError("");
+                  }}
+                  required
+                />
+
+                <FieldDescription id={`${inputId}-url-hint`}>
+                  仅支持以 http:// 或 https:// 开头的公开网页。
+                </FieldDescription>
+
+                <FieldError>{urlError}</FieldError>
+              </Field>
+            </FieldGroup>
+
+            <FormDialogFooter
+              isPending={isPending}
+              disabled={!urlInput.trim()}
+              submitLabel="确认添加"
+            />
+          </form>
+        )}
+
+        {view === "text" && (
+          <form onSubmit={submitText} className="flex flex-col gap-4">
+            <FieldGroup>
+              <Field data-invalid={!!textError}>
+                <FieldLabel htmlFor={`${inputId}-text`}>正文</FieldLabel>
+
+                <Textarea
+                  id={`${inputId}-text`}
+                  className="min-h-48"
+                  placeholder="在这里输入或粘贴文字……"
+                  value={text}
+                  disabled={isPending}
+                  aria-invalid={!!textError}
+                  aria-describedby={`${inputId}-text-hint`}
+                  onChange={(event) => {
+                    setText(event.target.value);
+                    uploadMutation.reset();
+                  }}
+                  required
+                />
+
+                <FieldDescription id={`${inputId}-text-hint`}>
+                  使用首行文字作为文档名称。
+                </FieldDescription>
+
+                <FieldError>{textError}</FieldError>
+              </Field>
+            </FieldGroup>
+
+            <FormDialogFooter
+              isPending={isPending}
+              disabled={!text.trim()}
+              submitLabel="确认添加"
+            />
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -256,8 +435,13 @@ async function uploadKnowledgeDocument(
   knowledgeBaseId: string,
   folderId: string | undefined,
   file: File,
-  contentType: string,
 ): Promise<UploadResult> {
+  const contentType = getFileContentType(file);
+
+  if (!contentType || !KNOWLEDGE_CONTENT_TYPES.includes(contentType)) {
+    return { file, error: "不支持该文件类型，请选择其他文件" };
+  }
+
   const { data: upload } = await knowledgeBasesCreateDocumentUpload({
     path: { knowledge_base_id: knowledgeBaseId },
     query: { folder_id: folderId },
@@ -275,6 +459,7 @@ async function uploadKnowledgeDocument(
         path: { document_id: upload.id },
         throwOnError: false,
       }),
+
     discard: () =>
       knowledgeDocumentsDeleteDocument({
         path: { document_id: upload.id },
