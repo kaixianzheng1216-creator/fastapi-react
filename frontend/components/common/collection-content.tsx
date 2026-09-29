@@ -21,7 +21,7 @@ export function CollectionContent({
     <div
       aria-busy={busy}
       inert={inert}
-      className={cn("aria-busy:opacity-60", className)}
+      className={cn("inert:opacity-60", className)}
     >
       {children}
     </div>
@@ -44,7 +44,7 @@ export function CardGrid({
       aria-label={label}
       aria-busy={busy}
       inert={inert}
-      className="grid grid-cols-1 gap-4 aria-busy:opacity-60 md:grid-cols-2 xl:grid-cols-3"
+      className="grid grid-cols-1 gap-4 inert:opacity-60 md:grid-cols-2 xl:grid-cols-3"
     >
       {children}
     </ul>
