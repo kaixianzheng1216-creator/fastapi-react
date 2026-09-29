@@ -41,6 +41,7 @@ import { getPaginationHref, parsePage } from "@/lib/pagination";
 import { getQueryViewState } from "@/lib/query-view-state";
 import { ChunkLocation } from "./chunk-location";
 import { ContentSkeleton } from "./content-skeleton";
+import { DocumentSummary } from "./document-summary";
 
 const CHUNK_PAGE_SIZE = 20;
 const PREVIEW_STALE_TIME_MS = 50 * 60 * 1000;
@@ -281,7 +282,7 @@ export function KnowledgeDocumentPreview({
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="markdown" className="flex flex-col">
+              <TabsContent value="markdown" className="flex flex-col gap-6">
                 {previewState === "loading" ? (
                   <ContentSkeleton variant="text" />
                 ) : previewState === "error" ? (
@@ -300,9 +301,15 @@ export function KnowledgeDocumentPreview({
                     </EmptyHeader>
                   </Empty>
                 ) : (
-                  <MarkdownContent className="max-w-none">
-                    {previewQuery.data.content}
-                  </MarkdownContent>
+                  <>
+                    <DocumentSummary
+                      documentId={documentId}
+                      summary={previewQuery.data.summary ?? null}
+                    />
+                    <MarkdownContent className="max-w-none">
+                      {previewQuery.data.content}
+                    </MarkdownContent>
+                  </>
                 )}
               </TabsContent>
 

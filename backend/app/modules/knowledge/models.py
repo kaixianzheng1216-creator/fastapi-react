@@ -95,6 +95,7 @@ class KnowledgeDocument(TimestampMixin, table=True):
         sa_type=String(20),  # type: ignore
     )
     error_message: str | None = Field(default=None, sa_type=Text)
+    summary: str | None = Field(default=None, sa_type=Text)
     processing_started_at: datetime | None = Field(
         default=None,
         sa_column=Column(DateTime(timezone=True), nullable=True),

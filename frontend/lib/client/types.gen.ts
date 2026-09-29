@@ -1058,6 +1058,10 @@ export type KnowledgeDocumentPreviewPublic = {
      * Content
      */
     content: string;
+    /**
+     * Summary
+     */
+    summary?: string | null;
 };
 
 /**
@@ -1119,6 +1123,16 @@ export type KnowledgeDocumentPublic = {
  * KnowledgeDocumentStatus
  */
 export type KnowledgeDocumentStatus = 'pending' | 'processing' | 'ready' | 'failed' | 'timed_out';
+
+/**
+ * KnowledgeDocumentSummaryPublic
+ */
+export type KnowledgeDocumentSummaryPublic = {
+    /**
+     * Content
+     */
+    content: string;
+};
 
 /**
  * KnowledgeDocumentUploadPublic
@@ -4171,6 +4185,70 @@ export type KnowledgeDocumentsReadDocumentPreviewResponses = {
 };
 
 export type KnowledgeDocumentsReadDocumentPreviewResponse = KnowledgeDocumentsReadDocumentPreviewResponses[keyof KnowledgeDocumentsReadDocumentPreviewResponses];
+
+export type KnowledgeDocumentsGenerateDocumentSummaryData = {
+    body?: never;
+    path: {
+        /**
+         * Document Id
+         *
+         * 知识库文档 ID
+         */
+        document_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/knowledge-documents/{document_id}/summary';
+};
+
+export type KnowledgeDocumentsGenerateDocumentSummaryErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Content Too Large
+     */
+    413: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponse;
+    /**
+     * Gateway Timeout
+     */
+    504: ErrorResponse;
+};
+
+export type KnowledgeDocumentsGenerateDocumentSummaryError = KnowledgeDocumentsGenerateDocumentSummaryErrors[keyof KnowledgeDocumentsGenerateDocumentSummaryErrors];
+
+export type KnowledgeDocumentsGenerateDocumentSummaryResponses = {
+    /**
+     * Successful Response
+     */
+    200: KnowledgeDocumentSummaryPublic;
+};
+
+export type KnowledgeDocumentsGenerateDocumentSummaryResponse = KnowledgeDocumentsGenerateDocumentSummaryResponses[keyof KnowledgeDocumentsGenerateDocumentSummaryResponses];
 
 export type KnowledgeDocumentsReadDocumentChunksData = {
     body?: never;

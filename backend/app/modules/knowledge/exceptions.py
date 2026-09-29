@@ -48,6 +48,21 @@ class KnowledgeSearchUnavailableError(ApplicationError):
     detail = "知识库检索暂时不可用"
 
 
+class DocumentSummaryTooLongError(ApplicationError):
+    status_code = status.HTTP_413_CONTENT_TOO_LARGE
+    detail = "文档过长，暂不支持 AI 总结"
+
+
+class DocumentSummaryUnavailableError(ApplicationError):
+    status_code = status.HTTP_502_BAD_GATEWAY
+    detail = "AI 总结生成失败，请重试"
+
+
+class DocumentSummaryTimeoutError(DocumentSummaryUnavailableError):
+    status_code = status.HTTP_504_GATEWAY_TIMEOUT
+    detail = "AI 总结生成超时，请重试"
+
+
 class WebpageScrapeError(ApplicationError):
     status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
     detail = "无法抓取该网页"

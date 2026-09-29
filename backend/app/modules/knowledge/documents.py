@@ -234,22 +234,26 @@ def get_preview(
     if document.status != KnowledgeDocumentStatus.READY:
         raise KnowledgeDocumentArtifactUnavailableError
 
-    try:
-        content = object_storage.read_object_bytes(
-            object_key=document_preview_key(document_id)
-        )
-
-        preview = document_images.resolve_markdown_image_urls(
-            document_id=document_id,
-            markdown=content.decode("utf-8"),
-        )
-    except (FileNotFoundError, UnicodeDecodeError) as error:
-        raise KnowledgeDocumentArtifactUnavailableError from error
+    preview = document_images.resolve_markdown_image_urls(
+        document_id=document_id,
+        markdown=read_markdown(document_id),
+    )
 
     return KnowledgeDocumentPreviewPublic(
         filename=stored_file.filename,
         content=preview,
+        summary=document.summary,
     )
+
+
+def read_markdown(document_id: uuid.UUID) -> str:
+    try:
+        content = object_storage.read_object_bytes(
+            object_key=document_preview_key(document_id)
+        )
+        return content.decode("utf-8")
+    except (FileNotFoundError, UnicodeDecodeError) as error:
+        raise KnowledgeDocumentArtifactUnavailableError from error
 
 
 def list_document_chunks(

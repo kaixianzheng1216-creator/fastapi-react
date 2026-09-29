@@ -519,6 +519,7 @@ def _publish_document(
             document.processing_finished_at = utc_now()
             document.status = KnowledgeDocumentStatus.READY
             document.error_message = None
+            document.summary = None
             session.commit()
 
             return

@@ -15,9 +15,19 @@ from app.modules.files.exceptions import (
     FileUploadIncompleteError,
 )
 from app.modules.files.schemas import FileCompletePublic, FileUploadRequest
-from app.modules.knowledge import documents, firecrawl, justoneapi, retrieval, service
+from app.modules.knowledge import (
+    documents,
+    firecrawl,
+    justoneapi,
+    retrieval,
+    service,
+    summary,
+)
 from app.modules.knowledge.access import KnowledgeAccessDep
 from app.modules.knowledge.exceptions import (
+    DocumentSummaryTimeoutError,
+    DocumentSummaryTooLongError,
+    DocumentSummaryUnavailableError,
     KnowledgeBaseAlreadyExistsError,
     KnowledgeBaseNotFoundError,
     KnowledgeDocumentArtifactUnavailableError,
@@ -44,6 +54,7 @@ from app.modules.knowledge.schemas import (
     KnowledgeDocumentMove,
     KnowledgeDocumentPreviewPublic,
     KnowledgeDocumentPublic,
+    KnowledgeDocumentSummaryPublic,
     KnowledgeDocumentUploadPublic,
     KnowledgeDocumentUploadResult,
     KnowledgeFolderCreate,
@@ -643,6 +654,32 @@ def read_document_preview(
     access.document(session, document_id, write=False)
 
     return documents.get_preview(session=session, document_id=document_id)
+
+
+@document_router.post(
+    "/{document_id}/summary",
+    response_model=KnowledgeDocumentSummaryPublic,
+    responses=error_responses(
+        KnowledgeDocumentNotFoundError,
+        KnowledgeDocumentStateError,
+        KnowledgeDocumentArtifactUnavailableError,
+        FileStorageUnavailableError,
+        DocumentSummaryTooLongError,
+        DocumentSummaryUnavailableError,
+        DocumentSummaryTimeoutError,
+    ),
+)
+def generate_document_summary(
+    session: SessionDep,
+    access: KnowledgeAccessDep,
+    document_id: Annotated[uuid.UUID, Path(description="知识库文档 ID")],
+) -> KnowledgeDocumentSummaryPublic:
+    """基于当前 Markdown 生成并保存 AI 总结。"""
+    access.document(session, document_id, write=True)
+
+    content = summary.generate(session=session, document_id=document_id)
+
+    return KnowledgeDocumentSummaryPublic(content=content)
 
 
 @document_router.get(

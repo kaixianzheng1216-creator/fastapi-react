@@ -248,6 +248,11 @@ class KnowledgeDirectoryPublic(SQLModel):
 class KnowledgeDocumentPreviewPublic(SQLModel):
     filename: str
     content: str
+    summary: str | None = None
+
+
+class KnowledgeDocumentSummaryPublic(SQLModel):
+    content: str
 
 
 class KnowledgeDocumentChunkPublic(SQLModel):
