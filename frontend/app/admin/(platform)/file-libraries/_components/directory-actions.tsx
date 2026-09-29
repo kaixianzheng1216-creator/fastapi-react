@@ -356,8 +356,8 @@ export function DirectoryActionDialogs({
               ? entryToMove.parent_id
               : entryToMove.folder_id
           }
-          excludedFolderId={
-            entryToMove.type === "folder" ? entryToMove.id : undefined
+          excludedFolderIds={
+            entryToMove.type === "folder" ? [entryToMove.id] : undefined
           }
           title={entryToMove.type === "folder" ? "移动文件夹" : "移动文件"}
           description={`选择“${entryToMove.type === "folder" ? entryToMove.name : entryToMove.filename}”的新位置。`}

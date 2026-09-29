@@ -100,18 +100,20 @@ export function useDirectoryActions({
     }: {
       entries: DirectoryEntry[];
       action: DocumentBatchAction;
-    }) => runDocumentBatch(
-      entries,
-      action,
-      action === "retry"
-        ? (documentId) => knowledgeDocumentsRetryDocument({
-            path: { document_id: documentId },
-            throwOnError: true,
-          })
-        : action === "original"
-          ? downloadOriginalKnowledgeDocument
-          : downloadMarkdownKnowledgeDocument,
-    ),
+    }) =>
+      runDocumentBatch(
+        entries,
+        action,
+        action === "retry"
+          ? (documentId) =>
+              knowledgeDocumentsRetryDocument({
+                path: { document_id: documentId },
+                throwOnError: true,
+              })
+          : action === "original"
+            ? downloadOriginalKnowledgeDocument
+            : downloadMarkdownKnowledgeDocument,
+      ),
     onSuccess: ({ succeeded, failures, skipped }, { action }) => {
       const summary = [
         action === "retry"
@@ -119,7 +121,9 @@ export function useDirectoryActions({
           : `已发起 ${succeeded} 个文档下载`,
         failures.length > 0 ? `${failures.length} 个失败` : "",
         skipped > 0 ? `已跳过 ${skipped} 个不适用项` : "",
-      ].filter(Boolean).join("，");
+      ]
+        .filter(Boolean)
+        .join("，");
 
       const firstFailure = failures[0];
 
@@ -140,38 +144,62 @@ export function useDirectoryActions({
 
   const [folderToEdit, setFolderToEdit] =
     useState<KnowledgeFolderPublic | null>();
-  const [entryToMove, setEntryToMove] = useState<DirectoryEntry>();
+  const [entriesToMove, setEntriesToMove] = useState<DirectoryEntry[]>();
 
-  const moveEntryMutation = useMutation({
+  const moveEntriesMutation = useMutation({
     mutationFn: async ({
-      entry,
+      entries,
       folderId,
     }: {
-      entry: DirectoryEntry;
+      entries: DirectoryEntry[];
       folderId: string | null;
     }) => {
-      if (entry.type === "folder") {
-        await knowledgeBasesMoveFolder({
-          path: { knowledge_base_id: knowledgeBaseId, folder_id: entry.id },
-          body: folderId ? { parent_id: folderId } : {},
-          throwOnError: true,
-        });
-      } else {
-        await knowledgeDocumentsMoveDocument({
-          path: { document_id: entry.id },
-          body: folderId ? { folder_id: folderId } : {},
-          throwOnError: true,
-        });
+      const moved: DirectoryEntry[] = [];
+      const failures: { entry: DirectoryEntry; error: unknown }[] = [];
+
+      for (const entry of entries) {
+        try {
+          if (entry.type === "folder") {
+            await knowledgeBasesMoveFolder({
+              path: { knowledge_base_id: knowledgeBaseId, folder_id: entry.id },
+              body: { parent_id: folderId },
+              throwOnError: true,
+            });
+          } else {
+            await knowledgeDocumentsMoveDocument({
+              path: { document_id: entry.id },
+              body: { folder_id: folderId },
+              throwOnError: true,
+            });
+          }
+
+          moved.push(entry);
+        } catch (error) {
+          failures.push({ entry, error });
+        }
       }
+
+      return { moved, failures };
     },
-    onSuccess: (_, { entry }) => {
-      toast.success("项目已移动");
+    onSuccess: ({ moved, failures }, { folderId }) => {
+      if (moved.length > 0) {
+        onChanged({ type: "moved", entries: moved, folderId });
+      }
+
+      if (failures.length > 0) {
+        setEntriesToMove(failures.map(({ entry }) => entry));
+        toast.error(`已移动 ${moved.length} 项，${failures.length} 项失败`, {
+          description: getApiErrorMessage(
+            failures[0].error,
+            "项目移动失败，请重试",
+          ),
+        });
+        return;
+      }
+
+      toast.success(`已移动 ${moved.length} 项`);
       clearActionTrigger();
-      setEntryToMove(undefined);
-      onChanged({ type: "moved", entry });
-    },
-    onError: (error) => {
-      toast.error(getApiErrorMessage(error, "项目移动失败，请重试"));
+      setEntriesToMove(undefined);
     },
   });
 
@@ -214,7 +242,7 @@ export function useDirectoryActions({
   }
 
   function closeMove(): void {
-    if (!moveEntryMutation.isPending) setEntryToMove(undefined);
+    if (!moveEntriesMutation.isPending) setEntriesToMove(undefined);
   }
 
   function onFolderSaved(): void {
@@ -230,16 +258,17 @@ export function useDirectoryActions({
       documentMutation,
       completeDocumentMutation,
       deleteEntriesMutation,
-      moveEntryMutation,
+      moveEntriesMutation,
     ].some((mutation) => mutation.isPending),
     completeDocumentMutation,
     documentMutation,
     folderToEdit,
     editFolder: setFolderToEdit,
     onFolderSaved,
-    entryToMove,
-    moveEntryMutation,
-    openMoveEntry: setEntryToMove,
+    entriesToMove,
+    moveEntriesMutation,
+    openMoveEntry: (entry: DirectoryEntry) => setEntriesToMove([entry]),
+    openMoveEntries: setEntriesToMove,
     closeMove,
     deleteTarget,
     deleteEntriesMutation,
@@ -262,11 +291,20 @@ export function DirectoryBatchActions({
   disabled: boolean;
 }) {
   const { documentMutation: mutation } = actions;
-  const canDownloadOriginal = entries.some((entry) => canRunDocumentAction(entry, "original"));
-  const canDownloadMarkdown = entries.some((entry) => canRunDocumentAction(entry, "markdown"));
-  const canRetry = entries.some((entry) => canRunDocumentAction(entry, "retry"));
+  const canDownloadOriginal = entries.some((entry) =>
+    canRunDocumentAction(entry, "original"),
+  );
+  const canDownloadMarkdown = entries.some((entry) =>
+    canRunDocumentAction(entry, "markdown"),
+  );
+  const canRetry = entries.some((entry) =>
+    canRunDocumentAction(entry, "retry"),
+  );
   const busy = disabled || actions.isActionPending;
-  const downloading = mutation.isPending && mutation.variables.action !== "retry";
+  const downloadingOriginal =
+    mutation.isPending && mutation.variables.action === "original";
+  const downloadingMarkdown =
+    mutation.isPending && mutation.variables.action === "markdown";
   const retrying = mutation.isPending && mutation.variables.action === "retry";
 
   function run(action: DocumentBatchAction) {
@@ -275,56 +313,59 @@ export function DirectoryBatchActions({
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={busy || (!canDownloadOriginal && !canDownloadMarkdown)}
-            aria-busy={downloading}
-          >
-            <ButtonContent loading={downloading} icon={DownloadIcon}>
-              {downloading ? "发起中…" : "下载文档"}
-            </ButtonContent>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuGroup>
-            <DropdownMenuItem
-              disabled={busy || !canDownloadOriginal}
-              onSelect={() => run("original")}
-            >
-              <DownloadIcon aria-hidden="true" />
-              下载原文件
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={busy || !canDownloadMarkdown}
-              onSelect={() => run("markdown")}
-            >
-              <FileTextIcon aria-hidden="true" />
-              下载 Markdown
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        disabled={busy || !canDownloadOriginal}
+        aria-busy={downloadingOriginal}
+        onClick={() => run("original")}
+      >
+        <ButtonContent loading={downloadingOriginal} icon={DownloadIcon}>
+          批量下载原文件
+        </ButtonContent>
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        disabled={busy || !canDownloadMarkdown}
+        aria-busy={downloadingMarkdown}
+        onClick={() => run("markdown")}
+      >
+        <ButtonContent loading={downloadingMarkdown} icon={FileTextIcon}>
+          批量下载 Markdown
+        </ButtonContent>
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        disabled={busy}
+        onFocus={actions.rememberActionTrigger}
+        onPointerDown={actions.rememberActionTrigger}
+        onClick={() => actions.openMoveEntries(entries)}
+      >
+        <FolderInputIcon data-icon="inline-start" />
+        批量移动
+      </Button>
       {canRetry && (
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="sm"
           disabled={busy}
           aria-busy={retrying}
           onClick={() => run("retry")}
         >
           <ButtonContent loading={retrying} icon={RefreshCwIcon}>
-            {retrying ? "提交中…" : "重试"}
+            {retrying ? "提交中…" : "批量重试"}
           </ButtonContent>
         </Button>
       )}
       <Button
         type="button"
-        variant="destructive"
+        variant="destructive-ghost"
         size="sm"
         disabled={busy}
         aria-busy={actions.deleteEntriesMutation.isPending}
@@ -332,8 +373,11 @@ export function DirectoryBatchActions({
         onPointerDown={actions.rememberActionTrigger}
         onClick={() => actions.openDeleteEntries(entries)}
       >
-        <ButtonContent loading={actions.deleteEntriesMutation.isPending} icon={TrashIcon}>
-          删除文档
+        <ButtonContent
+          loading={actions.deleteEntriesMutation.isPending}
+          icon={TrashIcon}
+        >
+          批量删除
         </ButtonContent>
       </Button>
     </>
@@ -357,11 +401,15 @@ export function DirectoryEntryActions({
     openDeleteEntry,
   } = actions;
 
-  const documentPending = (mutation.isPending &&
-    mutation.variables.entries.some((document) =>
-      document.id === entry.id && canRunDocumentAction(document, mutation.variables.action),
-    )) ||
-    (completeDocumentMutation.isPending && completeDocumentMutation.variables === entry.id);
+  const documentPending =
+    (mutation.isPending &&
+      mutation.variables.entries.some(
+        (document) =>
+          document.id === entry.id &&
+          canRunDocumentAction(document, mutation.variables.action),
+      )) ||
+    (completeDocumentMutation.isPending &&
+      completeDocumentMutation.variables === entry.id);
 
   return entry.type === "folder" ? (
     <FolderActions
@@ -402,7 +450,9 @@ export function DirectoryEntryActions({
           {canRunDocumentAction(entry, "original") ? (
             <DropdownMenuItem
               disabled={actions.isActionPending}
-              onSelect={() => mutation.mutate({ entries: [entry], action: "original" })}
+              onSelect={() =>
+                mutation.mutate({ entries: [entry], action: "original" })
+              }
             >
               <DownloadIcon aria-hidden="true" />
               下载原文件
@@ -419,7 +469,9 @@ export function DirectoryEntryActions({
           {canRunDocumentAction(entry, "markdown") ? (
             <DropdownMenuItem
               disabled={actions.isActionPending}
-              onSelect={() => mutation.mutate({ entries: [entry], action: "markdown" })}
+              onSelect={() =>
+                mutation.mutate({ entries: [entry], action: "markdown" })
+              }
             >
               <FileTextIcon aria-hidden="true" />
               下载 Markdown
@@ -428,13 +480,18 @@ export function DirectoryEntryActions({
           {canRunDocumentAction(entry, "retry") ? (
             <DropdownMenuItem
               disabled={actions.isActionPending}
-              onSelect={() => mutation.mutate({ entries: [entry], action: "retry" })}
+              onSelect={() =>
+                mutation.mutate({ entries: [entry], action: "retry" })
+              }
             >
               <RefreshCwIcon aria-hidden="true" />
               重试
             </DropdownMenuItem>
           ) : null}
-          <DropdownMenuItem disabled={actions.isActionPending} onSelect={() => openMoveEntry(entry)}>
+          <DropdownMenuItem
+            disabled={actions.isActionPending}
+            onSelect={() => openMoveEntry(entry)}
+          >
             <FolderInputIcon aria-hidden="true" />
             移动到
           </DropdownMenuItem>
@@ -471,11 +528,18 @@ export function DirectoryActionDialogs({
     deleteTarget,
     deleteEntriesMutation,
     closeDelete,
-    entryToMove,
-    moveEntryMutation,
+    entriesToMove,
+    moveEntriesMutation,
     closeMove,
   } = actions;
   const deleteTargetCount = deleteTarget?.entries.length ?? 0;
+  const moveFolderIds = new Set(
+    entriesToMove?.map((entry) =>
+      entry.type === "folder" ? entry.parent_id : entry.folder_id,
+    ),
+  );
+  const moveFolderId =
+    moveFolderIds.size === 1 ? [...moveFolderIds][0] : undefined;
 
   return (
     <>
@@ -516,24 +580,20 @@ export function DirectoryActionDialogs({
         文档原文件、解析产物和检索索引都会删除。
       </DeleteDialog>
 
-      {entryToMove && (
+      {entriesToMove && (
         <FolderPickerDialog
           onCloseAutoFocus={restoreActionFocus}
           onClose={closeMove}
           folders={folders}
-          currentFolderId={
-            entryToMove.type === "folder"
-              ? entryToMove.parent_id
-              : entryToMove.folder_id
-          }
-          excludedFolderId={
-            entryToMove.type === "folder" ? entryToMove.id : undefined
-          }
-          title={entryToMove.type === "folder" ? "移动文件夹" : "移动文档"}
-          description={`选择“${entryToMove.type === "folder" ? entryToMove.name : entryToMove.filename}”的新位置。`}
-          isPending={moveEntryMutation.isPending}
+          currentFolderId={moveFolderId}
+          excludedFolderIds={entriesToMove
+            .filter((entry) => entry.type === "folder")
+            .map((entry) => entry.id)}
+          title={entriesToMove.length > 1 ? "批量移动" : "移动项目"}
+          description={`选择 ${entriesToMove.length} 个项目的目标文件夹。`}
+          isPending={moveEntriesMutation.isPending}
           onMove={(folderId) =>
-            moveEntryMutation.mutate({ entry: entryToMove, folderId })
+            moveEntriesMutation.mutate({ entries: entriesToMove, folderId })
           }
         />
       )}

@@ -39,8 +39,8 @@ type FolderPickerDialogProps = {
   onClose: () => void;
   onCloseAutoFocus: (event: Event) => void;
   folders: Folder[];
-  currentFolderId: string | null;
-  excludedFolderId?: string;
+  currentFolderId: string | null | undefined;
+  excludedFolderIds?: string[];
   title: string;
   description: string;
   isPending: boolean;
@@ -71,7 +71,7 @@ export function FolderPickerDialog({
   onCloseAutoFocus,
   folders,
   currentFolderId,
-  excludedFolderId,
+  excludedFolderIds,
   title,
   description,
   isPending,
@@ -110,7 +110,9 @@ export function FolderPickerDialog({
         current: folder.id === currentFolderId,
         disabled:
           folder.id === currentFolderId ||
-          ancestors.some((ancestor) => ancestor.id === excludedFolderId),
+          ancestors.some((ancestor) =>
+            excludedFolderIds?.includes(ancestor.id),
+          ),
         defaultOpen: currentPath.has(folder.id),
         children: [],
       });
@@ -129,7 +131,7 @@ export function FolderPickerDialog({
     }
 
     return { root, nodes };
-  }, [folders, currentFolderId, excludedFolderId]);
+  }, [folders, currentFolderId, excludedFolderIds]);
 
   const [search, setSearch] = useState("");
 
@@ -155,7 +157,9 @@ export function FolderPickerDialog({
     return matches;
   }, [nodes, search]);
 
-  const [selectedFolderId, setSelectedFolderId] = useState(currentFolderId);
+  const [selectedFolderId, setSelectedFolderId] = useState(
+    currentFolderId ?? null,
+  );
 
   const selectedNode = nodes.get(selectedFolderId);
   const canMove = selectedNode !== undefined && !selectedNode.disabled;
@@ -190,7 +194,7 @@ export function FolderPickerDialog({
             disabled={isPending}
             onChange={(event) => {
               setSearch(event.currentTarget.value);
-              setSelectedFolderId(currentFolderId);
+              setSelectedFolderId(currentFolderId ?? null);
             }}
           />
         </Field>

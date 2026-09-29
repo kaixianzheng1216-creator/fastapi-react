@@ -5,7 +5,7 @@ import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
 import { CollectionContent } from "@/components/common/collection-content";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useRef, useState } from "react";
@@ -45,6 +45,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { Card, CardFooter } from "@/components/ui/card";
 import { ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useListParams } from "@/hooks/use-list-params";
 import {
@@ -261,24 +262,32 @@ export function KnowledgeDocuments({
         invalidateFolders();
         break;
 
-      case "moved":
+      case "moved": {
+        const movedKeys = new Set(change.entries.map(getDirectoryEntryKey));
+
         if (
           !currentStatus &&
-          directoryEntries.some(
-            (entry) =>
-              getDirectoryEntryKey(entry) ===
-              getDirectoryEntryKey(change.entry),
-          )
+          !search &&
+          change.folderId !== (currentFolderId ?? null)
         ) {
-          navigateAfterRemovingEntries(1);
+          navigateAfterRemovingEntries(
+            directoryEntries.filter((entry) =>
+              movedKeys.has(getDirectoryEntryKey(entry)),
+            ).length,
+          );
         }
 
-        if (change.entry.type === "folder") {
+        selectEntries(
+          new Set([...selectedEntryKeys].filter((key) => !movedKeys.has(key))),
+        );
+
+        if (change.entries.some((entry) => entry.type === "folder")) {
           invalidateFolders();
         } else {
           invalidateDocuments();
         }
         break;
+      }
 
       case "deleted": {
         const deletedCurrentFolder = change.entries.find(
@@ -434,58 +443,32 @@ export function KnowledgeDocuments({
         </div>
 
         <div className="flex min-h-9 flex-wrap items-center justify-between gap-3">
-          {selectedEntries.length > 0 ? (
-            <>
-              <div className="flex items-center gap-2">
-                <span className="text-sm" role="status">
-                  已选 {selectedEntries.length} 项
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => selectEntries(new Set())}
-                >
-                  取消选择
-                </Button>
-              </div>
-              <div className="flex items-center gap-2">
-                <DirectoryBatchActions
-                  entries={selectedEntries}
-                  actions={actions}
-                  disabled={actionsDisabled || directoryQuery.isPlaceholderData}
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <SearchToolbar
-                label="搜索文档名称"
-                placeholder="搜索文档名称…"
-                maxLength={100}
-                value={search}
-                onSearch={(value) => {
-                  if (value === search) void directoryQuery.refetch();
-                  else update({ search: value, folder: "" });
-                }}
-              />
+          <SearchToolbar
+            label="搜索文档名称"
+            placeholder="搜索文档名称…"
+            maxLength={100}
+            value={search}
+            onSearch={(value) => {
+              if (value === search) void directoryQuery.refetch();
+              else update({ search: value, folder: "" });
+            }}
+          />
 
-              {!directoryLoadFailed && !directoryPending && statusCounts && (
-                <FilterGroup
-                  label="状态筛选"
-                  value={currentStatus ?? "all"}
-                  onValueChange={(value) =>
-                    update({ status: value === "all" ? "" : value })
-                  }
-                >
-                  <ToggleGroupItem value="all">全部</ToggleGroupItem>
-                  {statusOptions.map((status) => (
-                    <ToggleGroupItem key={status} value={status}>
-                      {documentStatusLabels[status]} {statusCounts[status]}
-                    </ToggleGroupItem>
-                  ))}
-                </FilterGroup>
-              )}
-            </>
+          {!directoryLoadFailed && !directoryPending && statusCounts && (
+            <FilterGroup
+              label="状态筛选"
+              value={currentStatus ?? "all"}
+              onValueChange={(value) =>
+                update({ status: value === "all" ? "" : value })
+              }
+            >
+              <ToggleGroupItem value="all">全部</ToggleGroupItem>
+              {statusOptions.map((status) => (
+                <ToggleGroupItem key={status} value={status}>
+                  {documentStatusLabels[status]} {statusCounts[status]}
+                </ToggleGroupItem>
+              ))}
+            </FilterGroup>
           )}
         </div>
 
@@ -540,6 +523,36 @@ export function KnowledgeDocuments({
           </CollectionContent>
         )}
       </section>
+      {selectedEntries.length > 0 && (
+        <div className="sticky bottom-4 z-10 max-w-full shrink-0 self-center">
+          <Card className="rounded-md py-2" role="region" aria-label="批量操作">
+            <CardFooter className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 px-3 sm:grid-cols-[auto_1fr_auto]">
+              <span className="whitespace-nowrap text-sm" role="status">
+                已选 {selectedEntries.length} 项
+              </span>
+              <div className="col-span-2 row-start-2 flex flex-wrap items-center gap-1 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+                <DirectoryBatchActions
+                  entries={selectedEntries}
+                  actions={actions}
+                  disabled={actionsDisabled || directoryQuery.isPlaceholderData}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="col-start-2 row-start-1 sm:col-start-3"
+                aria-label="取消选择"
+                disabled={actions.isActionPending}
+                onClick={() => selectEntries(new Set())}
+              >
+                <XIcon aria-hidden="true" />
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      )}
+
       <PagePagination
         className="shrink-0"
         ariaLabel="知识库目录分页"

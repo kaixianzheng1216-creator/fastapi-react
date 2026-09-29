@@ -1,6 +1,12 @@
-import type { KnowledgeDirectoryPublic, KnowledgeDocumentPublic } from "@/lib/client";
+import type {
+  KnowledgeDirectoryPublic,
+  KnowledgeDocumentPublic,
+} from "@/lib/client";
 
-export const documentStatusLabels: Record<KnowledgeDocumentPublic["status"], string> = {
+export const documentStatusLabels: Record<
+  KnowledgeDocumentPublic["status"],
+  string
+> = {
   pending: "等待处理",
   processing: "处理中",
   ready: "已完成",
@@ -23,7 +29,7 @@ export type DirectoryEntry = KnowledgeDirectoryPublic["data"][number];
 export type DirectoryChange =
   | { type: "documents" }
   | { type: "folders" }
-  | { type: "moved"; entry: DirectoryEntry }
+  | { type: "moved"; entries: DirectoryEntry[]; folderId: string | null }
   | { type: "deleted"; entries: DirectoryEntry[] };
 
 export function getDirectoryEntryKey(entry: DirectoryEntry): string {
