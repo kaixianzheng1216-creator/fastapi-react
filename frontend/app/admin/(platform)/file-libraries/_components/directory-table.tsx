@@ -25,6 +25,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatFileSize } from "@/lib/file-types";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
   dateStyle: "medium",
@@ -128,22 +133,33 @@ export function LibraryDirectoryTable({
                   />
                 </TableCell>
                 <TableCell>
-                  {entry.type === "folder" ? (
-                    <Link
-                      href={getLibraryDirectoryHref(fileLibraryId, 1, entry.id)}
-                      className="flex min-w-0 items-center gap-2 hover:underline"
-                    >
-                      <FolderIcon
-                        className="size-4 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span className="truncate">{entry.name}</span>
-                    </Link>
-                  ) : (
-                    <span className="block min-w-0 truncate">
-                      {entry.filename}
-                    </span>
-                  )}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      {entry.type === "folder" ? (
+                        <Link
+                          href={getLibraryDirectoryHref(
+                            fileLibraryId,
+                            1,
+                            entry.id,
+                          )}
+                          className="flex min-w-0 items-center gap-2 hover:underline"
+                        >
+                          <FolderIcon
+                            className="size-4 shrink-0"
+                            aria-hidden="true"
+                          />
+                          <span className="truncate">{entry.name}</span>
+                        </Link>
+                      ) : (
+                        <span tabIndex={0} className="block min-w-0 truncate">
+                          {entry.filename}
+                        </span>
+                      )}
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-sm text-wrap break-words">
+                      {name}
+                    </TooltipContent>
+                  </Tooltip>
                 </TableCell>
                 <TableCell>
                   {entry.type === "folder" ? (

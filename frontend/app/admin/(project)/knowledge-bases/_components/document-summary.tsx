@@ -103,7 +103,7 @@ export function DocumentSummary({
           </Alert>
         )}
         {summary && (
-          <CollapsibleContent>
+          <CollapsibleContent className="scroll-content-y max-h-[min(24rem,50svh)]">
             <MarkdownContent className="prose-sm max-w-none [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm">
               {summary}
             </MarkdownContent>

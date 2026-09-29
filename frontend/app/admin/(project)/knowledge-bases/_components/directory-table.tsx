@@ -27,6 +27,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatFileSize } from "@/lib/file-types";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
   dateStyle: "medium",
@@ -154,43 +159,46 @@ export function KnowledgeDirectoryTable({
                   />
                 </TableCell>
                 <TableCell>
-                  {entry.type === "folder" ? (
-                    <Link
-                      href={getKnowledgeDirectoryHref(
-                        projectId,
-                        knowledgeBaseId,
-                        1,
-                        entry.id,
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      {entry.type === "folder" ? (
+                        <Link
+                          href={getKnowledgeDirectoryHref(
+                            projectId,
+                            knowledgeBaseId,
+                            1,
+                            entry.id,
+                          )}
+                          className="flex min-w-0 items-center gap-2 hover:underline"
+                        >
+                          <FolderIcon
+                            className="size-4 shrink-0"
+                            aria-hidden="true"
+                          />
+                          <span className="truncate">{entry.name}</span>
+                        </Link>
+                      ) : entry.status === "ready" ? (
+                        <Link
+                          href={getDocumentHref(entry.id)}
+                          className="block min-w-0 truncate hover:underline"
+                        >
+                          {entry.filename}
+                        </Link>
+                      ) : (
+                        <span tabIndex={0} className="block min-w-0 truncate">
+                          {entry.filename}
+                        </span>
                       )}
-                      className="flex min-w-0 items-center gap-2 hover:underline"
-                    >
-                      <FolderIcon
-                        className="size-4 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span className="truncate">{entry.name}</span>
-                    </Link>
-                  ) : (
-                    <div className="min-w-0">
-                      <div className="truncate">
-                        {entry.status === "ready" ? (
-                          <Link
-                            href={getDocumentHref(entry.id)}
-                            className="hover:underline"
-                          >
-                            {entry.filename}
-                          </Link>
-                        ) : (
-                          entry.filename
-                        )}
-                      </div>
-                      {entry.error_message ? (
-                        <p className="text-destructive whitespace-normal break-words">
-                          {entry.error_message}
-                        </p>
-                      ) : null}
-                    </div>
-                  )}
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-sm text-wrap break-words">
+                      {name}
+                    </TooltipContent>
+                  </Tooltip>
+                  {entry.type === "document" && entry.error_message ? (
+                    <p className="text-destructive whitespace-normal break-words">
+                      {entry.error_message}
+                    </p>
+                  ) : null}
                 </TableCell>
                 {folderPaths && (
                   <TableCell className="whitespace-normal break-words">
