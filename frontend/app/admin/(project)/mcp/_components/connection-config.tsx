@@ -21,7 +21,7 @@ export function ConnectionConfig({
   const config = JSON.stringify(
     {
       mcpServers: {
-        "data-hub": {
+        "data-center": {
           url: endpoint,
           headers: { Authorization: `Bearer ${apiKey}` },
         },
