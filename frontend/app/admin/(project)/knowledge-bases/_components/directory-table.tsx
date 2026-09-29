@@ -14,6 +14,7 @@ import {
 import { getKnowledgeDirectoryHref } from "@/app/admin/(project)/knowledge-bases/_lib/navigation";
 
 import { TableEmptyRow } from "@/components/common/table-empty-row";
+import { FileTypeIcon } from "@/components/common/file-type-icon";
 import { TableSkeletonBody } from "@/components/common/table-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -180,13 +181,18 @@ export function KnowledgeDirectoryTable({
                       ) : entry.status === "ready" ? (
                         <Link
                           href={getDocumentHref(entry.id)}
-                          className="block min-w-0 truncate hover:underline"
+                          className="flex min-w-0 items-center gap-2 hover:underline"
                         >
-                          {entry.filename}
+                          <FileTypeIcon contentType={entry.content_type} />
+                          <span className="truncate">{entry.filename}</span>
                         </Link>
                       ) : (
-                        <span tabIndex={0} className="block min-w-0 truncate">
-                          {entry.filename}
+                        <span
+                          tabIndex={0}
+                          className="flex min-w-0 items-center gap-2"
+                        >
+                          <FileTypeIcon contentType={entry.content_type} />
+                          <span className="truncate">{entry.filename}</span>
                         </span>
                       )}
                     </TooltipTrigger>
