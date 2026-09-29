@@ -6,6 +6,7 @@ from typing import Annotated, Literal
 import httpx
 from pydantic import BaseModel, Field, ValidationError
 
+from app.core.config import NEWAPI_PROJECT_ID
 from app.modules.knowledge.config import settings
 from app.modules.knowledge.vector_store import SearchResult
 
@@ -32,7 +33,8 @@ def rerank_matches(
         with httpx.Client(
             base_url=settings.NEWAPI_BASE_URL.rstrip("/") + "/",
             headers={
-                "Authorization": f"Bearer {settings.NEWAPI_API_KEY.get_secret_value()}"
+                "Authorization": f"Bearer {settings.NEWAPI_API_KEY.get_secret_value()}",
+                "X-Project-Id": NEWAPI_PROJECT_ID,
             },
             timeout=15.0,
         ) as client:

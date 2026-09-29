@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import httpx
 
+from app.core.config import NEWAPI_PROJECT_ID
 from app.modules.knowledge.config import settings
 
 if TYPE_CHECKING:
@@ -34,7 +35,8 @@ def embed_texts(texts: Sequence[str]) -> list[list[float]]:
     with httpx.Client(
         base_url=settings.NEWAPI_BASE_URL.rstrip("/") + "/",
         headers={
-            "Authorization": f"Bearer {settings.NEWAPI_API_KEY.get_secret_value()}"
+            "Authorization": f"Bearer {settings.NEWAPI_API_KEY.get_secret_value()}",
+            "X-Project-Id": NEWAPI_PROJECT_ID,
         },
         timeout=15.0,
     ) as client:

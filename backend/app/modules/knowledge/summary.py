@@ -4,6 +4,7 @@ import uuid
 from openai import APITimeoutError, BadRequestError, OpenAI, OpenAIError
 from sqlmodel import Session
 
+from app.core.config import NEWAPI_PROJECT_ID
 from app.modules.knowledge import documents
 from app.modules.knowledge.config import settings
 from app.modules.knowledge.exceptions import (
@@ -46,6 +47,7 @@ def generate(*, session: Session, document_id: uuid.UUID) -> str:
         with OpenAI(
             api_key=settings.NEWAPI_API_KEY.get_secret_value(),
             base_url=settings.NEWAPI_BASE_URL,
+            default_headers={"X-Project-Id": NEWAPI_PROJECT_ID},
             timeout=60,
             max_retries=0,
         ) as client:

@@ -32,6 +32,7 @@ from PIL import Image, UnidentifiedImageError
 from pydantic import AnyUrl, BaseModel, TypeAdapter, ValidationError
 from sqlmodel import Session, col, select
 
+from app.core.config import NEWAPI_PROJECT_ID
 from app.core.config import settings as app_settings
 from app.db.session import engine
 from app.db.timestamps import utc_now
@@ -239,6 +240,7 @@ def _parse_image_document(
         with OpenAI(
             api_key=knowledge_settings.NEWAPI_API_KEY.get_secret_value(),
             base_url=knowledge_settings.NEWAPI_BASE_URL,
+            default_headers={"X-Project-Id": NEWAPI_PROJECT_ID},
         ) as client:
             response = client.chat.completions.create(
                 model=IMAGE_DESCRIPTION_MODEL,

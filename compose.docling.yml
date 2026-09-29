@@ -21,7 +21,8 @@ services:
               "url": "${DOCLING_PICTURE_DESCRIPTION_URL:?Variable not set}",
               "concurrency": 3,
               "headers": {
-                "Authorization": "Bearer ${NEWAPI_API_KEY?Variable not set}"
+                "Authorization": "Bearer ${NEWAPI_API_KEY?Variable not set}",
+                "X-Project-Id": "data-hub"
               },
               "params": {
                 "model": "deepseek-flash",

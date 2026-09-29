@@ -16,6 +16,7 @@ API_V1_PREFIX = "/api/v1"
 # 60 分钟 * 24 小时 * 7 天 = 7 天
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
 PROJECT_NAME = "FastAPI React Project"
+NEWAPI_PROJECT_ID = "data-hub"
 
 
 def parse_cors(v: Any) -> list[str] | str:

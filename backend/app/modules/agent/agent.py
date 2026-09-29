@@ -14,6 +14,7 @@ from langgraph.config import get_config
 from langgraph.store.postgres.aio import AsyncPostgresStore
 from sqlmodel import Session
 
+from app.core.config import NEWAPI_PROJECT_ID
 from app.db.session import engine
 from app.modules.agent.config import settings
 from app.modules.agent.connections.firecrawl_mcp import load_firecrawl_mcp_tools
@@ -114,6 +115,7 @@ def create_chat_model(
         model=selected_model_name,
         api_key=settings.NEWAPI_API_KEY,
         base_url=settings.NEWAPI_BASE_URL,
+        default_headers={"X-Project-Id": NEWAPI_PROJECT_ID},
         extra_body=extra_body,
         output_version="v1",
         streaming=True,

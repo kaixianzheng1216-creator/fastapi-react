@@ -70,6 +70,7 @@ DOCLING_PICTURE_DESCRIPTION_URL=https://你的NewAPI地址/v1/chat/completions
 
 填写与主服务器相同的 NewAPI 服务地址和可访问 `deepseek-flash` 的密钥。
 本地 Docker 部署也需设置 `DOCLING_PICTURE_DESCRIPTION_URL`，地址指向 NewAPI 的 `/v1/chat/completions`。
+Docling 图片描述请求在 `compose.docling.yml` 中配置 `X-Project-Id: data-hub`，与后端的 NewAPI 请求一致。
 
 只启动 Docling：
 
