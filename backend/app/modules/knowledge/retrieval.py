@@ -40,6 +40,7 @@ def search_knowledge_base(
 
     try:
         matches = vector_store.search(
+            query=query,
             vector=query_vector,
             knowledge_base_id=knowledge_base_id,
             document_ids=ready_document_ids,

@@ -7,10 +7,12 @@ from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from qdrant_client.http.exceptions import ApiException
 
+from app.modules.knowledge import bm25
 from app.modules.knowledge.config import settings
 
-COLLECTION_NAME = settings.QDRANT_COLLECTION_NAME
+COLLECTION_NAME = f"{settings.QDRANT_COLLECTION_NAME}_hybrid"
 VECTOR_NAME = "dense"
+BM25_VECTOR_NAME = "bm25"
 VECTOR_DISTANCE = models.Distance.COSINE
 UPSERT_BATCH_SIZE = 64
 
@@ -57,6 +59,11 @@ def ensure_collection() -> None:
                     distance=VECTOR_DISTANCE,
                 )
             },
+            sparse_vectors_config={
+                BM25_VECTOR_NAME: models.SparseVectorParams(
+                    modifier=models.Modifier.IDF
+                )
+            },
             metadata=COLLECTION_METADATA,
         )
 
@@ -78,6 +85,13 @@ def ensure_collection() -> None:
         metadata.get(key) != value for key, value in COLLECTION_METADATA.items()
     ):
         raise RuntimeError("Qdrant Collection 索引模型配置不匹配")
+
+    sparse_vectors = collection.config.params.sparse_vectors or {}
+
+    bm25_config = sparse_vectors.get(BM25_VECTOR_NAME)
+
+    if bm25_config is None or bm25_config.modifier != models.Modifier.IDF:
+        raise RuntimeError("Qdrant BM25 索引配置不匹配")
 
     payload_schema = collection.payload_schema
 
@@ -150,7 +164,10 @@ def upsert_chunks(
             points.append(
                 models.PointStruct(
                     id=str(uuid.uuid5(document_id, str(chunk.chunk_index))),
-                    vector={VECTOR_NAME: vectors[index]},
+                    vector={
+                        VECTOR_NAME: vectors[index],
+                        BM25_VECTOR_NAME: bm25.embed_text(chunk.content),
+                    },
                     payload={
                         "knowledge_base_id": str(knowledge_base_id),
                         "document_id": str(document_id),
@@ -230,12 +247,13 @@ def list_document_chunks(
 
 def search(
     *,
+    query: str,
     vector: list[float],
     knowledge_base_id: uuid.UUID,
     document_ids: Sequence[uuid.UUID],
     limit: int,
 ) -> list[SearchResult]:
-    """在指定知识库的可用文档中检索相关切片。"""
+    """在可用文档中混合检索语义和关键词，以 RRF 合并候选。"""
     if not document_ids:
         return []
 
@@ -257,8 +275,21 @@ def search(
     try:
         response = client.query_points(
             collection_name=COLLECTION_NAME,
-            query=vector,
-            using=VECTOR_NAME,
+            prefetch=[
+                models.Prefetch(
+                    query=vector,
+                    using=VECTOR_NAME,
+                    filter=search_filter,
+                    limit=limit,
+                ),
+                models.Prefetch(
+                    query=bm25.embed_text(query, query=True),
+                    using=BM25_VECTOR_NAME,
+                    filter=search_filter,
+                    limit=limit,
+                ),
+            ],
+            query=models.FusionQuery(fusion=models.Fusion.RRF),
             query_filter=search_filter,
             limit=limit,
             with_payload=True,

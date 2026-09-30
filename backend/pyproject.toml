@@ -36,12 +36,15 @@ dependencies = [
     "redis>=6,<8",
     "playwright>=1.58,<2.0.0",
     "fastmcp-slim[server]==3.4.7",
+    "fastembed>=0.8.1,<0.9",
+    "jieba>=0.42.1,<0.43",
 ]
 
 [dependency-groups]
 dev = [
     "mypy<3.0.0,>=1.8.0",
     "ruff<1.0.0,>=0.2.2",
+    "types-jieba>=0.0.7",
     "types-openpyxl>=3.1.5.20250919",
     "types-PyYAML>=6.0.12.20250915",
 ]
