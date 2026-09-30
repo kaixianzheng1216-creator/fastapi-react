@@ -291,7 +291,7 @@ export function KnowledgeDocumentImport({
                   failures={uploadFailures}
                   disabled={isPending}
                   accept={KNOWLEDGE_FILE_ACCEPT}
-                  description={`支持 PDF、DOCX、XLSX、PPTX、TXT、MD、CSV、HTML、JPG/JPEG、PNG、WebP。单个文件最大 ${formatFileSize(MAX_FILE_SIZE)}。`}
+                  description={`支持文档（PDF、DOCX、XLSX、PPTX、TXT、MD、CSV、HTML）、图片（JPG/JPEG、PNG、WebP）、音频（MP3、WAV、M4A）和视频（MP4、MOV，转写声音）。单个文件最大 ${formatFileSize(MAX_FILE_SIZE)}。`}
                   onFilesChange={(files) => {
                     uploadMutation.reset();
                     setSelectedFiles(files);

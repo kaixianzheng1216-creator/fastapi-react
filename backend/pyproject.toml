@@ -36,6 +36,7 @@ dependencies = [
     "redis>=6,<8",
     "playwright>=1.58,<2.0.0",
     "fastmcp-slim[server]==3.4.7",
+    "ffmpeg-python>=0.2.0,<0.3.0",
 ]
 
 [dependency-groups]

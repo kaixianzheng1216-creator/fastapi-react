@@ -1,10 +1,12 @@
 import {
+  FileAudioIcon,
   FileCodeIcon,
   FileIcon,
   FileImageIcon,
   FileSpreadsheetIcon,
   FileTextIcon,
   FileTypeIcon as FileLetterIcon,
+  FileVideoIcon,
   PresentationIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -26,7 +28,13 @@ const icons: Record<string, LucideIcon> = {
 export function FileTypeIcon({ contentType }: { contentType: string }) {
   let Icon = icons[contentType] ?? FileIcon;
 
-  if (contentType.startsWith("image/")) Icon = FileImageIcon;
+  if (contentType.startsWith("image/")) {
+    Icon = FileImageIcon;
+  } else if (contentType.startsWith("audio/")) {
+    Icon = FileAudioIcon;
+  } else if (contentType.startsWith("video/")) {
+    Icon = FileVideoIcon;
+  }
 
   return (
     <Icon

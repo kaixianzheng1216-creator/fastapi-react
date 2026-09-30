@@ -20,6 +20,8 @@ class KnowledgeSettings(BaseSettings):
     NEWAPI_BASE_URL: str
     NEWAPI_API_KEY: SecretStr
 
+    VOLC_ASR_API_KEY: SecretStr = SecretStr("")
+
     EMBEDDING_MODEL: str
 
     RERANK_MODEL: str = "doubao-seed-rerank"

@@ -40,9 +40,10 @@ from app.modules.files import object_storage
 from app.modules.files.constants import (
     DOCUMENT_FORMAT_BY_CONTENT_TYPE,
     IMAGE_CONTENT_TYPES,
+    MEDIA_CONTENT_TYPES,
 )
 from app.modules.files.models import StoredFile
-from app.modules.knowledge import document_images, embedding, vector_store
+from app.modules.knowledge import document_images, embedding, media, vector_store
 from app.modules.knowledge.config import settings as knowledge_settings
 from app.modules.knowledge.documents import (
     cleanup_deleted_documents,
@@ -206,7 +207,11 @@ def _load_or_parse_document(
             exc_info=True,
         )
 
-    if stored_file.content_type in IMAGE_CONTENT_TYPES:
+    if stored_file.content_type in MEDIA_CONTENT_TYPES:
+        docling_document = media.parse_media_document(
+            document_id=document_id, stored_file=stored_file
+        )
+    elif stored_file.content_type in IMAGE_CONTENT_TYPES:
         content = object_storage.read_object_bytes(object_key=stored_file.object_key)
         docling_document = _parse_image_document(stored_file, content)
     else:

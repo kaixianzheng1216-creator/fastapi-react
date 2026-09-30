@@ -23,12 +23,24 @@ export const DOCUMENT_CONTENT_TYPES: readonly string[] = [
   ...TEXT_CONTENT_TYPES,
 ];
 
+const MEDIA_CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
+  mp3: "audio/mpeg",
+  wav: "audio/wav",
+  m4a: "audio/mp4",
+  mp4: "video/mp4",
+  mov: "video/quicktime",
+};
+
 export const KNOWLEDGE_CONTENT_TYPES: readonly string[] = [
   ...IMAGE_CONTENT_TYPES,
   ...DOCUMENT_CONTENT_TYPES,
+  ...Object.values(MEDIA_CONTENT_TYPE_BY_EXTENSION),
 ];
 
-export const CHAT_CONTENT_TYPES = KNOWLEDGE_CONTENT_TYPES;
+export const CHAT_CONTENT_TYPES: readonly string[] = [
+  ...IMAGE_CONTENT_TYPES,
+  ...DOCUMENT_CONTENT_TYPES,
+];
 
 export const MAX_FILE_SIZE = 100 * 1024 * 1024;
 export const MAX_FILE_COUNT = 9;
@@ -38,6 +50,7 @@ const sizeFormatter = new Intl.NumberFormat("zh-CN", {
 });
 
 const CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
+  ...MEDIA_CONTENT_TYPE_BY_EXTENSION,
   csv: "text/csv",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   html: "text/html",
@@ -61,9 +74,13 @@ export const KNOWLEDGE_FILE_ACCEPT = [
 ].join(",");
 
 export function getFileContentType(file: File): string | undefined {
-  if (file.type) return file.type;
-
   const extension = file.name.split(".").pop()?.toLowerCase();
+
+  if (extension && MEDIA_CONTENT_TYPE_BY_EXTENSION[extension]) {
+    return MEDIA_CONTENT_TYPE_BY_EXTENSION[extension];
+  }
+
+  if (file.type) return file.type;
 
   return extension ? CONTENT_TYPE_BY_EXTENSION[extension] : undefined;
 }

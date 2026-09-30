@@ -23,11 +23,11 @@ FROM dependencies AS collector-dependencies
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
 
 RUN sed -i \
-    's|deb.debian.org|mirrors.cloud.tencent.com|g' \
+    's|http://deb.debian.org|https://mirrors.cloud.tencent.com|g' \
     /etc/apt/sources.list.d/debian.sources
 
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends chromium fonts-noto-cjk \
+    && apt-get install --yes --no-install-recommends chromium fonts-noto-cjk ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 FROM collector-dependencies AS application
