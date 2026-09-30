@@ -275,11 +275,13 @@ export function DocumentSearch({
                     changeSource(value as SearchSource);
                   }}
                 >
-                  {Object.entries(searchSources).map(([value, label]) => (
-                    <ToggleGroupItem key={value} value={value}>
-                      {label}
-                    </ToggleGroupItem>
-                  ))}
+                  {Object.entries(searchSources)
+                    .filter(([value]) => value === "web")
+                    .map(([value, label]) => (
+                      <ToggleGroupItem key={value} value={value}>
+                        {label}
+                      </ToggleGroupItem>
+                    ))}
                 </ToggleGroup>
                 <InputGroupButton
                   type="submit"
