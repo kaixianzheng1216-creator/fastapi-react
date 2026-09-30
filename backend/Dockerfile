@@ -27,7 +27,7 @@ RUN sed -i \
     /etc/apt/sources.list.d/debian.sources
 
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends chromium fonts-noto-cjk ffmpeg \
+    && apt-get install --yes --no-install-recommends chromium fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
 FROM collector-dependencies AS application

@@ -121,7 +121,6 @@ dependencies = [
     { name = "e2b" },
     { name = "fastapi" },
     { name = "fastmcp-slim", extra = ["server"] },
-    { name = "ffmpeg-python" },
     { name = "httpx" },
     { name = "langchain-deepseek" },
     { name = "langchain-e2b" },
@@ -167,7 +166,6 @@ requires-dist = [
     { name = "e2b", specifier = ">=2.34.0,<3.0.0" },
     { name = "fastapi", specifier = ">=0.138.1,<1.0.0" },
     { name = "fastmcp-slim", extras = ["server"], specifier = "==3.4.7" },
-    { name = "ffmpeg-python", specifier = ">=0.2.0,<0.3.0" },
     { name = "httpx", specifier = ">=0.28.1,<1.0.0" },
     { name = "langchain-deepseek", specifier = ">=1.0.0,<2.0.0" },
     { name = "langchain-e2b", specifier = ">=0.0.5,<0.1.0" },
@@ -910,18 +908,6 @@ server = [
 ]
 
 [[package]]
-name = "ffmpeg-python"
-version = "0.2.0"
-source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
-dependencies = [
-    { name = "future" },
-]
-sdist = { url = "https://mirrors.aliyun.com/pypi/packages/dd/5e/d5f9105d59c1325759d838af4e973695081fbbc97182baf73afc78dec266/ffmpeg-python-0.2.0.tar.gz", hash = "sha256:65225db34627c578ef0e11c8b1eb528bb35e024752f6f10b78c011f6f64c4127" }
-wheels = [
-    { url = "https://mirrors.aliyun.com/pypi/packages/d7/0c/56be52741f75bad4dc6555991fabd2e07b432d333da82c11ad701123888a/ffmpeg_python-0.2.0-py3-none-any.whl", hash = "sha256:ac441a0404e053f8b6a1113a77c0f452f1cfc62f6344a769475ffdc0f56c23c5" },
-]
-
-[[package]]
 name = "filelock"
 version = "3.32.3"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
@@ -946,15 +932,6 @@ source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
 sdist = { url = "https://mirrors.aliyun.com/pypi/packages/00/78/f34251dadb8f3921264a1d9b8946f5e542014ee2614b285261b4e40e6775/fsspec-2026.7.0.tar.gz", hash = "sha256:c803c40f4cf860b49dea58ee3e1c33cb9c790520e233537e1340049f89b82a88" }
 wheels = [
     { url = "https://mirrors.aliyun.com/pypi/packages/fd/3c/6a2bf344106328fd04963664a60b9bb6496fc25df8e962fcdc1367285fb9/fsspec-2026.7.0-py3-none-any.whl", hash = "sha256:b57ddbafedfaef7018c1ecab32aa200a9d7ca26b77965f64e48b70061249d279" },
-]
-
-[[package]]
-name = "future"
-version = "1.0.0"
-source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
-sdist = { url = "https://mirrors.aliyun.com/pypi/packages/a7/b2/4140c69c6a66432916b26158687e821ba631a4c9273c474343badf84d3ba/future-1.0.0.tar.gz", hash = "sha256:bd2968309307861edae1458a4f8a4f3598c03be43b97521076aebf5d94c07b05" }
-wheels = [
-    { url = "https://mirrors.aliyun.com/pypi/packages/da/71/ae30dadffc90b9006d77af76b393cb9dfbfc9629f339fc1574a1c52e6806/future-1.0.0-py3-none-any.whl", hash = "sha256:929292d34f5872e70396626ef385ec22355a1fae8ad29e1a734c3e43f9fbc216" },
 ]
 
 [[package]]

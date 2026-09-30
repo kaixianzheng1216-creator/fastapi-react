@@ -34,7 +34,6 @@ from app.modules.knowledge.schemas import (
 
 DOCUMENT_JSON_PATH = "knowledge/{document_id}/document.json"
 DOCUMENT_PREVIEW_PATH = "knowledge/{document_id}/preview.md"
-DOCUMENT_AUDIO_PATH = "knowledge/{document_id}/audio.mp3"
 
 EXTERNAL_CLEANUP_ERROR_LOG = "清理知识库文档外部资源失败"
 
@@ -47,10 +46,6 @@ def document_json_key(document_id: uuid.UUID) -> str:
 
 def document_preview_key(document_id: uuid.UUID) -> str:
     return DOCUMENT_PREVIEW_PATH.format(document_id=document_id)
-
-
-def document_audio_key(document_id: uuid.UUID) -> str:
-    return DOCUMENT_AUDIO_PATH.format(document_id=document_id)
 
 
 def create_upload(
@@ -406,7 +401,6 @@ def cleanup_deleted_documents(
     delete_images: bool = False,
 ) -> None:
     for document_id in document_ids:
-        object_keys.append(document_audio_key(document_id))
         try:
             vector_store.delete_document(document_id)
         except Exception:

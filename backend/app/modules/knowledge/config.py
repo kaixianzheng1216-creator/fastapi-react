@@ -21,6 +21,7 @@ class KnowledgeSettings(BaseSettings):
     NEWAPI_API_KEY: SecretStr
 
     VOLC_ASR_API_KEY: SecretStr = SecretStr("")
+    VOLC_LAS_API_KEY: SecretStr = SecretStr("")
 
     EMBEDDING_MODEL: str
 
