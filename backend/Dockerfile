@@ -32,10 +32,7 @@ RUN apt-get update \
 
 FROM collector-dependencies AS application
 
-ENV EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer \
-    FASTEMBED_CACHE_PATH=/app/models/fastembed
-
-RUN python -c 'from fastembed import SparseTextEmbedding; SparseTextEmbedding(model_name="Qdrant/bm25", disable_stemmer=True)'
+ENV EMBEDDING_TOKENIZER=/app/models/bge-m3-tokenizer
 
 COPY backend/scripts/download_embedding_tokenizer.py /tmp/download_embedding_tokenizer.py
 
@@ -43,8 +40,7 @@ RUN python /tmp/download_embedding_tokenizer.py \
     && rm /tmp/download_embedding_tokenizer.py
 
 RUN groupadd --system app \
-    && useradd --system --gid app --home-dir /home/app --create-home app \
-    && chown -R app:app /app/models/fastembed
+    && useradd --system --gid app --home-dir /home/app --create-home app
 
 COPY --chown=app:app backend/scripts /app/backend/scripts
 COPY --chown=app:app backend/alembic.ini /app/backend/alembic.ini

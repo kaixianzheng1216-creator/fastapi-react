@@ -1,4 +1,5 @@
 from functools import cache
+from pathlib import Path
 
 import jieba
 from fastembed import SparseTextEmbedding
@@ -24,4 +25,8 @@ def embed_text(text: str, *, query: bool = False) -> models.SparseVector:
 
 @cache
 def _get_model() -> SparseTextEmbedding:
-    return SparseTextEmbedding(model_name="Qdrant/bm25", disable_stemmer=True)
+    return SparseTextEmbedding(
+        model_name="Qdrant/bm25",
+        disable_stemmer=True,
+        specific_model_path=str(Path(__file__).parent),
+    )
