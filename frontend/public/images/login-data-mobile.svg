@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="280" viewBox="0 0 390 280" fill="none">
+  <defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" stroke="#D3DDEC" stroke-width=".6"/></pattern></defs>
+  <path fill="#EAF0F6" d="M0 0h390v280H0z"/>
+  <path fill="url(#grid)" d="M208 0h182v280H208z"/>
+  <path fill="#D8E3FF" d="M326 32h64v64h-64z"/>
+  <path fill="#1557FF" d="M358 32h32v32h-32z"/>
+  <path d="M193 172h31v36h36M176 244h48v-36M340 208h50" stroke="#7499F9"/>
+  <rect x="145" y="148" width="48" height="40" fill="#FAFCFF" stroke="#BACBE6"/>
+  <path d="M155 161h28M155 169h18M155 177h24" stroke="#8DA9DC" stroke-width="2"/>
+  <path fill="#C6D6FF" d="M144 228h32v32h-32z"/>
+  <path fill="#1557FF" d="M260 164h80v88h-80z"/>
+  <path d="M270 252v8h78v-88h-8" stroke="#7196F6"/>
+  <path fill="white" d="M272 178h9v9h-9zM272 201h9v9h-9zM272 224h9v9h-9z"/>
+  <path d="M290 181h36M290 204h36M290 227h36" stroke="#E2EAFF" stroke-width="2"/>
+  <circle cx="224" cy="208" r="3" fill="#1557FF"/>
+</svg>
