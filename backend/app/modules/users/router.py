@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, Query, status
 
 from app.api.dependencies import SessionDep
 from app.api.responses import error_responses
-from app.common.schemas import Message
 from app.modules.auth.dependencies import (
     CurrentUser,
     get_current_active_superuser,
@@ -14,35 +13,18 @@ from app.modules.auth.dependencies import (
 from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
 from app.modules.users import service
 from app.modules.users.exceptions import (
-    IncorrectPasswordError,
     InsufficientPrivilegesError,
-    PasswordUnchangedError,
     SelfAdminStatusChangeForbiddenError,
     SelfDeletionForbiddenError,
-    UserAlreadyExistsError,
     UserNotFoundError,
 )
-from app.modules.users.schemas import (
-    AdminUserCreate,
-    UpdatePassword,
-    UserCreate,
-    UserPublic,
-    UserRegister,
-    UsersPublic,
-    UserUpdate,
-    UserUpdateMe,
-)
-
-public_router = APIRouter(prefix="/users", tags=["users"])
+from app.modules.users.schemas import UserPublic, UsersPublic, UserUpdate
 
 authenticated_router = APIRouter(
     prefix="/users",
     tags=["users"],
     dependencies=[Depends(get_current_user)],
-    responses=error_responses(
-        CredentialsValidationError,
-        InactiveUserError,
-    ),
+    responses=error_responses(CredentialsValidationError, InactiveUserError),
 )
 
 admin_router = APIRouter(
@@ -50,94 +32,14 @@ admin_router = APIRouter(
     tags=["users"],
     dependencies=[Depends(get_current_active_superuser)],
     responses=error_responses(
-        CredentialsValidationError,
-        InactiveUserError,
-        InsufficientPrivilegesError,
+        CredentialsValidationError, InactiveUserError, InsufficientPrivilegesError
     ),
 )
-
-
-@public_router.post(
-    "/signup",
-    response_model=UserPublic,
-    status_code=status.HTTP_201_CREATED,
-    responses=error_responses(UserAlreadyExistsError),
-)
-def register_user(session: SessionDep, user_in: UserRegister) -> UserPublic:
-    """无需登录即可创建新用户。"""
-    user = service.create_unique_user(
-        session=session,
-        user_create=UserCreate.model_validate(user_in),
-    )
-
-    return UserPublic.model_validate(user)
 
 
 @authenticated_router.get("/me", response_model=UserPublic)
 def read_user_me(current_user: CurrentUser) -> UserPublic:
-    """获取当前用户。"""
     return UserPublic.model_validate(current_user)
-
-
-@authenticated_router.patch(
-    "/me",
-    response_model=UserPublic,
-    responses=error_responses(UserAlreadyExistsError),
-)
-def update_user_me(
-    *, session: SessionDep, user_in: UserUpdateMe, current_user: CurrentUser
-) -> UserPublic:
-    """更新当前用户信息。"""
-    user = service.update_current_user(
-        session=session, current_user=current_user, user_update=user_in
-    )
-
-    return UserPublic.model_validate(user)
-
-
-@authenticated_router.patch(
-    "/me/password",
-    response_model=Message,
-    responses=error_responses(
-        IncorrectPasswordError,
-        PasswordUnchangedError,
-    ),
-)
-def update_password_me(
-    *, session: SessionDep, body: UpdatePassword, current_user: CurrentUser
-) -> Message:
-    """更新当前用户密码。"""
-    service.update_current_password(
-        session=session,
-        current_user=current_user,
-        current_password=body.current_password,
-        new_password=body.new_password,
-    )
-
-    return Message(message="Password updated successfully")
-
-
-@authenticated_router.delete(
-    "/me",
-    status_code=status.HTTP_204_NO_CONTENT,
-    responses=error_responses(SelfDeletionForbiddenError),
-)
-def delete_user_me(session: SessionDep, current_user: CurrentUser) -> None:
-    """删除当前用户。"""
-    service.delete_current_user(session=session, current_user=current_user)
-
-
-@admin_router.post(
-    "",
-    response_model=UserPublic,
-    status_code=status.HTTP_201_CREATED,
-    responses=error_responses(UserAlreadyExistsError),
-)
-def create_user(*, session: SessionDep, user_in: AdminUserCreate) -> UserPublic:
-    """创建新用户。"""
-    user = service.create_admin_user(session=session, body=user_in)
-
-    return UserPublic.model_validate(user)
 
 
 @admin_router.get("", response_model=UsersPublic)
@@ -188,7 +90,6 @@ def read_user_by_id(
     response_model=UserPublic,
     responses=error_responses(
         UserNotFoundError,
-        UserAlreadyExistsError,
         SelfAdminStatusChangeForbiddenError,
     ),
 )

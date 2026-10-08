@@ -1,19 +1,29 @@
-from fastapi import status
-
 from app.common.exceptions import ApplicationError
 
 
-class InvalidCredentialsError(ApplicationError):
-    status_code = status.HTTP_400_BAD_REQUEST
-    detail = "用户名或密码错误"
-
-
 class CredentialsValidationError(ApplicationError):
-    status_code = status.HTTP_401_UNAUTHORIZED
-    detail = "无法验证身份凭证"
-    headers = {"WWW-Authenticate": "Bearer"}
+    status_code = 401
+    detail = "登录已失效，请重新登录"
 
 
 class InactiveUserError(ApplicationError):
-    status_code = status.HTTP_400_BAD_REQUEST
-    detail = "用户已停用"
+    status_code = 403
+    detail = "用户已停用，请联系管理员"
+
+
+class InvalidSessionError(CredentialsValidationError):
+    """浏览器当前会话已失效。"""
+
+
+class InactiveSessionError(InactiveUserError):
+    """浏览器当前会话所属的用户已停用。"""
+
+
+class AuthUnavailableError(ApplicationError):
+    status_code = 503
+    detail = "登录服务暂不可用，请稍后重试"
+
+
+class InvalidOriginError(ApplicationError):
+    status_code = 403
+    detail = "请求来源不受信任"

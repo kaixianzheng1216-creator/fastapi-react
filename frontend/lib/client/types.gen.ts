@@ -12,7 +12,7 @@ export type AddMessageCommand = {
      * Type
      */
     type: 'add-message';
-    message: MessageInput;
+    message: Message;
     /**
      * Parentid
      */
@@ -55,36 +55,6 @@ export type AddToolResultCommand = {
      * Modelcontent
      */
     modelContent?: unknown | null;
-};
-
-/**
- * AdminUserCreate
- */
-export type AdminUserCreate = {
-    /**
-     * Username
-     */
-    username: string;
-    /**
-     * Is Active
-     */
-    is_active?: boolean;
-    /**
-     * Is Superuser
-     */
-    is_superuser?: boolean;
-    /**
-     * Full Name
-     */
-    full_name?: string | null;
-    /**
-     * Password
-     */
-    password: string;
-    /**
-     * Projects
-     */
-    projects?: Array<ProjectAssignment>;
 };
 
 /**
@@ -274,36 +244,6 @@ export type BilibiliRankingPublic = {
      * Count
      */
     count: number;
-};
-
-/**
- * Body_login-login_access_token
- */
-export type BodyLoginLoginAccessToken = {
-    /**
-     * Grant Type
-     */
-    grant_type?: string | null;
-    /**
-     * Username
-     */
-    username: string;
-    /**
-     * Password
-     */
-    password: string;
-    /**
-     * Scope
-     */
-    scope?: string;
-    /**
-     * Client Id
-     */
-    client_id?: string | null;
-    /**
-     * Client Secret
-     */
-    client_secret?: string | null;
 };
 
 /**
@@ -1855,7 +1795,7 @@ export type MembersPublic = {
 /**
  * Message
  */
-export type MessageInput = {
+export type Message = {
     /**
      * Role
      */
@@ -1864,27 +1804,6 @@ export type MessageInput = {
      * Parts
      */
     parts: Array<TextMessagePart | ImageMessagePart | FileMessagePart>;
-};
-
-/**
- * Message
- */
-export type MessageOutput = {
-    /**
-     * Message
-     */
-    message: string;
-};
-
-/**
- * ProjectAssignment
- */
-export type ProjectAssignment = {
-    /**
-     * Project Id
-     */
-    project_id: string;
-    role?: ProjectRole;
 };
 
 /**
@@ -2255,6 +2174,16 @@ export type TextMessagePart = {
 };
 
 /**
+ * TicketExchangeRequest
+ */
+export type TicketExchangeRequest = {
+    /**
+     * Ticket
+     */
+    ticket: string;
+};
+
+/**
  * TodoPublic
  */
 export type TodoPublic = {
@@ -2266,34 +2195,6 @@ export type TodoPublic = {
      * Status
      */
     status: 'pending' | 'in_progress' | 'completed';
-};
-
-/**
- * Token
- */
-export type Token = {
-    /**
-     * Access Token
-     */
-    access_token: string;
-    /**
-     * Token Type
-     */
-    token_type?: string;
-};
-
-/**
- * UpdatePassword
- */
-export type UpdatePassword = {
-    /**
-     * Current Password
-     */
-    current_password: string;
-    /**
-     * New Password
-     */
-    new_password: string;
 };
 
 /**
@@ -2331,31 +2232,9 @@ export type UserPublic = {
 };
 
 /**
- * UserRegister
- */
-export type UserRegister = {
-    /**
-     * Username
-     */
-    username: string;
-    /**
-     * Password
-     */
-    password: string;
-    /**
-     * Full Name
-     */
-    full_name?: string | null;
-};
-
-/**
  * UserUpdate
  */
 export type UserUpdate = {
-    /**
-     * Username
-     */
-    username?: string | null;
     /**
      * Is Active
      */
@@ -2364,28 +2243,6 @@ export type UserUpdate = {
      * Is Superuser
      */
     is_superuser?: boolean | null;
-    /**
-     * Full Name
-     */
-    full_name?: string | null;
-    /**
-     * Password
-     */
-    password?: string | null;
-};
-
-/**
- * UserUpdateMe
- */
-export type UserUpdateMe = {
-    /**
-     * Full Name
-     */
-    full_name?: string | null;
-    /**
-     * Username
-     */
-    username?: string | null;
 };
 
 /**
@@ -2512,63 +2369,60 @@ export type WebSearchResult = {
     collects?: number | null;
 };
 
-export type LoginLoginAccessTokenData = {
-    body: BodyLoginLoginAccessToken;
+export type AuthLoginDingtalkData = {
+    body?: never;
     path?: never;
     query?: never;
-    url: '/api/v1/login/access-token';
+    url: '/api/v1/auth/dingtalk';
 };
 
-export type LoginLoginAccessTokenErrors = {
+export type AuthLoginDingtalkResponses = {
     /**
-     * Bad Request
+     * Successful Response
      */
-    400: ErrorResponse;
+    200: unknown;
+};
+
+export type AuthExchangeTicketData = {
+    body: TicketExchangeRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/dingtalk/exchange';
+};
+
+export type AuthExchangeTicketErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type LoginLoginAccessTokenError = LoginLoginAccessTokenErrors[keyof LoginLoginAccessTokenErrors];
+export type AuthExchangeTicketError = AuthExchangeTicketErrors[keyof AuthExchangeTicketErrors];
 
-export type LoginLoginAccessTokenResponses = {
+export type AuthExchangeTicketResponses = {
     /**
      * Successful Response
      */
-    200: Token;
+    200: UserPublic;
 };
 
-export type LoginLoginAccessTokenResponse = LoginLoginAccessTokenResponses[keyof LoginLoginAccessTokenResponses];
+export type AuthExchangeTicketResponse = AuthExchangeTicketResponses[keyof AuthExchangeTicketResponses];
 
-export type UsersRegisterUserData = {
-    body: UserRegister;
+export type AuthLogoutData = {
+    body?: never;
     path?: never;
     query?: never;
-    url: '/api/v1/users/signup';
+    url: '/api/v1/auth/logout';
 };
 
-export type UsersRegisterUserErrors = {
-    /**
-     * Conflict
-     */
-    409: ErrorResponse;
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type UsersRegisterUserError = UsersRegisterUserErrors[keyof UsersRegisterUserErrors];
-
-export type UsersRegisterUserResponses = {
+export type AuthLogoutResponses = {
     /**
      * Successful Response
      */
-    201: UserPublic;
+    204: void;
 };
 
-export type UsersRegisterUserResponse = UsersRegisterUserResponses[keyof UsersRegisterUserResponses];
+export type AuthLogoutResponse = AuthLogoutResponses[keyof AuthLogoutResponses];
 
 export type UtilsHealthCheckData = {
     body?: never;
@@ -2588,68 +2442,6 @@ export type UtilsHealthCheckResponses = {
 
 export type UtilsHealthCheckResponse = UtilsHealthCheckResponses[keyof UtilsHealthCheckResponses];
 
-export type LoginTestTokenData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/login/test-token';
-};
-
-export type LoginTestTokenErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
-     * Unauthorized
-     */
-    401: ErrorResponse;
-};
-
-export type LoginTestTokenError = LoginTestTokenErrors[keyof LoginTestTokenErrors];
-
-export type LoginTestTokenResponses = {
-    /**
-     * Successful Response
-     */
-    200: UserPublic;
-};
-
-export type LoginTestTokenResponse = LoginTestTokenResponses[keyof LoginTestTokenResponses];
-
-export type UsersDeleteUserMeData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/users/me';
-};
-
-export type UsersDeleteUserMeErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
-     * Unauthorized
-     */
-    401: ErrorResponse;
-    /**
-     * Forbidden
-     */
-    403: ErrorResponse;
-};
-
-export type UsersDeleteUserMeError = UsersDeleteUserMeErrors[keyof UsersDeleteUserMeErrors];
-
-export type UsersDeleteUserMeResponses = {
-    /**
-     * Successful Response
-     */
-    204: void;
-};
-
-export type UsersDeleteUserMeResponse = UsersDeleteUserMeResponses[keyof UsersDeleteUserMeResponses];
-
 export type UsersReadUserMeData = {
     body?: never;
     path?: never;
@@ -2659,13 +2451,13 @@ export type UsersReadUserMeData = {
 
 export type UsersReadUserMeErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
 };
 
 export type UsersReadUserMeError = UsersReadUserMeErrors[keyof UsersReadUserMeErrors];
@@ -2678,76 +2470,6 @@ export type UsersReadUserMeResponses = {
 };
 
 export type UsersReadUserMeResponse = UsersReadUserMeResponses[keyof UsersReadUserMeResponses];
-
-export type UsersUpdateUserMeData = {
-    body: UserUpdateMe;
-    path?: never;
-    query?: never;
-    url: '/api/v1/users/me';
-};
-
-export type UsersUpdateUserMeErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
-     * Unauthorized
-     */
-    401: ErrorResponse;
-    /**
-     * Conflict
-     */
-    409: ErrorResponse;
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type UsersUpdateUserMeError = UsersUpdateUserMeErrors[keyof UsersUpdateUserMeErrors];
-
-export type UsersUpdateUserMeResponses = {
-    /**
-     * Successful Response
-     */
-    200: UserPublic;
-};
-
-export type UsersUpdateUserMeResponse = UsersUpdateUserMeResponses[keyof UsersUpdateUserMeResponses];
-
-export type UsersUpdatePasswordMeData = {
-    body: UpdatePassword;
-    path?: never;
-    query?: never;
-    url: '/api/v1/users/me/password';
-};
-
-export type UsersUpdatePasswordMeErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
-     * Unauthorized
-     */
-    401: ErrorResponse;
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type UsersUpdatePasswordMeError = UsersUpdatePasswordMeErrors[keyof UsersUpdatePasswordMeErrors];
-
-export type UsersUpdatePasswordMeResponses = {
-    /**
-     * Successful Response
-     */
-    200: MessageOutput;
-};
-
-export type UsersUpdatePasswordMeResponse = UsersUpdatePasswordMeResponses[keyof UsersUpdatePasswordMeResponses];
 
 export type UsersDeleteUserData = {
     body?: never;
@@ -2762,10 +2484,6 @@ export type UsersDeleteUserData = {
 };
 
 export type UsersDeleteUserErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -2809,10 +2527,6 @@ export type UsersReadUserByIdData = {
 
 export type UsersReadUserByIdErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -2855,10 +2569,6 @@ export type UsersUpdateUserData = {
 
 export type UsersUpdateUserErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -2870,10 +2580,6 @@ export type UsersUpdateUserErrors = {
      * Not Found
      */
     404: ErrorResponse;
-    /**
-     * Conflict
-     */
-    409: ErrorResponse;
     /**
      * Validation Error
      */
@@ -2921,10 +2627,6 @@ export type UsersReadUsersData = {
 
 export type UsersReadUsersErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -2948,47 +2650,6 @@ export type UsersReadUsersResponses = {
 };
 
 export type UsersReadUsersResponse = UsersReadUsersResponses[keyof UsersReadUsersResponses];
-
-export type UsersCreateUserData = {
-    body: AdminUserCreate;
-    path?: never;
-    query?: never;
-    url: '/api/v1/users';
-};
-
-export type UsersCreateUserErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
-     * Unauthorized
-     */
-    401: ErrorResponse;
-    /**
-     * Forbidden
-     */
-    403: ErrorResponse;
-    /**
-     * Conflict
-     */
-    409: ErrorResponse;
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type UsersCreateUserError = UsersCreateUserErrors[keyof UsersCreateUserErrors];
-
-export type UsersCreateUserResponses = {
-    /**
-     * Successful Response
-     */
-    201: UserPublic;
-};
-
-export type UsersCreateUserResponse = UsersCreateUserResponses[keyof UsersCreateUserResponses];
 
 export type BrandMarketingReadRegionalDataData = {
     body?: never;
@@ -3025,10 +2686,6 @@ export type BrandMarketingReadRegionalDataData = {
 };
 
 export type BrandMarketingReadRegionalDataErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -3067,10 +2724,6 @@ export type KnowledgeBasesSearchWebSourcesData = {
 };
 
 export type KnowledgeBasesSearchWebSourcesErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -3144,10 +2797,6 @@ export type KnowledgeBasesReadKnowledgeBasesData = {
 
 export type KnowledgeBasesReadKnowledgeBasesErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -3180,10 +2829,6 @@ export type KnowledgeBasesCreateKnowledgeBaseData = {
 };
 
 export type KnowledgeBasesCreateKnowledgeBaseErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -3229,10 +2874,6 @@ export type KnowledgeBasesDeleteKnowledgeBaseData = {
 
 export type KnowledgeBasesDeleteKnowledgeBaseErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -3277,10 +2918,6 @@ export type KnowledgeBasesReadKnowledgeBaseData = {
 
 export type KnowledgeBasesReadKnowledgeBaseErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -3324,10 +2961,6 @@ export type KnowledgeBasesUpdateKnowledgeBaseData = {
 };
 
 export type KnowledgeBasesUpdateKnowledgeBaseErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -3377,10 +3010,6 @@ export type KnowledgeBasesReadFoldersData = {
 
 export type KnowledgeBasesReadFoldersErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -3424,10 +3053,6 @@ export type KnowledgeBasesCreateFolderData = {
 };
 
 export type KnowledgeBasesCreateFolderErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -3483,10 +3108,6 @@ export type KnowledgeBasesUpdateFolderData = {
 
 export type KnowledgeBasesUpdateFolderErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -3540,10 +3161,6 @@ export type KnowledgeBasesMoveFolderData = {
 };
 
 export type KnowledgeBasesMoveFolderErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -3624,10 +3241,6 @@ export type KnowledgeBasesReadDirectoryData = {
 
 export type KnowledgeBasesReadDirectoryErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -3671,10 +3284,6 @@ export type KnowledgeBasesDeleteDirectoryEntriesData = {
 };
 
 export type KnowledgeBasesDeleteDirectoryEntriesErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -3789,10 +3398,6 @@ export type KnowledgeBasesCreateDocumentUploadsData = {
 
 export type KnowledgeBasesCreateDocumentUploadsErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -3841,10 +3446,6 @@ export type KnowledgeBasesCreateWebpageDocumentData = {
 };
 
 export type KnowledgeBasesCreateWebpageDocumentErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -3898,10 +3499,6 @@ export type KnowledgeBasesSearchKnowledgeBaseData = {
 
 export type KnowledgeBasesSearchKnowledgeBaseErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -3947,10 +3544,6 @@ export type KnowledgeDocumentsCompleteDocumentUploadsData = {
 };
 
 export type KnowledgeDocumentsCompleteDocumentUploadsErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -4050,10 +3643,6 @@ export type KnowledgeDocumentsDeleteDocumentData = {
 
 export type KnowledgeDocumentsDeleteDocumentErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -4098,10 +3687,6 @@ export type KnowledgeDocumentsReadDocumentData = {
 
 export type KnowledgeDocumentsReadDocumentErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -4145,10 +3730,6 @@ export type KnowledgeDocumentsReadDocumentPreviewData = {
 };
 
 export type KnowledgeDocumentsReadDocumentPreviewErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -4201,10 +3782,6 @@ export type KnowledgeDocumentsGenerateDocumentSummaryData = {
 };
 
 export type KnowledgeDocumentsGenerateDocumentSummaryErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -4279,10 +3856,6 @@ export type KnowledgeDocumentsReadDocumentChunksData = {
 
 export type KnowledgeDocumentsReadDocumentChunksErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -4330,10 +3903,6 @@ export type KnowledgeDocumentsDownloadOriginalDocumentData = {
 };
 
 export type KnowledgeDocumentsDownloadOriginalDocumentErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -4387,10 +3956,6 @@ export type KnowledgeDocumentsMoveDocumentData = {
 
 export type KnowledgeDocumentsMoveDocumentErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -4434,10 +3999,6 @@ export type KnowledgeDocumentsRetryDocumentData = {
 };
 
 export type KnowledgeDocumentsRetryDocumentErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -4497,13 +4058,13 @@ export type AgentReadConversationsData = {
 
 export type AgentReadConversationsErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Validation Error
      */
@@ -4530,13 +4091,13 @@ export type AgentCreateConversationData = {
 
 export type AgentCreateConversationErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Validation Error
      */
@@ -4568,13 +4129,13 @@ export type AgentGenerateConversationTitleData = {
 
 export type AgentGenerateConversationTitleErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Not Found
      */
@@ -4614,13 +4175,13 @@ export type AgentDeleteConversationData = {
 
 export type AgentDeleteConversationErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Validation Error
      */
@@ -4654,13 +4215,13 @@ export type AgentReadConversationData = {
 
 export type AgentReadConversationErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Not Found
      */
@@ -4696,13 +4257,13 @@ export type AgentRenameConversationData = {
 
 export type AgentRenameConversationErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Not Found
      */
@@ -4738,13 +4299,13 @@ export type AgentDownloadConversationReportPdfData = {
 
 export type AgentDownloadConversationReportPdfErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Not Found
      */
@@ -4788,13 +4349,13 @@ export type AgentArchiveConversationData = {
 
 export type AgentArchiveConversationErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Not Found
      */
@@ -4830,13 +4391,13 @@ export type AgentUnarchiveConversationData = {
 
 export type AgentUnarchiveConversationErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Not Found
      */
@@ -4883,10 +4444,6 @@ export type ContentOperationsReadBilibiliRankingData = {
 };
 
 export type ContentOperationsReadBilibiliRankingErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -4952,10 +4509,6 @@ export type InfluencerMarketingReadInfluencerAccountsData = {
 
 export type InfluencerMarketingReadInfluencerAccountsErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -4996,6 +4549,10 @@ export type FilesCreateFileUploadErrors = {
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Validation Error
      */
@@ -5039,6 +4596,10 @@ export type FilesCompleteFileUploadErrors = {
      */
     401: ErrorResponse;
     /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
      * Not Found
      */
     404: ErrorResponse;
@@ -5081,13 +4642,13 @@ export type FilesDeleteUnreferencedFileData = {
 
 export type FilesDeleteUnreferencedFileErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Not Found
      */
@@ -5127,13 +4688,13 @@ export type FilesGetFileDownloadUrlData = {
 
 export type FilesGetFileDownloadUrlErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Not Found
      */
@@ -5172,13 +4733,13 @@ export type SkillsCreateMdSkillData = {
 
 export type SkillsCreateMdSkillErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Conflict
      */
@@ -5220,6 +4781,10 @@ export type SkillsCreateZipSkillErrors = {
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Conflict
      */
@@ -5275,6 +4840,10 @@ export type SkillsReadSkillsErrors = {
      */
     401: ErrorResponse;
     /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
      * Not Found
      */
     404: ErrorResponse;
@@ -5313,13 +4882,13 @@ export type SkillsDeleteSkillData = {
 
 export type SkillsDeleteSkillErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Not Found
      */
@@ -5363,6 +4932,10 @@ export type SkillsReadSkillErrors = {
      */
     401: ErrorResponse;
     /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
      * Not Found
      */
     404: ErrorResponse;
@@ -5405,13 +4978,13 @@ export type SkillsReadSkillFileData = {
 
 export type SkillsReadSkillFileErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Not Found
      */
@@ -5442,13 +5015,13 @@ export type AgentReadModelsData = {
 
 export type AgentReadModelsErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Bad Gateway
      */
@@ -5482,6 +5055,10 @@ export type AgentCreateAgentRunErrors = {
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Not Found
      */
@@ -5518,13 +5095,13 @@ export type AgentReadAgentRunResumeStateData = {
 
 export type AgentReadAgentRunResumeStateErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Validation Error
      */
@@ -5560,13 +5137,13 @@ export type AgentResumeAgentRunData = {
 
 export type AgentResumeAgentRunErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Not Found
      */
@@ -5604,13 +5181,13 @@ export type AgentCancelAgentRunData = {
 
 export type AgentCancelAgentRunErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
     /**
      * Not Found
      */
@@ -5658,10 +5235,6 @@ export type FileLibrariesReadFileLibrariesData = {
 
 export type FileLibrariesReadFileLibrariesErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -5694,10 +5267,6 @@ export type FileLibrariesCreateFileLibraryData = {
 };
 
 export type FileLibrariesCreateFileLibraryErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -5741,10 +5310,6 @@ export type FileLibrariesDeleteFileLibraryData = {
 
 export type FileLibrariesDeleteFileLibraryErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -5787,10 +5352,6 @@ export type FileLibrariesReadFileLibraryData = {
 
 export type FileLibrariesReadFileLibraryErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -5832,10 +5393,6 @@ export type FileLibrariesUpdateFileLibraryData = {
 };
 
 export type FileLibrariesUpdateFileLibraryErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -5883,10 +5440,6 @@ export type FileLibrariesReadFoldersData = {
 
 export type FileLibrariesReadFoldersErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -5928,10 +5481,6 @@ export type FileLibrariesCreateFolderData = {
 };
 
 export type FileLibrariesCreateFolderErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -5983,10 +5532,6 @@ export type FileLibrariesUpdateFolderData = {
 
 export type FileLibrariesUpdateFolderErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -6036,10 +5581,6 @@ export type FileLibrariesMoveFolderData = {
 };
 
 export type FileLibrariesMoveFolderErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -6100,10 +5641,6 @@ export type FileLibrariesReadDirectoryData = {
 
 export type FileLibrariesReadDirectoryErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -6145,10 +5682,6 @@ export type FileLibrariesDeleteDirectoryEntriesData = {
 };
 
 export type FileLibrariesDeleteDirectoryEntriesErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -6196,10 +5729,6 @@ export type FileLibrariesCreateDocumentUploadData = {
 };
 
 export type FileLibrariesCreateDocumentUploadErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -6301,10 +5830,6 @@ export type LibraryDocumentsDeleteDocumentData = {
 
 export type LibraryDocumentsDeleteDocumentErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -6347,10 +5872,6 @@ export type LibraryDocumentsReadDocumentData = {
 
 export type LibraryDocumentsReadDocumentErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -6392,10 +5913,6 @@ export type LibraryDocumentsDownloadOriginalDocumentData = {
 };
 
 export type LibraryDocumentsDownloadOriginalDocumentErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -6446,10 +5963,6 @@ export type LibraryDocumentsMoveDocumentData = {
 };
 
 export type LibraryDocumentsMoveDocumentErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -6597,10 +6110,6 @@ export type McpKeysReadMcpApiKeysData = {
 
 export type McpKeysReadMcpApiKeysErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -6637,10 +6146,6 @@ export type McpKeysCreateMcpApiKeyData = {
 };
 
 export type McpKeysCreateMcpApiKeyErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -6684,10 +6189,6 @@ export type McpKeysDeleteMcpApiKeyData = {
 
 export type McpKeysDeleteMcpApiKeyErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -6730,10 +6231,6 @@ export type McpKeysUpdateMcpApiKeyData = {
 
 export type McpKeysUpdateMcpApiKeyErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -6770,10 +6267,6 @@ export type McpKeysReadProjectMcpToolsData = {
 };
 
 export type McpKeysReadProjectMcpToolsErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -6823,10 +6316,6 @@ export type ProjectsReadProjectsData = {
 
 export type ProjectsReadProjectsErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -6867,10 +6356,6 @@ export type ProjectsCreateProjectData = {
 };
 
 export type ProjectsCreateProjectErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -6918,10 +6403,6 @@ export type ProjectsDeleteProjectData = {
 
 export type ProjectsDeleteProjectErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -6968,10 +6449,6 @@ export type ProjectsReadProjectData = {
 
 export type ProjectsReadProjectErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -7017,10 +6494,6 @@ export type ProjectsUpdateProjectData = {
 };
 
 export type ProjectsUpdateProjectErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -7085,10 +6558,6 @@ export type ProjectsReadMembersData = {
 
 export type ProjectsReadMembersErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -7134,10 +6603,6 @@ export type ProjectsAddMembersData = {
 };
 
 export type ProjectsAddMembersErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */
@@ -7198,10 +6663,6 @@ export type ProjectsReadMemberCandidatesData = {
 
 export type ProjectsReadMemberCandidatesErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -7252,10 +6713,6 @@ export type ProjectsRemoveMemberData = {
 
 export type ProjectsRemoveMemberErrors = {
     /**
-     * Bad Request
-     */
-    400: ErrorResponse;
-    /**
      * Unauthorized
      */
     401: ErrorResponse;
@@ -7305,10 +6762,6 @@ export type ProjectsUpdateMemberData = {
 };
 
 export type ProjectsUpdateMemberErrors = {
-    /**
-     * Bad Request
-     */
-    400: ErrorResponse;
     /**
      * Unauthorized
      */

@@ -3,6 +3,9 @@ from fastapi.responses import JSONResponse
 
 from app.common.exceptions import ApplicationError
 from app.common.schemas import ErrorResponse
+from app.core.config import settings
+from app.modules.auth.exceptions import InactiveSessionError, InvalidSessionError
+from app.modules.auth.session import SESSION_COOKIE
 from app.modules.mcp_keys.exceptions import McpApiKeyNotFoundError
 
 MCP_API_KEY_NOT_FOUND_MESSAGE = "MCP 密钥不存在"
@@ -18,11 +21,24 @@ async def application_error_handler(
 ) -> JSONResponse:
     assert isinstance(exception, ApplicationError)
 
-    return JSONResponse(
+    response = JSONResponse(
         status_code=exception.status_code,
         content=ErrorResponse(detail=exception.detail).model_dump(),
         headers=exception.headers,
     )
+
+    if isinstance(exception, (InvalidSessionError, InactiveSessionError)):
+        response.delete_cookie(
+            SESSION_COOKIE,
+            path="/",
+            secure=settings.ENVIRONMENT == "production",
+            httponly=True,
+            samesite="lax",
+        )
+
+        response.headers["Cache-Control"] = "no-store"
+
+    return response
 
 
 async def mcp_api_key_not_found_handler(

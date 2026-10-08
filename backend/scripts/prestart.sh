@@ -8,6 +8,3 @@ python -m scripts.prestart
 
 # 执行数据库迁移
 python -m alembic upgrade head
-
-# 创建数据库初始数据
-python -m scripts.initial_data

@@ -1,9 +1,11 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastmcp.utilities.lifespan import combine_lifespans
+from redis import Redis
 from scalar_fastapi import get_scalar_api_reference
 from starlette.middleware.cors import CORSMiddleware
 
@@ -14,23 +16,39 @@ from app.core.config import API_V1_PREFIX, PROJECT_NAME, settings
 from app.mcp.server import create_mcp_server
 from app.modules.agent.resources import open_agent_resources
 from app.modules.agent.run_stream import AgentRunStream
+from app.modules.auth.client import AuthServerClient
+from app.modules.auth.session import SessionStore
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    async with open_agent_resources() as resources:
-        app.state.agent_resources = resources
+    with (
+        httpx.Client(base_url=str(settings.AUTH_SERVER_URL), timeout=10.0) as auth_http,
 
-        run_stream = AgentRunStream(redis_url=settings.REDIS_URL)
+        Redis.from_url(
+            settings.REDIS_URL,
+            decode_responses=True,
+            socket_timeout=5,
+            socket_connect_timeout=5,
+        ) as auth_redis,
+    ):
+        app.state.auth_client = AuthServerClient(
+            auth_http, settings.AUTH_SERVICE_TOKEN.get_secret_value()
+        )
+        app.state.auth_sessions = SessionStore(auth_redis)
+        async with open_agent_resources() as resources:
+            app.state.agent_resources = resources
 
-        await run_stream.connect()
+            run_stream = AgentRunStream(redis_url=settings.REDIS_URL)
 
-        app.state.agent_run_stream = run_stream
+            await run_stream.connect()
 
-        try:
-            yield
-        finally:
-            await run_stream.close()
+            app.state.agent_run_stream = run_stream
+
+            try:
+                yield
+            finally:
+                await run_stream.close()
 
 
 app = FastAPI(

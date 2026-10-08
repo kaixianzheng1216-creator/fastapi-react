@@ -1,51 +1,92 @@
-from typing import Annotated
+from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, Response
+from fastapi.responses import RedirectResponse
 
 from app.api.dependencies import SessionDep
-from app.api.responses import error_responses
-from app.modules.auth import service
-from app.modules.auth.dependencies import CurrentUser, get_current_user
-from app.modules.auth.exceptions import (
-    CredentialsValidationError,
-    InactiveUserError,
-    InvalidCredentialsError,
+from app.core.config import AUTH_PLATFORM, settings
+from app.modules.auth.dependencies import (
+    AuthClientDep,
+    SessionCookieDep,
+    SessionStoreDep,
+    require_trusted_origin,
 )
-from app.modules.auth.schemas import Token
+from app.modules.auth.schemas import TicketExchangeRequest
+from app.modules.auth.service import login_with_ticket, logout_session
+from app.modules.auth.session import SESSION_COOKIE
 from app.modules.users.schemas import UserPublic
 
-public_router = APIRouter(tags=["login"])
-
-authenticated_router = APIRouter(
-    tags=["login"],
-    dependencies=[Depends(get_current_user)],
-    responses=error_responses(
-        CredentialsValidationError,
-        InactiveUserError,
-    ),
+router = APIRouter(
+    prefix="/auth", tags=["auth"], dependencies=[Depends(require_trusted_origin)]
 )
 
 
-@public_router.post(
-    "/login/access-token",
-    responses=error_responses(
-        InvalidCredentialsError,
-        InactiveUserError,
-    ),
-)
-def login_access_token(
-    session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
-) -> Token:
-    """OAuth2 兼容的令牌登录，获取访问令牌用于后续请求"""
-    access_token = service.login(
-        session=session, username=form_data.username, password=form_data.password
+@router.get("/dingtalk")
+def login_dingtalk() -> RedirectResponse:
+    """跳转到统一认证服务，发起钉钉登录。"""
+    query = urlencode(
+        {
+            "platform": AUTH_PLATFORM,
+            "return_url": f"{str(settings.APP_ORIGIN).rstrip('/')}/login",
+        }
     )
 
-    return Token(access_token=access_token)
+    return RedirectResponse(
+        f"{str(settings.AUTH_SERVER_URL).rstrip('/')}/api/user/login/dingtalk/authorize?{query}",
+        status_code=302,
+        headers={"Cache-Control": "no-store", "Referrer-Policy": "no-referrer"},
+    )
 
 
-@authenticated_router.post("/login/test-token", response_model=UserPublic)
-def test_token(current_user: CurrentUser) -> UserPublic:
-    """测试访问令牌"""
-    return UserPublic.model_validate(current_user)
+@router.post("/dingtalk/exchange", response_model=UserPublic)
+def exchange_ticket(
+    body: TicketExchangeRequest,
+    response: Response,
+    session: SessionDep,
+    auth: AuthClientDep,
+    store: SessionStoreDep,
+    session_id: SessionCookieDep,
+) -> UserPublic:
+    """兑换一次性登录凭证，建立会话并返回当前用户。"""
+    user, new_id, ttl = login_with_ticket(
+        ticket=body.ticket,
+        previous_session_id=session_id,
+        session=session,
+        auth=auth,
+        store=store,
+    )
+
+    response.set_cookie(
+        SESSION_COOKIE,
+        new_id,
+        max_age=ttl,
+        httponly=True,
+        secure=settings.ENVIRONMENT == "production",
+        samesite="lax",
+        path="/",
+    )
+
+    response.headers["Cache-Control"] = "no-store"
+
+    return UserPublic.model_validate(user)
+
+
+@router.post("/logout", status_code=204)
+def logout(
+    response: Response,
+    auth: AuthClientDep,
+    store: SessionStoreDep,
+    session_id: SessionCookieDep,
+) -> None:
+    """退出登录并清除浏览器会话 Cookie。"""
+    logout_session(session_id=session_id, auth=auth, store=store)
+
+    response.delete_cookie(
+        SESSION_COOKIE,
+        path="/",
+        secure=settings.ENVIRONMENT == "production",
+        httponly=True,
+        samesite="lax",
+    )
+
+    response.headers["Cache-Control"] = "no-store"

@@ -1,38 +1,101 @@
-from datetime import timedelta
+import time
 
 from sqlmodel import Session
 
-from app.core import security
-from app.core.config import ACCESS_TOKEN_EXPIRE_MINUTES
-from app.modules.auth.exceptions import InactiveUserError, InvalidCredentialsError
-from app.modules.users import service as users_service
+from app.modules.auth.client import AuthServerClient
+from app.modules.auth.exceptions import (
+    AuthUnavailableError,
+    InactiveSessionError,
+    InvalidSessionError,
+)
+from app.modules.auth.schemas import LoginSession
+from app.modules.auth.session import SessionStore
+from app.modules.users.models import User
+from app.modules.users.service import get_or_create_auth_user
 
-DUMMY_HASH = "$argon2id$v=19$m=65536,t=3,p=4$MjQyZWE1MzBjYjJlZTI0Yw$YTU4NGM5ZTZmYjE2NzZlZjY0ZWY3ZGRkY2U2OWFjNjk"
 
+def login_with_ticket(
+    *,
+    ticket: str,
+    previous_session_id: str | None,
+    session: Session,
+    auth: AuthServerClient,
+    store: SessionStore,
+) -> tuple[User, str, int]:
+    """兑换登录凭证并替换会话，返回用户、会话 ID 和有效秒数。"""
+    started_at = int(time.time())
 
-def login(*, session: Session, username: str, password: str) -> str:
-    user = users_service.get_user_by_username(session=session, username=username)
+    tokens = auth.exchange(ticket)
 
-    if not user or user.deleted_at is not None:
-        security.verify_password(password, DUMMY_HASH)
-        raise InvalidCredentialsError
+    user = get_or_create_auth_user(session=session, identity=tokens.user)
 
-    verified, updated_password_hash = security.verify_password(
-        password, user.hashed_password
+    session_id, ttl = store.create(
+        LoginSession(
+            user_id=user.id,
+            auth_user_id=tokens.user.id,
+            access_token=tokens.access_token,
+            expires_at=started_at + tokens.expires_in,
+        )
     )
-    if not verified:
-        raise InvalidCredentialsError
 
-    if updated_password_hash:
-        user.hashed_password = updated_password_hash
-        session.add(user)
-        session.commit()
-        session.refresh(user)
+    store.delete(previous_session_id)
+
+    return user, session_id, ttl
+
+
+def get_session_user(
+    *,
+    session_id: str | None,
+    session: Session,
+    auth: AuthServerClient,
+    store: SessionStore,
+) -> User:
+    """验证已有会话及本地用户状态，返回当前用户。"""
+    login = store.read(session_id)
+
+    if login is None:
+        raise InvalidSessionError
+
+    identity = auth.verify(login.access_token)
+
+    expired = identity.expires_at <= int(time.time())
+
+    if identity.user_id != login.auth_user_id or expired:
+        store.delete(session_id)
+
+        raise InvalidSessionError
+
+    user = session.get(User, login.user_id)
+
+    if (
+        user is None
+        or user.deleted_at is not None
+        or user.auth_user_id != identity.user_id
+    ):
+        store.delete(session_id)
+
+        raise InvalidSessionError
 
     if not user.is_active:
-        raise InactiveUserError
+        store.delete(session_id)
 
-    expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = security.create_access_token(user.id, expires_delta=expires)
+        raise InactiveSessionError
 
-    return access_token
+    return user
+
+
+def logout_session(
+    *, session_id: str | None, auth: AuthServerClient, store: SessionStore
+) -> None:
+    """删除本地会话，并通知认证服务退出。"""
+    login = store.read(session_id)
+
+    store.delete(session_id)
+
+    if login is None:
+        return
+
+    try:
+        auth.logout(login.access_token)
+    except AuthUnavailableError:
+        pass

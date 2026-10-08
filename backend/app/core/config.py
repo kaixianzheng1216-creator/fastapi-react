@@ -13,10 +13,9 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 API_V1_PREFIX = "/api/v1"
-# 60 分钟 * 24 小时 * 7 天 = 7 天
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
 PROJECT_NAME = "FastAPI React Project"
 NEWAPI_PROJECT_ID = "data-hub"
+AUTH_PLATFORM = "data-hub"
 
 
 def parse_cors(v: Any) -> list[str] | str:
@@ -36,7 +35,6 @@ class Settings(BaseSettings):
         env_ignore_empty=True,
         extra="ignore",
     )
-    SECRET_KEY: str
     ENVIRONMENT: Literal["local", "production"] = "local"
 
     BACKEND_CORS_ORIGINS: Annotated[
@@ -84,8 +82,9 @@ class Settings(BaseSettings):
             path=self.POSTGRES_DB,
         )
 
-    FIRST_SUPERUSER_USERNAME: str
-    FIRST_SUPERUSER_PASSWORD: str
+    AUTH_SERVER_URL: AnyHttpUrl
+    AUTH_SERVICE_TOKEN: SecretStr
+    APP_ORIGIN: AnyHttpUrl
 
     COS_SECRET_ID: SecretStr
     COS_SECRET_KEY: SecretStr
@@ -107,12 +106,23 @@ class Settings(BaseSettings):
                 raise ValueError(message)
 
     @model_validator(mode="after")
-    def _enforce_non_default_secrets(self) -> Self:
-        self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
+    def _validate_configuration(self) -> Self:
         self._check_default_secret("POSTGRES_PASSWORD", self.POSTGRES_PASSWORD)
+
         self._check_default_secret(
-            "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
+            "AUTH_SERVICE_TOKEN", self.AUTH_SERVICE_TOKEN.get_secret_value()
         )
+
+        origin = self.APP_ORIGIN
+
+        if origin.path not in (None, "/") or origin.query or origin.fragment:
+            raise ValueError("APP_ORIGIN 必须只包含协议和域名端口")
+
+        if self.ENVIRONMENT == "production" and any(
+            url.scheme != "https"
+            for url in (self.AUTH_SERVER_URL, self.APP_ORIGIN)
+        ):
+            raise ValueError("生产认证配置必须使用 HTTPS")
 
         return self
 

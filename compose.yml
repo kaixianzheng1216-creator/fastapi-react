@@ -168,6 +168,7 @@ services:
         BACKEND_API_URL: http://backend:8000
     environment:
       - BACKEND_API_URL=http://backend:8000
+      - APP_ORIGIN=${APP_ORIGIN?Variable not set}
     ports:
       - "3001:3000"
 

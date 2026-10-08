@@ -1,47 +1,16 @@
 import uuid
 from datetime import datetime
 
-from sqlmodel import Field, SQLModel
+from pydantic import BaseModel, ConfigDict
+from sqlmodel import SQLModel
 
-from app.modules.projects.models import ProjectRole
 from app.modules.users.models import UserBase
 
 
-class UserCreate(UserBase):
-    password: str = Field(min_length=8, max_length=128)
-
-
-class ProjectAssignment(SQLModel):
-    project_id: uuid.UUID
-    role: ProjectRole = ProjectRole.MEMBER
-
-
-class AdminUserCreate(UserCreate):
-    projects: list[ProjectAssignment] = Field(default_factory=list, max_length=100)
-
-
-class UserRegister(SQLModel):
-    username: str = Field(min_length=3, max_length=255)
-    password: str = Field(min_length=8, max_length=128)
-    full_name: str | None = Field(default=None, max_length=255)
-
-
-class UserUpdate(SQLModel):
-    username: str | None = Field(default=None, min_length=3, max_length=255)
+class UserUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     is_active: bool | None = None
     is_superuser: bool | None = None
-    full_name: str | None = Field(default=None, max_length=255)
-    password: str | None = Field(default=None, min_length=8, max_length=128)
-
-
-class UserUpdateMe(SQLModel):
-    full_name: str | None = Field(default=None, max_length=255)
-    username: str | None = Field(default=None, min_length=3, max_length=255)
-
-
-class UpdatePassword(SQLModel):
-    current_password: str = Field(min_length=8, max_length=128)
-    new_password: str = Field(min_length=8, max_length=128)
 
 
 class UserPublic(UserBase):

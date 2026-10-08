@@ -1,46 +1,54 @@
-from typing import Annotated
+from typing import Annotated, cast
 
-import jwt
-from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer
-from jwt.exceptions import InvalidTokenError
-from pydantic import ValidationError
+from fastapi import Depends, Request, Response
+from fastapi.security import APIKeyCookie
 
 from app.api.dependencies import SessionDep
-from app.core import security
-from app.core.config import API_V1_PREFIX, settings
-from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
-from app.modules.auth.schemas import TokenPayload
+from app.core.config import settings
+from app.modules.auth.client import AuthServerClient
+from app.modules.auth.exceptions import InvalidOriginError
+from app.modules.auth.service import get_session_user
+from app.modules.auth.session import SESSION_COOKIE, SessionStore
 from app.modules.users.exceptions import InsufficientPrivilegesError
 from app.modules.users.models import User
 
-reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"{API_V1_PREFIX}/login/access-token", auto_error=False
-)
-TokenDep = Annotated[str | None, Depends(reusable_oauth2)]
+
+def get_auth_client(request: Request) -> AuthServerClient:
+    return cast(AuthServerClient, request.app.state.auth_client)
 
 
-def get_current_user(session: SessionDep, token: TokenDep) -> User:
-    if token is None:
-        raise CredentialsValidationError
+def get_session_store(request: Request) -> SessionStore:
+    return cast(SessionStore, request.app.state.auth_sessions)
 
-    try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
-        )
-        token_data = TokenPayload(**payload)
-    except InvalidTokenError, ValidationError:
-        raise CredentialsValidationError from None
 
-    user = session.get(User, token_data.sub)
+AuthClientDep = Annotated[AuthServerClient, Depends(get_auth_client)]
+SessionStoreDep = Annotated[SessionStore, Depends(get_session_store)]
+SessionCookieDep = Annotated[
+    str | None, Depends(APIKeyCookie(name=SESSION_COOKIE, auto_error=False))
+]
 
-    if not user or user.deleted_at is not None:
-        raise CredentialsValidationError
 
-    if not user.is_active:
-        raise InactiveUserError
+def require_trusted_origin(request: Request) -> None:
+    if request.method in {"GET", "HEAD", "OPTIONS"}:
+        return
 
-    return user
+    if request.headers.get("origin") != str(settings.APP_ORIGIN).rstrip("/"):
+        raise InvalidOriginError
+
+
+def get_current_user(
+    response: Response,
+    session: SessionDep,
+    session_id: SessionCookieDep,
+    store: SessionStoreDep,
+    auth: AuthClientDep,
+    _origin: Annotated[None, Depends(require_trusted_origin)],
+) -> User:
+    response.headers["Cache-Control"] = "no-store"
+
+    return get_session_user(
+        session_id=session_id, session=session, auth=auth, store=store
+    )
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]

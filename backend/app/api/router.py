@@ -1,10 +1,7 @@
 from fastapi import APIRouter
 
 from app.modules.agent.router import router as agent_router
-from app.modules.auth.router import (
-    authenticated_router as authenticated_auth_router,
-)
-from app.modules.auth.router import public_router as public_auth_router
+from app.modules.auth.router import router as auth_router
 from app.modules.brand_marketing.router import router as brand_marketing_router
 from app.modules.content_operations.router import router as content_operations_router
 from app.modules.conversations.router import router as conversations_router
@@ -25,14 +22,11 @@ from app.modules.users.router import admin_router as admin_users_router
 from app.modules.users.router import (
     authenticated_router as authenticated_users_router,
 )
-from app.modules.users.router import public_router as public_users_router
 
 api_router = APIRouter()
 
-api_router.include_router(public_auth_router)
-api_router.include_router(public_users_router)
+api_router.include_router(auth_router)
 api_router.include_router(system_router)
-api_router.include_router(authenticated_auth_router)
 api_router.include_router(authenticated_users_router)
 api_router.include_router(admin_users_router)
 api_router.include_router(brand_marketing_router)

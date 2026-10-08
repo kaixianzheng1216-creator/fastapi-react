@@ -1,100 +1,64 @@
 import uuid
 from collections.abc import Sequence
-from typing import Any
 
-from fastapi import HTTPException
-from psycopg.errors import UniqueViolation
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.elements import ColumnElement
 from sqlmodel import Session, col, func, select
 
-from app.core.security import get_password_hash, verify_password
 from app.db.timestamps import utc_now
-from app.modules.projects.exceptions import ProjectNotFoundError
-from app.modules.projects.models import Project, ProjectMember
+from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
+from app.modules.auth.schemas import AuthUser
 from app.modules.users.exceptions import (
-    IncorrectPasswordError,
     InsufficientPrivilegesError,
-    PasswordUnchangedError,
     SelfAdminStatusChangeForbiddenError,
     SelfDeletionForbiddenError,
-    UserAlreadyExistsError,
     UserNotFoundError,
 )
 from app.modules.users.models import User
-from app.modules.users.schemas import (
-    AdminUserCreate,
-    UserCreate,
-    UserUpdate,
-    UserUpdateMe,
-)
+from app.modules.users.schemas import UserUpdate
 
 
-def create_unique_user(*, session: Session, user_create: UserCreate) -> User:
-    if get_user_by_username(session=session, username=user_create.username):
-        raise UserAlreadyExistsError
+def get_or_create_auth_user(*, session: Session, identity: AuthUser) -> User:
+    statement = select(User).where(User.auth_user_id == identity.id)
 
-    return create_user(session=session, user_create=user_create)
+    user = session.exec(statement).one_or_none()
 
+    if user is None:
+        user = User(
+            auth_user_id=identity.id,
+            username=f"user_{uuid.uuid4().hex}",
+            full_name=identity.name,
+        )
 
-def get_user_by_username(*, session: Session, username: str) -> User | None:
-    statement = select(User).where(User.username == username)
-    user = session.exec(statement).first()
+        session.add(user)
 
-    return user
+        try:
+            session.commit()
+        except IntegrityError:
+            session.rollback()
 
+            user = session.exec(statement).one_or_none()
 
-def create_user(*, session: Session, user_create: UserCreate) -> User:
-    user = User.model_validate(
-        user_create,
-        update={"hashed_password": get_password_hash(user_create.password)},
-    )
+            if user is None:
+                raise
 
-    session.add(user)
-    session.commit()
+    if user.deleted_at is not None:
+        raise CredentialsValidationError
+
+    if not user.is_active:
+        raise InactiveUserError
+
+    if user.full_name != identity.name:
+        user.full_name = identity.name
+
+        session.add(user)
+
+        session.commit()
+
     session.refresh(user)
 
     return user
-
-
-def update_current_user(
-    *, session: Session, current_user: User, user_update: UserUpdateMe
-) -> User:
-    if user_update.username:
-        existing_user = get_user_by_username(
-            session=session, username=user_update.username
-        )
-        if existing_user and existing_user.id != current_user.id:
-            raise UserAlreadyExistsError
-
-    current_user.sqlmodel_update(user_update.model_dump(exclude_unset=True))
-    session.add(current_user)
-    session.commit()
-    session.refresh(current_user)
-
-    return current_user
-
-
-def update_current_password(
-    *, session: Session, current_user: User, current_password: str, new_password: str
-) -> None:
-    verified, _ = verify_password(current_password, current_user.hashed_password)
-    if not verified:
-        raise IncorrectPasswordError
-    if current_password == new_password:
-        raise PasswordUnchangedError
-
-    current_user.hashed_password = get_password_hash(new_password)
-    session.add(current_user)
-    session.commit()
-
-
-def delete_current_user(*, session: Session, current_user: User) -> None:
-    if current_user.is_superuser:
-        raise SelfDeletionForbiddenError
-
-    _soft_delete_user(session=session, user=current_user)
 
 
 def list_users(
@@ -141,48 +105,25 @@ def get_user_for_request(
 ) -> User:
     if user_id == current_user.id:
         return current_user
-
     if not current_user.is_superuser:
         raise InsufficientPrivilegesError
-
     return _get_user(session=session, user_id=user_id)
 
 
 def update_user_by_id(
-    *,
-    session: Session,
-    current_user: User,
-    user_id: uuid.UUID,
-    user_update: UserUpdate,
+    *, session: Session, current_user: User, user_id: uuid.UUID, user_update: UserUpdate
 ) -> User:
     user = _get_user(session=session, user_id=user_id)
-
-    if user == current_user and (
+    if user.id == current_user.id and (
         user_update.is_active is False or user_update.is_superuser is False
     ):
         raise SelfAdminStatusChangeForbiddenError
 
-    if user_update.username:
-        existing_user = get_user_by_username(
-            session=session, username=user_update.username
-        )
-        if existing_user and existing_user.id != user_id:
-            raise UserAlreadyExistsError
-
-    return update_user(session=session, user=user, user_update=user_update)
-
-
-def update_user(*, session: Session, user: User, user_update: UserUpdate) -> User:
-    user_data = user_update.model_dump(exclude_unset=True)
-    extra_data: dict[str, Any] = {}
-    if "password" in user_data:
-        extra_data["hashed_password"] = get_password_hash(user_data["password"])
-
-    user.sqlmodel_update(user_data, update=extra_data)
+    user.sqlmodel_update(user_update.model_dump(exclude_none=True))
     session.add(user)
     session.commit()
-    session.refresh(user)
 
+    session.refresh(user)
     return user
 
 
@@ -190,8 +131,7 @@ def delete_user_by_id(
     *, session: Session, current_user: User, user_id: uuid.UUID
 ) -> None:
     user = _get_user(session=session, user_id=user_id)
-
-    if user == current_user:
+    if user.id == current_user.id:
         raise SelfDeletionForbiddenError
 
     _soft_delete_user(session=session, user=user)
@@ -215,45 +155,3 @@ def _soft_delete_user(*, session: Session, user: User) -> None:
     user.deleted_at = utc_now()
     session.add(user)
     session.commit()
-
-
-def create_admin_user(*, session: Session, body: AdminUserCreate) -> User:
-    ids = [assignment.project_id for assignment in body.projects]
-
-    if len(ids) != len(set(ids)):
-        raise HTTPException(status_code=422, detail="项目不能重复分配")
-
-    if ids and set(
-        session.exec(select(Project.id).where(col(Project.id).in_(ids))).all()
-    ) != set(ids):
-        raise ProjectNotFoundError
-
-    user = User.model_validate(
-        body, update={"hashed_password": get_password_hash(body.password)}
-    )
-
-    session.add(user)
-
-    try:
-        session.flush()
-
-        for assignment in body.projects:
-            session.add(
-                ProjectMember(
-                    project_id=assignment.project_id,
-                    user_id=user.id,
-                    role=assignment.role,
-                )
-            )
-
-        session.commit()
-    except IntegrityError as error:
-        session.rollback()
-
-        if isinstance(error.orig, UniqueViolation):
-            raise UserAlreadyExistsError from error
-        raise
-
-    session.refresh(user)
-
-    return user

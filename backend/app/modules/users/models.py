@@ -16,7 +16,7 @@ class UserBase(SQLModel):
 
 class User(UserBase, TimestampMixin, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    hashed_password: str
+    auth_user_id: str | None = Field(default=None, max_length=255, unique=True)
     deleted_at: datetime | None = Field(
         default=None,
         sa_type=DateTime(timezone=True),  # type: ignore
