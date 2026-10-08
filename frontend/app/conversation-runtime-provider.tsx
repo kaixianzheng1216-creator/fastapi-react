@@ -35,7 +35,7 @@ import {
   useConversationKind,
 } from "@/app/conversation-kind";
 import { getApiErrorMessage } from "@/lib/api-error";
-import { getAccessToken, handleUnauthorizedResponse } from "@/lib/auth";
+import { handleUnauthorizedResponse } from "@/lib/auth";
 import { type ConversationStatePublic } from "@/lib/client";
 import type { ApplicationState } from "@/lib/conversation-state";
 import {
@@ -122,6 +122,7 @@ function useConversationRuntime() {
     initialState: { messages: [], researchMessages: [] },
 
     api: "/api/agent/runs",
+    headers: {},
     resumeStateApi: "/api/agent/runs/resume-state",
     resumeApi: "/api/agent/runs/resume",
 
@@ -145,12 +146,6 @@ function useConversationRuntime() {
       } as ReadonlyJSONObject,
       isRunning: connection.isSending,
     }),
-
-    headers: async (): Promise<Record<string, string>> => {
-      const token = getAccessToken();
-
-      return token ? { Authorization: `Bearer ${token}` } : {};
-    },
 
     prepareSendCommandsRequest: async (body) => {
       const savedStatePromise = savedStatePromiseRef.current;

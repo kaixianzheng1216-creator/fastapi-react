@@ -16,7 +16,8 @@ export function useCurrentUserQuery() {
 
       return data;
     },
-    staleTime: Infinity,
+    staleTime: 30_000,
+    meta: { handlesError: true },
   });
 }
 

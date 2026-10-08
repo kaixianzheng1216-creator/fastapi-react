@@ -8,10 +8,13 @@ import {
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 
+import { configureApiClient } from "@/lib/auth";
 import { getApiErrorMessage } from "@/lib/api-error";
 
 export function QueryProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => {
+    if (typeof window !== "undefined") configureApiClient();
+
     return new QueryClient({
       defaultOptions: {
         queries: { retry: false },

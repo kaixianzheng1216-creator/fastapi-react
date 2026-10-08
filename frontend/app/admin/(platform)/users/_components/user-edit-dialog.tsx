@@ -17,7 +17,6 @@ import {
   Field,
   FieldContent,
   FieldDescription,
-  FieldError,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
@@ -28,12 +27,6 @@ import { type UserPublic, usersUpdateUser } from "@/lib/client";
 import { toast } from "sonner";
 
 const userSchema = z.object({
-  username: z
-    .string()
-    .trim()
-    .min(3, "用户名至少 3 个字符")
-    .max(255, "用户名最多 255 个字符"),
-  fullName: z.string().trim().max(255, "姓名最多 255 个字符"),
   isSuperuser: z.boolean(),
 });
 
@@ -57,8 +50,6 @@ export function UserEditDialog({
   const form = useForm<UserValues>({
     resolver: zodResolver(userSchema),
     defaultValues: {
-      username: user.username,
-      fullName: user.full_name ?? "",
       isSuperuser: user.is_superuser ?? false,
     },
   });
@@ -68,8 +59,6 @@ export function UserEditDialog({
       await usersUpdateUser({
         path: { user_id: user.id },
         body: {
-          username: values.username,
-          full_name: values.fullName || null,
           is_superuser: values.isSuperuser,
         },
         throwOnError: true,
@@ -103,7 +92,7 @@ export function UserEditDialog({
       >
         <DialogHeader>
           <DialogTitle>编辑用户</DialogTitle>
-          <DialogDescription>更新账户资料和权限。</DialogDescription>
+          <DialogDescription>管理用户的平台权限。</DialogDescription>
         </DialogHeader>
 
         <form
@@ -113,30 +102,10 @@ export function UserEditDialog({
           )}
         >
           <FieldGroup>
-            <Field data-invalid={!!form.formState.errors.username}>
-              <FieldLabel htmlFor="edit-user-username">用户名</FieldLabel>
-              <Input
-                disabled={updateUserMutation.isPending}
-                id="edit-user-username"
-                autoComplete="off"
-                autoCapitalize="none"
-                spellCheck={false}
-                aria-invalid={!!form.formState.errors.username}
-                {...form.register("username")}
-              />
-              <FieldError errors={[form.formState.errors.username]} />
-            </Field>
-
-            <Field data-invalid={!!form.formState.errors.fullName}>
-              <FieldLabel htmlFor="edit-user-full-name">姓名</FieldLabel>
-              <Input
-                disabled={updateUserMutation.isPending}
-                id="edit-user-full-name"
-                autoComplete="off"
-                aria-invalid={!!form.formState.errors.fullName}
-                {...form.register("fullName")}
-              />
-              <FieldError errors={[form.formState.errors.fullName]} />
+            <Field>
+              <FieldLabel>姓名</FieldLabel>
+              <Input value={user.full_name ?? user.username} readOnly />
+              <FieldDescription>姓名由统一登录服务同步。</FieldDescription>
             </Field>
 
             <Controller

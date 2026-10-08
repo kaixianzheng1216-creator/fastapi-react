@@ -9,14 +9,12 @@ import {
 import {
   MoreHorizontalIcon,
   PencilIcon,
-  PlusIcon,
   PowerIcon,
   PowerOffIcon,
   TrashIcon,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
-import { UserCreateDialog } from "@/app/admin/(platform)/users/_components/user-create-dialog";
 import { UserEditDialog } from "@/app/admin/(platform)/users/_components/user-edit-dialog";
 import { FilterGroup } from "@/app/admin/_components/filter-group";
 import { ButtonContent } from "@/components/common/button-content";
@@ -76,9 +74,6 @@ const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
 });
 
 export function UserManager() {
-  const createButtonRef = useRef<HTMLButtonElement>(null);
-  const { rememberActionTrigger, restoreActionFocus } =
-    useActionFocus(createButtonRef);
 
   const { params: searchParams, update } = useListParams();
   const getPageHref = (page: number) =>
@@ -88,12 +83,12 @@ export function UserManager() {
 
   const currentPage = parsePage(searchParams.get("page"));
   const scrollRef = usePaginationScrollReset<HTMLElement>(currentPage);
+  const { rememberActionTrigger, restoreActionFocus } = useActionFocus(scrollRef);
   const pageIndex = currentPage - 1;
   const search = searchParams.get("search")?.trim() ?? "";
   const role = getRoleFilter(searchParams.get("role"));
   const status = getStatusFilter(searchParams.get("status"));
 
-  const [createOpen, setCreateOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState<UserPublic>();
   const [userToDelete, setUserToDelete] = useState<UserPublic>();
 
@@ -178,23 +173,11 @@ export function UserManager() {
 
   return (
     <>
-      <AppHeader
-        title="用户管理"
-        actions={
-          <Button
-            ref={createButtonRef}
-            onPointerDown={rememberActionTrigger}
-            onFocus={rememberActionTrigger}
-            onClick={() => setCreateOpen(true)}
-          >
-            <PlusIcon data-icon="inline-start" />
-            创建用户
-          </Button>
-        }
-      />
+      <AppHeader title="用户管理" />
 
       <main
         ref={scrollRef}
+        tabIndex={-1}
         className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6"
       >
         <section className="mx-auto flex min-h-full w-full max-w-6xl flex-col gap-6">
@@ -390,13 +373,6 @@ export function UserManager() {
           />
         </section>
       </main>
-
-      <UserCreateDialog
-        onCloseAutoFocus={restoreActionFocus}
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onCreated={invalidateUsers}
-      />
 
       {userToEdit && (
         <UserEditDialog

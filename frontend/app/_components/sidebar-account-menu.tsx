@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronRightIcon, LogOutIcon } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 
 import { AppearanceMenu } from "@/app/_components/appearance-menu";
@@ -15,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { UserProfile } from "@/app/_components/user-info";
-import { clearAccessToken } from "@/lib/auth";
+import { useLogout } from "@/hooks/use-logout";
 import type { UserPublic } from "@/lib/client";
 
 export function SidebarAccountMenu({
@@ -25,14 +24,7 @@ export function SidebarAccountMenu({
   user?: UserPublic;
   children?: ReactNode;
 }) {
-  const queryClient = useQueryClient();
-
-  function logOut(): void {
-    clearAccessToken();
-    queryClient.clear();
-
-    window.location.replace("/login");
-  }
+  const logout = useLogout();
 
   return (
     <SidebarMenuItem>
@@ -53,7 +45,10 @@ export function SidebarAccountMenu({
           <DropdownMenuSeparator />
 
           <DropdownMenuGroup>
-            <DropdownMenuItem onSelect={logOut}>
+            <DropdownMenuItem
+              disabled={logout.isPending}
+              onSelect={() => logout.mutate()}
+            >
               <LogOutIcon />
               退出登录
             </DropdownMenuItem>

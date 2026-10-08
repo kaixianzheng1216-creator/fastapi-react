@@ -1,30 +1,31 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { type ReactNode, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 
+import { LoadError } from "@/components/common/load-error";
 import { Spinner } from "@/components/ui/spinner";
-import { configureApiClient, getAccessToken } from "@/lib/auth";
+import { useCurrentUserQuery } from "@/hooks/use-current-user";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 export function AuthenticatedGuard({ children }: { children: ReactNode }) {
-  const router = useRouter();
-  const [ready, setReady] = useState(false);
+  const user = useCurrentUserQuery();
 
-  useEffect(() => {
-    if (!getAccessToken()) {
-      router.replace("/login");
-      return;
-    }
-
-    configureApiClient();
-
-    setReady(true);
-  }, [router]);
-
-  if (!ready) {
+  if (user.isPending) {
     return (
       <div className="flex h-svh items-center justify-center">
-        <Spinner aria-label="正在加载页面" />
+        <Spinner aria-label="正在验证登录" />
+      </div>
+    );
+  }
+
+  if (user.isError) {
+    return (
+      <div className="flex h-svh items-center justify-center">
+        <LoadError
+          title={getApiErrorMessage(user.error, "无法验证登录，请稍后重试")}
+          onRetry={() => void user.refetch()}
+          isRetrying={user.isFetching}
+        />
       </div>
     );
   }

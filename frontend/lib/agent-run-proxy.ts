@@ -19,12 +19,30 @@ export async function proxyAgentRequest(options: {
   method: "GET" | "POST";
   forwardJsonBody?: boolean;
 }): Promise<Response> {
-  const authorization = options.request.headers.get("Authorization");
-  if (!authorization) {
-    return Response.json({ detail: "Not authenticated" }, { status: 401 });
+  const cookie = options.request.headers
+    .get("Cookie")
+    ?.split(";")
+    .find((value) => value.trim().startsWith("data_hub_session="))
+    ?.trim();
+
+  if (!cookie) {
+    return Response.json({ detail: "尚未登录，请先登录" }, { status: 401 });
   }
 
-  const headers = new Headers({ Authorization: authorization });
+  const origin = options.request.headers.get("Origin");
+
+  const appOrigin = process.env.APP_ORIGIN;
+
+  if (!appOrigin) throw new Error("APP_ORIGIN 未配置");
+
+  if (options.request.method !== "GET" && origin !== new URL(appOrigin).origin) {
+    return Response.json({ detail: "请求来源不受信任" }, { status: 403 });
+  }
+
+  const headers = new Headers({ Cookie: cookie });
+
+  if (origin) headers.set("Origin", origin);
+
   let body: BodyInit | undefined;
 
   if (options.forwardJsonBody) {
@@ -32,7 +50,7 @@ export async function proxyAgentRequest(options: {
 
     if (requestBody === null) {
       return Response.json(
-        { detail: "Agent request body too large" },
+        { detail: "智能助手请求内容过大" },
         { status: 413 },
       );
     }
@@ -57,6 +75,10 @@ export async function proxyAgentRequest(options: {
   for (const name of forwardedResponseHeaders) {
     const value = upstream.headers.get(name);
     if (value) responseHeaders.set(name, value);
+  }
+
+  for (const cookie of upstream.headers.getSetCookie()) {
+    responseHeaders.append("Set-Cookie", cookie);
   }
 
   return new Response(upstream.body, {
