@@ -53,12 +53,12 @@ export function AppHeader({
   }
 
   return (
-    <header className="grid h-14 shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b px-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-      <div className="min-w-0 justify-self-start">{left}</div>
-      <h1 className="truncate text-center text-sm font-medium sm:max-w-96">
+    <header className="flex h-14 shrink-0 items-center gap-3 border-b px-3">
+      <div className="shrink-0">{left}</div>
+      <h1 className="min-w-0 flex-1 truncate text-sm font-medium">
         {title}
       </h1>
-      <div className="min-w-0 justify-self-end">{actions}</div>
+      {actions && <div className="shrink-0">{actions}</div>}
     </header>
   );
 }
