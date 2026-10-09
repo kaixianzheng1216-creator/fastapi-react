@@ -68,7 +68,7 @@ export function UserSelection({
           user_id: user.id,
           username: user.username,
           full_name: user.full_name,
-          is_member: user.is_superuser,
+          is_member: false,
         })),
       };
     },
@@ -128,7 +128,7 @@ export function UserSelection({
                     {user.full_name && ` / ${user.full_name}`}
                   </FieldLabel>
                   {user.is_member && (
-                    <Badge variant="secondary">已有权限</Badge>
+                    <Badge variant="secondary">已加入项目</Badge>
                   )}
                 </Field>
               );

@@ -279,7 +279,7 @@ def list_member_candidates(
             user_id=candidate.id,
             username=candidate.username,
             full_name=candidate.full_name,
-            is_member=member_id is not None or candidate.is_superuser,
+            is_member=member_id is not None,
         )
         for candidate, member_id in rows
     ], count
