@@ -6,7 +6,7 @@ import loginHero from "@/app/login/login-hero.png";
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <main className="flex min-h-svh items-center justify-center bg-muted/30 p-6">
-      <div className="grid w-full max-w-6xl overflow-hidden rounded-lg border bg-card text-card-foreground md:grid-cols-2">
+      <div className="grid w-full max-w-6xl overflow-hidden rounded-lg border bg-card text-card-foreground shadow-xl md:grid-cols-2">
         <Image
           src={loginHero}
           alt="DATA HUB"
