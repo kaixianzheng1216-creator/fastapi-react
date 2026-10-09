@@ -5,7 +5,15 @@ let apiClientConfigured = false;
 export function handleUnauthorizedResponse(response: Response): boolean {
   if (response.status !== 401) return false;
 
-  if (new URL(response.url).pathname.startsWith("/api/v1/auth/")) return false;
+  const path = new URL(response.url).pathname;
+
+  // 登录和邀请接口由各自页面处理失效会话。
+  if (
+    path.startsWith("/api/v1/auth/") ||
+    path.startsWith("/api/v1/invitations/")
+  ) {
+    return false;
+  }
 
   window.location.replace("/login");
 

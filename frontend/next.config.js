@@ -14,10 +14,13 @@ const nextConfig = {
   },
 
   async headers() {
-    return [{ source: "/login", headers: [
-      { key: "Referrer-Policy", value: "no-referrer" },
-      { key: "Cache-Control", value: "no-store" },
-    ] }];
+    return ["/login", "/invite/:path*"].map((source) => ({
+      source,
+      headers: [
+        { key: "Referrer-Policy", value: "no-referrer" },
+        { key: "Cache-Control", value: "no-store" },
+      ],
+    }));
   },
 
   async redirects() {

@@ -6,7 +6,7 @@ from fastapi.security import APIKeyCookie
 from app.api.dependencies import SessionDep
 from app.core.config import settings
 from app.modules.auth.client import AuthServerClient
-from app.modules.auth.exceptions import InvalidOriginError
+from app.modules.auth.exceptions import CredentialsValidationError, InvalidOriginError
 from app.modules.auth.service import get_session_user
 from app.modules.auth.session import SESSION_COOKIE, SessionStore
 from app.modules.users.exceptions import InsufficientPrivilegesError
@@ -52,6 +52,26 @@ def get_current_user(
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def get_optional_current_user(
+    session: SessionDep,
+    session_id: SessionCookieDep,
+    store: SessionStoreDep,
+    auth: AuthClientDep,
+) -> User | None:
+    if not session_id:
+        return None
+
+    try:
+        return get_session_user(
+            session_id=session_id, session=session, store=store, auth=auth
+        )
+    except CredentialsValidationError:
+        return None
+
+
+OptionalCurrentUser = Annotated[User | None, Depends(get_optional_current_user)]
 
 
 def get_current_active_superuser(current_user: CurrentUser) -> User:

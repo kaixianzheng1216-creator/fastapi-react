@@ -27,7 +27,7 @@ def get_or_create_auth_user(*, session: Session, identity: AuthUser) -> User:
     if user is None:
         user = User(
             auth_user_id=identity.id,
-            username=f"user_{uuid.uuid4().hex}",
+            username=f"user_{uuid.uuid4().hex[:12]}",
             full_name=identity.name,
         )
 

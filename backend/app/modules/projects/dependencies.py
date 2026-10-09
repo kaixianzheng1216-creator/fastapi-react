@@ -19,7 +19,7 @@ def require_project(
     if user.is_superuser:
         return project
 
-    member = session.get(ProjectMember, (project_id, user.id))
+    member = session.get(ProjectMember, (project_id, user.id), populate_existing=True)
 
     if member is None:
         raise ProjectNotFoundError

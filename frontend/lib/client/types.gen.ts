@@ -724,6 +724,66 @@ export type InfluencerPlatformCode = 'douyin' | 'xiaohongshu';
  */
 export type InfluencerSortOrder = 'asc' | 'desc';
 
+/**
+ * InvitationCreate
+ */
+export type InvitationCreate = {
+    /**
+     * Expires In Days
+     */
+    expires_in_days?: number;
+};
+
+/**
+ * InvitationCreated
+ */
+export type InvitationCreated = {
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Expires At
+     */
+    expires_at: string;
+};
+
+/**
+ * InvitationProject
+ */
+export type InvitationProject = {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Project Name
+     */
+    project_name: string;
+};
+
+/**
+ * InvitationPublic
+ */
+export type InvitationPublic = {
+    /**
+     * Project Id
+     */
+    project_id: string;
+    /**
+     * Project Name
+     */
+    project_name: string;
+    /**
+     * Current User Name
+     */
+    current_user_name?: string | null;
+    /**
+     * Is Member
+     */
+    is_member?: boolean;
+};
+
 export type JsonValue = unknown;
 
 /**
@@ -6294,6 +6354,52 @@ export type McpKeysReadProjectMcpToolsResponses = {
 
 export type McpKeysReadProjectMcpToolsResponse = McpKeysReadProjectMcpToolsResponses[keyof McpKeysReadProjectMcpToolsResponses];
 
+export type ProjectsCreateInvitationData = {
+    body: InvitationCreate;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/projects/{project_id}/invitations';
+};
+
+export type ProjectsCreateInvitationErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Conflict
+     */
+    409: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ProjectsCreateInvitationError = ProjectsCreateInvitationErrors[keyof ProjectsCreateInvitationErrors];
+
+export type ProjectsCreateInvitationResponses = {
+    /**
+     * Successful Response
+     */
+    201: InvitationCreated;
+};
+
+export type ProjectsCreateInvitationResponse = ProjectsCreateInvitationResponses[keyof ProjectsCreateInvitationResponses];
+
 export type ProjectsReadProjectsData = {
     body?: never;
     path?: never;
@@ -6794,3 +6900,87 @@ export type ProjectsUpdateMemberResponses = {
 };
 
 export type ProjectsUpdateMemberResponse = ProjectsUpdateMemberResponses[keyof ProjectsUpdateMemberResponses];
+
+export type InvitationsReadInvitationData = {
+    body?: never;
+    path: {
+        /**
+         * Token
+         */
+        token: string;
+    };
+    query?: never;
+    url: '/api/v1/invitations/{token}';
+};
+
+export type InvitationsReadInvitationErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type InvitationsReadInvitationError = InvitationsReadInvitationErrors[keyof InvitationsReadInvitationErrors];
+
+export type InvitationsReadInvitationResponses = {
+    /**
+     * Successful Response
+     */
+    200: InvitationPublic;
+};
+
+export type InvitationsReadInvitationResponse = InvitationsReadInvitationResponses[keyof InvitationsReadInvitationResponses];
+
+export type InvitationsAcceptInvitationData = {
+    body?: never;
+    path: {
+        /**
+         * Token
+         */
+        token: string;
+    };
+    query?: never;
+    url: '/api/v1/invitations/{token}/accept';
+};
+
+export type InvitationsAcceptInvitationErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: ErrorResponse;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type InvitationsAcceptInvitationError = InvitationsAcceptInvitationErrors[keyof InvitationsAcceptInvitationErrors];
+
+export type InvitationsAcceptInvitationResponses = {
+    /**
+     * Successful Response
+     */
+    200: InvitationProject;
+};
+
+export type InvitationsAcceptInvitationResponse = InvitationsAcceptInvitationResponses[keyof InvitationsAcceptInvitationResponses];

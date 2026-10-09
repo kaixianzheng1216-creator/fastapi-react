@@ -1,18 +1,31 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Response
 
 from app.api.dependencies import SessionDep
 from app.api.responses import error_responses
-from app.modules.auth.dependencies import CurrentSuperuser, CurrentUser
+from app.modules.auth.dependencies import (
+    CurrentSuperuser,
+    CurrentUser,
+    OptionalCurrentUser,
+)
 from app.modules.auth.exceptions import CredentialsValidationError, InactiveUserError
-from app.modules.projects import service
+from app.modules.projects import invitations, service
 from app.modules.projects.dependencies import require_project
-from app.modules.projects.exceptions import ProjectConflictError, ProjectNotFoundError
+from app.modules.projects.exceptions import (
+    InvitationUnavailableError,
+    LastProjectAdminError,
+    ProjectConflictError,
+    ProjectNotFoundError,
+)
 from app.modules.projects.models import ProjectRole
 from app.modules.projects.schemas import (
     CandidatesPublic,
+    InvitationCreate,
+    InvitationCreated,
+    InvitationProject,
+    InvitationPublic,
     MembersAdd,
     MembersPublic,
     MemberUpdate,
@@ -32,12 +45,59 @@ router = APIRouter(
         InsufficientPrivilegesError,
         ProjectNotFoundError,
         ProjectConflictError,
+        LastProjectAdminError,
     ),
 )
 
 Skip = Annotated[int, Query(ge=0)]
 Limit = Annotated[int, Query(ge=1, le=100)]
 Search = Annotated[str | None, Query(max_length=255)]
+
+invitation_router = APIRouter(
+    prefix="/invitations",
+    tags=["invitations"],
+    responses=error_responses(
+        InvitationUnavailableError, CredentialsValidationError, InactiveUserError
+    ),
+)
+
+
+@router.post(
+    "/{project_id}/invitations", response_model=InvitationCreated, status_code=201
+)
+def create_invitation(
+    project_id: uuid.UUID,
+    session: SessionDep,
+    current_user: CurrentUser,
+    body: InvitationCreate,
+) -> InvitationCreated:
+    """创建可供多人使用的独立邀请链接。"""
+    return invitations.create_invitation(session, current_user, project_id, body)
+
+
+@invitation_router.get("/{token}", response_model=InvitationPublic)
+def read_invitation(
+    token: str,
+    response: Response,
+    session: SessionDep,
+    current_user: OptionalCurrentUser,
+) -> InvitationPublic:
+    """查看邀请的项目、当前登录用户，以及该用户是否已加入项目。"""
+    response.headers["Cache-Control"] = "no-store"
+
+    return invitations.read_invitation(session, current_user, token)
+
+
+@invitation_router.post("/{token}/accept", response_model=InvitationProject)
+def accept_invitation(
+    token: str,
+    session: SessionDep,
+    current_user: CurrentUser,
+) -> InvitationProject:
+    """通过邀请加入项目，默认为普通成员；已加入的用户不修改角色。"""
+    project = invitations.accept_invitation(session, current_user, token)
+
+    return InvitationProject(project_id=project.id, project_name=project.name)
 
 
 @router.post("", response_model=ProjectPublic, status_code=201)
@@ -162,5 +222,5 @@ def remove_member(
     session: SessionDep,
     current_user: CurrentUser,
 ) -> None:
-    """移出项目成员。"""
+    """移出项目成员；目标为当前用户时退出项目。"""
     service.remove_member(session, current_user, project_id, user_id)

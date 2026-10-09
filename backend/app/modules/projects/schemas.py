@@ -86,3 +86,24 @@ class CandidatePublic(BaseModel):
 class CandidatesPublic(BaseModel):
     data: list[CandidatePublic]
     count: int
+
+
+class InvitationCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    expires_in_days: int = Field(default=7, ge=1, le=30, strict=True)
+
+
+class InvitationCreated(BaseModel):
+    url: str
+    expires_at: datetime
+
+
+class InvitationProject(BaseModel):
+    project_id: uuid.UUID
+    project_name: str
+
+
+class InvitationPublic(InvitationProject):
+    current_user_name: str | None = None
+    is_member: bool = False

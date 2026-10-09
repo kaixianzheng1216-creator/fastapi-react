@@ -2,7 +2,8 @@
 
 import time
 
-from sqlmodel import Session
+from sqlalchemy import update
+from sqlmodel import Session, col
 
 from app.core.config import settings
 from app.modules.auth.exceptions import InvalidSessionError
@@ -27,6 +28,12 @@ def create_dev_session(
 ) -> tuple[User, str, int]:
     if not settings.DEV_LOGIN_ENABLED:
         raise InvalidSessionError
+
+    session.exec(
+        update(User)
+        .where(col(User.auth_user_id) == DEV_AUTH_USER_ID, col(User.deleted_at).is_not(None))
+        .values(auth_user_id=None)
+    )
 
     user = get_or_create_auth_user(
         session=session,

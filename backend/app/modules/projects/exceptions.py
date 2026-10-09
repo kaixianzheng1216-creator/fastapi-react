@@ -19,3 +19,13 @@ class ProjectNotEmptyError(ApplicationError):
 class ProjectMemberNotFoundError(ApplicationError):
     status_code = 404
     detail = "项目成员不存在"
+
+
+class InvitationUnavailableError(ApplicationError):
+    status_code = 404
+    detail = "邀请链接无效或已过期，请联系项目管理员获取新链接"
+
+
+class LastProjectAdminError(ApplicationError):
+    status_code = 409
+    detail = "项目必须保留一位启用中的管理员，请先安排其他管理员"

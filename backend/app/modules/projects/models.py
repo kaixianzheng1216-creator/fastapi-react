@@ -40,3 +40,18 @@ class ProjectMember(SQLModel, table=True):
         default_factory=utc_now,
         sa_type=DateTime(timezone=True),
     )
+
+
+class ProjectInvitation(SQLModel, table=True):
+    __tablename__ = "project_invitation"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    project_id: uuid.UUID = Field(
+        foreign_key="project.id", ondelete="CASCADE", index=True
+    )
+    token_hash: str = Field(max_length=64, unique=True)
+    created_by: uuid.UUID = Field(foreign_key="user.id")
+    created_at: datetime = Field(  # type: ignore[call-overload]
+        default_factory=utc_now, sa_type=DateTime(timezone=True)
+    )
+    expires_at: datetime = Field(sa_type=DateTime(timezone=True))  # type: ignore[call-overload]

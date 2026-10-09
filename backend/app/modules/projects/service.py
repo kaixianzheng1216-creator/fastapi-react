@@ -9,9 +9,11 @@ from sqlmodel import Session, col, func, select
 from app.modules.knowledge.models import KnowledgeBase
 from app.modules.projects.dependencies import require_project
 from app.modules.projects.exceptions import (
+    LastProjectAdminError,
     ProjectConflictError,
     ProjectMemberNotFoundError,
     ProjectNotEmptyError,
+    ProjectNotFoundError,
 )
 from app.modules.projects.models import Project, ProjectMember, ProjectRole
 from app.modules.projects.schemas import (
@@ -219,7 +221,7 @@ def list_members(
         select(ProjectMember, User)
         .join(User, col(User.id) == col(ProjectMember.user_id))
         .where(*filters)
-        .order_by(User.username, col(User.id))
+        .order_by((col(User.id) == user.id).desc(), User.username, col(User.id))
         .offset(skip)
         .limit(limit)
     ).all()
@@ -319,12 +321,10 @@ def update_member(
     if not user.is_superuser:
         raise InsufficientPrivilegesError
 
-    require_project(session, user, project_id)
+    member = _member_for_update(session, user, project_id, user_id)
 
-    member = session.get(ProjectMember, (project_id, user_id))
-
-    if member is None:
-        raise ProjectMemberNotFoundError
+    if role != member.role:
+        _require_other_admin(session, member)
 
     member.role = role
 
@@ -334,25 +334,68 @@ def update_member(
 def remove_member(
     session: Session, user: User, project_id: uuid.UUID, user_id: uuid.UUID
 ) -> None:
-    require_project(session, user, project_id, manage_members=True)
+    member = _member_for_update(
+        session, user, project_id, user_id, manage_members=user_id != user.id
+    )
 
-    member = session.exec(
-        select(ProjectMember)
-        .where(
-            col(ProjectMember.project_id) == project_id,
-            col(ProjectMember.user_id) == user_id,
-        )
-        .with_for_update()
-    ).first()
-
-    if member is None:
-        raise ProjectMemberNotFoundError
-    if not user.is_superuser and member.role == ProjectRole.ADMIN:
+    if (
+        user_id != user.id
+        and not user.is_superuser
+        and member.role == ProjectRole.ADMIN
+    ):
         raise InsufficientPrivilegesError
+
+    _require_other_admin(session, member)
 
     session.delete(member)
 
     session.commit()
+
+
+def _member_for_update(
+    session: Session,
+    user: User,
+    project_id: uuid.UUID,
+    user_id: uuid.UUID,
+    *,
+    manage_members: bool = False,
+) -> ProjectMember:
+    project = session.exec(
+        select(Project).where(Project.id == project_id).with_for_update()
+    ).one_or_none()
+
+    if project is None:
+        raise ProjectNotFoundError
+
+    require_project(session, user, project_id, manage_members=manage_members)
+
+    member = session.get(ProjectMember, (project_id, user_id), populate_existing=True)
+
+    if member is None:
+        raise ProjectMemberNotFoundError
+
+    return member
+
+
+def _require_other_admin(session: Session, member: ProjectMember) -> None:
+    if member.role != ProjectRole.ADMIN:
+        return
+
+    other_admin = session.exec(
+        select(ProjectMember)
+        .join(User, col(User.id) == col(ProjectMember.user_id))
+        .where(
+            ProjectMember.project_id == member.project_id,
+            ProjectMember.user_id != member.user_id,
+            ProjectMember.role == ProjectRole.ADMIN,
+            col(User.is_active).is_(True),
+            col(User.deleted_at).is_(None),
+        )
+        .limit(1)
+    ).first()
+
+    if other_admin is None:
+        raise LastProjectAdminError
 
 
 def validate_users(session: Session, ids: set[uuid.UUID]) -> None:
