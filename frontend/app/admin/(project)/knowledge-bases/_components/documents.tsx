@@ -333,6 +333,36 @@ export function KnowledgeDocuments({
         ref={scrollRef}
         className="flex flex-1 flex-col gap-3 md:min-h-0 md:overflow-y-auto"
       >
+        <div className="mb-3 flex min-h-9 flex-wrap items-center justify-between gap-3">
+          <SearchToolbar
+            label="搜索文档名称"
+            placeholder="搜索文档名称…"
+            maxLength={100}
+            value={search}
+            onSearch={(value) => {
+              if (value === search) void directoryQuery.refetch();
+              else update({ search: value, folder: "" });
+            }}
+          />
+
+          {!directoryLoadFailed && !directoryPending && statusCounts && (
+            <FilterGroup
+              label="状态筛选"
+              value={currentStatus ?? "all"}
+              onValueChange={(value) =>
+                update({ status: value === "all" ? "" : value })
+              }
+            >
+              <ToggleGroupItem value="all">全部</ToggleGroupItem>
+              {statusOptions.map((status) => (
+                <ToggleGroupItem key={status} value={status}>
+                  {documentStatusLabels[status]} {statusCounts[status]}
+                </ToggleGroupItem>
+              ))}
+            </FilterGroup>
+          )}
+        </div>
+
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Breadcrumb>
             <BreadcrumbList>
@@ -440,36 +470,6 @@ export function KnowledgeDocuments({
               disabled={actionsDisabled}
             />
           </div>
-        </div>
-
-        <div className="flex min-h-9 flex-wrap items-center justify-between gap-3">
-          <SearchToolbar
-            label="搜索文档名称"
-            placeholder="搜索文档名称…"
-            maxLength={100}
-            value={search}
-            onSearch={(value) => {
-              if (value === search) void directoryQuery.refetch();
-              else update({ search: value, folder: "" });
-            }}
-          />
-
-          {!directoryLoadFailed && !directoryPending && statusCounts && (
-            <FilterGroup
-              label="状态筛选"
-              value={currentStatus ?? "all"}
-              onValueChange={(value) =>
-                update({ status: value === "all" ? "" : value })
-              }
-            >
-              <ToggleGroupItem value="all">全部</ToggleGroupItem>
-              {statusOptions.map((status) => (
-                <ToggleGroupItem key={status} value={status}>
-                  {documentStatusLabels[status]} {statusCounts[status]}
-                </ToggleGroupItem>
-              ))}
-            </FilterGroup>
-          )}
         </div>
 
         {directoryLoadFailed ? (
