@@ -2,9 +2,11 @@
 
 import {
   type LucideIcon,
+  ArrowLeftIcon,
   BookOpenIcon,
   ChevronRightIcon,
   // FileTextIcon,
+  SettingsIcon,
   FolderKanbanIcon,
   // GlobeIcon,
   PlugIcon,
@@ -13,7 +15,12 @@ import {
   WaypointsIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams, useRouter, usePathname } from "next/navigation";
+import {
+  useParams,
+  useRouter,
+  usePathname,
+  useSelectedLayoutSegment,
+} from "next/navigation";
 
 import { SidebarAccountMenu } from "@/app/_components/sidebar-account-menu";
 import {
@@ -39,6 +46,7 @@ import {
   SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProjectPicker } from "./project-picker";
 import { useProjectState } from "./project-context";
@@ -214,6 +222,7 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
   const router = useRouter();
   const { project, isLoading: projectLoading, selectProject } = useProjectState();
   const { setOpenMobile } = useSidebar();
+  const isPlatform = useSelectedLayoutSegment() === "(platform)";
 
   return (
     <Sidebar>
@@ -221,7 +230,7 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg">
-              <Link href="/admin">
+              <Link href={isPlatform ? "/admin/manage" : "/admin"}>
                 <span className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <WaypointsIcon aria-hidden="true" className="size-4" />
                 </span>
@@ -235,31 +244,33 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <ProjectPicker
-          current={project}
-          onSelect={(next) => {
-            setOpenMobile(false);
-            if (next.id === project?.id) return;
+        {!isPlatform && (
+          <ProjectPicker
+            current={project}
+            onSelect={(next) => {
+              setOpenMobile(false);
+              if (next.id === project?.id) return;
 
-            if (!routeProjectId) {
-              selectProject(next);
-              return;
-            }
+              if (!routeProjectId) {
+                selectProject(next);
+                return;
+              }
 
-            let href = projectHref(next.id);
-            if (isPathActive(pathname, projectMembersHref(routeProjectId))) {
-              href = projectMembersHref(next.id);
-            } else if (
-              isPathActive(
-                pathname,
-                `/admin/projects/${encodeURIComponent(routeProjectId)}/mcp`,
-              )
-            ) {
-              href = `/admin/projects/${encodeURIComponent(next.id)}/mcp`;
-            }
-            router.push(href);
-          }}
-        />
+              let href = projectHref(next.id);
+              if (isPathActive(pathname, projectMembersHref(routeProjectId))) {
+                href = projectMembersHref(next.id);
+              } else if (
+                isPathActive(
+                  pathname,
+                  `/admin/projects/${encodeURIComponent(routeProjectId)}/mcp`,
+                )
+              ) {
+                href = `/admin/projects/${encodeURIComponent(next.id)}/mcp`;
+              }
+              router.push(href);
+            }}
+          />
+        )}
       </SidebarHeader>
 
       <SidebarContent
@@ -267,34 +278,32 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
           if ((event.target as HTMLElement).closest("a")) setOpenMobile(false);
         }}
       >
-        {user.is_superuser && (
-          <SidebarGroup>
-            <SidebarGroupLabel>平台管理</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <AdminNavigation
-                pathname={pathname}
-                items={[
-                  {
-                    type: "link",
-                    name: "项目管理",
-                    icon: FolderKanbanIcon,
-                    href: "/admin/manage",
-                  },
-                  {
-                    type: "link",
-                    name: "用户管理",
-                    icon: UsersIcon,
-                    href: "/admin/users",
-                  },
-                ]}
-              />
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
         <SidebarGroup>
-          <SidebarGroupLabel>项目资源</SidebarGroupLabel>
+          <SidebarGroupLabel>
+            {isPlatform ? "管理后台" : "项目资源"}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            {projectLoading && !user.is_superuser ? (
+            {isPlatform ? (
+              user.is_superuser && (
+                <AdminNavigation
+                  pathname={pathname}
+                  items={[
+                    {
+                      type: "link",
+                      name: "项目管理",
+                      icon: FolderKanbanIcon,
+                      href: "/admin/manage",
+                    },
+                    {
+                      type: "link",
+                      name: "用户管理",
+                      icon: UsersIcon,
+                      href: "/admin/users",
+                    },
+                  ]}
+                />
+              )
+            ) : projectLoading && !user.is_superuser ? (
               <SidebarMenu aria-label="加载项目菜单" aria-busy="true">
                 {[0, 1].map((item) => (
                   <SidebarMenuItem key={item}>
@@ -339,23 +348,39 @@ export function AdminSidebar({ user }: { user: UserPublic }) {
           if ((event.target as HTMLElement).closest("a")) setOpenMobile(false);
         }}
       >
-        <AdminNavigation
-          items={[
-            {
-              type: "link",
-              name: "MCP 接入",
-              icon: PlugIcon,
-              href: project
-                ? `/admin/projects/${project.id}/mcp`
-                : undefined,
-            },
-          ]}
-          pathname={pathname}
-        />
+        {!isPlatform && (
+          <AdminNavigation
+            pathname={pathname}
+            items={[
+              {
+                type: "link",
+                name: "MCP 接入",
+                icon: PlugIcon,
+                href: project ? `/admin/projects/${project.id}/mcp` : undefined,
+              },
+            ]}
+          />
+        )}
 
         <SidebarSeparator className="mx-0" />
         <SidebarMenu>
-          <SidebarAccountMenu user={user} />
+          <SidebarAccountMenu user={user}>
+            {isPlatform ? (
+              <DropdownMenuItem asChild>
+                <Link href={project ? projectHref(project.id) : "/admin"}>
+                  <ArrowLeftIcon aria-hidden="true" />
+                  返回项目
+                </Link>
+              </DropdownMenuItem>
+            ) : user.is_superuser ? (
+              <DropdownMenuItem asChild>
+                <Link href="/admin/manage">
+                  <SettingsIcon aria-hidden="true" />
+                  管理后台
+                </Link>
+              </DropdownMenuItem>
+            ) : null}
+          </SidebarAccountMenu>
         </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />

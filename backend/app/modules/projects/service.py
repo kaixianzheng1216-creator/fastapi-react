@@ -27,13 +27,17 @@ from app.modules.users.exceptions import InsufficientPrivilegesError, UserNotFou
 from app.modules.users.models import User
 
 
-def create_project(session: Session, body: ProjectCreate) -> Project:
-    validate_users(session, body.admin_ids)
+def create_project(session: Session, user: User, body: ProjectCreate) -> Project:
+    if not user.is_superuser and body.admin_ids - {user.id}:
+        raise InsufficientPrivilegesError
+
+    admin_ids = body.admin_ids if user.is_superuser else {user.id}
+    validate_users(session, admin_ids)
 
     project = Project(name=body.name, description=body.description)
     session.add(project)
 
-    for user_id in body.admin_ids:
+    for user_id in admin_ids:
         session.add(
             ProjectMember(
                 project_id=project.id, user_id=user_id, role=ProjectRole.ADMIN

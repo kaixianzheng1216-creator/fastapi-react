@@ -12,6 +12,7 @@ import {
   projectsUpdateProject,
   type ProjectPublic,
 } from "@/lib/client";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { getApiErrorMessage } from "@/lib/api-error";
 import {
   Dialog,
@@ -52,8 +53,9 @@ export function ProjectDialog({
   project?: ProjectPublic;
   onClose: () => void;
   onCloseAutoFocus?: (event: Event) => void;
-  onSaved: () => void;
+  onSaved: (project: ProjectPublic) => void;
 }) {
+  const user = useCurrentUser();
   const [admins, setAdmins] = useState<SelectedUser[]>([]);
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -67,20 +69,22 @@ export function ProjectDialog({
     mutationFn: async (value: z.infer<typeof schema>) => {
       const body = { name: value.name, description: value.description || null };
       if (project)
-        await projectsUpdateProject({
+        return projectsUpdateProject({
           path: { project_id: project.id },
           body,
           throwOnError: true,
         });
       else
-        await projectsCreateProject({
-          body: { ...body, admin_ids: admins.map((u) => u.user_id) },
+        return projectsCreateProject({
+          body: user?.is_superuser
+            ? { ...body, admin_ids: admins.map((u) => u.user_id) }
+            : body,
           throwOnError: true,
         });
     },
-    onSuccess: () => {
+    onSuccess: ({ data }) => {
       toast.success(project ? "项目已更新" : "项目已创建");
-      onSaved();
+      onSaved(data);
       onClose();
     },
     onError: (error) => toast.error(getApiErrorMessage(error, "项目保存失败")),
@@ -126,7 +130,7 @@ export function ProjectDialog({
               <FieldError errors={[form.formState.errors.description]} />
             </Field>
 
-            {!project && (
+            {!project && user?.is_superuser && (
               <Field>
                 <FieldLabel>项目管理员（可选）</FieldLabel>
                 <UserSelection

@@ -102,11 +102,11 @@ def accept_invitation(
 
 @router.post("", response_model=ProjectPublic, status_code=201)
 def create_project(
-    session: SessionDep, current_user: CurrentSuperuser, body: ProjectCreate
+    session: SessionDep, current_user: CurrentUser, body: ProjectCreate
 ) -> ProjectPublic:
     """创建项目并指定初始项目管理员。"""
     return service.project_public(
-        session, service.create_project(session, body), current_user
+        session, service.create_project(session, current_user, body), current_user
     )
 
 

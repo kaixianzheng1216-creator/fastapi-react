@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { CheckIcon, ChevronsUpDownIcon, PlusIcon } from "lucide-react";
 import { useDebouncedCallback } from "use-debounce";
 
 import { projectsReadProjects, type ProjectPublic } from "@/lib/client";
+import { ProjectDialog } from "@/app/admin/(platform)/manage/_components/project-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -29,6 +30,9 @@ export function ProjectPicker({
   onSelect: (project: ProjectPublic) => void;
   disabled?: boolean;
 }) {
+  const client = useQueryClient();
+  const trigger = useRef<HTMLButtonElement>(null);
+  const [creating, setCreating] = useState(false);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [search, setSearch] = useState("");
@@ -75,74 +79,104 @@ export function ProjectPicker({
   }
 
   return (
-    <Popover open={open} onOpenChange={changeOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full justify-between"
-          role="combobox"
-          aria-expanded={open}
-          aria-label="选择项目"
-          disabled={disabled}
-        >
-          <span className="truncate">{current?.name ?? "选择项目"}</span>
-          <ChevronsUpDownIcon data-icon="inline-end" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-72 p-0">
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder="搜索项目…"
-            value={input}
-            onValueChange={changeInput}
-            onCompositionStart={() => {
-              composing.current = true;
-              searchLater.cancel();
-            }}
-            onCompositionEnd={(event) => {
-              composing.current = false;
-              searchLater(event.currentTarget.value);
-            }}
-          />
-          <CommandList>
-            <CommandGroup>
-              {items.map((project) => (
-                <CommandItem
-                  key={project.id}
-                  value={project.id}
-                  onSelect={() => {
-                    onSelect(project);
-                    changeOpen(false);
-                  }}
-                >
-                  <span className="flex-1 truncate">{project.name}</span>
-                  {current?.id === project.id && <CheckIcon />}
-                </CommandItem>
-              ))}
-              {query.isPending ? (
-                <CommandItem disabled>正在加载…</CommandItem>
-              ) : query.isError ? (
-                <CommandItem onSelect={() => void query.refetch()}>
-                  加载失败，点击重试
-                </CommandItem>
-              ) : (
-                !items.length && (
-                  <CommandItem disabled>没有匹配的项目</CommandItem>
-                )
-              )}
-              {query.hasNextPage && (
-                <CommandItem
-                  disabled={query.isFetchingNextPage}
-                  onSelect={() => void query.fetchNextPage()}
-                >
-                  加载更多
-                </CommandItem>
-              )}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+    <>
+      <Popover open={open} onOpenChange={changeOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            ref={trigger}
+            type="button"
+            variant="outline"
+            className="w-full justify-between"
+            role="combobox"
+            aria-expanded={open}
+            aria-label="选择项目"
+            disabled={disabled}
+          >
+            <span className="truncate">{current?.name ?? "选择项目"}</span>
+            <ChevronsUpDownIcon data-icon="inline-end" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-72 p-0">
+          <Command shouldFilter={false}>
+            <CommandInput
+              placeholder="搜索项目…"
+              value={input}
+              onValueChange={changeInput}
+              onCompositionStart={() => {
+                composing.current = true;
+                searchLater.cancel();
+              }}
+              onCompositionEnd={(event) => {
+                composing.current = false;
+                searchLater(event.currentTarget.value);
+              }}
+            />
+            <CommandList>
+              <CommandGroup>
+                {items.map((project) => (
+                  <CommandItem
+                    key={project.id}
+                    value={project.id}
+                    onSelect={() => {
+                      onSelect(project);
+                      changeOpen(false);
+                    }}
+                  >
+                    <span className="flex-1 truncate">{project.name}</span>
+                    {current?.id === project.id && <CheckIcon />}
+                  </CommandItem>
+                ))}
+                {query.isPending ? (
+                  <CommandItem disabled>正在加载…</CommandItem>
+                ) : query.isError ? (
+                  <CommandItem onSelect={() => void query.refetch()}>
+                    加载失败，点击重试
+                  </CommandItem>
+                ) : (
+                  !items.length && (
+                    <CommandItem disabled>没有匹配的项目</CommandItem>
+                  )
+                )}
+                {query.hasNextPage && (
+                  <CommandItem
+                    disabled={query.isFetchingNextPage}
+                    onSelect={() => void query.fetchNextPage()}
+                  >
+                    加载更多
+                  </CommandItem>
+                )}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+          <div className="border-t p-1">
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => {
+                changeOpen(false);
+                setCreating(true);
+              }}
+            >
+              <PlusIcon aria-hidden="true" />
+              创建项目
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      {creating && (
+        <ProjectDialog
+          onClose={() => setCreating(false)}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            trigger.current?.focus();
+          }}
+          onSaved={(project) => {
+            void client.invalidateQueries({ queryKey: ["projects"] });
+            onSelect(project);
+          }}
+        />
+      )}
+    </>
   );
 }
