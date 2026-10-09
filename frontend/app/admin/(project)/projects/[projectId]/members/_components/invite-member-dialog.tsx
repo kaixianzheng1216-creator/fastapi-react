@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { CopyIcon, LinkIcon } from "lucide-react";
+import { CopyIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { FormDialogFooter } from "@/components/common/form-dialog-footer";
@@ -70,7 +70,6 @@ export function InviteMemberDialog({
     >
       <DialogTrigger asChild>
         <Button variant="outline">
-          <LinkIcon data-icon="inline-start" aria-hidden="true" />
           邀请成员
         </Button>
       </DialogTrigger>

@@ -5,7 +5,6 @@ import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
 import { CollectionContent } from "@/components/common/collection-content";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { PlusIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useRef, useState } from "react";
@@ -32,7 +31,6 @@ import {
   getKnowledgeDocumentHref,
 } from "@/app/admin/(project)/knowledge-bases/_lib/navigation";
 import { FilterGroup } from "@/app/admin/_components/filter-group";
-import { FolderActions } from "@/components/common/folder-actions";
 import { LoadError } from "@/components/common/load-error";
 import { PagePagination } from "@/components/common/page-pagination";
 import { SearchToolbar } from "@/components/common/search-toolbar";
@@ -45,7 +43,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { Card, CardFooter } from "@/components/ui/card";
 import { ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useListParams } from "@/hooks/use-list-params";
 import {
@@ -116,7 +113,6 @@ export function KnowledgeDocuments({
   const folders = foldersQuery.data?.data ?? EMPTY_FOLDERS;
   const folderById = new Map(folders.map((folder) => [folder.id, folder]));
   const currentPath = getFolderAncestors(folderById, currentFolderId);
-  const currentFolder = folderById.get(currentFolderId ?? "");
   const folderPaths = new Map<string, string>();
 
   if (currentStatus || search) {
@@ -290,25 +286,8 @@ export function KnowledgeDocuments({
       }
 
       case "deleted": {
-        const deletedCurrentFolder = change.entries.find(
-          (entry) => entry.type === "folder" && entry.id === currentFolderId,
-        );
-
-        if (deletedCurrentFolder?.type === "folder") {
-          router.replace(
-            getKnowledgeDirectoryHref(
-              projectId,
-              knowledgeBaseId,
-              1,
-              deletedCurrentFolder.parent_id ?? undefined,
-              currentStatus,
-            ),
-          );
-        } else {
-          navigateAfterRemovingEntries(change.entries.length);
-        }
-
-        setDirectorySelection({ scope: selectionScope, keys: new Set() });
+        navigateAfterRemovingEntries(change.entries.length);
+        selectEntries(new Set());
 
         invalidateFolders();
         break;
@@ -333,10 +312,52 @@ export function KnowledgeDocuments({
         ref={scrollRef}
         className="flex flex-1 flex-col gap-3 md:min-h-0 md:overflow-y-auto"
       >
-        <div className="mb-3 flex min-h-9 flex-wrap items-center justify-between gap-3">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <KnowledgeDocumentImport
+            key={currentFolderId ?? "root"}
+            knowledgeBaseId={knowledgeBaseId}
+            folderId={currentFolderId}
+            onDocumentsChanged={invalidateDocuments}
+            disabled={actionsDisabled}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={actionsDisabled}
+            onClick={() => actions.editFolder(null)}
+            onFocus={actions.rememberActionTrigger}
+            onPointerDown={actions.rememberActionTrigger}
+          >
+            新建文件夹
+          </Button>
+          <DirectoryBatchActions
+            entries={selectedEntries}
+            actions={actions}
+            disabled={actionsDisabled || directoryQuery.isPlaceholderData}
+          />
+          {selectedEntries.length > 0 && (
+            <>
+              <span className="text-sm text-muted-foreground" role="status">
+                已选 {selectedEntries.length} 项
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={actions.isActionPending}
+                onClick={() => {
+                  selectEntries(new Set());
+                  documentsRef.current?.focus({ preventScroll: true });
+                }}
+              >
+                取消选择
+              </Button>
+            </>
+          )}
+        </div>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <SearchToolbar
-            label="搜索文档名称"
-            placeholder="搜索文档名称…"
+            label="按文档名称查找"
+            placeholder="按文档名称查找…"
             maxLength={100}
             value={search}
             onSearch={(value) => {
@@ -363,114 +384,69 @@ export function KnowledgeDocuments({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                {currentFolderId || currentStatus ? (
-                  <BreadcrumbLink asChild>
-                    <Link
-                      href={getKnowledgeDirectoryHref(
-                        projectId,
-                        knowledgeBaseId,
-                      )}
-                    >
-                      全部文档
-                    </Link>
-                  </BreadcrumbLink>
-                ) : (
-                  <BreadcrumbPage>全部文档</BreadcrumbPage>
-                )}
-              </BreadcrumbItem>
-              {currentFolderId && !folderById.has(currentFolderId) && (
-                <>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>
-                      {foldersQuery.isPending ? "加载目录中…" : "目录不可用"}
-                    </BreadcrumbPage>
-                  </BreadcrumbItem>
-                </>
-              )}
-              {currentPath.map((folder, index) => (
-                <Fragment key={folder.id}>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    {index === currentPath.length - 1 && !currentStatus ? (
-                      <BreadcrumbPage>{folder.name}</BreadcrumbPage>
-                    ) : (
-                      <BreadcrumbLink asChild>
-                        <Link
-                          href={getKnowledgeDirectoryHref(
-                            projectId,
-                            knowledgeBaseId,
-                            1,
-                            folder.id,
-                          )}
-                        >
-                          {folder.name}
-                        </Link>
-                      </BreadcrumbLink>
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              {currentFolderId || currentStatus ? (
+                <BreadcrumbLink asChild>
+                  <Link
+                    href={getKnowledgeDirectoryHref(
+                      projectId,
+                      knowledgeBaseId,
                     )}
-                  </BreadcrumbItem>
-                </Fragment>
-              ))}
-              {currentStatus && (
-                <>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>
-                      {documentStatusLabels[currentStatus]}
-                    </BreadcrumbPage>
-                  </BreadcrumbItem>
-                </>
+                  >
+                    根目录
+                  </Link>
+                </BreadcrumbLink>
+              ) : (
+                <BreadcrumbPage>根目录</BreadcrumbPage>
               )}
-            </BreadcrumbList>
-          </Breadcrumb>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <fieldset
-              disabled={actionsDisabled}
-              className="flex flex-wrap items-center gap-2"
-            >
-              {currentFolder ? (
-                <FolderActions
-                  name={currentFolder.name}
-                  variant="outline"
-                  disabled={actions.isActionPending}
-                  onTriggerInteraction={actions.rememberActionTrigger}
-                  onMove={() =>
-                    actions.openMoveEntry({ ...currentFolder, type: "folder" })
-                  }
-                  onRename={() => actions.editFolder(currentFolder)}
-                  onDelete={() =>
-                    actions.openDeleteEntry({
-                      ...currentFolder,
-                      type: "folder",
-                    })
-                  }
-                />
-              ) : null}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => actions.editFolder(null)}
-                onFocus={actions.rememberActionTrigger}
-                onPointerDown={actions.rememberActionTrigger}
-              >
-                <PlusIcon data-icon="inline-start" aria-hidden="true" />
-                新建文件夹
-              </Button>
-            </fieldset>
-            <KnowledgeDocumentImport
-              key={currentFolderId ?? "root"}
-              knowledgeBaseId={knowledgeBaseId}
-              folderId={currentFolderId}
-              onDocumentsChanged={invalidateDocuments}
-              disabled={actionsDisabled}
-            />
-          </div>
-        </div>
+            </BreadcrumbItem>
+            {currentFolderId && !folderById.has(currentFolderId) && (
+              <>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>
+                    {foldersQuery.isPending ? "加载目录中…" : "目录不可用"}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </>
+            )}
+            {currentPath.map((folder, index) => (
+              <Fragment key={folder.id}>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  {index === currentPath.length - 1 && !currentStatus ? (
+                    <BreadcrumbPage>{folder.name}</BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink asChild>
+                      <Link
+                        href={getKnowledgeDirectoryHref(
+                          projectId,
+                          knowledgeBaseId,
+                          1,
+                          folder.id,
+                        )}
+                      >
+                        {folder.name}
+                      </Link>
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+              </Fragment>
+            ))}
+            {currentStatus && (
+              <>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>
+                    {documentStatusLabels[currentStatus]}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </>
+            )}
+          </BreadcrumbList>
+        </Breadcrumb>
 
         {directoryLoadFailed ? (
           <LoadError
@@ -523,36 +499,6 @@ export function KnowledgeDocuments({
           </CollectionContent>
         )}
       </section>
-      {selectedEntries.length > 0 && (
-        <div className="sticky bottom-4 z-10 max-w-full shrink-0 self-center">
-          <Card className="rounded-md py-2" role="region" aria-label="批量操作">
-            <CardFooter className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 px-3 sm:grid-cols-[auto_1fr_auto]">
-              <span className="whitespace-nowrap text-sm" role="status">
-                已选 {selectedEntries.length} 项
-              </span>
-              <div className="col-span-2 row-start-2 flex flex-wrap items-center gap-1 sm:col-span-1 sm:col-start-2 sm:row-start-1">
-                <DirectoryBatchActions
-                  entries={selectedEntries}
-                  actions={actions}
-                  disabled={actionsDisabled || directoryQuery.isPlaceholderData}
-                />
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="col-start-2 row-start-1 sm:col-start-3"
-                aria-label="取消选择"
-                disabled={actions.isActionPending}
-                onClick={() => selectEntries(new Set())}
-              >
-                <XIcon aria-hidden="true" />
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-      )}
-
       <PagePagination
         className="shrink-0"
         ariaLabel="知识库目录分页"

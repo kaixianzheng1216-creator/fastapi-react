@@ -6,7 +6,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { MoreHorizontalIcon, PlusIcon } from "lucide-react";
+import { MoreHorizontalIcon } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -102,25 +102,21 @@ export function ProjectManager() {
 
   return (
     <>
-      <AppHeader
-        title="项目管理"
-        actions={
-          <Button
-            ref={createButtonRef}
-            onPointerDown={rememberActionTrigger}
-            onFocus={rememberActionTrigger}
-            onClick={() => setEditor("create")}
-          >
-            <PlusIcon data-icon="inline-start" />
-            创建项目
-          </Button>
-        }
-      />
+      <AppHeader title="项目管理" />
       <main
         ref={scrollRef}
         className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6"
       >
         <section className="mx-auto flex min-h-full w-full max-w-6xl flex-col gap-6">
+          <Button
+            className="self-start"
+            ref={createButtonRef}
+            onPointerDown={rememberActionTrigger}
+            onFocus={rememberActionTrigger}
+            onClick={() => setEditor("create")}
+          >
+            创建项目
+          </Button>
           <SearchToolbar
             label="搜索项目名称或描述…"
             value={search}

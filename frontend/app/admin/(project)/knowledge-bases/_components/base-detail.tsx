@@ -107,9 +107,9 @@ export function KnowledgeBaseDetail({
             )}
             onValueChange={changeView}
           >
-            <TabsList className="shrink-0">
-              <TabsTrigger value="documents">文档</TabsTrigger>
-              <TabsTrigger value="search">搜索</TabsTrigger>
+            <TabsList variant="line" className="shrink-0">
+              <TabsTrigger value="documents">文档管理</TabsTrigger>
+              <TabsTrigger value="search">内容检索</TabsTrigger>
             </TabsList>
 
             <TabsContent

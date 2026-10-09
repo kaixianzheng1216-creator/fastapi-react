@@ -6,7 +6,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { MoreHorizontalIcon, PlusIcon } from "lucide-react";
+import { MoreHorizontalIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -145,31 +145,26 @@ export function MemberManager() {
 
   return (
     <>
-      <AppHeader
-        title="项目成员"
-        actions={
-          canManage && (
-            <div className="flex gap-2">
-              <InviteMemberDialog key={project.id} project={project} />
-              <Button
-                ref={createButtonRef}
-                onPointerDown={rememberActionTrigger}
-                onFocus={rememberActionTrigger}
-                onClick={() => setAdding(true)}
-              >
-                <PlusIcon data-icon="inline-start" />
-                添加成员
-              </Button>
-            </div>
-          )
-        }
-      />
+      <AppHeader title="项目成员" />
 
       <main
         ref={scrollRef}
         className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6"
       >
         <section className="mx-auto flex min-h-full w-full max-w-6xl flex-col gap-6">
+          {canManage && (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                ref={createButtonRef}
+                onPointerDown={rememberActionTrigger}
+                onFocus={rememberActionTrigger}
+                onClick={() => setAdding(true)}
+              >
+                添加成员
+              </Button>
+              <InviteMemberDialog key={project.id} project={project} />
+            </div>
+          )}
           <div className="flex flex-wrap items-end justify-between gap-3">
             <SearchToolbar
               value={search}

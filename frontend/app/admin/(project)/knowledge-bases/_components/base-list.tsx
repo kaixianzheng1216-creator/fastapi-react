@@ -12,7 +12,6 @@ import {
   ListIcon,
   MoreHorizontalIcon,
   PencilIcon,
-  PlusIcon,
   PowerIcon,
   PowerOffIcon,
   TrashIcon,
@@ -230,27 +229,22 @@ export function KnowledgeBaseManager() {
 
   return (
     <>
-      <AppHeader
-        title="知识库"
-        actions={
-          <Button
-            ref={createButtonRef}
-            onPointerDown={rememberActionTrigger}
-            onFocus={rememberActionTrigger}
-            aria-label="创建知识库"
-            onClick={() => setCreateOpen(true)}
-          >
-            <PlusIcon data-icon="inline-start" aria-hidden="true" />
-            <span className="hidden sm:inline">创建知识库</span>
-          </Button>
-        }
-      />
+      <AppHeader title="知识库" />
 
       <div
         ref={scrollRef}
         className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6"
       >
         <section className="mx-auto flex min-h-full max-w-6xl flex-col gap-6">
+          <Button
+            className="self-start"
+            ref={createButtonRef}
+            onPointerDown={rememberActionTrigger}
+            onFocus={rememberActionTrigger}
+            onClick={() => setCreateOpen(true)}
+          >
+            创建知识库
+          </Button>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <SearchToolbar
               value={search}

@@ -2,6 +2,7 @@
 
 import { useIsMutating, useMutation } from "@tanstack/react-query";
 import {
+  ChevronDownIcon,
   FileTextIcon,
   UploadIcon,
   DownloadIcon,
@@ -31,6 +32,7 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getApiErrorMessage } from "@/lib/api-error";
@@ -301,86 +303,64 @@ export function DirectoryBatchActions({
     canRunDocumentAction(entry, "retry"),
   );
   const busy = disabled || actions.isActionPending;
-  const downloadingOriginal =
-    mutation.isPending && mutation.variables.action === "original";
-  const downloadingMarkdown =
-    mutation.isPending && mutation.variables.action === "markdown";
-  const retrying = mutation.isPending && mutation.variables.action === "retry";
-
-  function run(action: DocumentBatchAction) {
-    mutation.mutate({ entries, action });
-  }
+  const noSelection = entries.length === 0;
 
   return (
-    <>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        disabled={busy || !canDownloadOriginal}
-        aria-busy={downloadingOriginal}
-        onClick={() => run("original")}
-      >
-        <ButtonContent loading={downloadingOriginal} icon={DownloadIcon}>
-          批量下载原文件
-        </ButtonContent>
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        disabled={busy || !canDownloadMarkdown}
-        aria-busy={downloadingMarkdown}
-        onClick={() => run("markdown")}
-      >
-        <ButtonContent loading={downloadingMarkdown} icon={FileTextIcon}>
-          批量下载 Markdown
-        </ButtonContent>
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        disabled={busy}
-        onFocus={actions.rememberActionTrigger}
-        onPointerDown={actions.rememberActionTrigger}
-        onClick={() => actions.openMoveEntries(entries)}
-      >
-        <FolderInputIcon data-icon="inline-start" />
-        批量移动
-      </Button>
-      {canRetry && (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <Button
-          type="button"
-          variant="ghost"
+          variant="outline"
           size="sm"
           disabled={busy}
-          aria-busy={retrying}
-          onClick={() => run("retry")}
+          aria-busy={actions.isActionPending}
+          onFocus={actions.rememberActionTrigger}
+          onPointerDown={actions.rememberActionTrigger}
         >
-          <ButtonContent loading={retrying} icon={RefreshCwIcon}>
-            {retrying ? "提交中…" : "批量重试"}
+          <ButtonContent loading={actions.isActionPending}>
+            更多操作
           </ButtonContent>
+          <ChevronDownIcon data-icon="inline-end" aria-hidden="true" />
         </Button>
-      )}
-      <Button
-        type="button"
-        variant="destructive-ghost"
-        size="sm"
-        disabled={busy}
-        aria-busy={actions.deleteEntriesMutation.isPending}
-        onFocus={actions.rememberActionTrigger}
-        onPointerDown={actions.rememberActionTrigger}
-        onClick={() => actions.openDeleteEntries(entries)}
-      >
-        <ButtonContent
-          loading={actions.deleteEntriesMutation.isPending}
-          icon={TrashIcon}
-        >
-          批量删除
-        </ButtonContent>
-      </Button>
-    </>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            disabled={busy || !canDownloadOriginal}
+            onSelect={() => mutation.mutate({ entries, action: "original" })}
+          >
+            下载原文件
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={busy || !canDownloadMarkdown}
+            onSelect={() => mutation.mutate({ entries, action: "markdown" })}
+          >
+            下载 Markdown
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={busy || noSelection}
+            onSelect={() => actions.openMoveEntries(entries)}
+          >
+            移动到…
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={busy || !canRetry}
+            onSelect={() => mutation.mutate({ entries, action: "retry" })}
+          >
+            重试处理
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            variant="destructive"
+            disabled={busy || noSelection}
+            onSelect={() => actions.openDeleteEntries(entries)}
+          >
+            删除选中项
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -572,7 +552,7 @@ export function DirectoryActionDialogs({
       >
         {deleteTarget?.label
           ? `确定删除“${deleteTarget.label}”吗？`
-          : "确定删除选中的项目吗？"}
+          : `确定删除选中的 ${deleteTargetCount} 项吗？`}
         {deleteTarget &&
         deleteTarget.entries.some((entry) => entry.type === "folder")
           ? "文件夹内的子文件夹和文档也会删除。"

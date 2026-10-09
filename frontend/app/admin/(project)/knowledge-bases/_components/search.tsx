@@ -80,7 +80,7 @@ export function KnowledgeSearch({
   return (
     <>
       <SearchToolbar
-        label="搜索知识库"
+        label="检索文档内容"
         placeholder="输入关键词或问题…"
         className="shrink-0"
         onSearch={submitSearch}
@@ -125,7 +125,7 @@ export function KnowledgeSearch({
               <EmptyDescription>
                 {searchQuery
                   ? "试试其他关键词，或换一种方式描述问题。"
-                  : "输入关键词或问题，按 Enter 搜索相关内容。"}
+                  : "输入关键词或问题，按 Enter 在当前知识库全部已完成文档中检索相关内容。"}
               </EmptyDescription>
             </EmptyHeader>
           </Empty>

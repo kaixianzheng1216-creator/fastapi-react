@@ -228,7 +228,6 @@ export function KnowledgeDocumentImport({
     >
       <DialogTrigger asChild>
         <Button size="sm" disabled={disabled}>
-          <UploadIcon data-icon="inline-start" aria-hidden="true" />
           添加文档
         </Button>
       </DialogTrigger>
