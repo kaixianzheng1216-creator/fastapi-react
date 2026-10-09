@@ -4,9 +4,13 @@ import { SearchIcon } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 
-import { Button } from "@/components/ui/button";
-import { ButtonContent } from "@/components/common/button-content";
-import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
 type SearchToolbarProps = {
@@ -53,10 +57,7 @@ export function SearchToolbar({
     <form
       role="search"
       aria-label={label}
-      className={cn(
-        "flex w-full min-w-0 items-center gap-2 sm:w-auto",
-        className,
-      )}
+      className={cn("w-full min-w-0 sm:w-72", className)}
       onSubmit={(event) => {
         event.preventDefault();
         if (isPending || composing.current) {
@@ -71,39 +72,41 @@ export function SearchToolbar({
         {label}
       </label>
 
-      <Input
-        id={generatedId}
-        name="search"
-        type="search"
-        autoComplete="off"
-        spellCheck={false}
-        className="min-w-0 flex-1 sm:w-64 sm:flex-none"
-        placeholder={placeholder}
-        value={input}
-        onChange={(event) => {
-          setInput(event.target.value);
-          if (searchOnChange && !composing.current) search(event.target.value);
-        }}
-        onCompositionStart={() => {
-          composing.current = true;
-          search.cancel();
-        }}
-        onCompositionEnd={(event) => {
-          composing.current = false;
-          if (searchOnChange) search(event.currentTarget.value);
-        }}
-        maxLength={maxLength}
-      />
-      <Button
-        type="submit"
-        variant="outline"
-        disabled={isPending}
-        aria-busy={isPending}
-      >
-        <ButtonContent loading={isPending} icon={SearchIcon}>
-          搜索
-        </ButtonContent>
-      </Button>
+      <InputGroup>
+        <InputGroupInput
+          id={generatedId}
+          name="search"
+          type="search"
+          autoComplete="off"
+          spellCheck={false}
+          placeholder={placeholder}
+          value={input}
+          onChange={(event) => {
+            setInput(event.target.value);
+            if (searchOnChange && !composing.current) search(event.target.value);
+          }}
+          onCompositionStart={() => {
+            composing.current = true;
+            search.cancel();
+          }}
+          onCompositionEnd={(event) => {
+            composing.current = false;
+            if (searchOnChange) search(event.currentTarget.value);
+          }}
+          maxLength={maxLength}
+        />
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton
+            type="submit"
+            size="icon-sm"
+            disabled={isPending}
+            aria-label="搜索"
+            aria-busy={isPending}
+          >
+            {isPending ? <Spinner /> : <SearchIcon aria-hidden="true" />}
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
     </form>
   );
 }
