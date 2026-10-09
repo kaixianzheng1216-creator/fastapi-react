@@ -1,6 +1,6 @@
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import RedirectResponse
 
 from app.api.dependencies import SessionDep
@@ -11,6 +11,7 @@ from app.modules.auth.dependencies import (
     SessionStoreDep,
     require_trusted_origin,
 )
+from app.modules.auth.dev_login import create_dev_session
 from app.modules.auth.schemas import TicketExchangeRequest
 from app.modules.auth.service import login_with_ticket, logout_session
 from app.modules.auth.session import SESSION_COOKIE
@@ -19,6 +20,43 @@ from app.modules.users.schemas import UserPublic
 router = APIRouter(
     prefix="/auth", tags=["auth"], dependencies=[Depends(require_trusted_origin)]
 )
+
+
+@router.get("/dev-login", include_in_schema=False)
+def dev_login_available(response: Response) -> dict[str, bool]:
+    response.headers["Cache-Control"] = "no-store"
+
+    if not settings.DEV_LOGIN_ENABLED:
+        raise HTTPException(status_code=404)
+
+    return {"enabled": True}
+
+
+@router.post("/dev-login", response_model=UserPublic, include_in_schema=False)
+def dev_login(
+    response: Response,
+    session: SessionDep,
+    store: SessionStoreDep,
+    session_id: SessionCookieDep,
+) -> UserPublic:
+    """本地开发时登录为固定普通用户。"""
+    if not settings.DEV_LOGIN_ENABLED:
+        raise HTTPException(status_code=404)
+
+    user, new_id, ttl = create_dev_session(session, store, session_id)
+
+    response.set_cookie(
+        SESSION_COOKIE,
+        new_id,
+        max_age=ttl,
+        httponly=True,
+        samesite="lax",
+        path="/",
+    )
+
+    response.headers["Cache-Control"] = "no-store"
+
+    return UserPublic.model_validate(user)
 
 
 @router.get("/dingtalk")

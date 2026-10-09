@@ -36,6 +36,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
     ENVIRONMENT: Literal["local", "production"] = "local"
+    DEV_LOGIN_ENABLED: bool = False
 
     BACKEND_CORS_ORIGINS: Annotated[
         list[AnyUrl] | str, BeforeValidator(parse_cors)
@@ -107,6 +108,12 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _validate_configuration(self) -> Self:
+        if self.DEV_LOGIN_ENABLED and (
+            self.ENVIRONMENT != "local"
+            or self.APP_ORIGIN.host not in {"localhost", "127.0.0.1"}
+        ):
+            raise ValueError("本地测试登录只能用于 localhost 开发环境")
+
         self._check_default_secret("POSTGRES_PASSWORD", self.POSTGRES_PASSWORD)
 
         self._check_default_secret(

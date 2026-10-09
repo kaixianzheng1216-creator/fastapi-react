@@ -2,7 +2,9 @@ import time
 
 from sqlmodel import Session
 
+from app.core.config import settings
 from app.modules.auth.client import AuthServerClient
+from app.modules.auth.dev_login import is_dev_session
 from app.modules.auth.exceptions import (
     AuthUnavailableError,
     InactiveSessionError,
@@ -56,21 +58,26 @@ def get_session_user(
     if login is None:
         raise InvalidSessionError
 
-    identity = auth.verify(login.access_token)
+    if is_dev_session(login):
+        if not settings.DEV_LOGIN_ENABLED or login.expires_at <= int(time.time()):
+            store.delete(session_id)
+            raise InvalidSessionError
+    else:
+        identity = auth.verify(login.access_token)
 
-    expired = identity.expires_at <= int(time.time())
+        expired = identity.expires_at <= int(time.time())
 
-    if identity.user_id != login.auth_user_id or expired:
-        store.delete(session_id)
+        if identity.user_id != login.auth_user_id or expired:
+            store.delete(session_id)
 
-        raise InvalidSessionError
+            raise InvalidSessionError
 
     user = session.get(User, login.user_id)
 
     if (
         user is None
         or user.deleted_at is not None
-        or user.auth_user_id != identity.user_id
+        or user.auth_user_id != login.auth_user_id
     ):
         store.delete(session_id)
 
@@ -93,6 +100,9 @@ def logout_session(
     store.delete(session_id)
 
     if login is None:
+        return
+
+    if is_dev_session(login):
         return
 
     try:
