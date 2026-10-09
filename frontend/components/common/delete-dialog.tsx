@@ -18,6 +18,7 @@ type DeleteDialogProps = {
   open: boolean;
   pending: boolean;
   title: string;
+  confirmLabel?: string;
   children: ReactNode;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
@@ -28,6 +29,7 @@ export function DeleteDialog({
   open,
   pending,
   title,
+  confirmLabel = "删除",
   children,
   onOpenChange,
   onConfirm,
@@ -56,7 +58,7 @@ export function DeleteDialog({
               onConfirm();
             }}
           >
-            <ButtonContent loading={pending}>删除</ButtonContent>
+            <ButtonContent loading={pending}>{confirmLabel}</ButtonContent>
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

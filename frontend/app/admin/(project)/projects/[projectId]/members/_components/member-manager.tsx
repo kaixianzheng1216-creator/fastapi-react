@@ -55,6 +55,7 @@ import { getPaginationHref, parsePage } from "@/lib/pagination";
 import { getQueryViewState } from "@/lib/query-view-state";
 
 import { AddMembersDialog } from "./add-members-dialog";
+import { InviteMemberDialog } from "./invite-member-dialog";
 
 export function MemberManager() {
   const createButtonRef = useRef<HTMLButtonElement>(null);
@@ -79,6 +80,9 @@ export function MemberManager() {
   const [adding, setAdding] = useState(false);
   const [deleting, setDeleting] = useState<MemberPublic>();
 
+  const isLeaving = deleting?.user_id === user.id;
+  const removeLabel = isLeaving ? "退出项目" : "移出项目";
+
   const query = useQuery({
     queryKey: ["members", project.id, search, role, page],
     meta: { handlesInitialError: true },
@@ -93,6 +97,7 @@ export function MemberManager() {
       ).data,
     placeholderData: keepPreviousData,
   });
+
   const viewState = getQueryViewState(query, query.data?.data.length === 0);
 
   function refresh() {
@@ -101,28 +106,36 @@ export function MemberManager() {
   }
 
   const remove = useMutation({
-    mutationFn: async (id: string) => {
-      await projectsRemoveMember({
+    mutationFn: (id: string) =>
+      projectsRemoveMember({
         path: { project_id: project.id, user_id: id },
         throwOnError: true,
-      });
-    },
-    onSuccess: () => {
+      }),
+    onSuccess: (_, id) => {
+      if (id === user.id) {
+        localStorage.removeItem(`last-project:${user.id}`);
+        window.location.replace(user.is_superuser ? "/admin/manage" : "/admin");
+
+        return;
+      }
+
       setDeleting(undefined);
       refresh();
       toast.success("成员已移出");
     },
-    onError: (error) => toast.error(getApiErrorMessage(error, "移出失败")),
+    onError: (error, id) =>
+      toast.error(
+        getApiErrorMessage(error, id === user.id ? "退出项目失败" : "移出失败"),
+      ),
   });
 
   const changeRole = useMutation({
-    mutationFn: async ({ id, role }: { id: string; role: ProjectRole }) => {
-      await projectsUpdateMember({
+    mutationFn: ({ id, role }: { id: string; role: ProjectRole }) =>
+      projectsUpdateMember({
         path: { project_id: project.id, user_id: id },
         body: { role },
         throwOnError: true,
-      });
-    },
+      }),
     onSuccess: () => {
       refresh();
       toast.success("角色已更新");
@@ -136,18 +149,22 @@ export function MemberManager() {
         title="项目成员"
         actions={
           canManage && (
-            <Button
-              ref={createButtonRef}
-              onPointerDown={rememberActionTrigger}
-              onFocus={rememberActionTrigger}
-              onClick={() => setAdding(true)}
-            >
-              <PlusIcon data-icon="inline-start" />
-              添加成员
-            </Button>
+            <div className="flex gap-2">
+              <InviteMemberDialog key={project.id} project={project} />
+              <Button
+                ref={createButtonRef}
+                onPointerDown={rememberActionTrigger}
+                onFocus={rememberActionTrigger}
+                onClick={() => setAdding(true)}
+              >
+                <PlusIcon data-icon="inline-start" />
+                添加成员
+              </Button>
+            </div>
           )
         }
       />
+
       <main
         ref={scrollRef}
         className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6"
@@ -176,6 +193,7 @@ export function MemberManager() {
               <ToggleGroupItem value="member">普通成员</ToggleGroupItem>
             </FilterGroup>
           </div>
+
           {viewState === "error" ? (
             <LoadError
               title="成员加载失败"
@@ -193,22 +211,23 @@ export function MemberManager() {
               >
                 <TableHeader>
                   <TableRow>
-                    <TableHead>账号 / 姓名</TableHead>
+                    <TableHead>姓名 / 账号</TableHead>
                     <TableHead className="w-36">项目角色</TableHead>
-                    {canManage && <TableHead className="w-16">操作</TableHead>}
+                    <TableHead className="w-16">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 {viewState === "loading" ? (
-                  <TableSkeletonBody columns={canManage ? 3 : 2} />
+                  <TableSkeletonBody columns={3} />
                 ) : (
                   <TableBody>
                     {query.data?.data.length === 0 && (
-                      <TableEmptyRow colSpan={canManage ? 3 : 2}>
+                      <TableEmptyRow colSpan={3}>
                         {search || role ? "未找到符合条件的成员" : "暂无成员"}
                       </TableEmptyRow>
                     )}
 
                     {query.data?.data.map((member) => {
+                      const isSelf = member.user_id === user.id;
                       const isUpdating =
                         changeRole.isPending &&
                         changeRole.variables?.id === member.user_id;
@@ -217,11 +236,16 @@ export function MemberManager() {
                         <TableRow key={member.user_id}>
                           <TableCell>
                             <div className="truncate font-medium">
-                              {member.username}
+                              {member.full_name || member.username}
                             </div>
-                            <div className="truncate text-muted-foreground">
-                              {member.full_name || "未填写姓名"}
-                            </div>
+                            {member.full_name && (
+                              <div
+                                className="max-w-48 truncate text-xs text-muted-foreground"
+                                title={member.username}
+                              >
+                                {member.username}
+                              </div>
+                            )}
                           </TableCell>
                           <TableCell>
                             <Badge
@@ -236,63 +260,65 @@ export function MemberManager() {
                                 : "普通成员"}
                             </Badge>
                           </TableCell>
-                          {canManage && (
-                            <TableCell>
-                              {(user.is_superuser ||
-                                member.role === "member") && (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger
-                                    asChild
-                                    onPointerDown={rememberActionTrigger}
-                                    onFocus={rememberActionTrigger}
+                          <TableCell>
+                            {(isSelf ||
+                              user.is_superuser ||
+                              (canManage && member.role === "member")) && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger
+                                  asChild
+                                  onPointerDown={rememberActionTrigger}
+                                  onFocus={rememberActionTrigger}
+                                >
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    aria-label={`${member.full_name || member.username} 的操作`}
+                                    disabled={
+                                      changeRole.isPending ||
+                                      query.isPlaceholderData
+                                    }
+                                    aria-busy={isUpdating}
                                   >
-                                    <Button
-                                      variant="ghost"
-                                      size="icon-sm"
-                                      aria-label={`${member.username} 的操作`}
-                                      disabled={
-                                        changeRole.isPending ||
-                                        query.isPlaceholderData
-                                      }
-                                      aria-busy={isUpdating}
-                                    >
-                                      <ButtonContent
-                                        icon={MoreHorizontalIcon}
-                                        loading={isUpdating}
-                                      />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuGroup>
-                                      {user.is_superuser && (
-                                        <DropdownMenuItem
-                                          onSelect={() =>
-                                            changeRole.mutate({
-                                              id: member.user_id,
-                                              role:
-                                                member.role === "admin"
-                                                  ? "member"
-                                                  : "admin",
-                                            })
-                                          }
-                                        >
-                                          {member.role === "admin"
-                                            ? "设为普通成员"
-                                            : "设为项目管理员"}
-                                        </DropdownMenuItem>
-                                      )}
+                                    <ButtonContent
+                                      icon={MoreHorizontalIcon}
+                                      loading={isUpdating}
+                                    />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuGroup>
+                                    {user.is_superuser && (
                                       <DropdownMenuItem
-                                        variant="destructive"
-                                        onSelect={() => setDeleting(member)}
+                                        onSelect={() =>
+                                          changeRole.mutate({
+                                            id: member.user_id,
+                                            role:
+                                              member.role === "admin"
+                                                ? "member"
+                                                : "admin",
+                                          })
+                                        }
                                       >
-                                        移出项目
+                                        {member.role === "admin"
+                                          ? "设为普通成员"
+                                          : "设为项目管理员"}
                                       </DropdownMenuItem>
-                                    </DropdownMenuGroup>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              )}
-                            </TableCell>
-                          )}
+                                    )}
+                                    <DropdownMenuItem
+                                      variant="destructive"
+                                      onSelect={() => {
+                                        remove.reset();
+                                        setDeleting(member);
+                                      }}
+                                    >
+                                      {isSelf ? "退出项目" : "移出项目"}
+                                    </DropdownMenuItem>
+                                  </DropdownMenuGroup>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </TableCell>
                         </TableRow>
                       );
                     })}
@@ -301,6 +327,7 @@ export function MemberManager() {
               </Table>
             </CollectionContent>
           )}
+
           <PagePagination
             className="mt-auto"
             currentPage={page}
@@ -317,6 +344,7 @@ export function MemberManager() {
           />
         </section>
       </main>
+
       {adding && (
         <AddMembersDialog
           project={project}
@@ -325,11 +353,13 @@ export function MemberManager() {
           onCloseAutoFocus={restoreActionFocus}
         />
       )}
+
       <DeleteDialog
         onCloseAutoFocus={restoreActionFocus}
         open={!!deleting}
-        pending={remove.isPending}
-        title="移出项目"
+        pending={remove.isPending || (isLeaving && remove.isSuccess)}
+        title={removeLabel}
+        confirmLabel={removeLabel}
         onOpenChange={(open) => {
           if (!open) setDeleting(undefined);
         }}
@@ -337,7 +367,14 @@ export function MemberManager() {
           if (deleting) remove.mutate(deleting.user_id);
         }}
       >
-        将“{deleting?.username}”移出“{project.name}”？账号、资料和项目密钥保留。
+        {isLeaving ? (
+          <>确定退出「{project.name}」吗？</>
+        ) : (
+          <>
+            将“{deleting?.full_name || deleting?.username}”移出“{project.name}”？
+            账号、资料和项目密钥保留。
+          </>
+        )}
       </DeleteDialog>
     </>
   );

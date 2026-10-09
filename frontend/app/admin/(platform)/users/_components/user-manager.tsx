@@ -237,7 +237,7 @@ export function UserManager() {
               >
                 <TableHeader>
                   <TableRow>
-                    <TableHead>账号 / 姓名</TableHead>
+                    <TableHead>姓名 / 账号</TableHead>
                     <TableHead className="w-28">角色</TableHead>
                     <TableHead className="w-28">状态</TableHead>
                     <TableHead className="w-44">创建时间</TableHead>
@@ -266,11 +266,16 @@ export function UserManager() {
                           <TableCell>
                             <div className="max-w-md">
                               <div className="truncate font-medium">
-                                {user.username}
+                                {user.full_name || user.username}
                               </div>
-                              <div className="truncate text-muted-foreground">
-                                {user.full_name || "未填写姓名"}
-                              </div>
+                              {user.full_name && (
+                                <div
+                                  className="max-w-48 truncate text-xs text-muted-foreground"
+                                  title={user.username}
+                                >
+                                  {user.username}
+                                </div>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>
