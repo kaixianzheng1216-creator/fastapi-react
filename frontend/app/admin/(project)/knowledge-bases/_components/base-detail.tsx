@@ -5,16 +5,18 @@ import { projectHref } from "@/lib/project-routes";
 
 import { usePaginationScrollReset } from "@/hooks/use-pagination-scroll-reset";
 import { useEffect } from "react";
-import { parsePage } from "@/lib/pagination";
 import { cn } from "@/lib/utils";
+import { parsePage } from "@/lib/pagination";
 
 import { useQuery } from "@tanstack/react-query";
+import { FilesIcon, SearchIcon } from "lucide-react";
 import { redirect, useRouter, useSearchParams } from "next/navigation";
 
 import { AppHeader } from "@/components/layout/app-header";
 import { getQueryViewState } from "@/lib/query-view-state";
 import { LoadError } from "@/components/common/load-error";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BackButton } from "@/components/common/back-button";
 import { knowledgeBasesReadKnowledgeBase } from "@/lib/client";
 import { KnowledgeDocuments } from "@/app/admin/(project)/knowledge-bases/_components/documents";
 import { KnowledgeSearch } from "@/app/admin/(project)/knowledge-bases/_components/search";
@@ -78,7 +80,11 @@ export function KnowledgeBaseDetail({
   }
 
   return (
-    <>
+    <Tabs
+      value={activeView}
+      onValueChange={changeView}
+      className="min-h-0 flex-1 gap-0 overflow-hidden"
+    >
       <AppHeader
         title={knowledgeBaseQuery.data?.name ?? "知识库详情"}
         breadcrumbs={[{ label: "知识库", href: projectHref(project.id) }]}
@@ -87,31 +93,38 @@ export function KnowledgeBaseDetail({
       <div
         ref={scrollRef}
         className={cn(
-          "flex min-h-0 flex-1 flex-col overflow-y-auto p-4 md:p-6",
+          "flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4 [scrollbar-gutter:stable] md:p-6",
           activeView !== "search" && "md:overflow-hidden",
         )}
       >
+        <div className="mx-auto flex w-full max-w-6xl shrink-0 items-center justify-between gap-3">
+          <BackButton href={projectHref(project.id)} label="返回知识库列表" />
+          <TabsList aria-label="知识库视图" className="py-0">
+            <TabsTrigger value="documents" className="h-full">
+              <FilesIcon aria-hidden="true" />
+              文档管理
+            </TabsTrigger>
+            <TabsTrigger value="search" className="h-full">
+              <SearchIcon aria-hidden="true" />
+              内容检索
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
         {getQueryViewState(knowledgeBaseQuery) === "error" ? (
           <LoadError
             title="知识库加载失败"
             isRetrying={knowledgeBaseQuery.isFetching}
             onRetry={() => void knowledgeBaseQuery.refetch()}
-            className="mx-auto min-h-full max-w-6xl"
+            className="mx-auto w-full max-w-6xl flex-1"
           />
         ) : (
-          <Tabs
-            value={activeView}
+          <div
             className={cn(
-              "mx-auto min-h-full w-full max-w-6xl gap-6",
-              activeView === "search" ? "shrink-0" : "md:h-full md:min-h-0",
+              "mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col",
+              activeView === "search" && "shrink-0",
             )}
-            onValueChange={changeView}
           >
-            <TabsList variant="line" className="shrink-0">
-              <TabsTrigger value="documents">文档管理</TabsTrigger>
-              <TabsTrigger value="search">内容检索</TabsTrigger>
-            </TabsList>
-
             <TabsContent
               value="documents"
               forceMount
@@ -124,15 +137,18 @@ export function KnowledgeBaseDetail({
               />
             </TabsContent>
 
-            <TabsContent value="search" className="flex min-h-0 flex-col gap-4">
+            <TabsContent
+              value="search"
+              className="flex min-h-0 flex-col gap-4"
+            >
               <KnowledgeSearch
                 projectId={project.id}
                 knowledgeBaseId={knowledgeBaseId}
               />
             </TabsContent>
-          </Tabs>
+          </div>
         )}
       </div>
-    </>
+    </Tabs>
   );
 }

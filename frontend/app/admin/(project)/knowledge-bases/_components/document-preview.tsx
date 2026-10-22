@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 import { getKnowledgeDirectoryHref } from "@/app/admin/(project)/knowledge-bases/_lib/navigation";
 import { ButtonContent } from "@/components/common/button-content";
+import { BackButton } from "@/components/common/back-button";
 import { CollectionContent } from "@/components/common/collection-content";
 import { LoadError } from "@/components/common/load-error";
 import { MarkdownContent } from "@/components/common/markdown-content";
@@ -62,13 +63,18 @@ export function KnowledgeDocumentPreview({
   const chunkPage = parsePage(searchParams.get("chunkPage"));
   const scrollRef = usePaginationScrollReset<HTMLDivElement>(chunkPage);
   const documentPath = `${projectHref(project.id)}/${knowledgeBaseId}/documents/${documentId}`;
+  const directoryStatus = searchParams.get("status");
 
   const directoryHref = getKnowledgeDirectoryHref(
     project.id,
     knowledgeBaseId,
     parsePage(searchParams.get("page")),
     searchParams.get("folder") ?? undefined,
-    searchParams.get("status") === "ready" ? "ready" : undefined,
+    directoryStatus === "ready" ||
+      directoryStatus === "processing" ||
+      directoryStatus === "failed"
+      ? directoryStatus
+      : undefined,
     searchParams.get("search") ?? undefined,
   );
 
@@ -244,9 +250,28 @@ export function KnowledgeDocumentPreview({
 
       <div
         ref={scrollRef}
-        className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6"
+        className="min-h-0 flex-1 overflow-y-auto p-4 [scrollbar-gutter:stable] md:p-6"
       >
-        <div className="mx-auto flex min-h-full max-w-5xl flex-col gap-6">
+        <Tabs
+          value={activeView}
+          onValueChange={changeView}
+          className="mx-auto min-h-full w-full max-w-6xl gap-5"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <BackButton href={directoryHref} label="返回文档列表" />
+            {canPreviewMarkdown && (
+              <TabsList aria-label="文档查看方式" className="ml-auto py-0">
+                <TabsTrigger value="markdown" className="h-full">
+                  <FileTextIcon aria-hidden="true" />
+                  Markdown
+                </TabsTrigger>
+                <TabsTrigger value="chunks" className="h-full">
+                  <LayersIcon aria-hidden="true" />
+                  切片
+                </TabsTrigger>
+              </TabsList>
+            )}
+          </div>
           {documentState === "loading" ? (
             <ContentSkeleton
               variant={activeView === "chunks" ? "cards" : "text"}
@@ -266,22 +291,7 @@ export function KnowledgeDocumentPreview({
               />
             </div>
           ) : (
-            <Tabs
-              value={activeView}
-              onValueChange={changeView}
-              className="flex-1 gap-6"
-            >
-              <TabsList>
-                <TabsTrigger value="markdown">
-                  <FileTextIcon aria-hidden="true" />
-                  Markdown
-                </TabsTrigger>
-                <TabsTrigger value="chunks">
-                  <LayersIcon aria-hidden="true" />
-                  切片
-                </TabsTrigger>
-              </TabsList>
-
+            <>
               <TabsContent value="markdown" className="flex flex-col gap-6">
                 {previewState === "loading" ? (
                   <ContentSkeleton variant="text" />
@@ -320,9 +330,9 @@ export function KnowledgeDocumentPreview({
                   getPageHref={getChunkPageHref}
                 />
               </TabsContent>
-            </Tabs>
+            </>
           )}
-        </div>
+        </Tabs>
       </div>
     </>
   );

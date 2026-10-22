@@ -1,6 +1,6 @@
 "use client";
 
-import { SearchIcon } from "lucide-react";
+import { SearchIcon, XIcon } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 
@@ -35,6 +35,7 @@ export function SearchToolbar({
   searchOnChange = true,
 }: SearchToolbarProps) {
   const generatedId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [input, setInput] = useState(value);
   const composing = useRef(false);
   const submitted = useRef(value);
@@ -74,9 +75,11 @@ export function SearchToolbar({
 
       <InputGroup>
         <InputGroupInput
+          ref={inputRef}
           id={generatedId}
           name="search"
           type="search"
+          className="[&::-webkit-search-cancel-button]:appearance-none"
           autoComplete="off"
           spellCheck={false}
           placeholder={placeholder}
@@ -96,6 +99,22 @@ export function SearchToolbar({
           maxLength={maxLength}
         />
         <InputGroupAddon align="inline-end">
+          {input && (
+            <InputGroupButton
+              size="icon-sm"
+              aria-label="清除搜索"
+              disabled={isPending}
+              onClick={() => {
+                search.cancel();
+                setInput("");
+                submitted.current = "";
+                onSearch("");
+                inputRef.current?.focus();
+              }}
+            >
+              <XIcon aria-hidden="true" />
+            </InputGroupButton>
+          )}
           <InputGroupButton
             type="submit"
             size="icon-sm"

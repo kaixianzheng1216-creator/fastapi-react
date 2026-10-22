@@ -170,7 +170,7 @@ export function KnowledgeDirectoryTable({
                             1,
                             entry.id,
                           )}
-                          className="flex min-w-0 items-center gap-2 hover:underline"
+                          className="flex w-fit max-w-full items-center gap-2 hover:underline"
                         >
                           <FolderIcon
                             className="size-4 shrink-0"
@@ -181,7 +181,7 @@ export function KnowledgeDirectoryTable({
                       ) : entry.status === "ready" ? (
                         <Link
                           href={getDocumentHref(entry.id)}
-                          className="flex min-w-0 items-center gap-2 hover:underline"
+                          className="flex w-fit max-w-full items-center gap-2 hover:underline"
                         >
                           <FileTypeIcon contentType={entry.content_type} />
                           <span className="truncate">{entry.filename}</span>
@@ -189,14 +189,14 @@ export function KnowledgeDirectoryTable({
                       ) : (
                         <span
                           tabIndex={0}
-                          className="flex min-w-0 items-center gap-2"
+                          className="flex w-fit max-w-full items-center gap-2"
                         >
                           <FileTypeIcon contentType={entry.content_type} />
                           <span className="truncate">{entry.filename}</span>
                         </span>
                       )}
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-sm text-wrap break-words">
+                    <TooltipContent align="start" className="max-w-sm text-wrap break-words">
                       {name}
                     </TooltipContent>
                   </Tooltip>

@@ -312,7 +312,7 @@ export function KnowledgeDocuments({
         ref={scrollRef}
         className="flex flex-1 flex-col gap-3 md:min-h-0 md:overflow-y-auto"
       >
-        <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <KnowledgeDocumentImport
             key={currentFolderId ?? "root"}
             knowledgeBaseId={knowledgeBaseId}
@@ -354,7 +354,7 @@ export function KnowledgeDocuments({
             </>
           )}
         </div>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 [&>[data-slot=field]]:max-w-full [&>[data-slot=field]]:flex-wrap">
           <SearchToolbar
             label="按文档名称查找"
             placeholder="按文档名称查找…"
@@ -365,7 +365,6 @@ export function KnowledgeDocuments({
               else update({ search: value, folder: "" });
             }}
           />
-
           {!directoryLoadFailed && !directoryPending && statusCounts && (
             <FilterGroup
               label="状态筛选"
@@ -383,8 +382,7 @@ export function KnowledgeDocuments({
             </FilterGroup>
           )}
         </div>
-
-        <Breadcrumb>
+        <Breadcrumb className="min-w-0 py-1">
           <BreadcrumbList>
             <BreadcrumbItem>
               {currentFolderId || currentStatus ? (

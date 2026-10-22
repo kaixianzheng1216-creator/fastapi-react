@@ -7,6 +7,7 @@ import { LoadError } from "@/components/common/load-error";
 import { ContentSkeleton } from "./content-skeleton";
 import { ChunkLocation } from "./chunk-location";
 import { getQueryViewState } from "@/lib/query-view-state";
+import { cn } from "@/lib/utils";
 import { MarkdownContent } from "@/components/common/markdown-content";
 import { SearchToolbar } from "@/components/common/search-toolbar";
 import { Badge } from "@/components/ui/badge";
@@ -79,29 +80,31 @@ export function KnowledgeSearch({
 
   return (
     <>
-      <SearchToolbar
-        label="检索文档内容"
-        placeholder="输入关键词或问题…"
-        className="shrink-0"
-        onSearch={submitSearch}
-        value={searchQuery}
-        searchOnChange={false}
-        maxLength={1000}
-        isPending={knowledgeSearchQuery.isFetching}
-      />
-
-      {searchQuery &&
-        searchResults !== undefined &&
-        searchResults.length > 0 && (
-          <h2
-            className="shrink-0 text-sm text-muted-foreground"
-            aria-live="polite"
-          >
-            以下内容与你的搜索最相关
-          </h2>
-        )}
       <div
-        key={searchQuery}
+        className={cn(
+          "flex w-full max-w-2xl flex-col gap-6",
+          searchQuery ? "py-2" : "mx-auto pt-[clamp(2rem,12vh,8rem)]",
+        )}
+      >
+        {!searchQuery && (
+          <div className="space-y-2 text-center">
+            <h2 className="text-2xl font-semibold tracking-tight">搜索文档内容</h2>
+            <p className="text-sm text-muted-foreground">在当前知识库中查找相关内容</p>
+          </div>
+        )}
+        <SearchToolbar
+          label="检索文档内容"
+          placeholder="输入关键词或问题…"
+          className="sm:w-full [&_[data-slot=input-group]]:h-13 [&_[data-slot=input-group]]:rounded-xl [&_input]:text-base"
+          onSearch={submitSearch}
+          value={searchQuery}
+          searchOnChange={false}
+          maxLength={1000}
+          isPending={knowledgeSearchQuery.isFetching}
+        />
+      </div>
+
+      <div
         className="flex min-w-0 flex-1 flex-col gap-4"
         aria-busy={knowledgeSearchQuery.isFetching}
       >
@@ -114,18 +117,15 @@ export function KnowledgeSearch({
           />
         )}
 
-        {(!searchQuery ||
-          (viewState === "ready" && searchResults?.length === 0)) && (
+        {searchQuery && viewState === "ready" && searchResults?.length === 0 && (
           <Empty>
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <SearchIcon aria-hidden="true" />
               </EmptyMedia>
-              {searchQuery && <EmptyTitle>未找到相关内容</EmptyTitle>}
+              <EmptyTitle>未找到相关内容</EmptyTitle>
               <EmptyDescription>
-                {searchQuery
-                  ? "试试其他关键词，或换一种方式描述问题。"
-                  : "输入关键词或问题，按 Enter 在当前知识库全部已完成文档中检索相关内容。"}
+                试试其他关键词，或换一种方式描述问题。
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -136,9 +136,7 @@ export function KnowledgeSearch({
             className="shrink-0 wrap-anywhere"
           >
             <CardHeader>
-              <CardTitle>
-                {result.knowledge_base_name} · {result.filename}
-              </CardTitle>
+              <CardTitle>{result.filename}</CardTitle>
               <ChunkLocation
                 pageNumbers={result.page_numbers}
                 sectionPath={result.section_path}
