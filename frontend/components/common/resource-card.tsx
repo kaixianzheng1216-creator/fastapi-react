@@ -111,13 +111,15 @@ export function ResourceCard({
 
 export function ResourceCardsSkeleton({
   showMetadata = false,
+  count = SKELETON_COUNT,
 }: {
   showMetadata?: boolean;
+  count?: number;
 }) {
   return (
     <div role="status" aria-label="正在加载列表…">
       <CardGrid label="加载占位">
-        {Array.from({ length: SKELETON_COUNT }, (_, index) => (
+        {Array.from({ length: count }, (_, index) => (
           <li key={index} aria-hidden="true">
             <Card className="h-full min-w-0">
               <CardHeader className="min-w-0">

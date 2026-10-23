@@ -16,7 +16,6 @@ import { AppHeader } from "@/components/layout/app-header";
 import { getQueryViewState } from "@/lib/query-view-state";
 import { LoadError } from "@/components/common/load-error";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BackButton } from "@/components/common/back-button";
 import { knowledgeBasesReadKnowledgeBase } from "@/lib/client";
 import { KnowledgeDocuments } from "@/app/admin/(project)/knowledge-bases/_components/documents";
 import { KnowledgeSearch } from "@/app/admin/(project)/knowledge-bases/_components/search";
@@ -97,8 +96,7 @@ export function KnowledgeBaseDetail({
           activeView !== "search" && "md:overflow-hidden",
         )}
       >
-        <div className="mx-auto flex w-full max-w-6xl shrink-0 items-center justify-between gap-3">
-          <BackButton href={projectHref(project.id)} label="返回知识库列表" />
+        <div className="mx-auto w-full max-w-6xl shrink-0">
           <TabsList aria-label="知识库视图" className="py-0">
             <TabsTrigger value="documents" className="h-full">
               <FilesIcon aria-hidden="true" />

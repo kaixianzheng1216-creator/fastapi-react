@@ -12,7 +12,6 @@ import { toast } from "sonner";
 
 import { getKnowledgeDirectoryHref } from "@/app/admin/(project)/knowledge-bases/_lib/navigation";
 import { ButtonContent } from "@/components/common/button-content";
-import { BackButton } from "@/components/common/back-button";
 import { CollectionContent } from "@/components/common/collection-content";
 import { LoadError } from "@/components/common/load-error";
 import { MarkdownContent } from "@/components/common/markdown-content";
@@ -257,21 +256,18 @@ export function KnowledgeDocumentPreview({
           onValueChange={changeView}
           className="mx-auto min-h-full w-full max-w-6xl gap-5"
         >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <BackButton href={directoryHref} label="返回文档列表" />
-            {canPreviewMarkdown && (
-              <TabsList aria-label="文档查看方式" className="ml-auto py-0">
-                <TabsTrigger value="markdown" className="h-full">
-                  <FileTextIcon aria-hidden="true" />
-                  Markdown
-                </TabsTrigger>
-                <TabsTrigger value="chunks" className="h-full">
-                  <LayersIcon aria-hidden="true" />
-                  切片
-                </TabsTrigger>
-              </TabsList>
-            )}
-          </div>
+          {canPreviewMarkdown && (
+            <TabsList aria-label="文档查看方式" className="py-0">
+              <TabsTrigger value="markdown" className="h-full">
+                <FileTextIcon aria-hidden="true" />
+                Markdown
+              </TabsTrigger>
+              <TabsTrigger value="chunks" className="h-full">
+                <LayersIcon aria-hidden="true" />
+                切片
+              </TabsTrigger>
+            </TabsList>
+          )}
           {documentState === "loading" ? (
             <ContentSkeleton
               variant={activeView === "chunks" ? "cards" : "text"}

@@ -308,7 +308,7 @@ export function KnowledgeBaseManager() {
             </div>
 
             {viewState === "loading" && view === "cards" ? (
-              <ResourceCardsSkeleton showMetadata />
+              <ResourceCardsSkeleton showMetadata count={6} />
             ) : viewState === "error" ? (
               <LoadError
                 title="知识库加载失败"
